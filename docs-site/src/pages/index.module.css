@@ -18,6 +18,12 @@
 }
 
 .packageCard {
+  /* `<Link>` renders as an <a>, which is inline by default — without this,
+     an inline element wrapping block children (h3/p) fragments its own
+     border box per line, rendering as a phantom extra rectangle below the
+     text instead of one card outline. */
+  display: flex;
+  flex-direction: column;
   height: 100%;
   padding: 1.5rem;
   border-radius: var(--ifm-card-border-radius);
