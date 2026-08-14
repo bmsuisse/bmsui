@@ -711,9 +711,13 @@ and after the rendered window). Omit it entirely for a plain, fully-rendered
   `<tbody>`, not the row's own `<tr>`, so expanding/collapsing a row is
   measured correctly (unlike `<TreeDataGrid>`, which has no detail panels
   and still measures its own `<tr>` directly).
-- See `packages/datagrid/demo/src/App.tsx`'s `VirtualizedInfiniteScrollDemo`
-  for a full working example (a "server"-mode dataset that grows on every
-  `onEndReached`).
+- The demo (`packages/datagrid/demo/src/App.tsx`'s `VirtualizedScrollDemo`)
+  only exercises plain virtualization now — a fixed 5,000-row "server"-mode
+  dataset, no `onEndReached` — after a screenshot review found the earlier
+  incremental-load demo confusing (its Previous/Next footer looked
+  interactive but its `onStateChange` was a no-op). For a worked
+  `onEndReached` example, see `DataGrid.test.tsx`'s "calls onEndReached once
+  scrolling reaches the last currently-loaded row" test instead.
 
 ## `<TreeDataGrid>` — lazy-loading tree grid
 

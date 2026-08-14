@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { ColumnDef } from "../../src/column/types";
@@ -670,6 +670,50 @@ describe("DataGrid (column resizing)", () => {
       />,
     );
     expect(screen.getByRole("columnheader", { name: /Age/ })).toHaveStyle({ width: "300px" });
+  });
+
+  // Regression test: with no `columnSizing`/`onColumnSizingChange` passed (the
+  // common, uncontrolled case), <DataGrid> used to never give `useTable` a
+  // `state.columnSizing`/`onColumnSizingChange` at all, so every drag was
+  // silently discarded and no column ever resized — see DataGrid.tsx's
+  // `internalColumnSizing` comment.
+  it("resizes an uncontrolled column by dragging its handle, with no columnSizing prop passed", () => {
+    render(
+      <DataGrid
+        columns={columns}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        enableColumnResizing
+      />,
+    );
+    const handle = screen.getByTestId("resize-handle-name");
+    fireEvent.mouseDown(handle, { clientX: 0 });
+    fireEvent.mouseMove(document, { clientX: 50 });
+    fireEvent.mouseUp(document, { clientX: 50 });
+    // 150px is TanStack's own default for a column with no explicit `width` (see above).
+    expect(screen.getByRole("columnheader", { name: /Name/ })).toHaveStyle({ width: "200px" });
+  });
+
+  // Regression test: real browsers' default `table-layout: auto` treats a
+  // cell's `style.width` as a loose hint (weighed against every other cell's
+  // content across the whole column), not a hard constraint — jsdom's lack
+  // of real layout can't catch this, so this only pins down the mechanism
+  // (the `table-fixed` class), not the rendered result itself.
+  it("renders table-fixed once enableColumnResizing is true, so pixel widths actually apply", () => {
+    const { rerender } = render(
+      <DataGrid columns={columns} dataSource={{ mode: "client", data: rows }} getRowId={(row) => row.id} />,
+    );
+    expect(screen.getByRole("table")).not.toHaveClass("table-fixed");
+
+    rerender(
+      <DataGrid
+        columns={columns}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        enableColumnResizing
+      />,
+    );
+    expect(screen.getByRole("table")).toHaveClass("table-fixed");
   });
 });
 
