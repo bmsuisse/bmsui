@@ -15,9 +15,9 @@ test.describe("Orders grid — SQL engine", () => {
   });
 
   test("loads and renders order rows from the fixture data", async ({ page }) => {
-    await expect(page.getByRole("cell", { name: "ORD-1001" })).toBeVisible();
-    // 20 fixture rows + 1 header row.
-    await expect(page.getByRole("row")).toHaveCount(21);
+    await expect(page.getByRole("cell", { name: "ORD-1001", exact: true })).toBeVisible();
+    // 20 fixture rows + 2 header rows (leaf header + filter row).
+    await expect(page.getByTestId("orders-grid").getByRole("row")).toHaveCount(22);
   });
 
   test("sorts ascending by amount via header click", async ({ page }) => {
@@ -25,7 +25,7 @@ test.describe("Orders grid — SQL engine", () => {
 
     // ORD-1004 (Blue Bottle Coffee, $15.00) is the smallest amount in the
     // fixture data, so it must be the first data row once sorted ascending.
-    const firstDataRow = page.getByRole("row").nth(1);
+    const firstDataRow = page.getByTestId("orders-grid").getByRole("row").nth(2);
     await expect(firstDataRow).toContainText("ORD-1004");
   });
 
@@ -35,33 +35,31 @@ test.describe("Orders grid — SQL engine", () => {
     await amountHeader.click();
 
     // ORD-1013 (Wayne Enterprises, $12,000.00) is the largest amount.
-    const firstDataRow = page.getByRole("row").nth(1);
+    const firstDataRow = page.getByTestId("orders-grid").getByRole("row").nth(2);
     await expect(firstDataRow).toContainText("ORD-1013");
   });
 
   test("filters rows by status via the enum filter widget", async ({ page }) => {
     await page.getByRole("button", { name: "Filter Status" }).click();
-    await page.getByRole("button", { name: /Any status/ }).click();
     await page.getByRole("checkbox", { name: "Pending" }).click();
     // Radix's Popover is non-modal, so the grid stays visible to role-based
     // queries with the checkbox list still open — no Escape needed.
     await page.keyboard.press("Escape");
 
-    // 5 "pending" orders in the fixture data (ORD-1002/1006/1009/1014/1018) + header row.
-    await expect(page.getByRole("row")).toHaveCount(6);
-    await expect(page.getByRole("cell", { name: "ORD-1002" })).toBeVisible();
-    await expect(page.getByRole("cell", { name: "ORD-1001" })).not.toBeVisible();
+    // 5 "pending" orders in the fixture data (ORD-1002/1006/1009/1014/1018) + 2 header rows.
+    await expect(page.getByTestId("orders-grid").getByRole("row")).toHaveCount(7);
+    await expect(page.getByRole("cell", { name: "ORD-1002", exact: true })).toBeVisible();
+    await expect(page.getByRole("cell", { name: "ORD-1001", exact: true })).not.toBeVisible();
   });
 
   test("filters rows by status via the enum filter's search box", async ({ page }) => {
     await page.getByRole("button", { name: "Filter Status" }).click();
-    await page.getByRole("button", { name: /Any status/ }).click();
     await page.getByPlaceholder("Search status...").fill("cancel");
     await page.getByRole("checkbox", { name: "Cancelled" }).click();
     await page.keyboard.press("Escape");
 
-    // 3 "cancelled" orders in the fixture data + header row.
-    await expect(page.getByRole("row")).toHaveCount(4);
+    // 3 "cancelled" orders in the fixture data + 2 header rows.
+    await expect(page.getByTestId("orders-grid").getByRole("row")).toHaveCount(5);
   });
 
   test("toggles dark mode by adding/removing the `dark` class on <html>", async ({ page }) => {
@@ -81,8 +79,8 @@ test.describe("Orders grid — SQL engine", () => {
 
     // Debounced (server mode filter changes wait ~300ms) — assert with
     // Playwright's built-in auto-retrying expect rather than a manual sleep.
-    await expect(page.getByRole("row")).toHaveCount(3); // ORD-1001, ORD-1002 + header row
-    await expect(page.getByRole("cell", { name: "ORD-1001" })).toBeVisible();
-    await expect(page.getByRole("cell", { name: "ORD-1003" })).not.toBeVisible();
+    await expect(page.getByTestId("orders-grid").getByRole("row")).toHaveCount(4); // ORD-1001, ORD-1002 + 2 header rows (leaf header + filter row)
+    await expect(page.getByRole("cell", { name: "ORD-1001", exact: true })).toBeVisible();
+    await expect(page.getByRole("cell", { name: "ORD-1003", exact: true })).not.toBeVisible();
   });
 });

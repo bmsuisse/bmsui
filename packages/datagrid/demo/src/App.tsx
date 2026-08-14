@@ -570,6 +570,7 @@ export function App(): ReactElement {
       {/* key={engine} forces a clean remount (fresh GridState) when switching engines. */}
       <DataGrid
         key={engine}
+        testId="orders-grid"
         columns={columns}
         dataSource={dataSource}
         getRowId={(row) => row.id}
