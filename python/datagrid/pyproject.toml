@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["bmsdna"]
+
+[project]
+name = "bmsdna-datagrid"
+version = "0.1.0"
+description = "Frontend filter/sort contract -> SQL (via sqlglot) or Meilisearch filter string."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.9.0",
+    "sqlglot>=25.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/bmsuisse/bmsui/tree/main/python/datagrid#readme"
+Repository = "https://github.com/bmsuisse/bmsui"
+Issues = "https://github.com/bmsuisse/bmsui/issues"
+
+[dependency-groups]
+dev = [
+    "ty>=0.0.59",
+    "ruff>=0.14.0",
+]
+test = [
+    "pytest>=9.1.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]

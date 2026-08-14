@@ -1,0 +1,93 @@
+@import "@fontsource-variable/inter";
+@import "tailwindcss";
+
+/*
+ * Tailwind v4's automatic content detection only scans this Vite project's
+ * own root (packages/ui/demo). The actual component source that uses
+ * Tailwind utility classes lives in packages/ui/src, reached only via
+ * vite.config.ts's `@bmsuisse/ui` alias — Tailwind never resolves that alias,
+ * so without this it silently generates none of those classes (every
+ * className string is present in the DOM, but has no matching CSS rule).
+ * Same convention as packages/datagrid/demo/src/globals.css.
+ */
+@source "../../src";
+
+/* Same convention a reference consumer app's own stylesheet uses: `.dark` on
+   an ancestor (in practice <html>, toggled by the demo's dark-mode button
+   below) flips every `dark:`-prefixed utility, rather than relying on the
+   OS-level `prefers-color-scheme` media query. */
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * shadcn/ui-style theme tokens for the semantic classes @bmsuisse/ui's
+ * components use (bg-primary, text-muted-foreground, border-input, etc.) —
+ * values ported from a reference consumer app's stylesheet, identical to
+ * packages/datagrid/demo's tokens, so every @bmsuisse package looks consistent.
+ */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --font-sans: var(--font-sans);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --background: #fcfcfc;
+  --foreground: oklch(0.2 0.005 250);
+  --primary: #2e4a62;
+  --primary-foreground: oklch(1 0 0);
+  --muted: #f8f8f8;
+  --muted-foreground: oklch(0.48 0.015 250);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.2 0.005 250);
+  --accent: #3d6080;
+  --accent-foreground: oklch(1 0 0);
+  --destructive: oklch(0.56 0.22 27);
+  --destructive-foreground: oklch(1 0 0);
+  --border: #f2f2f2;
+  --input: #f2f2f2;
+  --ring: #2e4a62;
+  --radius: 0.625rem;
+  --font-sans: "Inter Variable", "Inter", system-ui, -apple-system, sans-serif;
+}
+
+/* Reference consumer app's dark-mode token values. */
+html.dark {
+  --background: oklch(0.165 0.022 265);
+  --foreground: oklch(0.97 0.01 265);
+  --primary: #2e4a62;
+  --primary-foreground: oklch(1 0 0);
+  --muted: oklch(0.245 0.03 265);
+  --muted-foreground: oklch(0.64 0.028 265);
+  --popover: oklch(0.205 0.026 265);
+  --popover-foreground: oklch(0.97 0.01 265);
+  --accent: #6b90b8;
+  --accent-foreground: oklch(1 0 0);
+  --destructive: oklch(0.56 0.22 27);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.33 0.038 265);
+  --input: oklch(0.33 0.038 265);
+  --ring: #6b90b8;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}

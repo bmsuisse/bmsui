@@ -1,0 +1,12 @@
+[
+  { "id": "CUST-1", "name": "Acme Corp", "email": "billing@acme.example", "since": "2021-03-14", "active": true },
+  { "id": "CUST-2", "name": "Blue Bottle Coffee", "email": "ap@bluebottle.example", "since": "2022-06-01", "active": true },
+  { "id": "CUST-3", "name": "Contoso Ltd", "email": "finance@contoso.example", "since": "2020-11-22", "active": true },
+  { "id": "CUST-4", "name": "Globex Inc", "email": "accounts@globex.example", "since": "2023-01-09", "active": true },
+  { "id": "CUST-5", "name": "Initech", "email": "ar@initech.example", "since": "2019-08-30", "active": false },
+  { "id": "CUST-6", "name": "Umbrella Corp", "email": "billing@umbrella.example", "since": "2022-09-17", "active": true },
+  { "id": "CUST-7", "name": "Wayne Enterprises", "email": "finance@wayne.example", "since": "2018-05-05", "active": true },
+  { "id": "CUST-8", "name": "Stark Industries", "email": "ap@stark.example", "since": "2020-02-14", "active": true },
+  { "id": "CUST-9", "name": "Hooli", "email": "billing@hooli.example", "since": "2023-07-25", "active": false },
+  { "id": "CUST-10", "name": "Soylent Corp", "email": "ar@soylent.example", "since": "2021-12-01", "active": true }
+]

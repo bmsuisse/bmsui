@@ -1,0 +1,25 @@
+[project]
+name = "datagrid-e2e-server"
+version = "0.1.0"
+description = "FastAPI harness exercising bmsdna-datagrid against SQLite and Meilisearch, driven by the Playwright suite in packages/datagrid/e2e."
+requires-python = ">=3.11"
+dependencies = [
+    "bmsdna-datagrid",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "meilisearch>=0.32.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.14.0",
+]
+
+[tool.uv]
+# This is a standalone FastAPI app (`uv run uvicorn main:app`), not a library
+# meant to be built/installed as a package itself — only its dependencies
+# (notably the local bmsdna-datagrid path dependency below) matter.
+package = false
+
+[tool.uv.sources]
+bmsdna-datagrid = { path = "../../python/datagrid", editable = true }

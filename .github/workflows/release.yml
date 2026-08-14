@@ -1,0 +1,210 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Report which packages would release without publishing/tagging anything"
+        type: boolean
+        default: false
+
+jobs:
+  test:
+    uses: ./.github/workflows/ci.yml
+
+  plan:
+    name: Detect version bumps
+    needs: test
+    runs-on: ubuntu-latest
+    outputs:
+      ui_release: ${{ steps.ui.outputs.release }}
+      ui_version: ${{ steps.ui.outputs.version }}
+      datagrid_release: ${{ steps.datagrid.outputs.release }}
+      datagrid_version: ${{ steps.datagrid.outputs.version }}
+      python_release: ${{ steps.python.outputs.release }}
+      python_version: ${{ steps.python.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: ui
+        name: "Check @bmsuisse/ui"
+        run: |
+          VERSION=$(node -p "require('./packages/ui/package.json').version")
+          TAG="@bmsuisse/ui@$VERSION"
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - id: datagrid
+        name: "Check @bmsuisse/datagrid"
+        run: |
+          VERSION=$(node -p "require('./packages/datagrid/package.json').version")
+          TAG="@bmsuisse/datagrid@$VERSION"
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - id: python
+        name: "Check bmsdna-datagrid"
+        run: |
+          VERSION=$(grep -m1 '^version = ' python/datagrid/pyproject.toml | sed -E 's/version = "(.*)"/\1/')
+          TAG="bmsdna-datagrid@$VERSION"
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Summary
+        run: |
+          echo "@bmsuisse/ui:       release=${{ steps.ui.outputs.release }}       version=${{ steps.ui.outputs.version }}"
+          echo "@bmsuisse/datagrid: release=${{ steps.datagrid.outputs.release }} version=${{ steps.datagrid.outputs.version }}"
+          echo "bmsdna-datagrid:    release=${{ steps.python.outputs.release }}   version=${{ steps.python.outputs.version }}"
+
+  publish-ui:
+    name: "Publish @bmsuisse/ui"
+    needs: [test, plan]
+    if: needs.plan.outputs.ui_release == 'true' && (github.event_name != 'workflow_dispatch' || inputs.dry_run != true)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+      - run: bun install --frozen-lockfile
+      - run: bun run --filter '@bmsuisse/ui' build
+      - run: npm install -g npm@latest
+      - name: Publish to npm (OIDC trusted publishing)
+        working-directory: packages/ui
+        run: npm publish --access public --provenance
+      - name: Tag release
+        run: |
+          git tag "@bmsuisse/ui@${{ needs.plan.outputs.ui_version }}"
+          git push origin "@bmsuisse/ui@${{ needs.plan.outputs.ui_version }}"
+      - name: Create scoped GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ needs.plan.outputs.ui_version }}"
+          TAG="@bmsuisse/ui@$VERSION"
+          PREV_TAG=$(git tag -l '@bmsuisse/ui@*' --sort=-creatordate | grep -vxF "$TAG" | head -n1)
+          {
+            echo "## @bmsuisse/ui v$VERSION"
+            echo
+            if [ -n "$PREV_TAG" ]; then
+              echo "Changes in \`packages/ui\` since $PREV_TAG:"
+              echo
+              git log "$PREV_TAG..HEAD" --pretty=format:'- %s (%h)' -- packages/ui
+            else
+              echo "Initial release."
+            fi
+          } > release-notes.md
+          gh release create "$TAG" --title "@bmsuisse/ui v$VERSION" --notes-file release-notes.md
+
+  publish-datagrid:
+    name: "Publish @bmsuisse/datagrid"
+    needs: [test, plan]
+    if: needs.plan.outputs.datagrid_release == 'true' && (github.event_name != 'workflow_dispatch' || inputs.dry_run != true)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+      - run: bun install --frozen-lockfile
+      - run: bun run --filter '@bmsuisse/datagrid' build
+      - run: npm install -g npm@latest
+      - name: Publish to npm (OIDC trusted publishing)
+        working-directory: packages/datagrid
+        run: npm publish --access public --provenance
+      - name: Tag release
+        run: |
+          git tag "@bmsuisse/datagrid@${{ needs.plan.outputs.datagrid_version }}"
+          git push origin "@bmsuisse/datagrid@${{ needs.plan.outputs.datagrid_version }}"
+      - name: Create scoped GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ needs.plan.outputs.datagrid_version }}"
+          TAG="@bmsuisse/datagrid@$VERSION"
+          PREV_TAG=$(git tag -l '@bmsuisse/datagrid@*' --sort=-creatordate | grep -vxF "$TAG" | head -n1)
+          {
+            echo "## @bmsuisse/datagrid v$VERSION"
+            echo
+            if [ -n "$PREV_TAG" ]; then
+              echo "Changes in \`packages/datagrid\` since $PREV_TAG:"
+              echo
+              git log "$PREV_TAG..HEAD" --pretty=format:'- %s (%h)' -- packages/datagrid
+            else
+              echo "Initial release."
+            fi
+          } > release-notes.md
+          gh release create "$TAG" --title "@bmsuisse/datagrid v$VERSION" --notes-file release-notes.md
+
+  publish-python:
+    name: "Publish bmsdna-datagrid"
+    needs: [test, plan]
+    if: needs.plan.outputs.python_release == 'true' && (github.event_name != 'workflow_dispatch' || inputs.dry_run != true)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v3
+      - working-directory: python/datagrid
+        run: uv build
+      - name: Publish to PyPI (OIDC trusted publishing)
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: python/datagrid/dist
+      - name: Tag release
+        run: |
+          git tag "bmsdna-datagrid@${{ needs.plan.outputs.python_version }}"
+          git push origin "bmsdna-datagrid@${{ needs.plan.outputs.python_version }}"
+      - name: Create scoped GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ needs.plan.outputs.python_version }}"
+          TAG="bmsdna-datagrid@$VERSION"
+          PREV_TAG=$(git tag -l 'bmsdna-datagrid@*' --sort=-creatordate | grep -vxF "$TAG" | head -n1)
+          {
+            echo "## bmsdna-datagrid v$VERSION"
+            echo
+            if [ -n "$PREV_TAG" ]; then
+              echo "Changes in \`python/datagrid\` since $PREV_TAG:"
+              echo
+              git log "$PREV_TAG..HEAD" --pretty=format:'- %s (%h)' -- python/datagrid
+            else
+              echo "Initial release."
+            fi
+          } > release-notes.md
+          gh release create "$TAG" --title "bmsdna-datagrid v$VERSION" --notes-file release-notes.md
