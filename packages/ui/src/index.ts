@@ -121,5 +121,8 @@ export {
   loadingSpinnerIconVariants,
 } from "./patterns/loading-spinner/LoadingSpinner";
 
+export type { TabStripProps, TabStripTab } from "./patterns/tab-strip/TabStrip";
+export { TabStrip } from "./patterns/tab-strip/TabStrip";
+
 // --- shared utility -----------------------------------------------------------
 export { cn } from "./lib/utils";

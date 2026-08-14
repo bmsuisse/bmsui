@@ -65,5 +65,40 @@ this package's own `Popover`/`Input` rather than pulling in `cmdk` — a
 plain substring filter over a manually rendered list is enough for the
 sizes this component is used at.
 
+### `TabStrip`
+
+A responsive tab strip modeled on OneSales' customer-detail tabstrip: renders as
+many `tabs` as fit the available width inline, collapsing the rest into a "More"
+dropdown as the container shrinks (or as more tabs are added). Built on this
+package's own `Tabs` primitives, so it's a controlled component like the rest of
+this list — `value` / `onValueChange` work exactly like Radix's `Tabs.Root`.
+
+```tsx
+<TabStrip
+  tabs={[
+    { id: "overview", label: "Overview", content: <OverviewPanel /> },
+    { id: "orders", label: "Orders", content: <OrdersPanel /> },
+    // ...
+  ]}
+  value={activeTab}
+  onValueChange={setActiveTab}
+/>
+```
+
+Content is lazy-mount: `content` for a tab only renders once that tab is first
+activated (inherited from Radix `Tabs.Content`'s default, un-`forceMount`ed
+behavior), so an unopened tab never runs its component or fetches its data. It's
+not keep-alive, though — switching away unmounts that tab's content again, so
+per-tab local state doesn't survive a round trip unless you lift it out.
+
+`TabStrip` deliberately has no opinion on *which* tabs exist or their order —
+that's just whatever subset/order of `tabs` the caller passes in. A per-user
+"which tabs do I want to see" preference (loaded from a saved setting, an API
+call, `localStorage`, ...) is entirely the caller's to filter and persist; the
+component's only job is deciding, given however many tabs it was handed, how
+many fit inline before the rest collapse behind "More". The currently active
+tab is always kept reachable inline, swapping in for whichever tab is closest
+to the overflow boundary if a resize would otherwise hide it.
+
 See the [interactive demo](https://bmsuisse.github.io/bmsui/demo/ui/) for all of these rendered
 together.

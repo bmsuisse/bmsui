@@ -143,6 +143,25 @@ logic above, which already had its own extraction). Structure:
     those groups' labels (comma-joined) instead of a bare count — driven by
     the sales app's sales-agent filter, which previously faked grouping with
     page-local sentinel option rows (see AGENTS.md's UI-hack rule).
+  - `tab-strip/` — `TabStrip` (v0.5.0), a responsive tab strip modeled on the
+    sales app's ("OneSales") customer-detail tabstrip: renders as many
+    `tabs` as fit the available width inline, collapsing the rest into a
+    "More" dropdown as the container shrinks. Built on this package's own
+    `Tabs` primitives (a `Tabs.Root`/`Tabs.Content` per tab underneath, so
+    it's controlled via `value`/`onValueChange` like the rest of this list),
+    which also makes content lazy-mount for free — a tab's `content` only
+    renders once first activated and un-mounts again once you navigate
+    away, matching `Tabs.Content`'s un-`forceMount`ed Radix default (not
+    keep-alive: per-tab local state doesn't survive a round trip). Takes no
+    opinion on *which* tabs exist or their order: `tabs` is just whatever
+    subset/order the caller passes in, so a saved per-user tab-visibility
+    preference is the caller's array to filter and persist, not something
+    this component owns. The overflow split itself is a pure function
+    (`computeTabStripLayout`, unit-tested directly with fabricated widths
+    since jsdom never actually lays elements out) fed by an off-screen
+    measurement clone of each trigger plus a `ResizeObserver` on the
+    container; the active tab is swapped back inline if a resize would
+    otherwise push it into overflow, so it's never hidden behind "More".
 - `packages/ui/demo/` — same pattern as `packages/datagrid/demo`: a Vite
   app aliasing `@bmsuisse/ui` straight to `src/index.ts`, using the same
   reference-app-derived Tailwind v4 tokens, for visual QA.

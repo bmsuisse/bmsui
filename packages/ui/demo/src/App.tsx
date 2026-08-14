@@ -8,6 +8,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
+  Checkbox,
   Combobox,
   ConfirmDialog,
   Dialog,
@@ -47,6 +48,7 @@ import {
   SheetTrigger,
   Skeleton,
   StatusBadge,
+  TabStrip,
   Textarea,
   Tooltip,
   TooltipContent,
@@ -54,7 +56,7 @@ import {
   TooltipTrigger,
 } from "@bmsuisse/ui";
 import type { ReactElement } from "react";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 function Section({ title, children }: { title: string; children: ReactElement }): ReactElement {
   return (
@@ -67,6 +69,39 @@ function Section({ title, children }: { title: string; children: ReactElement })
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+const CUSTOMER_DETAIL_TABS = [
+  { id: "overview", label: "Overview", content: "Name, address, and account status." },
+  { id: "orders", label: "Orders", content: "Order history for this customer." },
+  { id: "invoices", label: "Invoices", content: "Open and paid invoices." },
+  { id: "documents", label: "Documents", content: "Uploaded contracts and attachments." },
+  { id: "activity", label: "Activity", content: "Recent notes and audit log entries." },
+  { id: "contacts", label: "Contacts", content: "Additional contact persons on the account." },
+  { id: "shipping", label: "Shipping", content: "Saved shipping addresses." },
+] as const;
+
+// Demonstrates TabStrip's lazy-mount behavior: `onMount` only fires the first time a
+// tab is opened (proving its content wasn't rendered up front), and the local
+// `note` input loses whatever was typed once you switch away and back (proving
+// content isn't kept alive — Radix un-mounts the previous tab, it doesn't just hide it).
+function LazyDemoPanel({ tabId, text, onMount }: { tabId: string; text: string; onMount: (id: string) => void }) {
+  const [note, setNote] = useState("");
+  useEffect(() => {
+    onMount(tabId);
+  }, [tabId, onMount]);
+
+  return (
+    <div className="flex flex-col gap-2 p-2 text-sm">
+      <p>{text}</p>
+      <Input
+        placeholder="Type here, switch tabs, then come back…"
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        className="max-w-xs"
+      />
+    </div>
+  );
 }
 
 export function App(): ReactElement {
@@ -92,6 +127,19 @@ export function App(): ReactElement {
   const [country, setCountry] = useState<string | null>("ch");
   const [teamMembers, setTeamMembers] = useState<string[]>([]);
   const [showArchived, setShowArchived] = useState(false);
+
+  // Simulates a per-user "which tabs do I even want" preference, e.g. loaded from a
+  // saved API setting — TabStrip itself has no opinion on this, it just renders
+  // whatever subset/order it's handed and auto-collapses what doesn't fit.
+  const [enabledDetailTabs, setEnabledDetailTabs] = useState<Record<string, boolean>>(
+    Object.fromEntries(CUSTOMER_DETAIL_TABS.map((tab) => [tab.id, true])),
+  );
+  const [customerDetailTab, setCustomerDetailTab] = useState("overview");
+  const [tabMountLog, setTabMountLog] = useState<string[]>([]);
+  // Stable identity (setTabMountLog is guaranteed stable by React) — LazyDemoPanel's
+  // mount effect depends on this callback, so an unstable identity here would re-fire
+  // it on every unrelated App re-render instead of only on an actual (re)mount.
+  const recordTabMount = useCallback((id: string) => setTabMountLog((prev) => [...prev, id]), []);
 
   return (
     <div>
@@ -286,6 +334,45 @@ export function App(): ReactElement {
               <StatusBadge status="new" />
               <StatusBadge status="custom_status" toneMap={{ custom_status: "info" }} />
             </>
+          </Section>
+
+          <Section title="TabStrip (responsive, overflow into 'More')">
+            <div className="flex w-full flex-col gap-3">
+              <div className="flex flex-wrap gap-3 text-sm">
+                {CUSTOMER_DETAIL_TABS.map((tab) => (
+                  <label key={tab.id} className="flex items-center gap-1.5">
+                    <Checkbox
+                      checked={enabledDetailTabs[tab.id] ?? false}
+                      onCheckedChange={(checked) =>
+                        setEnabledDetailTabs((prev) => ({ ...prev, [tab.id]: checked === true }))
+                      }
+                    />
+                    {tab.label}
+                  </label>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Drag the bottom-right corner to resize — tabs that no longer fit collapse into "More".
+              </p>
+              <div className="w-full max-w-xl resize-x overflow-auto rounded-md border p-3">
+                <TabStrip
+                  tabs={CUSTOMER_DETAIL_TABS.filter((tab) => enabledDetailTabs[tab.id]).map((tab) => ({
+                    id: tab.id,
+                    label: tab.label,
+                    content: (
+                      <LazyDemoPanel tabId={tab.id} text={tab.content} onMount={recordTabMount} />
+                    ),
+                  }))}
+                  value={customerDetailTab}
+                  onValueChange={setCustomerDetailTab}
+                  data-testid="customer-detail-tabs"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground" data-testid="tab-mount-log">
+                Lazy-mount log (each entry is a tab's content actually mounting, not just becoming visible):{" "}
+                {tabMountLog.length === 0 ? "—" : tabMountLog.join(" → ")}
+              </p>
+            </div>
           </Section>
 
           <Section title="DropdownMenu">
