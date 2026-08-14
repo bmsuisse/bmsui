@@ -60,7 +60,13 @@ logic above, which already had its own extraction). Structure:
   contract-management app had one and uses it for pending/warning states
   (e.g. the approvals page), and no equivalent tone existed on this
   package's `Badge` (only `StatusBadge` had warning/amber via its own
-  fixed-palette tone map).
+  fixed-palette tone map). `Input` gained `min-w-0`, `file:*`, and
+  `selection:*` classes (v0.4.6) — the contract-management app's own
+  `Input` had these (needed for its `<input type="file">` usages and to
+  shrink inside flex rows) and this package's lacked them entirely; found
+  after some of that app's call sites had already switched to this `Input`
+  while others hadn't, mid-migration. Ref-forwarding was already correct,
+  just untested — added a test for it alongside.
 - `packages/ui/src/patterns/` — components composed on top of the
   primitives, one subfolder per pattern, each addressing a specific
   duplication found in the survey:
