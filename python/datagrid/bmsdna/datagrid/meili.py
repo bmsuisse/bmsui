@@ -227,7 +227,7 @@ def build_sort(sort: list[SortDescriptor]) -> list[str]:
 
 
 def build_search_params(
-    filter: CompositeFilterDescriptor | None,
+    filter: FilterNode | None,
     sort: list[SortDescriptor],
     offset: int,
     limit: int,

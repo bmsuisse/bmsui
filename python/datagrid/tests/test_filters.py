@@ -77,7 +77,7 @@ def test_composite_filter_from_json() -> None:
 
 def test_invalid_operator_rejected() -> None:
     with pytest.raises(ValidationError):
-        FilterDescriptor(field="name", operator="bogus")  # type: ignore[arg-type]
+        FilterDescriptor(field="name", operator="bogus")  # ty: ignore[invalid-argument-type]
 
 
 def test_sort_descriptor() -> None:

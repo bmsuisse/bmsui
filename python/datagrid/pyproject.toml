@@ -7,7 +7,7 @@ packages = ["bmsdna"]
 
 [project]
 name = "bmsdna-datagrid"
-version = "0.1.0"
+version = "0.1.1"
 description = "Frontend filter/sort contract -> SQL (via sqlglot) or Meilisearch filter string."
 readme = "README.md"
 license = "MIT"

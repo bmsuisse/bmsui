@@ -308,7 +308,7 @@ def _apply_sort(query: exp.Select, sort: list[SortDescriptor]) -> exp.Select:
 
 def build_select(
     table: str,
-    filter: CompositeFilterDescriptor | None,
+    filter: FilterNode | None,
     sort: list[SortDescriptor],
     offset: int,
     limit: int,
@@ -331,7 +331,7 @@ def build_select(
 
 def build_count(
     table: str,
-    filter: CompositeFilterDescriptor | None,
+    filter: FilterNode | None,
     dialect: str = "postgres",
 ) -> tuple[str, dict]:
     """Builds a `SELECT COUNT(*) FROM {table}` statement with the same filter, for total-row-count pagination."""
