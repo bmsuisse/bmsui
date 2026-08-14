@@ -1,3 +1,6 @@
+.claude/skills
+.agents/skills
+
 # Logs
 logs
 *.log
