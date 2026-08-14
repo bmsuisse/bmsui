@@ -70,7 +70,20 @@ function sleep(ms: number): Promise<void> {
 }
 
 export function App(): ReactElement {
-  const [dark, setDark] = useState(false);
+  // Mirrors packages/datagrid/demo's own dark-mode convention: toggle the
+  // `dark` class on <html>, since globals.css's token overrides are scoped
+  // to `html.dark` (see its `@custom-variant dark (&:is(.dark *))` comment)
+  // — toggling a class on a wrapping <div> instead flips `dark:`-prefixed
+  // utility classes but never the CSS-variable-driven tokens (bg-background,
+  // text-foreground, etc.), which is most of what this demo actually uses.
+  const [dark, setDark] = useState(() => document.documentElement.classList.contains("dark"));
+
+  function toggleDarkMode(): void {
+    const next = !dark;
+    document.documentElement.classList.toggle("dark", next);
+    setDark(next);
+  }
+
   const [modalOpen, setModalOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [formModalOpen, setFormModalOpen] = useState(false);
@@ -81,7 +94,7 @@ export function App(): ReactElement {
   const [showArchived, setShowArchived] = useState(false);
 
   return (
-    <div className={dark ? "dark" : undefined}>
+    <div>
       <div className="min-h-screen bg-background p-8 text-foreground">
         <div className="mx-auto flex max-w-3xl flex-col gap-10">
           <header className="flex items-center justify-between">
@@ -89,7 +102,7 @@ export function App(): ReactElement {
               <h1 className="text-xl font-semibold">@bmsuisse/ui</h1>
               <p className="text-sm text-muted-foreground">Shared primitives — visual QA demo</p>
             </div>
-            <Button variant="outline" onClick={() => setDark((d) => !d)}>
+            <Button variant="outline" data-testid="dark-mode-toggle" onClick={toggleDarkMode}>
               {dark ? "Light mode" : "Dark mode"}
             </Button>
           </header>

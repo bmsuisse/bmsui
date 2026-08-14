@@ -4,6 +4,9 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
 export default defineConfig({
+  // Set by the GitHub Pages deploy workflow so this builds for
+  // https://bmsuisse.github.io/bmsui/demo/datagrid/ instead of the site root.
+  base: process.env.BASE_PATH ?? "/",
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {

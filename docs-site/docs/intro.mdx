@@ -1,0 +1,47 @@
+---
+title: Introduction
+---
+
+# bmsui
+
+**bmsui** is a small set of shared, framework-level packages for building
+internal apps at bmsuisse:
+
+| Package | What it is |
+| --- | --- |
+| [`@bmsuisse/ui`](/ui/getting-started) | shadcn/ui-based React primitives (`Button`, `Input`, `Dialog`, `Select`, `Sheet`, `Tooltip`, …) plus composed patterns (`Modal`, `FormField`, `AlertBox`, `StatusBadge`, `Combobox`, …). |
+| [`@bmsuisse/datagrid`](/datagrid/getting-started) | A headless-core React data grid (TanStack Table v9) with a shared filter/sort contract, column types with automatic filter widgets, virtualization, and a lazy-loading tree grid. |
+| [`bmsdna-datagrid`](https://github.com/bmsuisse/bmsui/tree/main/python/datagrid) | The Python counterpart — turns that same filter/sort contract into a parameterized SQL statement or a Meilisearch filter string, so a frontend `<DataGrid>` and a backend query stay in sync without hand-written glue on either side. |
+
+Both packages grew out of duplicated code found across several existing
+internal apps — a Modal/Dialog wrapper reimplemented 11 times, a bespoke
+1300-line tree list, hand-rolled filter-to-SQL translation. The goal is one
+well-tested copy of each, instead of another slightly different one per app.
+
+## Try it live
+
+Both packages ship a runnable demo, deployed straight from this
+repository — no install required:
+
+- **[@bmsuisse/ui demo →](https://bmsuisse.github.io/bmsui/demo/ui/)**
+- **[@bmsuisse/datagrid demo →](https://bmsuisse.github.io/bmsui/demo/datagrid/)**
+
+See the [screenshot gallery](/screenshots) for a static tour if you'd rather
+not leave this page.
+
+## Install
+
+Both are published to npm:
+
+```bash
+npm install @bmsuisse/ui @bmsuisse/datagrid
+```
+
+Peer dependencies: `react` and `react-dom` (`^18` or `^19`). Neither package
+ships its own Tailwind build — they rely on your app already having
+Tailwind CSS configured with shadcn/ui-style theme tokens (`bg-primary`,
+`text-muted-foreground`, `border-input`, etc.), the same way any other
+shadcn/ui component would.
+
+Next: [get started with `@bmsuisse/ui`](/ui/getting-started) or jump
+straight to [`@bmsuisse/datagrid`](/datagrid/getting-started).

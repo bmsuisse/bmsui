@@ -3,11 +3,16 @@
   "private": true,
   "workspaces": [
     "packages/*",
-    "packages/*/demo"
+    "packages/*/demo",
+    "docs-site"
   ],
   "scripts": {
     "build": "bun run --filter '@bmsuisse/datagrid' --filter '@bmsuisse/ui' build",
     "test": "bun run --filter '@bmsuisse/datagrid' --filter '@bmsuisse/ui' test",
-    "check": "bun run --filter '@bmsuisse/datagrid' --filter '@bmsuisse/ui' check"
+    "check": "bun run --filter '@bmsuisse/datagrid' --filter '@bmsuisse/ui' check",
+    "screenshots": "bun run scripts/screenshots.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.1"
   }
 }
