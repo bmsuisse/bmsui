@@ -9,7 +9,7 @@ import { expect, test } from "@playwright/test";
 test.describe("Column selector", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/?engine=sql");
-    await expect(page.getByRole("cell", { name: "ORD-1001" })).toBeVisible();
+    await expect(page.getByRole("cell", { name: "ORD-1001", exact: true })).toBeVisible();
   });
 
   test("opens to grouped sections with the right columns under each", async ({ page }) => {
@@ -39,35 +39,35 @@ test.describe("Column selector", () => {
   test("toggling a column off hides it from the grid, and back on restores it", async ({
     page,
   }) => {
-    await expect(page.getByRole("columnheader", { name: "Amount" })).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Amount", exact: true })).toBeVisible();
 
     await page.getByRole("button", { name: "Columns" }).click();
     const dialog = page.getByRole("dialog");
     await dialog.getByLabel("Amount").uncheck();
     await page.keyboard.press("Escape");
 
-    await expect(page.getByRole("columnheader", { name: "Amount" })).not.toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Amount", exact: true })).not.toBeVisible();
 
     await page.getByRole("button", { name: "Columns" }).click();
     await page.getByRole("dialog").getByLabel("Amount").check();
     await page.keyboard.press("Escape");
 
-    await expect(page.getByRole("columnheader", { name: "Amount" })).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Amount", exact: true })).toBeVisible();
   });
 
   test("a hidden column set via persistKey survives a real page reload", async ({ page }) => {
-    await expect(page.getByRole("columnheader", { name: "Paid" })).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Paid", exact: true })).toBeVisible();
 
     await page.getByRole("button", { name: "Columns" }).click();
     await page.getByRole("dialog").getByLabel("Paid").uncheck();
     await page.keyboard.press("Escape");
-    await expect(page.getByRole("columnheader", { name: "Paid" })).not.toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Paid", exact: true })).not.toBeVisible();
 
     await page.reload();
-    await expect(page.getByRole("cell", { name: "ORD-1001" })).toBeVisible();
+    await expect(page.getByRole("cell", { name: "ORD-1001", exact: true })).toBeVisible();
 
     // localStorage (via persistKey="orders") restored the hidden column
     // across the reload, not just in-memory React state.
-    await expect(page.getByRole("columnheader", { name: "Paid" })).not.toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Paid", exact: true })).not.toBeVisible();
   });
 });
