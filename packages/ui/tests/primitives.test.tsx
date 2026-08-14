@@ -71,6 +71,17 @@ describe("Input + Label", () => {
     );
     expect(screen.getByLabelText("Email")).toBeInstanceOf(HTMLInputElement);
   });
+
+  it("forwards a ref to the underlying input element", () => {
+    const ref = { current: null as HTMLInputElement | null };
+    render(<Input ref={ref} />);
+    expect(ref.current).toBeInstanceOf(HTMLInputElement);
+  });
+
+  it("applies min-w-0 so it can shrink inside a flex row", () => {
+    render(<Input data-testid="x" />);
+    expect(screen.getByTestId("x").className).toContain("min-w-0");
+  });
 });
 
 describe("Badge", () => {
