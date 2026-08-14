@@ -1,0 +1,79 @@
+name: Deploy docs site
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one Pages deployment at a time; never cancel one mid-flight in favor
+# of a newer push — let it finish, then the next run supersedes it.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  test:
+    uses: ./.github/workflows/ci.yml
+
+  build:
+    name: Build docs site + demos
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+
+      - name: Install Playwright Chromium
+        run: bunx playwright install --with-deps chromium
+
+      - name: Generate docs screenshots
+        # Builds its own throwaway (default base "/") copies of both demos
+        # and writes into docs-site/static/img/screenshots — must run
+        # before the docs site build below, and before the *real*,
+        # subpath-based demo builds further down (see scripts/screenshots.ts).
+        run: bun run screenshots
+
+      - name: Build docs site
+        working-directory: docs-site
+        run: bun run build
+
+      - name: Build @bmsuisse/ui demo
+        working-directory: packages/ui/demo
+        run: bun run build
+        env:
+          BASE_PATH: /bmsui/demo/ui/
+
+      - name: Build @bmsuisse/datagrid demo (static, client-side sample data)
+        working-directory: packages/datagrid/demo
+        run: bun run build:static
+        env:
+          BASE_PATH: /bmsui/demo/datagrid/
+
+      - name: Assemble Pages artifact
+        run: |
+          set -euo pipefail
+          mkdir -p site/demo/ui site/demo/datagrid
+          cp -r docs-site/build/. site/
+          cp -r packages/ui/demo/dist/. site/demo/ui/
+          cp -r packages/datagrid/demo/dist/. site/demo/datagrid/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

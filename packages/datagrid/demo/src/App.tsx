@@ -91,6 +91,38 @@ type Engine = "sql" | "meili";
 
 const DEFAULT_GRID_STATE: GridState = { filter: null, sort: [], page: 0, pageSize: 20 };
 
+// Set at build time (`bun run build:static`, see package.json) for the
+// public GitHub Pages demo, which has no e2e/server FastAPI backend to talk
+// to — swaps the orders grid over to a bundled, fully client-side dataset
+// instead of fetching. Unset (the default `bun run dev`/`bun run build`,
+// which is what Playwright drives) behaves exactly as before.
+const STATIC_DEMO = import.meta.env.VITE_STATIC_DEMO === "true";
+
+/** Deterministic (no Math.random, so screenshots are reproducible) synthetic dataset for the static demo build. */
+const STATIC_CUSTOMERS = [
+  "Acme Corp",
+  "Globex",
+  "Initech",
+  "Umbrella Inc",
+  "Soylent Ltd",
+  "Hooli",
+  "Stark Industries",
+  "Wayne Enterprises",
+];
+const STATIC_STATUSES = ["pending", "shipped", "delivered", "cancelled"] as const;
+const STATIC_ORDERS: Order[] = Array.from({ length: 120 }, (_, i) => {
+  const day = String((i % 27) + 1).padStart(2, "0");
+  const month = String((i % 12) + 1).padStart(2, "0");
+  return {
+    id: `ORD-${String(1000 + i)}`,
+    customer_name: STATIC_CUSTOMERS[i % STATIC_CUSTOMERS.length],
+    status: STATIC_STATUSES[i % STATIC_STATUSES.length],
+    amount: Math.round((25 + ((i * 37) % 975)) * 100) / 100,
+    is_paid: i % 3 !== 0,
+    created_at: `2026-${month}-${day}`,
+  };
+});
+
 /** Fetches the current page of orders from the given engine's query route, refetching on every GridState change. */
 function useOrdersDataSource(engine: Engine): DataSource<Order> {
   const [state, setState] = useState<GridState>(DEFAULT_GRID_STATE);
@@ -99,6 +131,7 @@ function useOrdersDataSource(engine: Engine): DataSource<Order> {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (STATIC_DEMO) return;
     const controller = new AbortController();
     setLoading(true);
     fetch(`/api/${engine}/orders/query`, {
@@ -136,6 +169,7 @@ function useOrdersDataSource(engine: Engine): DataSource<Order> {
     return () => controller.abort();
   }, [engine, state]);
 
+  if (STATIC_DEMO) return { mode: "client", data: STATIC_ORDERS };
   return { mode: "server", data: rows, rowCount, loading, onStateChange: setState };
 }
 
@@ -531,30 +565,37 @@ export function App(): ReactElement {
         </button>
       </div>
       <div className="mb-4 flex items-center justify-between gap-2">
-        <nav className="flex gap-2" role="tablist" aria-label="Query engine">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={engine === "sql"}
-            data-testid="engine-sql"
-            className="rounded-md border px-3 py-1 text-sm data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"
-            data-state={engine === "sql" ? "active" : "inactive"}
-            onClick={() => selectEngine("sql")}
-          >
-            SQL (SQLite)
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={engine === "meili"}
-            data-testid="engine-meili"
-            className="rounded-md border px-3 py-1 text-sm data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"
-            data-state={engine === "meili" ? "active" : "inactive"}
-            onClick={() => selectEngine("meili")}
-          >
-            Meilisearch
-          </button>
-        </nav>
+        {STATIC_DEMO ? (
+          <p className="text-sm text-muted-foreground">
+            Client-side sample data — the real package also supports server-side SQL and
+            Meilisearch backends, see the docs.
+          </p>
+        ) : (
+          <nav className="flex gap-2" role="tablist" aria-label="Query engine">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={engine === "sql"}
+              data-testid="engine-sql"
+              className="rounded-md border px-3 py-1 text-sm data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"
+              data-state={engine === "sql" ? "active" : "inactive"}
+              onClick={() => selectEngine("sql")}
+            >
+              SQL (SQLite)
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={engine === "meili"}
+              data-testid="engine-meili"
+              className="rounded-md border px-3 py-1 text-sm data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"
+              data-state={engine === "meili" ? "active" : "inactive"}
+              onClick={() => selectEngine("meili")}
+            >
+              Meilisearch
+            </button>
+          </nav>
+        )}
         <ColumnSelector
           columns={columns}
           visibility={visibility}
