@@ -19,13 +19,13 @@ test.describe("Orders grid — Meilisearch engine", () => {
 
   test("loads and renders order rows from the fixture data", async ({ page }) => {
     await expect(page.getByRole("cell", { name: "ORD-1001", exact: true })).toBeVisible();
-    await expect(page.getByTestId("orders-grid").getByRole("row")).toHaveCount(22);
+    await expect(page.getByTestId("orders-grid").getByRole("row")).toHaveCount(21);
   });
 
   test("sorts ascending by amount via header click", async ({ page }) => {
     await page.getByRole("button", { name: "Amount", exact: true }).click();
 
-    const firstDataRow = page.getByTestId("orders-grid").getByRole("row").nth(2);
+    const firstDataRow = page.getByTestId("orders-grid").getByRole("row").nth(1);
     await expect(firstDataRow).toContainText("ORD-1004");
   });
 
@@ -34,7 +34,7 @@ test.describe("Orders grid — Meilisearch engine", () => {
     await amountHeader.click();
     await amountHeader.click();
 
-    const firstDataRow = page.getByTestId("orders-grid").getByRole("row").nth(2);
+    const firstDataRow = page.getByTestId("orders-grid").getByRole("row").nth(1);
     await expect(firstDataRow).toContainText("ORD-1013");
   });
 
@@ -45,7 +45,7 @@ test.describe("Orders grid — Meilisearch engine", () => {
     // non-modal, so the grid stays visible with the checkbox list open.
     await page.keyboard.press("Escape");
 
-    await expect(page.getByTestId("orders-grid").getByRole("row")).toHaveCount(7);
+    await expect(page.getByTestId("orders-grid").getByRole("row")).toHaveCount(6);
     await expect(page.getByRole("cell", { name: "ORD-1002", exact: true })).toBeVisible();
     await expect(page.getByRole("cell", { name: "ORD-1001", exact: true })).not.toBeVisible();
   });
@@ -55,8 +55,8 @@ test.describe("Orders grid — Meilisearch engine", () => {
     await page.getByRole("combobox", { name: "Paid filter" }).click();
     await page.getByRole("option", { name: "No" }).click();
 
-    // 8 unpaid orders in the fixture data + 2 header rows.
-    await expect(page.getByTestId("orders-grid").getByRole("row")).toHaveCount(10);
+    // 8 unpaid orders in the fixture data + 1 header row.
+    await expect(page.getByTestId("orders-grid").getByRole("row")).toHaveCount(9);
     await expect(page.getByRole("cell", { name: "ORD-1002", exact: true })).toBeVisible();
     await expect(page.getByRole("cell", { name: "ORD-1001", exact: true })).not.toBeVisible();
   });
@@ -87,7 +87,7 @@ test.describe("Orders grid — Meilisearch engine", () => {
 
     // Ascending puts unpaid (false) orders first; ORD-1002 is the first
     // unpaid order in the fixture data's insertion order.
-    const firstDataRow = page.getByTestId("orders-grid").getByRole("row").nth(2);
+    const firstDataRow = page.getByTestId("orders-grid").getByRole("row").nth(1);
     await expect(firstDataRow).toContainText("ORD-1002");
   });
 });

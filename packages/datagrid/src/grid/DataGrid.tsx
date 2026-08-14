@@ -1,5 +1,5 @@
 import { BarsArrowDownIcon, BarsArrowUpIcon, FunnelIcon } from "@heroicons/react/24/outline";
-import type { CellContext, ColumnDef as TanstackColumnDef, RowData } from "@tanstack/react-table";
+import type { CellContext, ColumnDef as TanstackColumnDef, ColumnSizingState, RowData } from "@tanstack/react-table";
 import { columnResizingFeature, columnSizingFeature, flexRender, tableFeatures, useTable } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ChevronRight, Loader2 } from "lucide-react";
@@ -115,7 +115,7 @@ export function DataGrid<TRow extends RowData>({
   renderDetail,
   enableColumnResizing = false,
   columnResizeMode = "onChange",
-  columnSizing,
+  columnSizing: controlledColumnSizing,
   onColumnSizingChange,
   virtualize,
   showPagination = true,
@@ -137,6 +137,20 @@ export function DataGrid<TRow extends RowData>({
   function updateSelectedIds(next: ReadonlySet<string>): void {
     setInternalSelectedIds(next);
     onSelectedIdsChange?.(next);
+  }
+
+  // Same controlled/uncontrolled pattern as `selectedIds` above — without
+  // an internal fallback here, dragging a resize handle with no
+  // `columnSizing`/`onColumnSizingChange` passed in (the common case; see
+  // `enableColumnResizing`'s own doc) had nowhere to write the new width to
+  // at all: `useTable` below was never given `state.columnSizing` nor
+  // `onColumnSizingChange` in that case, so every drag was silently
+  // discarded and no column ever actually resized.
+  const [internalColumnSizing, setInternalColumnSizing] = useState<ColumnSizingState>({});
+  const columnSizing = controlledColumnSizing ?? internalColumnSizing;
+  function updateColumnSizing(next: ColumnSizingState): void {
+    setInternalColumnSizing(next);
+    onColumnSizingChange?.(next);
   }
   const [expandedIds, setExpandedIds] = useState<ReadonlySet<string>>(new Set());
 
@@ -213,15 +227,11 @@ export function DataGrid<TRow extends RowData>({
     getRowId,
     enableColumnResizing,
     columnResizeMode,
-    ...(columnSizing
-      ? {
-          state: { columnSizing },
-          onColumnSizingChange: (updater) => {
-            const next = typeof updater === "function" ? updater(columnSizing) : updater;
-            onColumnSizingChange?.(next);
-          },
-        }
-      : {}),
+    state: { columnSizing },
+    onColumnSizingChange: (updater) => {
+      const next = typeof updater === "function" ? updater(columnSizing) : updater;
+      updateColumnSizing(next);
+    },
   });
 
   const pageCount = Math.max(1, Math.ceil(rowCount / state.pageSize));
@@ -427,7 +437,21 @@ export function DataGrid<TRow extends RowData>({
           className={cn("overflow-x-auto rounded-md border", shouldVirtualize && "overflow-y-auto")}
           style={shouldVirtualize ? { maxHeight: virtualize?.maxBodyHeight ?? 480 } : undefined}
         >
-        <table className="w-full border-collapse text-sm">
+        {/*
+          `table-fixed` (only once every column has a concrete pixel width —
+          see `enableColumnResizing`'s own doc) is required for that width to
+          actually determine the rendered column, not just hint at it: the
+          browser's default `table-layout: auto` algorithm treats a cell's
+          `style.width` as one input among several (including cell content
+          across every row) and can render a column far narrower than its
+          specified width regardless of what `columnSize()` above computes —
+          which silently broke both column resizing (the state updated
+          correctly; the table just never reflected it) and pinned columns'
+          sticky offset math (each depends on the *rendered* width matching
+          `getSize()`). Omitted otherwise so a grid with no explicit widths
+          keeps natural, content-driven column sizing.
+        */}
+        <table className={cn("w-full border-collapse text-sm", enableColumnResizing && "table-fixed")}>
         <thead className="bg-muted">
           {table.getHeaderGroups().map((headerGroup) => {
             // `headerById` backs both the optional spanning-label row below

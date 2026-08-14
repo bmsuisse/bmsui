@@ -36,7 +36,6 @@ const columns: ColumnDef<Order>[] = [
     accessorKey: "customer_name",
     sortable: true,
     filterable: true,
-    filterDisplay: "row",
     group: "Account",
   },
   {
@@ -46,7 +45,6 @@ const columns: ColumnDef<Order>[] = [
     accessorKey: "status",
     sortable: true,
     filterable: true,
-    filterDisplay: "row",
     group: "Details",
     options: [
       { value: "pending", label: "Pending" },
@@ -62,7 +60,6 @@ const columns: ColumnDef<Order>[] = [
     accessorKey: "amount",
     sortable: true,
     filterable: true,
-    filterDisplay: "row",
     group: "Financial",
   },
   {
@@ -72,7 +69,6 @@ const columns: ColumnDef<Order>[] = [
     accessorKey: "is_paid",
     sortable: true,
     filterable: true,
-    filterDisplay: "row",
     group: "Financial",
   },
   {
@@ -82,7 +78,6 @@ const columns: ColumnDef<Order>[] = [
     accessorKey: "created_at",
     sortable: true,
     filterable: true,
-    filterDisplay: "row",
     group: "Details",
   },
 ];
@@ -474,11 +469,15 @@ function HeaderGroupDemo(): ReactElement {
   );
 }
 
-// --- virtualized infinite-scroll demo: "server" mode with `data` growing on
-// every `onEndReached`, exactly the pattern real consuming apps use (a real
-// fetch would replace `loadMore`'s setTimeout). Deliberately "server" mode, not
+// --- virtualized scrolling demo: the full row set is already in memory
+// (no incremental "load more on scroll" — see AGENTS.md's `virtualize` for
+// that pattern if you need it instead), just rendered through the
+// virtualizer so scrolling 5,000 rows stays smooth. "server" mode, not
 // "client" — client mode still paginates via GridState.pageSize, which would
-// cap what's rendered to one page regardless of how many rows `data` holds.
+// cap what's rendered to one page regardless of how many rows `data` holds;
+// `showPagination={false}` hides the Previous/Next footer that would
+// otherwise imply paging even though `onStateChange` is a no-op here (there's
+// nothing to page — the whole dataset is already loaded).
 interface BigRow {
   id: string;
   label: string;
@@ -489,32 +488,22 @@ const bigRowColumns: ColumnDef<BigRow>[] = [
   { id: "label", type: "string", header: "Label", accessorKey: "label" },
 ];
 
-const TOTAL_AVAILABLE = 5000;
-const BATCH_SIZE = 100;
+const TOTAL_ROWS = 5000;
+const ALL_BIG_ROWS: BigRow[] = Array.from({ length: TOTAL_ROWS }, (_, i) => ({ id: String(i), label: `Item ${i}` }));
 
-function makeBigRowBatch(start: number, count: number): BigRow[] {
-  return Array.from({ length: count }, (_, i) => ({ id: String(start + i), label: `Item ${start + i}` }));
-}
-
-function VirtualizedInfiniteScrollDemo(): ReactElement {
-  const [items, setItems] = useState<BigRow[]>(() => makeBigRowBatch(0, BATCH_SIZE));
-
-  function loadMore(): void {
-    setItems((prev) =>
-      prev.length >= TOTAL_AVAILABLE ? prev : [...prev, ...makeBigRowBatch(prev.length, BATCH_SIZE)],
-    );
-  }
-
+function VirtualizedScrollDemo(): ReactElement {
   return (
     <div>
       <p className="mb-2 text-sm text-muted-foreground">
-        {items.length} of {TOTAL_AVAILABLE} rows loaded — scroll to the bottom to load 100 more.
+        {TOTAL_ROWS.toLocaleString()} rows, virtualized — only the rows near the visible viewport are
+        ever mounted, so scrolling stays smooth however far down the list you go.
       </p>
       <DataGrid
         columns={bigRowColumns}
-        dataSource={{ mode: "server", data: items, rowCount: TOTAL_AVAILABLE, onStateChange: () => {} }}
+        dataSource={{ mode: "server", data: ALL_BIG_ROWS, rowCount: TOTAL_ROWS, onStateChange: () => {} }}
         getRowId={(row) => row.id}
-        virtualize={{ maxBodyHeight: 300, onEndReached: loadMore, hasMore: items.length < TOTAL_AVAILABLE }}
+        showPagination={false}
+        virtualize={{ maxBodyHeight: 480 }}
       />
     </div>
   );
@@ -643,8 +632,8 @@ export function App(): ReactElement {
       <h2 className="mb-2 mt-8 text-lg font-semibold">headerGroup demo — spanning header cells</h2>
       <HeaderGroupDemo />
 
-      <h2 className="mb-2 mt-8 text-lg font-semibold">Virtualized infinite-scroll demo</h2>
-      <VirtualizedInfiniteScrollDemo />
+      <h2 className="mb-2 mt-8 text-lg font-semibold">Virtualized scrolling demo</h2>
+      <VirtualizedScrollDemo />
 
       <h2 className="mb-2 mt-8 text-lg font-semibold">
         &lt;TreeDataGrid&gt; demo — lazy-loading org chart
