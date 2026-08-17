@@ -31,7 +31,7 @@
     },
     "packages/datagrid": {
       "name": "@bmsuisse/datagrid",
-      "version": "0.23.1",
+      "version": "0.23.2",
       "dependencies": {
         "@heroicons/react": "^2.2.0",
         "@radix-ui/react-checkbox": "^1.3.11",

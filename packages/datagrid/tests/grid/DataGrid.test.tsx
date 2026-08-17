@@ -454,6 +454,20 @@ describe("DataGrid (renderDetail)", () => {
     expect(screen.queryByTestId("row-1-detail")).not.toBeInTheDocument();
   });
 
+  it("renders the expand toggle with a full icon-button hit target, not just the bare chevron", () => {
+    render(
+      <DataGrid
+        columns={columns}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        renderDetail={(row) => <div>Detail for {row.name}</div>}
+      />,
+    );
+    // `size="icon"` -> 36px (h-9 w-9), well past a bare 16px chevron glyph --
+    // small enough hit targets are what made the button hard to press.
+    expect(screen.getByRole("button", { name: "Expand row 1" })).toHaveClass("h-9", "w-9");
+  });
+
   it("allows multiple rows to be expanded simultaneously", async () => {
     render(
       <DataGrid
@@ -561,6 +575,44 @@ describe("DataGrid (column pinning)", () => {
     const nameCell = within(firstRow).getAllByRole("cell")[0]!;
     expect(nameCell).toHaveClass("sticky");
     expect(nameCell).toHaveStyle({ left: "0px" });
+  });
+
+  it("reserves space for the expand column so a pinned column doesn't stick at offset 0 over it", () => {
+    const pinned: ColumnDef<Row>[] = [{ ...columns[0]!, pinned: "left", width: 120 }, columns[1]!];
+    render(
+      <DataGrid
+        columns={pinned}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        renderDetail={(row) => <div>Detail for {row.name}</div>}
+      />,
+    );
+
+    // The pinned "Name" column must start after the expand column's own
+    // width, not at 0 -- otherwise it sticks directly on top of the expand
+    // button once the grid scrolls horizontally, hiding it.
+    expect(screen.getByRole("columnheader", { name: /Name/ })).toHaveStyle({ left: "44px" });
+
+    const firstRow = screen.getByTestId("row-1");
+    const expandButton = within(firstRow).getByRole("button", { name: "Expand row 1" });
+    const expandCell = expandButton.closest("td")!;
+    expect(expandCell).toHaveClass("sticky");
+    expect(expandCell).toHaveStyle({ left: "0px" });
+  });
+
+  it("stacks a pinned column after both the expand and selection columns", () => {
+    const pinned: ColumnDef<Row>[] = [{ ...columns[0]!, pinned: "left", width: 120 }, columns[1]!];
+    render(
+      <DataGrid
+        columns={pinned}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        renderDetail={(row) => <div>Detail for {row.name}</div>}
+        selectedIds={new Set()}
+      />,
+    );
+
+    expect(screen.getByRole("columnheader", { name: /Name/ })).toHaveStyle({ left: "88px" });
   });
 });
 
