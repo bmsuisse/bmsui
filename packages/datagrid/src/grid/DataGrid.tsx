@@ -37,14 +37,35 @@ type GridTableFeatures = typeof gridTableFeatures;
 // before a `table` instance exists to ask `getSize()` directly.
 const DEFAULT_COLUMN_SIZE = 150;
 
-/** Cumulative sticky `left`/`right` pixel offset per pinned column id, in visible-column order. */
+// Fixed pixel width of each "structural" column DataGrid renders itself
+// (row-expand chevron, selection checkbox, per-row actions menu) rather than
+// deriving from `columns` — matched by the `width` style applied to their
+// own cells below. These always render pinned to the left/right edge of the
+// scroll container, regardless of whether any *data* column is `pinned`: a
+// data column's own pinned offset must reserve this space (see
+// `pinnedOffsets`'s `leadingOffset` param below), otherwise a pinned data
+// column sticks at the very edge and scrolls right over these non-sticky
+// columns, hiding them once the grid needs to scroll horizontally.
+const DETAIL_COLUMN_WIDTH = 40;
+const SELECTION_COLUMN_WIDTH = 40;
+const ROW_ACTIONS_COLUMN_WIDTH = 40;
+
+/**
+ * Cumulative sticky `left`/`right` pixel offset per pinned column id, in
+ * visible-column order, starting from `leadingOffset` — the combined width
+ * of whichever structural columns (expand/selection on the left,
+ * row-actions on the right) render before the first data column on that
+ * side, so a pinned data column's offset accounts for them instead of
+ * assuming it's the first thing in the row.
+ */
 function pinnedOffsets<TRow>(
   visibleColumns: ColumnDef<TRow>[],
   side: "left" | "right",
   getSize: (columnId: string) => number,
+  leadingOffset: number,
 ): Map<string, number> {
   const offsets = new Map<string, number>();
-  let cursor = 0;
+  let cursor = leadingOffset;
   const ordered = side === "left" ? visibleColumns : [...visibleColumns].reverse();
   for (const column of ordered) {
     if (column.pinned !== side) continue;
@@ -278,8 +299,11 @@ export function DataGrid<TRow extends RowData>({
   // reasoning about `table`'s reference-stability guarantees across
   // `columnSizing` state changes.
   const columnSize = (columnId: string): number => table.getColumn(columnId)?.getSize() ?? DEFAULT_COLUMN_SIZE;
-  const leftPinnedOffsets = pinnedOffsets(visibleColumns, "left", columnSize);
-  const rightPinnedOffsets = pinnedOffsets(visibleColumns, "right", columnSize);
+  const leadingStructuralWidth =
+    (showDetailColumn ? DETAIL_COLUMN_WIDTH : 0) + (showSelectionColumn ? SELECTION_COLUMN_WIDTH : 0);
+  const trailingStructuralWidth = showRowActionsColumn ? ROW_ACTIONS_COLUMN_WIDTH : 0;
+  const leftPinnedOffsets = pinnedOffsets(visibleColumns, "left", columnSize, leadingStructuralWidth);
+  const rightPinnedOffsets = pinnedOffsets(visibleColumns, "right", columnSize, trailingStructuralWidth);
 
   // Combines with (doesn't replace) the `width` style every cell already
   // gets — a pinned column's `left`/`right` offset only makes sense relative
@@ -307,6 +331,42 @@ export function DataGrid<TRow extends RowData>({
     if (enableColumnResizing) return { style: { width: columnSize(column.id) } };
     return { style: column.width ? { width: column.width } : undefined };
   }
+
+  // Same sticky-pinning treatment as `pinnedCellProps`, for the structural
+  // expand/selection/row-actions columns instead of a data column — these
+  // always pin (they have no `pinned` prop of their own to opt out with),
+  // so a pinned *data* column's reserved `leadingOffset`/its own offset
+  // math actually lines up with a column that's really there, rather than a
+  // gap left by content that scrolled away underneath it.
+  function structuralCellProps(
+    side: "left" | "right",
+    offset: number,
+    width: number,
+    area: "header" | "body" = "body",
+  ): { className: string; style: CSSProperties } {
+    const bg = area === "header" ? "bg-muted" : "bg-background";
+    return { className: cn("sticky z-10", bg), style: { [side]: offset, width } };
+  }
+
+  // Computed once per render (cheap object literals) rather than inline at
+  // each of the several header/body/filter-row call sites below, so the
+  // selection column's offset — which depends on whether the detail column
+  // renders before it — stays in exactly one place.
+  const detailCellProps = structuralCellProps("left", 0, DETAIL_COLUMN_WIDTH);
+  const selectionCellProps = structuralCellProps(
+    "left",
+    showDetailColumn ? DETAIL_COLUMN_WIDTH : 0,
+    SELECTION_COLUMN_WIDTH,
+  );
+  const rowActionsCellProps = structuralCellProps("right", 0, ROW_ACTIONS_COLUMN_WIDTH);
+  const detailHeaderCellProps = structuralCellProps("left", 0, DETAIL_COLUMN_WIDTH, "header");
+  const selectionHeaderCellProps = structuralCellProps(
+    "left",
+    showDetailColumn ? DETAIL_COLUMN_WIDTH : 0,
+    SELECTION_COLUMN_WIDTH,
+    "header",
+  );
+  const rowActionsHeaderCellProps = structuralCellProps("right", 0, ROW_ACTIONS_COLUMN_WIDTH, "header");
 
   const tableRows = table.getRowModel().rows;
   const shouldVirtualize = Boolean(virtualize) && tableRows.length > (virtualize?.threshold ?? 100);
@@ -357,7 +417,7 @@ export function DataGrid<TRow extends RowData>({
           className={cn(rowProps?.className as string | undefined, row.index % 2 === 1 && "bg-foreground/5")}
         >
           {showDetailColumn && (
-            <td className="border-b p-2">
+            <td className={cn("border-b p-2", detailCellProps.className)} style={detailCellProps.style}>
               <button
                 type="button"
                 aria-label={`${isExpanded ? "Collapse" : "Expand"} row ${row.id}`}
@@ -372,7 +432,7 @@ export function DataGrid<TRow extends RowData>({
             </td>
           )}
           {showSelectionColumn && (
-            <td className="border-b p-2">
+            <td className={cn("border-b p-2", selectionCellProps.className)} style={selectionCellProps.style}>
               <input
                 type="checkbox"
                 aria-label={`Select row ${row.id}`}
@@ -398,7 +458,7 @@ export function DataGrid<TRow extends RowData>({
             );
           })}
           {showRowActionsColumn && rowActions && (
-            <td className="border-b p-2">
+            <td className={cn("border-b p-2", rowActionsCellProps.className)} style={rowActionsCellProps.style}>
               <ActionsMenu items={rowActions} ctx={{ row: row.original }} triggerLabel={`Row actions for ${row.id}`} />
             </td>
           )}
@@ -522,9 +582,20 @@ export function DataGrid<TRow extends RowData>({
               <Fragment key={headerGroup.id}>
                 {hasHeaderGroups && (
                   <tr key={`${headerGroup.id}-groups`} data-testid="header-group-row">
-                    {showDetailColumn && <th rowSpan={2} className="border-b p-2" aria-hidden />}
+                    {showDetailColumn && (
+                      <th
+                        rowSpan={2}
+                        className={cn("border-b p-2", detailHeaderCellProps.className)}
+                        style={detailHeaderCellProps.style}
+                        aria-hidden
+                      />
+                    )}
                     {showSelectionColumn && (
-                      <th rowSpan={2} className="border-b p-2">
+                      <th
+                        rowSpan={2}
+                        className={cn("border-b p-2", selectionHeaderCellProps.className)}
+                        style={selectionHeaderCellProps.style}
+                      >
                         <input
                           type="checkbox"
                           aria-label="Select all rows on this page"
@@ -546,13 +617,29 @@ export function DataGrid<TRow extends RowData>({
                         </th>
                       ),
                     )}
-                    {showRowActionsColumn && <th rowSpan={2} className="border-b p-2" aria-label="Row actions" />}
+                    {showRowActionsColumn && (
+                      <th
+                        rowSpan={2}
+                        className={cn("border-b p-2", rowActionsHeaderCellProps.className)}
+                        style={rowActionsHeaderCellProps.style}
+                        aria-label="Row actions"
+                      />
+                    )}
                   </tr>
                 )}
                 <tr key={headerGroup.id}>
-                  {!hasHeaderGroups && showDetailColumn && <th className="border-b p-2" aria-hidden />}
+                  {!hasHeaderGroups && showDetailColumn && (
+                    <th
+                      className={cn("border-b p-2", detailHeaderCellProps.className)}
+                      style={detailHeaderCellProps.style}
+                      aria-hidden
+                    />
+                  )}
                   {!hasHeaderGroups && showSelectionColumn && (
-                    <th className="border-b p-2">
+                    <th
+                      className={cn("border-b p-2", selectionHeaderCellProps.className)}
+                      style={selectionHeaderCellProps.style}
+                    >
                       <input
                         type="checkbox"
                         aria-label="Select all rows on this page"
@@ -571,7 +658,11 @@ export function DataGrid<TRow extends RowData>({
                     return renderLeafHeaderCell(column);
                   })}
                   {!hasHeaderGroups && showRowActionsColumn && (
-                    <th className="border-b p-2" aria-label="Row actions" />
+                    <th
+                      className={cn("border-b p-2", rowActionsHeaderCellProps.className)}
+                      style={rowActionsHeaderCellProps.style}
+                      aria-label="Row actions"
+                    />
                   )}
                 </tr>
               </Fragment>
@@ -579,8 +670,15 @@ export function DataGrid<TRow extends RowData>({
           })}
           {hasFilterRow && (
             <tr data-testid="filter-row">
-              {showDetailColumn && <th className="border-b p-2" />}
-              {showSelectionColumn && <th className="border-b p-2" />}
+              {showDetailColumn && (
+                <th className={cn("border-b p-2", detailHeaderCellProps.className)} style={detailHeaderCellProps.style} />
+              )}
+              {showSelectionColumn && (
+                <th
+                  className={cn("border-b p-2", selectionHeaderCellProps.className)}
+                  style={selectionHeaderCellProps.style}
+                />
+              )}
               {visibleColumns.map((column) => {
                 const pinnedProps = pinnedCellProps(column, "header");
                 return (
@@ -593,7 +691,12 @@ export function DataGrid<TRow extends RowData>({
                   </th>
                 );
               })}
-              {showRowActionsColumn && <th className="border-b p-2" />}
+              {showRowActionsColumn && (
+                <th
+                  className={cn("border-b p-2", rowActionsHeaderCellProps.className)}
+                  style={rowActionsHeaderCellProps.style}
+                />
+              )}
             </tr>
           )}
         </thead>
