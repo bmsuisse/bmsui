@@ -46,9 +46,12 @@ const DEFAULT_COLUMN_SIZE = 150;
 // `pinnedOffsets`'s `leadingOffset` param below), otherwise a pinned data
 // column sticks at the very edge and scrolls right over these non-sticky
 // columns, hiding them once the grid needs to scroll horizontally.
-const DETAIL_COLUMN_WIDTH = 40;
-const SELECTION_COLUMN_WIDTH = 40;
-const ROW_ACTIONS_COLUMN_WIDTH = 40;
+// 36px (the shared `Button`'s `size="icon"`) plus 4px of padding on each
+// side — big enough to comfortably hit (WCAG's 44px minimum touch target)
+// without the surrounding `p-1` cell padding eating into the button itself.
+const DETAIL_COLUMN_WIDTH = 44;
+const SELECTION_COLUMN_WIDTH = 44;
+const ROW_ACTIONS_COLUMN_WIDTH = 44;
 
 /**
  * Cumulative sticky `left`/`right` pixel offset per pinned column id, in
@@ -417,9 +420,11 @@ export function DataGrid<TRow extends RowData>({
           className={cn(rowProps?.className as string | undefined, row.index % 2 === 1 && "bg-foreground/5")}
         >
           {showDetailColumn && (
-            <td className={cn("border-b p-2", detailCellProps.className)} style={detailCellProps.style}>
-              <button
+            <td className={cn("border-b p-1", detailCellProps.className)} style={detailCellProps.style}>
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon"
                 aria-label={`${isExpanded ? "Collapse" : "Expand"} row ${row.id}`}
                 aria-expanded={isExpanded}
                 onClick={(event) => {
@@ -428,11 +433,11 @@ export function DataGrid<TRow extends RowData>({
                 }}
               >
                 <ChevronRight className={cn("h-4 w-4 transition-transform", isExpanded && "rotate-90")} aria-hidden />
-              </button>
+              </Button>
             </td>
           )}
           {showSelectionColumn && (
-            <td className={cn("border-b p-2", selectionCellProps.className)} style={selectionCellProps.style}>
+            <td className={cn("border-b p-1", selectionCellProps.className)} style={selectionCellProps.style}>
               <input
                 type="checkbox"
                 aria-label={`Select row ${row.id}`}
@@ -458,7 +463,7 @@ export function DataGrid<TRow extends RowData>({
             );
           })}
           {showRowActionsColumn && rowActions && (
-            <td className={cn("border-b p-2", rowActionsCellProps.className)} style={rowActionsCellProps.style}>
+            <td className={cn("border-b p-1", rowActionsCellProps.className)} style={rowActionsCellProps.style}>
               <ActionsMenu items={rowActions} ctx={{ row: row.original }} triggerLabel={`Row actions for ${row.id}`} />
             </td>
           )}
@@ -585,7 +590,7 @@ export function DataGrid<TRow extends RowData>({
                     {showDetailColumn && (
                       <th
                         rowSpan={2}
-                        className={cn("border-b p-2", detailHeaderCellProps.className)}
+                        className={cn("border-b p-1", detailHeaderCellProps.className)}
                         style={detailHeaderCellProps.style}
                         aria-hidden
                       />
@@ -593,7 +598,7 @@ export function DataGrid<TRow extends RowData>({
                     {showSelectionColumn && (
                       <th
                         rowSpan={2}
-                        className={cn("border-b p-2", selectionHeaderCellProps.className)}
+                        className={cn("border-b p-1", selectionHeaderCellProps.className)}
                         style={selectionHeaderCellProps.style}
                       >
                         <input
@@ -620,7 +625,7 @@ export function DataGrid<TRow extends RowData>({
                     {showRowActionsColumn && (
                       <th
                         rowSpan={2}
-                        className={cn("border-b p-2", rowActionsHeaderCellProps.className)}
+                        className={cn("border-b p-1", rowActionsHeaderCellProps.className)}
                         style={rowActionsHeaderCellProps.style}
                         aria-label="Row actions"
                       />
@@ -630,14 +635,14 @@ export function DataGrid<TRow extends RowData>({
                 <tr key={headerGroup.id}>
                   {!hasHeaderGroups && showDetailColumn && (
                     <th
-                      className={cn("border-b p-2", detailHeaderCellProps.className)}
+                      className={cn("border-b p-1", detailHeaderCellProps.className)}
                       style={detailHeaderCellProps.style}
                       aria-hidden
                     />
                   )}
                   {!hasHeaderGroups && showSelectionColumn && (
                     <th
-                      className={cn("border-b p-2", selectionHeaderCellProps.className)}
+                      className={cn("border-b p-1", selectionHeaderCellProps.className)}
                       style={selectionHeaderCellProps.style}
                     >
                       <input
@@ -659,7 +664,7 @@ export function DataGrid<TRow extends RowData>({
                   })}
                   {!hasHeaderGroups && showRowActionsColumn && (
                     <th
-                      className={cn("border-b p-2", rowActionsHeaderCellProps.className)}
+                      className={cn("border-b p-1", rowActionsHeaderCellProps.className)}
                       style={rowActionsHeaderCellProps.style}
                       aria-label="Row actions"
                     />
@@ -671,11 +676,11 @@ export function DataGrid<TRow extends RowData>({
           {hasFilterRow && (
             <tr data-testid="filter-row">
               {showDetailColumn && (
-                <th className={cn("border-b p-2", detailHeaderCellProps.className)} style={detailHeaderCellProps.style} />
+                <th className={cn("border-b p-1", detailHeaderCellProps.className)} style={detailHeaderCellProps.style} />
               )}
               {showSelectionColumn && (
                 <th
-                  className={cn("border-b p-2", selectionHeaderCellProps.className)}
+                  className={cn("border-b p-1", selectionHeaderCellProps.className)}
                   style={selectionHeaderCellProps.style}
                 />
               )}
@@ -693,7 +698,7 @@ export function DataGrid<TRow extends RowData>({
               })}
               {showRowActionsColumn && (
                 <th
-                  className={cn("border-b p-2", rowActionsHeaderCellProps.className)}
+                  className={cn("border-b p-1", rowActionsHeaderCellProps.className)}
                   style={rowActionsHeaderCellProps.style}
                 />
               )}

@@ -454,6 +454,20 @@ describe("DataGrid (renderDetail)", () => {
     expect(screen.queryByTestId("row-1-detail")).not.toBeInTheDocument();
   });
 
+  it("renders the expand toggle with a full icon-button hit target, not just the bare chevron", () => {
+    render(
+      <DataGrid
+        columns={columns}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        renderDetail={(row) => <div>Detail for {row.name}</div>}
+      />,
+    );
+    // `size="icon"` -> 36px (h-9 w-9), well past a bare 16px chevron glyph --
+    // small enough hit targets are what made the button hard to press.
+    expect(screen.getByRole("button", { name: "Expand row 1" })).toHaveClass("h-9", "w-9");
+  });
+
   it("allows multiple rows to be expanded simultaneously", async () => {
     render(
       <DataGrid
@@ -577,7 +591,7 @@ describe("DataGrid (column pinning)", () => {
     // The pinned "Name" column must start after the expand column's own
     // width, not at 0 -- otherwise it sticks directly on top of the expand
     // button once the grid scrolls horizontally, hiding it.
-    expect(screen.getByRole("columnheader", { name: /Name/ })).toHaveStyle({ left: "40px" });
+    expect(screen.getByRole("columnheader", { name: /Name/ })).toHaveStyle({ left: "44px" });
 
     const firstRow = screen.getByTestId("row-1");
     const expandButton = within(firstRow).getByRole("button", { name: "Expand row 1" });
@@ -598,7 +612,7 @@ describe("DataGrid (column pinning)", () => {
       />,
     );
 
-    expect(screen.getByRole("columnheader", { name: /Name/ })).toHaveStyle({ left: "80px" });
+    expect(screen.getByRole("columnheader", { name: /Name/ })).toHaveStyle({ left: "88px" });
   });
 });
 
