@@ -36,8 +36,19 @@ export interface ButtonProps
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : "button";
+    // `buttonVariants` (via `cva`) already appends `className` itself —
+    // through plain `clsx` concatenation, not `twMerge` — so it's already
+    // present in `variantClass` below; the separate `cn()` call exists only
+    // to resolve conflicts between it and the variant/size classes (e.g. a
+    // caller overriding the default `h-9`). Skipping that resolution pass
+    // entirely when there's no `className` to conflict with matters here
+    // specifically because `<DataGrid>` renders a `<Button>` per visible row
+    // (the expand toggle, the row-actions trigger) with no `className` of
+    // its own — every scroll-triggered re-render was paying for a full
+    // clsx+twMerge parse of an already-final, already-conflict-free string.
+    const variantClass = buttonVariants({ variant, size });
     return (
-      <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
+      <Comp className={className ? cn(variantClass, className) : variantClass} ref={ref} {...props} />
     );
   },
 );
