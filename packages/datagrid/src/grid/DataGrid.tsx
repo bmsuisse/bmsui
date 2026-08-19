@@ -292,6 +292,13 @@ export function DataGrid<TRow extends RowData>({
   const headerRuns = useMemo(() => computeHeaderRuns(visibleColumns), [visibleColumns]);
   const hasHeaderGroups = visibleColumns.some((column) => column.headerGroup);
 
+  // Any pinned column gets a concrete `columnSize()`-derived width from
+  // `pinnedCellProps` regardless of `enableColumnResizing` (see that
+  // function's own doc) — so `table-fixed` must follow the same condition,
+  // not just `enableColumnResizing`, or a pinned column's rendered width can
+  // drift from the pixel value its sticky offset math assumes.
+  const hasPinnedColumns = visibleColumns.some((column) => column.pinned === "left" || column.pinned === "right");
+
   function renderFilterWidget(column: ColumnDef<TRow>): ReactNode {
     const value = filtersByColumn.get(column.id);
     const onChange = (next: FilterDescriptor | undefined): void => setColumnFilter(column.id, next);
@@ -386,25 +393,30 @@ export function DataGrid<TRow extends RowData>({
     };
   }
 
-  // Computed once per render (cheap object literals) rather than inline at
-  // each of the several header/body/filter-row call sites below, so the
-  // selection column's offset — which depends on whether the detail column
-  // renders before it — stays in exactly one place.
-  const detailCellProps = structuralCellProps("left", 0, DETAIL_COLUMN_WIDTH);
-  const selectionCellProps = structuralCellProps(
-    "left",
-    showDetailColumn ? DETAIL_COLUMN_WIDTH : 0,
-    SELECTION_COLUMN_WIDTH,
-  );
-  const rowActionsCellProps = structuralCellProps("right", 0, ROW_ACTIONS_COLUMN_WIDTH);
-  const detailHeaderCellProps = structuralCellProps("left", 0, DETAIL_COLUMN_WIDTH, "header");
-  const selectionHeaderCellProps = structuralCellProps(
-    "left",
-    showDetailColumn ? DETAIL_COLUMN_WIDTH : 0,
-    SELECTION_COLUMN_WIDTH,
-    "header",
-  );
-  const rowActionsHeaderCellProps = structuralCellProps("right", 0, ROW_ACTIONS_COLUMN_WIDTH, "header");
+  // Memoized (not recomputed per render) since these six are otherwise
+  // plain object literals recreated on every virtualizer-driven scroll
+  // re-render — the same per-scroll-tick allocation `bodyCellPropsByColumn`
+  // and its siblings above were memoized to avoid. `showDetailColumn` is the
+  // only actual input: the selection column's offset depends on whether the
+  // detail column renders before it, and everything else here is a constant.
+  const {
+    detailCellProps,
+    selectionCellProps,
+    rowActionsCellProps,
+    detailHeaderCellProps,
+    selectionHeaderCellProps,
+    rowActionsHeaderCellProps,
+  } = useMemo(() => {
+    const selectionOffset = showDetailColumn ? DETAIL_COLUMN_WIDTH : 0;
+    return {
+      detailCellProps: structuralCellProps("left", 0, DETAIL_COLUMN_WIDTH),
+      selectionCellProps: structuralCellProps("left", selectionOffset, SELECTION_COLUMN_WIDTH),
+      rowActionsCellProps: structuralCellProps("right", 0, ROW_ACTIONS_COLUMN_WIDTH),
+      detailHeaderCellProps: structuralCellProps("left", 0, DETAIL_COLUMN_WIDTH, "header"),
+      selectionHeaderCellProps: structuralCellProps("left", selectionOffset, SELECTION_COLUMN_WIDTH, "header"),
+      rowActionsHeaderCellProps: structuralCellProps("right", 0, ROW_ACTIONS_COLUMN_WIDTH, "header"),
+    };
+  }, [showDetailColumn]);
 
   // Precomputed once per *column* (via the memoized maps below), not once
   // per column per *row* — the previous shape called `pinnedCellProps` (and
@@ -611,10 +623,11 @@ export function DataGrid<TRow extends RowData>({
           style={shouldVirtualize ? { maxHeight: virtualize?.maxBodyHeight ?? 480 } : undefined}
         >
         {/*
-          `table-fixed` (only once every column has a concrete pixel width —
-          see `enableColumnResizing`'s own doc) is required for that width to
-          actually determine the rendered column, not just hint at it: the
-          browser's default `table-layout: auto` algorithm treats a cell's
+          `table-fixed` (only once some column has a concrete pixel width —
+          `enableColumnResizing`, or any column being `pinned`, per
+          `hasPinnedColumns` above) is required for that width to actually
+          determine the rendered column, not just hint at it: the browser's
+          default `table-layout: auto` algorithm treats a cell's
           `style.width` as one input among several (including cell content
           across every row) and can render a column far narrower than its
           specified width regardless of what `columnSize()` above computes —
@@ -624,7 +637,9 @@ export function DataGrid<TRow extends RowData>({
           `getSize()`). Omitted otherwise so a grid with no explicit widths
           keeps natural, content-driven column sizing.
         */}
-        <table className={cn("w-full border-collapse text-sm", enableColumnResizing && "table-fixed")}>
+        <table
+          className={cn("w-full border-collapse text-sm", (enableColumnResizing || hasPinnedColumns) && "table-fixed")}
+        >
         <thead className="bg-muted">
           {table.getHeaderGroups().map((headerGroup) => {
             // `headerById` backs both the optional spanning-label row below
