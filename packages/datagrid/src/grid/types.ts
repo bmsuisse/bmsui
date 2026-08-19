@@ -193,4 +193,35 @@ export interface DataGridProps<TRow> {
    * a page with more than one.
    */
   testId?: string;
+  /**
+   * Buckets the grid's already-filtered/sorted/paginated `rows` into groups,
+   * rendering one full-width `colSpan`'d group-header row before each
+   * bucket's own rows, in first-seen bucket order (rows are never re-sorted
+   * to cluster a group together — the caller's own sort already determines
+   * which key appears first). Single level only — no nested grouping, no
+   * aggregate/summary calculation; a caller wanting a subtotal computes it
+   * themselves in `renderGroupHeader` off that bucket's own row array.
+   * Operates on whatever `rows` already resolved to — i.e. the current page,
+   * if paginated — with no special-casing; pair with a large `pageSize`/
+   * `showPagination: false` if a group's full membership should never be
+   * split across pages. Omit entirely to disable — no grouping, no header
+   * rows, unchanged default rendering.
+   *
+   * Not supported together with `virtualize` yet — when both are set,
+   * virtualization is silently disabled and the grid renders as a plain,
+   * fully-rendered (but still grouped) `<table>` instead. See AGENTS.md's
+   * "Known limitations."
+   */
+  groupBy?: (row: TRow) => string;
+  /** Customizes a group-header row's content. Defaults to `` `${key} (${rows.length})` ``. */
+  renderGroupHeader?: (key: string, rows: TRow[], expanded: boolean) => ReactNode;
+  /** Whether a newly-seen group starts expanded. Defaults to true. */
+  defaultGroupsExpanded?: boolean;
+  /**
+   * Controlled per-group expand/collapse state, keyed by the `groupBy` key.
+   * Both must be supplied together to control it — omit both for
+   * `<DataGrid>` to own this state internally.
+   */
+  expandedGroups?: Record<string, boolean>;
+  onExpandedGroupsChange?: (expanded: Record<string, boolean>) => void;
 }

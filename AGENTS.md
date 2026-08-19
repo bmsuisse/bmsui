@@ -421,8 +421,14 @@ column's `width`; `pinned: "right"` stacks the same way from the right, in
 reverse column order. **Give a pinned column an explicit `width`** — without
 one, offset math falls back to a fixed 150px per column, which usually
 doesn't match its actual rendered width and throws off stacking for anything
-pinned after it. Doesn't (yet) extend to the built-in selection/detail/row-
-actions columns — only columns you declare with `pinned` participate. See
+pinned after it. The built-in expand/selection/row-actions columns always
+render pinned to their edge regardless of any `pinned` you set on a data
+column — a pinned data column's own offset math already reserves space for
+whichever of those render before it (`leadingOffset`/`trailingOffset` in
+`DataGrid.tsx`'s `pinnedOffsets`), so it lines up flush against them rather
+than sticking at the very edge and scrolling over them. You still can't pin
+a structural column itself to the opposite edge or interleave a pinned data
+column between them — they're fixed to the outer edges. See
 `packages/datagrid/demo/src/App.tsx`'s `PinnedColumnsDemo` for a working
 example with one column pinned each side. Combines with `enableColumnResizing`
 below — a pinned column's offset always tracks its *live* width (resized or
@@ -719,6 +725,45 @@ and after the rendered window). Omit it entirely for a plain, fully-rendered
   `onEndReached` example, see `DataGrid.test.tsx`'s "calls onEndReached once
   scrolling reaches the last currently-loaded row" test instead.
 
+### `groupBy` — single-level row grouping
+
+`DataGridProps.groupBy?: (row: TRow) => string` buckets the grid's
+already-filtered/sorted/paginated `rows` into groups, rendering one
+full-width, `colSpan`'d, collapsible group-header row before each bucket's
+own rows — in first-seen bucket order, never re-sorted (the caller's own
+sort already determines which key appears first). Single level only: no
+nested grouping, no built-in aggregate/summary calculation — a caller
+wanting a subtotal computes it themselves in `renderGroupHeader` off that
+bucket's own row array.
+
+```tsx
+<DataGrid
+  columns={columns}
+  dataSource={{ mode: "client", data: approvals }}
+  getRowId={(row) => row.id}
+  groupBy={(row) => row.customerName}
+  renderGroupHeader={(key, rows) => `${key} (${rows.length} pending)`}
+/>
+```
+
+`renderGroupHeader` defaults to `` `${key} (${rows.length})` `` when
+omitted. `defaultGroupsExpanded` (default `true`) sets a newly-seen group's
+initial state; pass `expandedGroups`/`onExpandedGroupsChange` together
+(same controlled/uncontrolled convention as `columnSizing`) to persist or
+drive collapse state yourself.
+
+Operates on whatever `rows` already resolved to — i.e. the current page, if
+paginated — with no special-casing to keep one group's full membership
+together across pages; pair with a large `pageSize`/`showPagination: false`
+if that matters for a given grid.
+
+**Not supported together with `virtualize` yet.** Interleaving synthetic
+group-header rows and hiding a collapsed bucket's rows needs a flattened
+index space to virtualize correctly (the same technique `<TreeDataGrid>`
+uses for its own flattened tree) — out of scope for this pass. Setting both
+`groupBy` and `virtualize` silently disables virtualization rather than
+mis-rendering; see "Known limitations" below.
+
 ## `<TreeDataGrid>` — lazy-loading tree grid
 
 Generalizes a consuming app's contract tree list component (1343 lines,
@@ -766,23 +811,80 @@ generalizes.
   `ContractTreelist` itself uses. Only engages once the *flattened* (visible)
   row count exceeds `virtualizeThreshold` (default 100); smaller trees render
   every row directly with no virtualizer overhead. `estimatedRowHeight`
-  (default 40) and `maxBodyHeight` (default 480, becomes the scrollable
-  container's `max-height`) tune it.
+  (default 40) is only the virtualizer's *initial* guess before layout —
+  `virtualizer.measureElement` is attached directly to each row's own `<tr>`
+  (there's no detail panel to also measure, unlike `<DataGrid>`'s own
+  `<tbody>`-level attachment above), so actual per-row DOM height — e.g. a
+  multi-line label — is measured and corrected for after the fact, not just
+  estimated. `maxBodyHeight` (default 480, becomes the scrollable
+  container's `max-height`) tunes the viewport.
 - **`rowActions`** reuses the exact `MenuItem<TRow>`/`ActionsMenu` contract
   `<DataGrid>`'s `rowActions` prop uses — a deliberate improvement over
   `ContractTreelist`'s always-visible bespoke icon buttons, for consistency
   between the two grids' per-row action UIs.
 - **Not carried over from `ContractTreelist`, on purpose, as out of scope for
   a generic component**: inline cell editing (`edited_rebate`'s
-  `RebateInputGraduate` + debounced autosave), row selection, and
-  server-driven filtering — all business-logic-specific to that one screen,
-  not generalizable patterns. A consumer that needs inline editing should
-  build it via a custom `column.cell` renderer + its own state, the same way
-  it would for `<DataGrid>`.
+  `RebateInputGraduate` + debounced autosave) and server-driven filtering —
+  business-logic-specific to that one screen, not generalizable patterns. A
+  consumer that needs inline editing should build it via a custom
+  `column.cell` renderer + its own state, the same way it would for
+  `<DataGrid>`. Row selection now has a minimal, generic primitive (below) —
+  but any *cascade* semantics (selecting a parent selects/deselects its
+  descendants, "whole group vs. split into individual children once
+  loaded") stays entirely the caller's job, the same way it would for
+  `<DataGrid>`.
 - See `packages/datagrid/demo/src/App.tsx`'s `<OrgTreeDemo>` for a complete
   worked example: a 3-level lazy org chart with a `setTimeout`-simulated API
   and one node whose first load intentionally fails, to exercise the
   error+retry UX.
+
+### `selectedIds` — controlled row selection (tri-state)
+
+Same controlled-only convention as `<DataGrid>`'s own `selectedIds`/
+`onSelectedIdsChange`, except there's no internal/uncontrolled fallback —
+`<TreeDataGrid>` has no `headerActions` bulk-toolbar concept that would need
+selection state even without external control, so both props must be
+supplied together for the checkbox column to render at all.
+
+```tsx
+<TreeDataGrid
+  columns={columns}
+  data={data}
+  getRowId={(row) => row.id}
+  getChildren={(row) => row.children}
+  selectedIds={selectedIds}
+  onSelectedIdsChange={setSelectedIds}
+/>
+```
+
+Clicking a row's checkbox always toggles exactly that row's own id in
+`selectedIds` — never its children or parent; any cascade is the caller's
+job, recomputing the desired final set inside `onSelectedIdsChange` before
+committing it. A "select all visible rows" checkbox renders in the header,
+scoped to the currently flattened/visible rows (mirroring `<DataGrid>`'s own
+"select all on this page").
+
+**`checked` is always exactly `selectedIds.has(getRowId(row))`** — nothing
+in the component can make a row render checked without its id literally
+being a member of `selectedIds`. **`indeterminate` is auto-derived** as a
+convenience: true when a row itself isn't checked but at least one
+*currently loaded* descendant (via the same `getChildren`/`onLoadChildren`
+cache the tree already maintains) is checked or itself indeterminate — a
+pure display fact, computed once per render over the whole loaded tree
+(`packages/datagrid/src/tree/selectionState.ts`'s `computeSelectionStates`),
+not per visible row. A selected descendant hidden behind a node that's
+never been expanded (so its children were never fetched) can't be
+inspected — that ancestor reads unchecked, not indeterminate, until the
+fetch happens.
+
+`getRowSelectionState?: (row) => {checked, indeterminate?} | undefined` is
+a full override escape hatch for selection semantics this component won't
+build in — e.g. `PrintDiscountGroupSelectionTab`'s "select whole group vs.
+split into individual children once loaded" cascade, where a parent should
+read as checked even though not every descendant id is literally in
+`selectedIds`. Return `undefined` for a given row to fall back to the
+default derivation just for that row. `isRowSelectionDisabled?: (row) =>
+boolean` disables just one row's checkbox.
 
 ## `sql.py` vs `meili.py` — one engine per query, never mixed
 
@@ -891,3 +993,9 @@ the retry-connect loop in `main.py`'s lifespan never found it reachable, and
   `useEffect`, no TanStack Query) as the recommended way to wire
   `"server"` mode in a real app; see the `tanstack-best-practices` skill
   for that.
+- **`DataGridProps.groupBy` doesn't combine with `virtualize` yet.** Setting
+  both silently forces virtualization off (the grid still groups correctly,
+  just renders every row rather than windowing) rather than mis-rendering —
+  true support needs a flattened index space for the virtualizer, the same
+  technique `<TreeDataGrid>` uses for its own flattened tree, which is out
+  of scope for now.

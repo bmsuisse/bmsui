@@ -835,6 +835,101 @@ describe("DataGrid (virtualize)", () => {
   });
 });
 
+describe("DataGrid (groupBy)", () => {
+  const groupByTier = (row: Row): string => (row.age >= 30 ? "Senior" : "Junior");
+
+  it("buckets rows in first-seen order, with a default 'key (count)' header label, expanded by default", () => {
+    render(
+      <DataGrid columns={columns} dataSource={{ mode: "client", data: rows }} getRowId={(row) => row.id} groupBy={groupByTier} />,
+    );
+    // Charlie (30) is the first row, so "Senior" is the first-seen bucket,
+    // even though "Junior" (Alice, 25) sorts earlier if you sorted the keys.
+    expect(screen.getByText("Senior (2)")).toBeInTheDocument();
+    expect(screen.getByText("Junior (1)")).toBeInTheDocument();
+    expect(nameCellsInOrder()).toEqual(["Charlie", "Bob", "Alice"]);
+  });
+
+  it("supports a renderGroupHeader override", () => {
+    render(
+      <DataGrid
+        columns={columns}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        groupBy={groupByTier}
+        renderGroupHeader={(key, groupRows) => `${key} tier — ${groupRows.length} people`}
+      />,
+    );
+    expect(screen.getByText("Senior tier — 2 people")).toBeInTheDocument();
+  });
+
+  it("collapsing one group hides only its own rows", async () => {
+    render(
+      <DataGrid columns={columns} dataSource={{ mode: "client", data: rows }} getRowId={(row) => row.id} groupBy={groupByTier} />,
+    );
+    await userEvent.click(screen.getByText("Senior (2)"));
+    expect(screen.queryByText("Charlie")).not.toBeInTheDocument();
+    expect(screen.queryByText("Bob")).not.toBeInTheDocument();
+    expect(screen.getByText("Alice")).toBeInTheDocument();
+  });
+
+  it("supports controlled expandedGroups/onExpandedGroupsChange", async () => {
+    const onExpandedGroupsChange = vi.fn();
+    render(
+      <DataGrid
+        columns={columns}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        groupBy={groupByTier}
+        expandedGroups={{ Senior: true, Junior: false }}
+        onExpandedGroupsChange={onExpandedGroupsChange}
+      />,
+    );
+    expect(screen.getByText("Charlie")).toBeInTheDocument();
+    expect(screen.queryByText("Alice")).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByText("Senior (2)"));
+    expect(onExpandedGroupsChange).toHaveBeenCalledWith({ Senior: false, Junior: false });
+  });
+
+  it("forces virtualization off when combined with groupBy, even below the row-count threshold check", async () => {
+    await withMockedOffsetHeight(100, () => {
+      const manyRows: Row[] = Array.from({ length: 300 }, (_, i) => ({ id: `r${i}`, name: `Row ${i}`, age: i }));
+      render(
+        <DataGrid
+          columns={columns}
+          dataSource={{ mode: "client", data: manyRows }}
+          getRowId={(row) => row.id}
+          groupBy={() => "All"}
+          virtualize={{ threshold: 0 }}
+          initialState={{ pageSize: 300 }}
+        />,
+      );
+      // If virtualization silently won, the small mocked viewport height would
+      // keep far fewer than 300 rows in the DOM at once.
+      expect(screen.getAllByTestId(/^row-/)).toHaveLength(300);
+    });
+  });
+
+  it("spans the group-header row across every column, including selection/detail/row-actions", () => {
+    const rowActions: MenuItem<Row>[] = [{ id: "edit", label: "Edit", onSelect: () => {} }];
+    render(
+      <DataGrid
+        columns={columns}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        groupBy={groupByTier}
+        selectedIds={new Set()}
+        onSelectedIdsChange={() => {}}
+        renderDetail={(row) => <div>{row.name} detail</div>}
+        rowActions={rowActions}
+      />,
+    );
+    // columns(2) + selection(1) + detail(1) + rowActions(1) = 5
+    const groupHeaderCell = screen.getByText("Senior (2)").closest("td")!;
+    expect(groupHeaderCell).toHaveAttribute("colspan", "5");
+  });
+});
+
 describe("DataGrid (getRowProps)", () => {
   it("spreads caller-supplied props (onClick, data-*, className) onto each row's <tr>", async () => {
     const onRowClick = vi.fn();

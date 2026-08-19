@@ -5,12 +5,19 @@ import { useEffect, useMemo, useRef } from "react";
 import { alignClassName, defaultFormat } from "../column/format";
 import type { ColumnDef } from "../column/types";
 import { getColumnValue } from "../column/types";
+import { Checkbox } from "../components/ui/checkbox";
+import { SELECTION_COLUMN_WIDTH } from "../lib/structuralColumns";
 import { cn, stopRowClick } from "../lib/utils";
 import { ActionsMenu } from "../menu/ActionsMenu";
 import type { FlatTreeRow } from "./flattenTree";
 import { flattenTree } from "./flattenTree";
+import { computeSelectionStates } from "./selectionState";
+import type { RowSelectionState } from "./selectionState";
 import type { TreeAccessors, TreeDataGridProps } from "./types";
 import { useTreeState } from "./useTreeState";
+
+const EMPTY_SELECTED_IDS: ReadonlySet<string> = new Set();
+const UNCHECKED_STATE: RowSelectionState = { checked: false, indeterminate: false };
 
 function renderCell<TRow>(column: ColumnDef<TRow>, row: TRow): ReactNode {
   const value = getColumnValue(column, row);
@@ -111,6 +118,10 @@ export function TreeDataGrid<TRow>({
   virtualizeThreshold = 100,
   estimatedRowHeight = 40,
   maxBodyHeight = 480,
+  selectedIds: controlledSelectedIds,
+  onSelectedIdsChange,
+  getRowSelectionState,
+  isRowSelectionDisabled,
 }: TreeDataGridProps<TRow>): ReactElement {
   const accessors: TreeAccessors<TRow> = useMemo(
     () => ({ getRowId, getChildren, hasChildren }),
@@ -147,7 +158,58 @@ export function TreeDataGrid<TRow>({
 
   const treeColId = treeColumnId ?? columns[0]?.id;
   const showRowActionsColumn = Boolean(rowActions?.length);
-  const totalColumnCount = columns.length + (showRowActionsColumn ? 1 : 0);
+  const showSelectionColumn = controlledSelectedIds !== undefined;
+  const totalColumnCount = columns.length + (showRowActionsColumn ? 1 : 0) + (showSelectionColumn ? 1 : 0);
+
+  // Computed once (not per visible row) over the whole *loaded* tree, not
+  // just `flatRows` — see `computeSelectionStates`'s own doc for why a
+  // collapsed parent's indeterminate state still depends on children loaded
+  // during an earlier expand. Skipped entirely when there's no selection
+  // column to show.
+  const selectionStates = useMemo(
+    () =>
+      showSelectionColumn
+        ? computeSelectionStates(data, accessors, childrenMap, controlledSelectedIds ?? EMPTY_SELECTED_IDS)
+        : undefined,
+    [showSelectionColumn, data, accessors, childrenMap, controlledSelectedIds],
+  );
+
+  function resolveSelectionState(row: TRow, id: string): RowSelectionState {
+    const override = getRowSelectionState?.(row);
+    if (override) return { checked: override.checked, indeterminate: override.indeterminate ?? false };
+    return selectionStates?.get(id) ?? UNCHECKED_STATE;
+  }
+
+  function toggleRowSelected(id: string): void {
+    if (!controlledSelectedIds) return;
+    const next = new Set(controlledSelectedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    onSelectedIdsChange?.(next);
+  }
+
+  // "Select all" operates on the currently visible (flattened) rows, mirroring
+  // <DataGrid>'s own "select all on this page" — and, like there, on raw
+  // `selectedIds` membership specifically (not the derived indeterminate
+  // view), since `checked` must always stay exactly `selectedIds.has(id)`.
+  const selectableFlatRows = useMemo(
+    () => flatRows.filter((flatRow) => !(isRowSelectionDisabled?.(flatRow.row) ?? false)),
+    [flatRows, isRowSelectionDisabled],
+  );
+  const allVisibleSelected =
+    showSelectionColumn &&
+    selectableFlatRows.length > 0 &&
+    selectableFlatRows.every((flatRow) => (controlledSelectedIds as ReadonlySet<string>).has(flatRow.id));
+
+  function toggleAllVisibleSelected(): void {
+    if (!controlledSelectedIds) return;
+    const next = new Set(controlledSelectedIds);
+    for (const flatRow of selectableFlatRows) {
+      if (allVisibleSelected) next.delete(flatRow.id);
+      else next.add(flatRow.id);
+    }
+    onSelectedIdsChange?.(next);
+  }
 
   // `alignClassName(column)` only depends on the column, not the row, so
   // resolving it once per column here — instead of via `cn("p-2",
@@ -198,6 +260,22 @@ export function TreeDataGrid<TRow>({
             : `border-b border-border divide-x divide-border${index % 2 === 1 ? " bg-foreground/5" : ""}`
         }
       >
+        {showSelectionColumn && (
+          <td className="p-1" style={{ width: SELECTION_COLUMN_WIDTH }}>
+            {(() => {
+              const state = resolveSelectionState(flatRow.row, flatRow.id);
+              return (
+                <Checkbox
+                  aria-label={`Select row ${flatRow.id}`}
+                  checked={state.indeterminate ? "indeterminate" : state.checked}
+                  disabled={isRowSelectionDisabled?.(flatRow.row) ?? false}
+                  onCheckedChange={() => toggleRowSelected(flatRow.id)}
+                  onClick={stopRowClick}
+                />
+              );
+            })()}
+          </td>
+        )}
         {columns.map((column) => (
           <td key={column.id} className={bodyTdClassByColumn.get(column.id)}>
             {column.id === treeColId ? (
@@ -243,6 +321,15 @@ export function TreeDataGrid<TRow>({
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="divide-x divide-border">
+              {showSelectionColumn && (
+                <th className="border-b border-border p-1" style={{ width: SELECTION_COLUMN_WIDTH }}>
+                  <Checkbox
+                    aria-label="Select all visible rows"
+                    checked={allVisibleSelected}
+                    onCheckedChange={toggleAllVisibleSelected}
+                  />
+                </th>
+              )}
               {columns.map((column) => (
                 <th
                   key={column.id}
