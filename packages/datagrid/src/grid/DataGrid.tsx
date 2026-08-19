@@ -14,7 +14,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popove
 import { renderDefaultFilterWidget } from "../filter/registry";
 import type { FilterDescriptor } from "../filter/types";
 import { cn, stopRowClick } from "../lib/utils";
+import { SELECTION_COLUMN_WIDTH } from "../lib/structuralColumns";
 import { ActionsMenu } from "../menu/ActionsMenu";
+import { groupRows } from "./groupRows";
 import { processClientData } from "./processClientData";
 import type { DataGridProps } from "./types";
 import { useGridState } from "./useGridState";
@@ -50,7 +52,6 @@ const DEFAULT_COLUMN_SIZE = 150;
 // side — big enough to comfortably hit (WCAG's 44px minimum touch target)
 // without the surrounding `p-1` cell padding eating into the button itself.
 const DETAIL_COLUMN_WIDTH = 44;
-const SELECTION_COLUMN_WIDTH = 44;
 const ROW_ACTIONS_COLUMN_WIDTH = 44;
 
 /**
@@ -150,6 +151,11 @@ export function DataGrid<TRow extends RowData>({
   onSelectedIdsChange,
   testId,
   loading: loadingProp = false,
+  groupBy,
+  renderGroupHeader,
+  defaultGroupsExpanded = true,
+  expandedGroups: controlledExpandedGroups,
+  onExpandedGroupsChange,
 }: DataGridProps<TRow>): ReactElement {
   const { state, filtersByColumn, setColumnFilter, toggleSort, setPage } = useGridState(
     dataSource,
@@ -185,6 +191,23 @@ export function DataGrid<TRow extends RowData>({
       else next.add(id);
       return next;
     });
+  }
+
+  // Same controlled/uncontrolled pattern as `selectedIds`/`columnSizing`
+  // above. A key absent from this record (a group never toggled since it
+  // was first seen) falls back to `defaultGroupsExpanded`, not `false` —
+  // otherwise every group would render collapsed on first paint.
+  const [internalExpandedGroups, setInternalExpandedGroups] = useState<Record<string, boolean>>({});
+  const expandedGroupsState = controlledExpandedGroups ?? internalExpandedGroups;
+  function updateExpandedGroups(next: Record<string, boolean>): void {
+    setInternalExpandedGroups(next);
+    onExpandedGroupsChange?.(next);
+  }
+  function isGroupExpanded(key: string): boolean {
+    return expandedGroupsState[key] ?? defaultGroupsExpanded;
+  }
+  function toggleGroupExpanded(key: string): void {
+    updateExpandedGroups({ ...expandedGroupsState, [key]: !isGroupExpanded(key) });
   }
 
   // Single source of truth for "which columns actually render": every other
@@ -448,7 +471,15 @@ export function DataGrid<TRow extends RowData>({
   }, [visibleColumns, enableColumnResizing, leftPinnedOffsets, rightPinnedOffsets, columnSizing]);
 
   const tableRows = table.getRowModel().rows;
-  const shouldVirtualize = Boolean(virtualize) && tableRows.length > (virtualize?.threshold ?? 100);
+  // Interleaving synthetic group-header rows (and hiding a collapsed
+  // bucket's rows) needs a flattened index space to virtualize correctly —
+  // out of scope for this pass, so `groupBy` forces virtualization off
+  // rather than silently mis-rendering; see `groupBy`'s own doc.
+  const shouldVirtualize = Boolean(virtualize) && !groupBy && tableRows.length > (virtualize?.threshold ?? 100);
+  const groupedBuckets = useMemo(
+    () => (groupBy ? groupRows(tableRows, (row) => groupBy(row.original)) : undefined),
+    [tableRows, groupBy],
+  );
   const scrollRef = useRef<HTMLDivElement>(null);
   const virtualizer = useVirtualizer({
     count: tableRows.length,
@@ -565,6 +596,39 @@ export function DataGrid<TRow extends RowData>({
           </tr>
         )}
       </tbody>
+    );
+  }
+
+  // One `<tbody>` for the group-header row, then each member row as its own
+  // sibling `<tbody>` (via `renderRow`) — a `<tbody>` can't nest inside
+  // another, and a `<table>` happily holds any number of them.
+  function renderGroupedBucket(bucket: NonNullable<typeof groupedBuckets>[number]): ReactNode {
+    const expanded = isGroupExpanded(bucket.key);
+    const originalRows = bucket.items.map((row) => row.original);
+    return (
+      <Fragment key={`group-${bucket.key}`}>
+        <tbody>
+          <tr data-testid={`group-header-${bucket.key}`}>
+            <td colSpan={totalColumnCount} className="border-b bg-muted/50 p-2 font-medium">
+              <button
+                type="button"
+                className="flex w-full items-center gap-1 text-left"
+                onClick={() => toggleGroupExpanded(bucket.key)}
+                aria-expanded={expanded}
+              >
+                <ChevronRight
+                  className={`h-4 w-4 shrink-0 transition-transform${expanded ? " rotate-90" : ""}`}
+                  aria-hidden
+                />
+                {renderGroupHeader
+                  ? renderGroupHeader(bucket.key, originalRows, expanded)
+                  : `${bucket.key} (${originalRows.length})`}
+              </button>
+            </td>
+          </tr>
+        </tbody>
+        {expanded && bucket.items.map((row) => renderRow(row))}
+      </Fragment>
     );
   }
 
@@ -813,6 +877,8 @@ export function DataGrid<TRow extends RowData>({
               </tbody>
             )}
           </>
+        ) : groupedBuckets ? (
+          groupedBuckets.map((bucket) => renderGroupedBucket(bucket))
         ) : (
           tableRows.map((row) => renderRow(row))
         )}

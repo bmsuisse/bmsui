@@ -100,4 +100,43 @@ export interface TreeDataGridProps<TRow> extends TreeAccessors<TRow> {
   estimatedRowHeight?: number;
   /** Max height of the scrollable table body in pixels. Required for virtualization to have a viewport to scroll within. Defaults to 480. */
   maxBodyHeight?: number;
+  /**
+   * Controlled row selection — same convention as `<DataGrid>`'s own
+   * `selectedIds`/`onSelectedIdsChange`. Both must be supplied together to
+   * render a checkbox column at all; there is no internal/uncontrolled
+   * fallback here, unlike `<DataGrid>` — `<TreeDataGrid>` has no
+   * `headerActions` bulk-toolbar concept that would need selection state
+   * even without external control, so there's nothing for an uncontrolled
+   * default to serve.
+   *
+   * Clicking a row's checkbox always toggles exactly that row's own id in
+   * this set — never its children or parent. Any cascade ("select whole
+   * group" / "select all descendants") is the caller's job, done by
+   * recomputing the desired final set inside `onSelectedIdsChange` before
+   * committing it to their own state.
+   */
+  selectedIds?: ReadonlySet<string>;
+  onSelectedIdsChange?: (ids: ReadonlySet<string>) => void;
+  /**
+   * Fully overrides a row's checked/indeterminate display, replacing the
+   * default derivation below. Needed for selection semantics this component
+   * won't build in — e.g. a "select whole group vs. split into individual
+   * children once loaded" cascade, where a parent should read as checked
+   * even though not every descendant id is literally in `selectedIds`.
+   * Return `undefined` for a given row to fall back to the default
+   * derivation for just that row.
+   *
+   * Omitted (the default): `checked` is exactly `selectedIds.has(getRowId(row))`
+   * — `selectedIds` always stays the single source of truth for "is this id
+   * selected." `indeterminate` is true only when the row itself isn't
+   * checked but at least one *currently loaded* descendant (recursively, via
+   * the same `getChildren`/`onLoadChildren` cache this component already
+   * maintains) is checked or itself indeterminate. A selected descendant
+   * hidden behind a node that's never been expanded (so its children were
+   * never fetched) can't be inspected — that ancestor reads as unchecked,
+   * not indeterminate, until the fetch happens.
+   */
+  getRowSelectionState?: (row: TRow) => { checked: boolean; indeterminate?: boolean } | undefined;
+  /** Disables just the checkbox for a specific row. Defaults to `() => false`. */
+  isRowSelectionDisabled?: (row: TRow) => boolean;
 }

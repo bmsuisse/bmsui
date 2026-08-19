@@ -297,3 +297,114 @@ describe("TreeDataGrid", () => {
     expect(dataRows()).toHaveLength(30);
   });
 });
+
+describe("TreeDataGrid (selection)", () => {
+  it("renders no selection column when selectedIds/onSelectedIdsChange are omitted", () => {
+    render(
+      <TreeDataGrid columns={columns} data={eagerTree} getRowId={(row) => row.id} getChildren={(row) => row.children} />,
+    );
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+  });
+
+  it("toggles only the clicked row's own id, never its children or parent", async () => {
+    const onSelectedIdsChange = vi.fn();
+    render(
+      <TreeDataGrid
+        columns={columns}
+        data={eagerTree}
+        getRowId={(row) => row.id}
+        getChildren={(row) => row.children}
+        selectedIds={new Set()}
+        onSelectedIdsChange={onSelectedIdsChange}
+      />,
+    );
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select row b" }));
+    expect(onSelectedIdsChange).toHaveBeenCalledWith(new Set(["b"]));
+  });
+
+  it("shows a parent as indeterminate when only some of its loaded (expanded) children are selected", async () => {
+    render(
+      <TreeDataGrid
+        columns={columns}
+        data={eagerTree}
+        getRowId={(row) => row.id}
+        getChildren={(row) => row.children}
+        selectedIds={new Set(["a1"])}
+        onSelectedIdsChange={() => {}}
+      />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Expand" }));
+    expect(screen.getByRole("checkbox", { name: "Select row a" })).toHaveAttribute("data-state", "indeterminate");
+    expect(screen.getByRole("checkbox", { name: "Select row a1" })).toBeChecked();
+  });
+
+  it("shows an ancestor as unchecked, not indeterminate, when a selected descendant sits behind a lazy node that's never been expanded/fetched", () => {
+    // "c" has children server-side (hasChildren says so) but none loaded yet —
+    // getChildren returns undefined and childrenMap has no entry for it, since
+    // it's never been expanded. A hypothetically-selected descendant id is
+    // simply invisible to the walk until that fetch happens.
+    const lazyNode: Node = { id: "c", name: "Gamma", lazy: true };
+    render(
+      <TreeDataGrid
+        columns={columns}
+        data={[lazyNode]}
+        getRowId={(row) => row.id}
+        getChildren={(row) => row.children}
+        hasChildren={(row) => Boolean(row.lazy)}
+        onLoadChildren={() => new Promise<Node[]>(() => {})}
+        selectedIds={new Set(["c-hidden-child"])}
+        onSelectedIdsChange={() => {}}
+      />,
+    );
+    const checkbox = screen.getByRole("checkbox", { name: "Select row c" });
+    expect(checkbox).not.toBeChecked();
+    expect(checkbox).not.toHaveAttribute("data-state", "indeterminate");
+  });
+
+  it("getRowSelectionState fully overrides a row's checked/indeterminate display", () => {
+    render(
+      <TreeDataGrid
+        columns={columns}
+        data={eagerTree}
+        getRowId={(row) => row.id}
+        getChildren={(row) => row.children}
+        selectedIds={new Set()}
+        onSelectedIdsChange={() => {}}
+        getRowSelectionState={(row) => (row.id === "b" ? { checked: true } : undefined)}
+      />,
+    );
+    expect(screen.getByRole("checkbox", { name: "Select row b" })).toBeChecked();
+  });
+
+  it("isRowSelectionDisabled disables just that row's checkbox", () => {
+    render(
+      <TreeDataGrid
+        columns={columns}
+        data={eagerTree}
+        getRowId={(row) => row.id}
+        getChildren={(row) => row.children}
+        selectedIds={new Set()}
+        onSelectedIdsChange={() => {}}
+        isRowSelectionDisabled={(row) => row.id === "b"}
+      />,
+    );
+    expect(screen.getByRole("checkbox", { name: "Select row b" })).toBeDisabled();
+  });
+
+  it("does not fire a row-wide onClick from getRowProps when the selection checkbox is clicked", async () => {
+    const onRowClick = vi.fn();
+    render(
+      <TreeDataGrid
+        columns={columns}
+        data={eagerTree}
+        getRowId={(row) => row.id}
+        getChildren={(row) => row.children}
+        getRowProps={(row) => ({ onClick: () => onRowClick(row.id) })}
+        selectedIds={new Set()}
+        onSelectedIdsChange={() => {}}
+      />,
+    );
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select row b" }));
+    expect(onRowClick).not.toHaveBeenCalled();
+  });
+});
