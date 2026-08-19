@@ -149,6 +149,18 @@ export function TreeDataGrid<TRow>({
   const showRowActionsColumn = Boolean(rowActions?.length);
   const totalColumnCount = columns.length + (showRowActionsColumn ? 1 : 0);
 
+  // `alignClassName(column)` only depends on the column, not the row, so
+  // resolving it once per column here — instead of via `cn("p-2",
+  // alignClassName(column))` inside the per-row `<td>` loop below — turns an
+  // O(rows x columns) `cn()`/twMerge call count into O(columns) per render.
+  // `"p-2"` and `text-{align}` never conflict (distinct utility groups), so
+  // a plain template string is exact, not an approximation.
+  const bodyTdClassByColumn = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const column of columns) map.set(column.id, `p-2 ${alignClassName(column)}`);
+    return map;
+  }, [columns]);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const shouldVirtualize = flatRows.length > virtualizeThreshold;
   const virtualizer = useVirtualizer({
@@ -172,10 +184,18 @@ export function TreeDataGrid<TRow>({
         ref={measureRef}
         {...rowProps}
         data-testid={rowTestId}
-        className={cn("border-b", rowProps?.className as string | undefined, index % 2 === 1 && "bg-foreground/5")}
+        // Same reasoning as <DataGrid>'s own row className: full `cn()`
+        // conflict resolution is only needed when a caller-supplied
+        // `getRowProps().className` might collide with the zebra stripe's
+        // `bg-*` utility — skip straight to a plain string otherwise.
+        className={
+          rowProps?.className
+            ? cn("border-b", rowProps.className as string, index % 2 === 1 && "bg-foreground/5")
+            : `border-b${index % 2 === 1 ? " bg-foreground/5" : ""}`
+        }
       >
         {columns.map((column) => (
-          <td key={column.id} className={cn("p-2", alignClassName(column))}>
+          <td key={column.id} className={bodyTdClassByColumn.get(column.id)}>
             {column.id === treeColId ? (
               <TreeCell
                 flatRow={flatRow}
@@ -223,7 +243,7 @@ export function TreeDataGrid<TRow>({
                 <th
                   key={column.id}
                   style={column.width ? { width: column.width } : undefined}
-                  className={cn("border-b p-2 font-medium", alignClassName(column))}
+                  className={`border-b p-2 font-medium ${alignClassName(column)}`}
                 >
                   {column.header}
                 </th>
