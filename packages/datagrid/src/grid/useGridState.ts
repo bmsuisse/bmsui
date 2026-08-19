@@ -138,61 +138,67 @@ export function useGridState<TRow>(
    * scope here — this is a known, accepted limitation of the column-scoped
    * filtering model, not an oversight.
    */
+  // Every setter below computes `nextState` from `state` (closed over, not
+  // the functional-updater `prev`) and calls `setState`/`notify*` as two
+  // separate statements, deliberately — calling `notifyDebounced`/`notifyNow`
+  // from *inside* a `setState` updater function (the previous shape here)
+  // means React invokes it as part of processing this hook's own state
+  // update, which is treated as still being "inside this component's
+  // render." Since `notify*` calls `dataSource.onStateChange` — the
+  // caller's own state setter, on a *different* component, exactly per this
+  // hook's own controlled-server-mode contract above — React's dev-mode
+  // warns "Cannot update a component while rendering a different component"
+  // for any consumer following that documented pattern. A single click
+  // handler calling `setState(nextState)` then `notifyNow(nextState)` as
+  // two ordinary statements is standard React, and doesn't rely on any
+  // same-tick-recomputation guarantee the updater form would have needed.
   const setColumnFilter = useCallback(
     (columnId: string, next: FilterDescriptor | undefined) => {
-      setState((prev) => {
-        const remaining = (prev.filter?.filters ?? []).filter(
-          (f) => !("operator" in f) || fieldKey(f.field) !== columnId,
-        );
-        const filters = next ? [...remaining, next] : remaining;
-        const nextState: GridState = {
-          ...prev,
-          filter: filters.length > 0 ? { logic: "and", filters } : null,
-          page: 0,
-        };
-        notifyDebounced(nextState);
-        return nextState;
-      });
+      const remaining = (state.filter?.filters ?? []).filter(
+        (f) => !("operator" in f) || fieldKey(f.field) !== columnId,
+      );
+      const filters = next ? [...remaining, next] : remaining;
+      const nextState: GridState = {
+        ...state,
+        filter: filters.length > 0 ? { logic: "and", filters } : null,
+        page: 0,
+      };
+      setState(nextState);
+      notifyDebounced(nextState);
     },
-    [notifyDebounced],
+    [state, notifyDebounced],
   );
 
   const toggleSort = useCallback(
     (columnId: string, additive: boolean, descFirst = false) => {
-      setState((prev) => {
-        const existing = prev.sort.find((s) => s.field === columnId);
-        const dir = nextSortDir(existing?.dir, descFirst);
-        const withoutColumn = prev.sort.filter((s) => s.field !== columnId);
-        const base = additive ? withoutColumn : [];
-        const sort = dir ? [...base, { field: columnId, dir }] : base;
-        const nextState: GridState = { ...prev, sort };
-        notifyNow(nextState);
-        return nextState;
-      });
+      const existing = state.sort.find((s) => s.field === columnId);
+      const dir = nextSortDir(existing?.dir, descFirst);
+      const withoutColumn = state.sort.filter((s) => s.field !== columnId);
+      const base = additive ? withoutColumn : [];
+      const sort = dir ? [...base, { field: columnId, dir }] : base;
+      const nextState: GridState = { ...state, sort };
+      setState(nextState);
+      notifyNow(nextState);
     },
-    [notifyNow],
+    [state, notifyNow],
   );
 
   const setPage = useCallback(
     (page: number) => {
-      setState((prev) => {
-        const nextState: GridState = { ...prev, page };
-        notifyNow(nextState);
-        return nextState;
-      });
+      const nextState: GridState = { ...state, page };
+      setState(nextState);
+      notifyNow(nextState);
     },
-    [notifyNow],
+    [state, notifyNow],
   );
 
   const setPageSize = useCallback(
     (pageSize: number) => {
-      setState((prev) => {
-        const nextState: GridState = { ...prev, pageSize, page: 0 };
-        notifyNow(nextState);
-        return nextState;
-      });
+      const nextState: GridState = { ...state, pageSize, page: 0 };
+      setState(nextState);
+      notifyNow(nextState);
     },
-    [notifyNow],
+    [state, notifyNow],
   );
 
   return { state, filtersByColumn, setColumnFilter, toggleSort, setPage, setPageSize };
