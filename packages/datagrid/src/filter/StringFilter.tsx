@@ -104,7 +104,10 @@ export function StringFilter<TRow>({
           aria-label={`Filter ${column.header}`}
           data-testid={`filter-${column.id}`}
         >
-          <FunnelIcon className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
+          <FunnelIcon
+            className={cn("h-3.5 w-3.5 shrink-0", isFiltered ? "opacity-100 text-primary" : "opacity-40")}
+            aria-hidden
+          />
           {isFiltered && <span className="truncate">{text}</span>}
         </Button>
       </PopoverTrigger>

@@ -190,8 +190,12 @@ export function TreeDataGrid<TRow>({
         // `bg-*` utility — skip straight to a plain string otherwise.
         className={
           rowProps?.className
-            ? cn("border-b", rowProps.className as string, index % 2 === 1 && "bg-foreground/5")
-            : `border-b${index % 2 === 1 ? " bg-foreground/5" : ""}`
+            ? cn(
+                "border-b border-border divide-x divide-border",
+                rowProps.className as string,
+                index % 2 === 1 && "bg-foreground/5",
+              )
+            : `border-b border-border divide-x divide-border${index % 2 === 1 ? " bg-foreground/5" : ""}`
         }
       >
         {columns.map((column) => (
@@ -238,17 +242,17 @@ export function TreeDataGrid<TRow>({
       >
         <table className="w-full border-collapse text-sm">
           <thead>
-            <tr>
+            <tr className="divide-x divide-border">
               {columns.map((column) => (
                 <th
                   key={column.id}
                   style={column.width ? { width: column.width } : undefined}
-                  className={`border-b p-2 font-medium ${alignClassName(column)}`}
+                  className={`border-b border-border p-2 font-medium ${alignClassName(column)}`}
                 >
                   {column.header}
                 </th>
               ))}
-              {showRowActionsColumn && <th className="border-b p-2" aria-label="Row actions" />}
+              {showRowActionsColumn && <th className="border-b border-border p-2" aria-label="Row actions" />}
             </tr>
           </thead>
           <tbody>

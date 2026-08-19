@@ -53,6 +53,12 @@ const DETAIL_COLUMN_WIDTH = 44;
 const SELECTION_COLUMN_WIDTH = 44;
 const ROW_ACTIONS_COLUMN_WIDTH = 44;
 
+// Opaque equivalent of the body row's translucent `bg-foreground/5` zebra
+// tint, for the structural expand/selection/row-actions columns' `sticky`
+// cells — a translucent background there would let horizontally-scrolled
+// column content show through underneath on odd rows.
+const STRUCTURAL_ZEBRA_BG_CLASS = "bg-[color-mix(in_srgb,var(--color-foreground)_5%,var(--color-background))]";
+
 /**
  * Cumulative sticky `left`/`right` pixel offset per pinned column id, in
  * visible-column order, starting from `leadingOffset` — the combined width
@@ -362,16 +368,22 @@ export function DataGrid<TRow extends RowData>({
   // math actually lines up with a column that's really there, rather than a
   // gap left by content that scrolled away underneath it. The `border-b
   // p-1` base is baked in here (every call site below combined it with
-  // exactly this className anyway) so callers use `.className` directly
-  // instead of re-running `cn()` per row on an already-fixed string.
+  // exactly this className anyway) so callers use `.className`/`.classNameOdd`
+  // directly instead of re-running `cn()` per row on an already-fixed string.
   function structuralCellProps(
     side: "left" | "right",
     offset: number,
     width: number,
     area: "header" | "body" = "body",
-  ): { className: string; style: CSSProperties } {
+  ): { className: string; classNameOdd: string; style: CSSProperties } {
+    const base = "border-b border-border p-1 sticky z-10";
     const bg = area === "header" ? "bg-muted" : "bg-background";
-    return { className: `border-b p-1 sticky z-10 ${bg}`, style: { [side]: offset, width } };
+    const bgOdd = area === "header" ? "bg-muted" : STRUCTURAL_ZEBRA_BG_CLASS;
+    return {
+      className: `${base} ${bg}`,
+      classNameOdd: `${base} ${bgOdd}`,
+      style: { [side]: offset, width },
+    };
   }
 
   // Computed once per render (cheap object literals) rather than inline at
@@ -401,7 +413,7 @@ export function DataGrid<TRow extends RowData>({
   // per render (and once per scroll-triggered re-render) instead of 10. Only
   // a pinned-or-resizing column needs a props object at all in the body;
   // every other column's `<td>` falls back to the plain base class below.
-  const BODY_TD_BASE_CLASS = "border-b p-2";
+  const BODY_TD_BASE_CLASS = "border-b border-border p-2";
   function bodyCellClassAndStyle(column: ColumnDef<TRow>): { className: string; style?: CSSProperties } {
     const pinnedProps = column.pinned || enableColumnResizing ? pinnedCellProps(column) : undefined;
     return {
@@ -434,7 +446,7 @@ export function DataGrid<TRow extends RowData>({
   const leafHeaderCellPropsByColumn = useMemo(() => {
     const map = new Map<string, { className: string; style?: CSSProperties }>();
     for (const column of visibleColumns) {
-      map.set(column.id, headerCellClassAndStyle(column, "relative border-b p-2 font-medium"));
+      map.set(column.id, headerCellClassAndStyle(column, "relative border-b border-border p-2 font-medium"));
     }
     return map;
   }, [visibleColumns, enableColumnResizing, leftPinnedOffsets, rightPinnedOffsets, columnSizing]);
@@ -442,7 +454,7 @@ export function DataGrid<TRow extends RowData>({
   const filterHeaderCellPropsByColumn = useMemo(() => {
     const map = new Map<string, { className: string; style?: CSSProperties }>();
     for (const column of visibleColumns) {
-      map.set(column.id, headerCellClassAndStyle(column, "border-b p-2 align-top font-normal"));
+      map.set(column.id, headerCellClassAndStyle(column, "border-b border-border p-2 align-top font-normal"));
     }
     return map;
   }, [visibleColumns, enableColumnResizing, leftPinnedOffsets, rightPinnedOffsets, columnSizing]);
@@ -501,14 +513,15 @@ export function DataGrid<TRow extends RowData>({
           // for every grid that doesn't use the feature.
           className={
             rowProps?.className
-              ? cn(rowProps.className as string, row.index % 2 === 1 && "bg-foreground/5")
-              : row.index % 2 === 1
-                ? "bg-foreground/5"
-                : undefined
+              ? cn("divide-x divide-border", rowProps.className as string, row.index % 2 === 1 && "bg-foreground/5")
+              : `divide-x divide-border${row.index % 2 === 1 ? " bg-foreground/5" : ""}`
           }
         >
           {showDetailColumn && (
-            <td className={detailCellProps.className} style={detailCellProps.style}>
+            <td
+              className={row.index % 2 === 1 ? detailCellProps.classNameOdd : detailCellProps.className}
+              style={detailCellProps.style}
+            >
               <Button
                 type="button"
                 variant="ghost"
@@ -528,7 +541,10 @@ export function DataGrid<TRow extends RowData>({
             </td>
           )}
           {showSelectionColumn && (
-            <td className={selectionCellProps.className} style={selectionCellProps.style}>
+            <td
+              className={row.index % 2 === 1 ? selectionCellProps.classNameOdd : selectionCellProps.className}
+              style={selectionCellProps.style}
+            >
               <input
                 type="checkbox"
                 aria-label={`Select row ${row.id}`}
@@ -552,14 +568,17 @@ export function DataGrid<TRow extends RowData>({
             );
           })}
           {showRowActionsColumn && rowActions && (
-            <td className={rowActionsCellProps.className} style={rowActionsCellProps.style}>
+            <td
+              className={row.index % 2 === 1 ? rowActionsCellProps.classNameOdd : rowActionsCellProps.className}
+              style={rowActionsCellProps.style}
+            >
               <ActionsMenu items={rowActions} ctx={{ row: row.original }} triggerLabel={`Row actions for ${row.id}`} />
             </td>
           )}
         </tr>
         {showDetailColumn && isExpanded && renderDetail && (
           <tr data-testid={`${rowTestId}-detail`}>
-            <td colSpan={totalColumnCount} className="border-b p-2">
+            <td colSpan={totalColumnCount} className="border-b border-border p-2">
               {renderDetail(row.original)}
             </td>
           </tr>
@@ -648,7 +667,15 @@ export function DataGrid<TRow extends RowData>({
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button variant="ghost" size="icon" aria-label={`Filter ${column.header}`}>
-                            <FunnelIcon className="h-3 w-3" aria-hidden />
+                            <FunnelIcon
+                              className={cn(
+                                "h-3 w-3",
+                                filtersByColumn.get(column.id) !== undefined
+                                  ? "opacity-100 text-primary"
+                                  : "opacity-40",
+                              )}
+                              aria-hidden
+                            />
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent>{renderFilterWidget(column)}</PopoverContent>
@@ -670,7 +697,7 @@ export function DataGrid<TRow extends RowData>({
             return (
               <Fragment key={headerGroup.id}>
                 {hasHeaderGroups && (
-                  <tr key={`${headerGroup.id}-groups`} data-testid="header-group-row">
+                  <tr key={`${headerGroup.id}-groups`} data-testid="header-group-row" className="divide-x divide-border">
                     {showDetailColumn && (
                       <th
                         rowSpan={2}
@@ -700,7 +727,7 @@ export function DataGrid<TRow extends RowData>({
                         <th
                           key={`group-${run.label}-${run.columns[0]!.id}`}
                           colSpan={run.columns.length}
-                          className="border-b p-2 text-center font-medium"
+                          className="border-b border-border p-2 text-center font-medium"
                         >
                           {run.label}
                         </th>
@@ -716,7 +743,7 @@ export function DataGrid<TRow extends RowData>({
                     )}
                   </tr>
                 )}
-                <tr key={headerGroup.id}>
+                <tr key={headerGroup.id} className="divide-x divide-border">
                   {!hasHeaderGroups && showDetailColumn && (
                     <th
                       className={detailHeaderCellProps.className}
@@ -758,7 +785,7 @@ export function DataGrid<TRow extends RowData>({
             );
           })}
           {hasFilterRow && (
-            <tr data-testid="filter-row">
+            <tr data-testid="filter-row" className="divide-x divide-border">
               {showDetailColumn && (
                 <th className={detailHeaderCellProps.className} style={detailHeaderCellProps.style} />
               )}
