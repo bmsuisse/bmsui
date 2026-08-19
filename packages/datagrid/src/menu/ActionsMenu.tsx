@@ -1,5 +1,6 @@
 import { MoreVertical } from "lucide-react";
 import type { ReactElement } from "react";
+import { useMemo } from "react";
 import { Button } from "../components/ui/button";
 import {
   DropdownMenu,
@@ -26,7 +27,17 @@ interface ActionsMenuProps<TRow> {
  * having two near-identical components.
  */
 export function ActionsMenu<TRow>({ items, ctx, triggerLabel }: ActionsMenuProps<TRow>): ReactElement | null {
-  const resolved = resolveMenuItems(items, ctx);
+  // `<DataGrid>` instantiates one `<ActionsMenu>` per visible row (for
+  // `rowActions`) and re-renders every one of them on every scroll tick —
+  // memoized on `ctx.row`/`ctx.selectedRows` (the parts of `ctx` any
+  // `visible`/`disabled` predicate can actually read) rather than on `ctx`
+  // itself, since the caller passes a fresh `{ row: row.original }` object
+  // literal every render; that identity churn would otherwise defeat a
+  // naive `useMemo([items, ctx])` even though the row itself hasn't changed.
+  const resolved = useMemo(
+    () => resolveMenuItems(items, ctx),
+    [items, ctx.row, ctx.selectedRows],
+  );
   if (resolved.length === 0) return null;
 
   return (
