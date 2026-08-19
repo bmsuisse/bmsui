@@ -297,16 +297,29 @@ export function DataGrid<TRow extends RowData>({
   // `table.getColumn(id)?.getSize()` already resolves to exactly
   // `column.width ?? DEFAULT_COLUMN_SIZE` when resize has never touched that
   // column (TanStack's own resting value), and correctly reflects the live,
-  // resized width once it has — one source of truth for both. Not memoized:
-  // recomputing over a handful of columns every render is cheaper than
-  // reasoning about `table`'s reference-stability guarantees across
-  // `columnSizing` state changes.
+  // resized width once it has — one source of truth for both.
   const columnSize = (columnId: string): number => table.getColumn(columnId)?.getSize() ?? DEFAULT_COLUMN_SIZE;
   const leadingStructuralWidth =
     (showDetailColumn ? DETAIL_COLUMN_WIDTH : 0) + (showSelectionColumn ? SELECTION_COLUMN_WIDTH : 0);
   const trailingStructuralWidth = showRowActionsColumn ? ROW_ACTIONS_COLUMN_WIDTH : 0;
-  const leftPinnedOffsets = pinnedOffsets(visibleColumns, "left", columnSize, leadingStructuralWidth);
-  const rightPinnedOffsets = pinnedOffsets(visibleColumns, "right", columnSize, trailingStructuralWidth);
+
+  // Memoized on `columnSizing` (rather than recomputed every render) because
+  // every scroll tick re-renders this whole component (the virtualizer's own
+  // state lives in React state) — without this, scrolling a wide/pinned grid
+  // would reallocate both offset Maps (plus, for the right side, a full
+  // `[...visibleColumns].reverse()` copy) on every single frame for no
+  // reason: neither `visibleColumns` nor any column's resolved size changes
+  // just because the scroll position did.
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- `columnSize` reads `columnSizing`/`table` by closure; both are covered by the explicit deps below.
+  const leftPinnedOffsets = useMemo(
+    () => pinnedOffsets(visibleColumns, "left", columnSize, leadingStructuralWidth),
+    [visibleColumns, columnSizing, leadingStructuralWidth],
+  );
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- see leftPinnedOffsets above.
+  const rightPinnedOffsets = useMemo(
+    () => pinnedOffsets(visibleColumns, "right", columnSize, trailingStructuralWidth),
+    [visibleColumns, columnSizing, trailingStructuralWidth],
+  );
 
   // Combines with (doesn't replace) the `width` style every cell already
   // gets — a pinned column's `left`/`right` offset only makes sense relative
@@ -324,12 +337,19 @@ export function DataGrid<TRow extends RowData>({
     // content scrolling underneath a sticky column doesn't show through —
     // matched to whichever section (header vs. body) they sit in, since the
     // header now carries `bg-muted` while the body stays `bg-background`.
+    // Plain template strings rather than `cn()` throughout this function and
+    // `structuralCellProps` below: every combination here is a fixed set of
+    // internally-controlled utility classes touching unrelated CSS
+    // properties (position/z-index vs. background), so there's never a
+    // Tailwind conflict for `cn()`'s clsx+twMerge machinery to resolve —
+    // called from the memoized per-column maps below, so it already runs
+    // once per column per relevant state change, not once per cell.
     const bg = area === "header" ? "bg-muted" : "bg-background";
     if (column.pinned === "left") {
-      return { className: cn("sticky z-10", bg), style: { left: leftPinnedOffsets.get(column.id), width: columnSize(column.id) } };
+      return { className: `sticky z-10 ${bg}`, style: { left: leftPinnedOffsets.get(column.id), width: columnSize(column.id) } };
     }
     if (column.pinned === "right") {
-      return { className: cn("sticky z-10", bg), style: { right: rightPinnedOffsets.get(column.id), width: columnSize(column.id) } };
+      return { className: `sticky z-10 ${bg}`, style: { right: rightPinnedOffsets.get(column.id), width: columnSize(column.id) } };
     }
     if (enableColumnResizing) return { style: { width: columnSize(column.id) } };
     return { style: column.width ? { width: column.width } : undefined };
@@ -340,7 +360,10 @@ export function DataGrid<TRow extends RowData>({
   // always pin (they have no `pinned` prop of their own to opt out with),
   // so a pinned *data* column's reserved `leadingOffset`/its own offset
   // math actually lines up with a column that's really there, rather than a
-  // gap left by content that scrolled away underneath it.
+  // gap left by content that scrolled away underneath it. The `border-b
+  // p-1` base is baked in here (every call site below combined it with
+  // exactly this className anyway) so callers use `.className` directly
+  // instead of re-running `cn()` per row on an already-fixed string.
   function structuralCellProps(
     side: "left" | "right",
     offset: number,
@@ -348,7 +371,7 @@ export function DataGrid<TRow extends RowData>({
     area: "header" | "body" = "body",
   ): { className: string; style: CSSProperties } {
     const bg = area === "header" ? "bg-muted" : "bg-background";
-    return { className: cn("sticky z-10", bg), style: { [side]: offset, width } };
+    return { className: `border-b p-1 sticky z-10 ${bg}`, style: { [side]: offset, width } };
   }
 
   // Computed once per render (cheap object literals) rather than inline at
@@ -370,6 +393,59 @@ export function DataGrid<TRow extends RowData>({
     "header",
   );
   const rowActionsHeaderCellProps = structuralCellProps("right", 0, ROW_ACTIONS_COLUMN_WIDTH, "header");
+
+  // Precomputed once per *column* (via the memoized maps below), not once
+  // per column per *row* — the previous shape called `pinnedCellProps` (and
+  // its `cn()` inside) from within the per-row cell-rendering loop, which
+  // meant a virtualized 40-visible-row x 10-column grid ran that ~400 times
+  // per render (and once per scroll-triggered re-render) instead of 10. Only
+  // a pinned-or-resizing column needs a props object at all in the body;
+  // every other column's `<td>` falls back to the plain base class below.
+  const BODY_TD_BASE_CLASS = "border-b p-2";
+  function bodyCellClassAndStyle(column: ColumnDef<TRow>): { className: string; style?: CSSProperties } {
+    const pinnedProps = column.pinned || enableColumnResizing ? pinnedCellProps(column) : undefined;
+    return {
+      className: pinnedProps?.className ? `${BODY_TD_BASE_CLASS} ${pinnedProps.className}` : BODY_TD_BASE_CLASS,
+      style: pinnedProps?.style,
+    };
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- `bodyCellClassAndStyle` closes over `enableColumnResizing`/`leftPinnedOffsets`/`rightPinnedOffsets`/`columnSizing`, all listed explicitly below.
+  const bodyCellPropsByColumn = useMemo(() => {
+    const map = new Map<string, { className: string; style?: CSSProperties }>();
+    for (const column of visibleColumns) map.set(column.id, bodyCellClassAndStyle(column));
+    return map;
+  }, [visibleColumns, enableColumnResizing, leftPinnedOffsets, rightPinnedOffsets, columnSizing]);
+
+  // Same idea for the two header contexts, each with their own fixed base
+  // classes (the plain leaf header row vs. the opt-in filter row) — both
+  // still only ever render once per <DataGrid> render (there's exactly one
+  // header, not one per row), but memoizing keeps a pure-scroll re-render
+  // from re-running `cn()` over every visible column for no reason either.
+  function headerCellClassAndStyle(
+    column: ColumnDef<TRow>,
+    base: string,
+  ): { className: string; style?: CSSProperties } {
+    const pinnedProps = pinnedCellProps(column, "header");
+    const align = alignClassName(column);
+    const className = pinnedProps.className ? `${base} ${align} ${pinnedProps.className}` : `${base} ${align}`;
+    return { className, style: pinnedProps.style };
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- see bodyCellPropsByColumn above.
+  const leafHeaderCellPropsByColumn = useMemo(() => {
+    const map = new Map<string, { className: string; style?: CSSProperties }>();
+    for (const column of visibleColumns) {
+      map.set(column.id, headerCellClassAndStyle(column, "relative border-b p-2 font-medium"));
+    }
+    return map;
+  }, [visibleColumns, enableColumnResizing, leftPinnedOffsets, rightPinnedOffsets, columnSizing]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- see bodyCellPropsByColumn above.
+  const filterHeaderCellPropsByColumn = useMemo(() => {
+    const map = new Map<string, { className: string; style?: CSSProperties }>();
+    for (const column of visibleColumns) {
+      map.set(column.id, headerCellClassAndStyle(column, "border-b p-2 align-top font-normal"));
+    }
+    return map;
+  }, [visibleColumns, enableColumnResizing, leftPinnedOffsets, rightPinnedOffsets, columnSizing]);
 
   const tableRows = table.getRowModel().rows;
   const shouldVirtualize = Boolean(virtualize) && tableRows.length > (virtualize?.threshold ?? 100);
@@ -417,10 +493,22 @@ export function DataGrid<TRow extends RowData>({
         <tr
           {...rowProps}
           data-testid={rowTestId}
-          className={cn(rowProps?.className as string | undefined, row.index % 2 === 1 && "bg-foreground/5")}
+          // `cn()` (clsx+twMerge) is only needed here when a caller-supplied
+          // `getRowProps().className` might itself carry a conflicting
+          // `bg-*` utility that needs resolving against the zebra stripe —
+          // the overwhelmingly common case (no `getRowProps` at all) skips
+          // straight to a plain string, avoiding that per-row allocation
+          // for every grid that doesn't use the feature.
+          className={
+            rowProps?.className
+              ? cn(rowProps.className as string, row.index % 2 === 1 && "bg-foreground/5")
+              : row.index % 2 === 1
+                ? "bg-foreground/5"
+                : undefined
+          }
         >
           {showDetailColumn && (
-            <td className={cn("border-b p-1", detailCellProps.className)} style={detailCellProps.style}>
+            <td className={detailCellProps.className} style={detailCellProps.style}>
               <Button
                 type="button"
                 variant="ghost"
@@ -432,12 +520,15 @@ export function DataGrid<TRow extends RowData>({
                   toggleRowExpanded(row.id);
                 }}
               >
-                <ChevronRight className={cn("h-4 w-4 transition-transform", isExpanded && "rotate-90")} aria-hidden />
+                <ChevronRight
+                  className={`h-4 w-4 transition-transform${isExpanded ? " rotate-90" : ""}`}
+                  aria-hidden
+                />
               </Button>
             </td>
           )}
           {showSelectionColumn && (
-            <td className={cn("border-b p-1", selectionCellProps.className)} style={selectionCellProps.style}>
+            <td className={selectionCellProps.className} style={selectionCellProps.style}>
               <input
                 type="checkbox"
                 aria-label={`Select row ${row.id}`}
@@ -453,17 +544,15 @@ export function DataGrid<TRow extends RowData>({
               reaching the table is meant to render; getAllCells() is
               the core-only equivalent for that already-filtered set. */}
           {row.getAllCells().map((cell) => {
-            const cellColumn = columnById.get(cell.column.id);
-            const pinnedProps =
-              cellColumn && (cellColumn.pinned || enableColumnResizing) ? pinnedCellProps(cellColumn) : undefined;
+            const cellProps = bodyCellPropsByColumn.get(cell.column.id);
             return (
-              <td key={cell.id} style={pinnedProps?.style} className={cn("border-b p-2", pinnedProps?.className)}>
+              <td key={cell.id} style={cellProps?.style} className={cellProps?.className ?? BODY_TD_BASE_CLASS}>
                 {flexRender(cell.column.columnDef.cell, cell.getContext())}
               </td>
             );
           })}
           {showRowActionsColumn && rowActions && (
-            <td className={cn("border-b p-1", rowActionsCellProps.className)} style={rowActionsCellProps.style}>
+            <td className={rowActionsCellProps.className} style={rowActionsCellProps.style}>
               <ActionsMenu items={rowActions} ctx={{ row: row.original }} triggerLabel={`Row actions for ${row.id}`} />
             </td>
           )}
@@ -533,14 +622,9 @@ export function DataGrid<TRow extends RowData>({
               const sortEntry = state.sort.find((s) => s.field === column.id);
               const sortable = isSortable(column);
               const filterable = isFilterable(column) && column.filterDisplay !== "row";
-              const pinnedProps = pinnedCellProps(column, "header");
+              const cellProps = leafHeaderCellPropsByColumn.get(column.id);
               return (
-                <th
-                  key={header.id}
-                  rowSpan={rowSpan}
-                  style={pinnedProps.style}
-                  className={cn("relative border-b p-2 font-medium", alignClassName(column), pinnedProps.className)}
-                >
+                <th key={header.id} rowSpan={rowSpan} style={cellProps?.style} className={cellProps?.className}>
                   <div className="flex items-center gap-1">
                     <button
                       type="button"
@@ -590,7 +674,7 @@ export function DataGrid<TRow extends RowData>({
                     {showDetailColumn && (
                       <th
                         rowSpan={2}
-                        className={cn("border-b p-1", detailHeaderCellProps.className)}
+                        className={detailHeaderCellProps.className}
                         style={detailHeaderCellProps.style}
                         aria-hidden
                       />
@@ -598,7 +682,7 @@ export function DataGrid<TRow extends RowData>({
                     {showSelectionColumn && (
                       <th
                         rowSpan={2}
-                        className={cn("border-b p-1", selectionHeaderCellProps.className)}
+                        className={selectionHeaderCellProps.className}
                         style={selectionHeaderCellProps.style}
                       >
                         <input
@@ -625,7 +709,7 @@ export function DataGrid<TRow extends RowData>({
                     {showRowActionsColumn && (
                       <th
                         rowSpan={2}
-                        className={cn("border-b p-1", rowActionsHeaderCellProps.className)}
+                        className={rowActionsHeaderCellProps.className}
                         style={rowActionsHeaderCellProps.style}
                         aria-label="Row actions"
                       />
@@ -635,14 +719,14 @@ export function DataGrid<TRow extends RowData>({
                 <tr key={headerGroup.id}>
                   {!hasHeaderGroups && showDetailColumn && (
                     <th
-                      className={cn("border-b p-1", detailHeaderCellProps.className)}
+                      className={detailHeaderCellProps.className}
                       style={detailHeaderCellProps.style}
                       aria-hidden
                     />
                   )}
                   {!hasHeaderGroups && showSelectionColumn && (
                     <th
-                      className={cn("border-b p-1", selectionHeaderCellProps.className)}
+                      className={selectionHeaderCellProps.className}
                       style={selectionHeaderCellProps.style}
                     >
                       <input
@@ -664,7 +748,7 @@ export function DataGrid<TRow extends RowData>({
                   })}
                   {!hasHeaderGroups && showRowActionsColumn && (
                     <th
-                      className={cn("border-b p-1", rowActionsHeaderCellProps.className)}
+                      className={rowActionsHeaderCellProps.className}
                       style={rowActionsHeaderCellProps.style}
                       aria-label="Row actions"
                     />
@@ -676,29 +760,25 @@ export function DataGrid<TRow extends RowData>({
           {hasFilterRow && (
             <tr data-testid="filter-row">
               {showDetailColumn && (
-                <th className={cn("border-b p-1", detailHeaderCellProps.className)} style={detailHeaderCellProps.style} />
+                <th className={detailHeaderCellProps.className} style={detailHeaderCellProps.style} />
               )}
               {showSelectionColumn && (
                 <th
-                  className={cn("border-b p-1", selectionHeaderCellProps.className)}
+                  className={selectionHeaderCellProps.className}
                   style={selectionHeaderCellProps.style}
                 />
               )}
               {visibleColumns.map((column) => {
-                const pinnedProps = pinnedCellProps(column, "header");
+                const cellProps = filterHeaderCellPropsByColumn.get(column.id);
                 return (
-                  <th
-                    key={column.id}
-                    style={pinnedProps.style}
-                    className={cn("border-b p-2 align-top font-normal", alignClassName(column), pinnedProps.className)}
-                  >
+                  <th key={column.id} style={cellProps?.style} className={cellProps?.className}>
                     {isFilterable(column) && column.filterDisplay === "row" ? renderFilterWidget(column) : null}
                   </th>
                 );
               })}
               {showRowActionsColumn && (
                 <th
-                  className={cn("border-b p-1", rowActionsHeaderCellProps.className)}
+                  className={rowActionsHeaderCellProps.className}
                   style={rowActionsHeaderCellProps.style}
                 />
               )}

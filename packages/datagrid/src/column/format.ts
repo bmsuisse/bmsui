@@ -67,6 +67,23 @@ function toNumber(value: unknown): number | null {
   return null;
 }
 
+// `new Intl.NumberFormat(...)` does locale/ICU data lookup on construction
+// and is expensive enough that building one per cell, per row, per render
+// (this used to happen inline in the `"currency"` case below) shows up as
+// real GC/CPU pressure once a grid has more than a handful of currency
+// cells on screen. Formatters are immutable and keyed only by currency code
+// here (locale is always `undefined`, i.e. the runtime default), so caching
+// by currency code is exact — never stale.
+const currencyFormatters = new Map<string, Intl.NumberFormat>();
+function currencyFormatter(currency: string): Intl.NumberFormat {
+  let formatter = currencyFormatters.get(currency);
+  if (!formatter) {
+    formatter = new Intl.NumberFormat(undefined, { style: "currency", currency });
+    currencyFormatters.set(currency, formatter);
+  }
+  return formatter;
+}
+
 /**
  * Renders a raw cell value as a display string, using the type-appropriate
  * default formatter for `column.type`. Columns with a custom `cell` render
@@ -87,10 +104,7 @@ export function defaultFormat<TRow>(column: ColumnDef<TRow>, value: unknown): st
     case "currency": {
       const num = toNumber(value);
       if (num === null) return String(value);
-      return new Intl.NumberFormat(undefined, {
-        style: "currency",
-        currency: column.currency ?? "USD",
-      }).format(num);
+      return currencyFormatter(column.currency ?? "USD").format(num);
     }
 
     case "date": {
