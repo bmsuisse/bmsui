@@ -60,8 +60,8 @@
   --accent-foreground: oklch(1 0 0);
   --destructive: oklch(0.56 0.22 27);
   --destructive-foreground: oklch(1 0 0);
-  --border: #f2f2f2;
-  --input: #f2f2f2;
+  --border: #e6e6e6;
+  --input: #e6e6e6;
   --ring: #2e4a62;
   --radius: 0.625rem;
   --font-sans: "Inter Variable", "Inter", system-ui, -apple-system, sans-serif;

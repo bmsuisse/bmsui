@@ -252,8 +252,12 @@ export function TreeDataGrid<TRow>({
         // `bg-*` utility — skip straight to a plain string otherwise.
         className={
           rowProps?.className
-            ? cn("border-b", rowProps.className as string, index % 2 === 1 && "bg-foreground/5")
-            : `border-b${index % 2 === 1 ? " bg-foreground/5" : ""}`
+            ? cn(
+                "border-b border-border divide-x divide-border",
+                rowProps.className as string,
+                index % 2 === 1 && "bg-foreground/5",
+              )
+            : `border-b border-border divide-x divide-border${index % 2 === 1 ? " bg-foreground/5" : ""}`
         }
       >
         {showSelectionColumn && (
@@ -316,9 +320,9 @@ export function TreeDataGrid<TRow>({
       >
         <table className="w-full border-collapse text-sm">
           <thead>
-            <tr>
+            <tr className="divide-x divide-border">
               {showSelectionColumn && (
-                <th className="border-b p-1" style={{ width: SELECTION_COLUMN_WIDTH }}>
+                <th className="border-b border-border p-1" style={{ width: SELECTION_COLUMN_WIDTH }}>
                   <Checkbox
                     aria-label="Select all visible rows"
                     checked={allVisibleSelected}
@@ -330,12 +334,12 @@ export function TreeDataGrid<TRow>({
                 <th
                   key={column.id}
                   style={column.width ? { width: column.width } : undefined}
-                  className={`border-b p-2 font-medium ${alignClassName(column)}`}
+                  className={`border-b border-border p-2 font-medium ${alignClassName(column)}`}
                 >
                   {column.header}
                 </th>
               ))}
-              {showRowActionsColumn && <th className="border-b p-2" aria-label="Row actions" />}
+              {showRowActionsColumn && <th className="border-b border-border p-2" aria-label="Row actions" />}
             </tr>
           </thead>
           <tbody>
