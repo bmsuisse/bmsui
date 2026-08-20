@@ -111,6 +111,9 @@ export { AlertBox } from "./patterns/alert-box/AlertBox";
 export type { StatusBadgeProps, StatusTone } from "./patterns/status-badge/StatusBadge";
 export { StatusBadge } from "./patterns/status-badge/StatusBadge";
 
+export type { ButtonGroupOption, ButtonGroupProps } from "./patterns/button-group/ButtonGroup";
+export { ButtonGroup } from "./patterns/button-group/ButtonGroup";
+
 export type {
   LoadingOverlayProps,
   LoadingSpinnerProps,
