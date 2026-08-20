@@ -424,6 +424,38 @@ describe("DataGrid (filter display)", () => {
     await userEvent.click(screen.getByTestId("custom-age-header"));
     expect(screen.getByRole("button", { name: /Rich Age/ }).querySelector("svg")).toBeInTheDocument();
   });
+
+  it("doesn't wrap a non-sortable column's renderHeader in a button, so nested interactive content stays clickable", async () => {
+    // Regression test: the leaf header cell always wrapped `renderHeader` output
+    // in a `<button disabled={!sortable}>` for the sort toggle. A *disabled*
+    // button suppresses pointer events for its entire DOM subtree in real
+    // browsers (jsdom doesn't model this, so this asserts the DOM shape
+    // directly rather than relying on a simulated click to catch it) — any
+    // interactive element a non-sortable column's own `renderHeader` embeds
+    // (a bare filter input, an "approve/reject all" button) was silently
+    // unclickable even though nothing looked wrong visually.
+    const onClickSpy = vi.fn();
+    const customColumns: ColumnDef<Row>[] = [
+      columns[0]!,
+      {
+        ...columns[1]!,
+        sortable: false,
+        renderHeader: () => (
+          <button type="button" data-testid="reject-all" onClick={onClickSpy}>
+            Reject all
+          </button>
+        ),
+      },
+    ];
+    render(
+      <DataGrid columns={customColumns} dataSource={{ mode: "client", data: rows }} getRowId={(row) => row.id} />,
+    );
+
+    const rejectAll = screen.getByTestId("reject-all");
+    expect(rejectAll.closest("button[disabled]")).toBeNull();
+    await userEvent.click(rejectAll);
+    expect(onClickSpy).toHaveBeenCalledOnce();
+  });
 });
 
 describe("DataGrid (renderDetail)", () => {

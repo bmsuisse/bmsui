@@ -706,27 +706,30 @@ export function DataGrid<TRow extends RowData>({
               const sortable = isSortable(column);
               const filterable = isFilterable(column) && column.filterDisplay !== "row";
               const cellProps = leafHeaderCellPropsByColumn.get(column.id);
+              const headerContent = column.renderHeader ? column.renderHeader(column) : column.header;
               return (
                 <th key={header.id} rowSpan={rowSpan} style={cellProps?.style} className={cellProps?.className}>
                   <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      className={cn(
-                        "flex items-center gap-1 rounded-sm px-1",
-                        sortable && "hover:bg-accent hover:text-accent-foreground",
-                      )}
-                      disabled={!sortable}
-                      onClick={(event) =>
-                        sortable &&
-                        toggleSort(column.id, enableMultiSort && event.shiftKey, column.sortDescFirst === true)
-                      }
-                    >
-                      {column.renderHeader ? column.renderHeader(column) : column.header}
-                      {sortable && sortEntry?.dir === "asc" && <BarsArrowUpIcon className="h-3 w-3" aria-hidden />}
-                      {sortable && sortEntry?.dir === "desc" && (
-                        <BarsArrowDownIcon className="h-3 w-3" aria-hidden />
-                      )}
-                    </button>
+                    {sortable ? (
+                      <button
+                        type="button"
+                        className="flex items-center gap-1 rounded-sm px-1 hover:bg-accent hover:text-accent-foreground"
+                        onClick={(event) =>
+                          toggleSort(column.id, enableMultiSort && event.shiftKey, column.sortDescFirst === true)
+                        }
+                      >
+                        {headerContent}
+                        {sortEntry?.dir === "asc" && <BarsArrowUpIcon className="h-3 w-3" aria-hidden />}
+                        {sortEntry?.dir === "desc" && <BarsArrowDownIcon className="h-3 w-3" aria-hidden />}
+                      </button>
+                    ) : (
+                      // Not wrapped in a `<button>` (unlike the sortable branch above): a
+                      // disabled `<button>` swallows pointer events for its entire subtree,
+                      // silently breaking any interactive content a column's own `renderHeader`
+                      // embeds directly (bare filter inputs, "select/reject all" buttons) —
+                      // clicks never reach them at all, even though nothing looks wrong visually.
+                      <div className="flex items-center gap-1 px-1">{headerContent}</div>
+                    )}
                     {filterable && (
                       <Popover>
                         <PopoverTrigger asChild>

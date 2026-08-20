@@ -251,31 +251,46 @@ filter row whatsoever.
 `BaseColumn.header` is a plain `string` — used for the filter icon's
 `aria-label` and the `<ColumnSelector>` list, neither of which can work off a
 `ReactNode`. `BaseColumn.renderHeader?: (column) => ReactNode` overrides just
-the *rendering* of the header cell's sort-toggle button (the sort caret still
-renders alongside whatever this returns, and both end up nested inside that
-same real `<button>`) — use it for a tooltip, an info icon, or a loading
-spinner tied to a separate batch-hydration fetch:
+the *rendering* of the header cell's content — what wraps it depends on
+`sortable`:
 
-```tsx
-{
-  ...marginColumn,
-  renderHeader: (column) => (
-    <Tooltip>
-      {/* render as a <span>, not a <button> -- TooltipTrigger defaults to a
-          <button>, and this whole thing is already nested inside DataGrid's
-          own sort-toggle <button>; a button inside a button is invalid HTML
-          and silently breaks click-to-sort for the column. */}
-      <TooltipTrigger render={<span />}>{column.header}</TooltipTrigger>
-      <TooltipContent>...</TooltipContent>
-    </Tooltip>
-  ),
-}
-```
+- **`sortable: true`** — the sort caret renders alongside whatever this
+  returns, and both end up nested inside a real `<button>` (the sort toggle).
+  Avoid nesting another `<button>`/link/other focusable element in here: a
+  button inside a button is invalid HTML, and a click on the inner element
+  also bubbles up and fires the outer sort toggle — usually not what you want.
+  Use a non-focusable wrapper (a `<span>`, not a `<TooltipTrigger>`'s default
+  `<button>`) for tooltips/info icons:
 
-The same rule applies to anything else `renderHeader` returns: no nested
-`<button>`/link/other focusable element. If what you return has no visible
-text (an icon-only header), add your own `aria-label` on it — `<DataGrid>`
-has no way to detect that its own accessible name would otherwise be empty.
+  ```tsx
+  {
+    ...marginColumn,
+    sortable: true,
+    renderHeader: (column) => (
+      <Tooltip>
+        <TooltipTrigger render={<span />}>{column.header}</TooltipTrigger>
+        <TooltipContent>...</TooltipContent>
+      </Tooltip>
+    ),
+  }
+  ```
+
+- **`sortable` unset/`false`** (the default) — this renders directly in a
+  plain, non-interactive `<div>`, no wrapping button at all, so nested
+  interactive content (a bare filter input, an "approve/reject all" button)
+  works normally. Before 0.24.1 this was *also* wrapped in a `<button
+  disabled>` for consistency with the sortable case — a disabled button
+  suppresses pointer events for its entire subtree in real browsers, so any
+  interactive element a non-sortable column's `renderHeader` returned was
+  silently unclickable (nothing looked wrong visually, and jsdom-based tests
+  don't reproduce the browser's disabled-subtree pointer-event suppression,
+  so this shipped unnoticed for a while). Prefer a column embedding its own
+  interactive header widgets to stay `sortable: false`/unset now that this
+  works — don't set `sortable: true` just to route around the old bug.
+
+If what `renderHeader` returns has no visible text (an icon-only header), add
+your own `aria-label` on it — `<DataGrid>` has no way to detect that its own
+accessible name would otherwise be empty.
 
 ### `NumberHistogramFilter` + `facetedNumberValues` — richer numeric filtering
 
