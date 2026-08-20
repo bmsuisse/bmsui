@@ -102,6 +102,18 @@ logic above, which already had its own extraction). Structure:
     English status vocabulary (`approved`/`pending`/`rejected`/etc.) >
     `neutral` fallback. Uses the same warning/info/success color choices as
     `AlertBox` for visual consistency between the two.
+  - `button-group/` — `ButtonGroup` (v0.5.0), a single-select segmented
+    control (e.g. an ignore/create/update per-row choice) — built on
+    `Button` rather than a bespoke element so segments get its variant/size/
+    disabled/focus-visible styling for free. Selected segment uses
+    `variant="default"`, the rest `variant="outline"`; segments are visually
+    joined via `rounded-none` (first/last get `rounded-l-md`/`rounded-r-md`)
+    and `-ml-px` overlap, with `hover:z-10`/`focus-visible:z-10` on each
+    segment so its own border draws over the neighbor's instead of being
+    clipped underneath it. Added for OneSales's contact-sync review UI,
+    which previously used a plain `<select>` for this same three-way
+    choice on desktop and had no mobile treatment at all — that plain
+    `<select>` becomes a `ButtonGroup` on both.
   - `loading-spinner/` — `LoadingSpinner` (inline, `size` + optional
     `label`) and `LoadingOverlay` (centers a larger spinner in its
     container). Deliberately did **not** adopt the sales app's existing

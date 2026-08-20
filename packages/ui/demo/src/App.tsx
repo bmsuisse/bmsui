@@ -2,6 +2,7 @@ import {
   AlertBox,
   Badge,
   Button,
+  ButtonGroup,
   Card,
   CardContent,
   CardDescription,
@@ -92,6 +93,8 @@ export function App(): ReactElement {
   const [country, setCountry] = useState<string | null>("ch");
   const [teamMembers, setTeamMembers] = useState<string[]>([]);
   const [showArchived, setShowArchived] = useState(false);
+  const [syncAction, setSyncAction] = useState<"ignore" | "create" | "update">("create");
+  const [syncActionSmall, setSyncActionSmall] = useState<"ignore" | "create" | "update">("update");
 
   return (
     <div>
@@ -286,6 +289,39 @@ export function App(): ReactElement {
               <StatusBadge status="new" />
               <StatusBadge status="custom_status" toneMap={{ custom_status: "info" }} />
             </>
+          </Section>
+
+          <Section title="ButtonGroup">
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <Label>Default size</Label>
+                <ButtonGroup
+                  options={[
+                    { value: "ignore", label: "Ignore" },
+                    { value: "create", label: "Create" },
+                    { value: "update", label: "Update" },
+                  ]}
+                  value={syncAction}
+                  onValueChange={setSyncAction}
+                  aria-label="Contact sync action"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label>Small, disabled</Label>
+                <ButtonGroup
+                  size="sm"
+                  options={[
+                    { value: "ignore", label: "Ignore" },
+                    { value: "create", label: "Create" },
+                    { value: "update", label: "Update" },
+                  ]}
+                  value={syncActionSmall}
+                  onValueChange={setSyncActionSmall}
+                  disabled
+                  aria-label="Contact sync action (disabled)"
+                />
+              </div>
+            </div>
           </Section>
 
           <Section title="DropdownMenu">
