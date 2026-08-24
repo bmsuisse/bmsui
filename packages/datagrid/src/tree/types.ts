@@ -139,4 +139,6 @@ export interface TreeDataGridProps<TRow> extends TreeAccessors<TRow> {
   getRowSelectionState?: (row: TRow) => { checked: boolean; indeterminate?: boolean } | undefined;
   /** Disables just the checkbox for a specific row. Defaults to `() => false`. */
   isRowSelectionDisabled?: (row: TRow) => boolean;
+  /** Alternates body row backgrounds for readability on wide/dense tables. Defaults to true. */
+  zebra?: boolean;
 }

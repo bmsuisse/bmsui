@@ -162,6 +162,7 @@ export function DataGrid<TRow extends RowData>({
   defaultGroupsExpanded = true,
   expandedGroups: controlledExpandedGroups,
   onExpandedGroupsChange,
+  zebra = true,
 }: DataGridProps<TRow>): ReactElement {
   const { state, filtersByColumn, setColumnFilter, toggleSort, setPage } = useGridState(
     dataSource,
@@ -531,6 +532,7 @@ export function DataGrid<TRow extends RowData>({
     // notice the detail panel's height at all once virtualized.
     const rowProps = getRowProps?.(row.original);
     const rowTestId = getRowTestId?.(row.original) ?? `row-${row.id}`;
+    const isOddRow = zebra && row.index % 2 === 1;
     return (
       <tbody key={row.id} ref={measureRef} data-index={row.index}>
         <tr
@@ -544,13 +546,13 @@ export function DataGrid<TRow extends RowData>({
           // for every grid that doesn't use the feature.
           className={
             rowProps?.className
-              ? cn("divide-x divide-border", rowProps.className as string, row.index % 2 === 1 && "bg-foreground/5")
-              : `divide-x divide-border${row.index % 2 === 1 ? " bg-foreground/5" : ""}`
+              ? cn("divide-x divide-border", rowProps.className as string, isOddRow && "bg-foreground/5")
+              : `divide-x divide-border${isOddRow ? " bg-foreground/5" : ""}`
           }
         >
           {showDetailColumn && (
             <td
-              className={row.index % 2 === 1 ? detailCellProps.classNameOdd : detailCellProps.className}
+              className={isOddRow ? detailCellProps.classNameOdd : detailCellProps.className}
               style={detailCellProps.style}
             >
               <Button
@@ -573,7 +575,7 @@ export function DataGrid<TRow extends RowData>({
           )}
           {showSelectionColumn && (
             <td
-              className={row.index % 2 === 1 ? selectionCellProps.classNameOdd : selectionCellProps.className}
+              className={isOddRow ? selectionCellProps.classNameOdd : selectionCellProps.className}
               style={selectionCellProps.style}
             >
               <input
@@ -600,7 +602,7 @@ export function DataGrid<TRow extends RowData>({
           })}
           {showRowActionsColumn && rowActions && (
             <td
-              className={row.index % 2 === 1 ? rowActionsCellProps.classNameOdd : rowActionsCellProps.className}
+              className={isOddRow ? rowActionsCellProps.classNameOdd : rowActionsCellProps.className}
               style={rowActionsCellProps.style}
             >
               <ActionsMenu items={rowActions} ctx={{ row: row.original }} triggerLabel={`Row actions for ${row.id}`} />
