@@ -122,6 +122,7 @@ export function TreeDataGrid<TRow>({
   onSelectedIdsChange,
   getRowSelectionState,
   isRowSelectionDisabled,
+  zebra = true,
 }: TreeDataGridProps<TRow>): ReactElement {
   const accessors: TreeAccessors<TRow> = useMemo(
     () => ({ getRowId, getChildren, hasChildren }),
@@ -240,6 +241,7 @@ export function TreeDataGrid<TRow>({
   ): ReactElement {
     const rowProps = getRowProps?.(flatRow.row, flatRow.depth, index);
     const rowTestId = getRowTestId?.(flatRow.row) ?? `tree-row-${flatRow.id}`;
+    const isOddRow = zebra && index % 2 === 1;
     return (
       <tr
         key={flatRow.id}
@@ -255,9 +257,9 @@ export function TreeDataGrid<TRow>({
             ? cn(
                 "border-b border-border divide-x divide-border",
                 rowProps.className as string,
-                index % 2 === 1 && "bg-foreground/5",
+                isOddRow && "bg-foreground/5",
               )
-            : `border-b border-border divide-x divide-border${index % 2 === 1 ? " bg-foreground/5" : ""}`
+            : `border-b border-border divide-x divide-border${isOddRow ? " bg-foreground/5" : ""}`
         }
       >
         {showSelectionColumn && (

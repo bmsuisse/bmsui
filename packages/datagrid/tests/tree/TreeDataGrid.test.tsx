@@ -190,6 +190,19 @@ describe("TreeDataGrid", () => {
     expect(alphaOneRow).toHaveClass("bg-foreground/5");
   });
 
+  it("omits zebra striping when zebra is false", async () => {
+    render(
+      <TreeDataGrid
+        columns={columns}
+        data={eagerTree}
+        getRowId={(row) => row.id}
+        getChildren={(row) => row.children}
+        zebra={false}
+      />,
+    );
+    expect(screen.getByText("Beta").closest("tr")).not.toHaveClass("bg-foreground/5");
+  });
+
   it("fires getRowProps' onClick when the row is clicked", async () => {
     const onRowClick = vi.fn();
     render(

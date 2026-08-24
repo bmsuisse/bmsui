@@ -59,6 +59,36 @@ describe("DataGrid (client mode)", () => {
     expect(nameCellsInOrder()).toEqual(["Charlie", "Alice", "Bob"]);
   });
 
+  it("stripes odd rows by default", () => {
+    render(
+      <DataGrid
+        columns={columns}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+      />,
+    );
+
+    const dataRows = screen.getAllByTestId(/^row-/);
+    expect(dataRows[0]).not.toHaveClass("bg-foreground/5");
+    expect(dataRows[1]).toHaveClass("bg-foreground/5");
+    expect(dataRows[2]).not.toHaveClass("bg-foreground/5");
+  });
+
+  it("omits zebra striping when zebra is false", () => {
+    render(
+      <DataGrid
+        columns={columns}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        zebra={false}
+      />,
+    );
+
+    for (const row of screen.getAllByTestId(/^row-/)) {
+      expect(row).not.toHaveClass("bg-foreground/5");
+    }
+  });
+
   it("sorts ascending then descending on repeated header clicks", async () => {
     render(
       <DataGrid

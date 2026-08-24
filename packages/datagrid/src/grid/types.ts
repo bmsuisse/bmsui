@@ -224,4 +224,6 @@ export interface DataGridProps<TRow> {
    */
   expandedGroups?: Record<string, boolean>;
   onExpandedGroupsChange?: (expanded: Record<string, boolean>) => void;
+  /** Alternates body row backgrounds for readability on wide/dense tables. Defaults to true. */
+  zebra?: boolean;
 }
