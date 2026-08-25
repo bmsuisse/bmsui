@@ -111,6 +111,8 @@ export function TreeDataGrid<TRow>({
   initialExpandedLevel = 0,
   expanded: controlledExpanded,
   onExpandedChange,
+  childrenMap: controlledChildrenMap,
+  onChildrenMapChange,
   indentSize = 20,
   getRowProps,
   getRowTestId,
@@ -137,6 +139,8 @@ export function TreeDataGrid<TRow>({
     onLoadChildren,
     expanded: controlledExpanded,
     onExpandedChange,
+    childrenMap: controlledChildrenMap,
+    onChildrenMapChange,
   });
 
   // Runs exactly once, against the tree as it existed on first render — not
@@ -247,6 +251,22 @@ export function TreeDataGrid<TRow>({
         key={flatRow.id}
         ref={measureRef}
         {...rowProps}
+        // Required by `@tanstack/react-virtual`'s `measureElement` (wired
+        // below via `measureRef`): it reads this attribute back off the
+        // measured node to know which row it just measured. Without it,
+        // `indexFromElement` falls back to -1 for every row (logging its own
+        // "Missing attribute name 'data-index={index}' on measured element"
+        // warning), which the virtualizer's `resizeItem` then discards
+        // outright (`index < 0` bails before recording the size) — so a
+        // row's real rendered height, e.g. this one growing well past
+        // `estimatedRowHeight` once a caller renders an expanded editor
+        // inside a cell, never overwrites the estimate. The virtualizer's
+        // start/end offsets then drift from the real DOM layout as more
+        // dynamically-sized rows accumulate, which can push a still-relevant
+        // row out of the computed visible range — unmounting it (and
+        // anything with local state/focus inside it) even though it's still
+        // meant to be on screen.
+        data-index={index}
         data-testid={rowTestId}
         // Same reasoning as <DataGrid>'s own row className: full `cn()`
         // conflict resolution is only needed when a caller-supplied

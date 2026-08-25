@@ -19,6 +19,8 @@ export interface UseTreeStateOptions<TRow> extends TreeAccessors<TRow> {
   onLoadChildren?: (row: TRow) => Promise<TRow[]>;
   expanded?: Record<string, boolean>;
   onExpandedChange?: (expanded: Record<string, boolean>) => void;
+  childrenMap?: ReadonlyMap<string, TRow[]>;
+  onChildrenMapChange?: (childrenMap: ReadonlyMap<string, TRow[]>) => void;
 }
 
 /**
@@ -42,6 +44,8 @@ export function useTreeState<TRow>({
   onLoadChildren,
   expanded: controlledExpanded,
   onExpandedChange,
+  childrenMap: controlledChildrenMap,
+  onChildrenMapChange,
 }: UseTreeStateOptions<TRow>): TreeStateController<TRow> {
   const [internalExpanded, setInternalExpanded] = useState<Record<string, boolean>>({});
   const expanded = controlledExpanded ?? internalExpanded;
@@ -57,7 +61,20 @@ export function useTreeState<TRow>({
     [controlledExpanded, onExpandedChange],
   );
 
-  const [childrenMap, setChildrenMap] = useState<Map<string, TRow[]>>(new Map());
+  const [internalChildrenMap, setInternalChildrenMap] = useState<Map<string, TRow[]>>(new Map());
+  const childrenMap = controlledChildrenMap ?? internalChildrenMap;
+
+  const setChildrenMap = useCallback(
+    (updater: (prev: ReadonlyMap<string, TRow[]>) => ReadonlyMap<string, TRow[]>) => {
+      if (controlledChildrenMap) {
+        onChildrenMapChange?.(updater(controlledChildrenMap));
+      } else {
+        setInternalChildrenMap((prev) => new Map(updater(prev)));
+      }
+    },
+    [controlledChildrenMap, onChildrenMapChange],
+  );
+
   const [loadingIds, setLoadingIds] = useState<Set<string>>(new Set());
   const [errorIds, setErrorIds] = useState<Map<string, string>>(new Map());
 
@@ -99,7 +116,7 @@ export function useTreeState<TRow>({
         });
       }
     },
-    [childrenMap, getChildren, getRowId, onLoadChildren],
+    [childrenMap, getChildren, getRowId, onLoadChildren, setChildrenMap],
   );
 
   const toggleExpand = useCallback(

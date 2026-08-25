@@ -126,4 +126,59 @@ describe("useTreeState", () => {
     act(() => result.current.toggleExpand(eagerTree[0]!));
     expect(onExpandedChange).toHaveBeenCalledWith({ a: true });
   });
+
+  it("supports controlled childrenMap state via onChildrenMapChange", async () => {
+    const lazyNode: Node = { id: "f" };
+    const onLoadChildren = vi.fn().mockResolvedValue([{ id: "f1" }]);
+    const onChildrenMapChange = vi.fn();
+    const { result } = renderHook(() =>
+      useTreeState<Node>({
+        data: [lazyNode],
+        getRowId: (row) => row.id,
+        getChildren: (row) => row.children,
+        hasChildren: (row) => row.id === "f",
+        onLoadChildren,
+        childrenMap: new Map(),
+        onChildrenMapChange,
+      }),
+    );
+
+    act(() => result.current.toggleExpand(lazyNode));
+    await waitFor(() => expect(onChildrenMapChange).toHaveBeenCalled());
+    const [calledWith] = onChildrenMapChange.mock.calls.at(-1)!;
+    expect(calledWith.get("f")).toEqual([{ id: "f1" }]);
+  });
+
+  // Regression test for the bug this option was added to fix: a caller
+  // (e.g. CCMT2's ContractTreelist) re-fetches a lazily-loaded node's
+  // children itself -- outside toggleExpand/expandToLevel entirely, e.g.
+  // after saving an edit made to one of that node's rows -- and needs the
+  // grid to render that fresher batch. Before controlled childrenMap
+  // existed, a re-fetch like that had nowhere to feed back into: this
+  // hook's own internal cache, once populated for a node id, was never
+  // invalidated by anything the caller did to its own separate copy of the
+  // data, so the "refreshed" batch was silently ignored by rendering.
+  it("reflects a caller's own re-fetch of an already-cached node when childrenMap is controlled", () => {
+    const node: Node = { id: "g" };
+    const { result, rerender } = renderHook(
+      (props: { childrenMap: Map<string, Node[]> }) =>
+        useTreeState<Node>({
+          data: [node],
+          getRowId: (row) => row.id,
+          getChildren: (row) => row.children,
+          hasChildren: (row) => row.id === "g",
+          childrenMap: props.childrenMap,
+          onChildrenMapChange: () => {},
+        }),
+      { initialProps: { childrenMap: new Map([["g", [{ id: "g1-stale" }]]]) } },
+    );
+    expect(result.current.childrenMap.get("g")).toEqual([{ id: "g1-stale" }]);
+
+    // The caller re-fetched "g"'s children on its own (e.g. via its own
+    // onLoadChildren call after an edit was saved) and hands the grid a new
+    // map reflecting that -- this must be visible immediately, without
+    // needing another toggleExpand/expandToLevel round-trip.
+    rerender({ childrenMap: new Map([["g", [{ id: "g1-fresh" }]]]) });
+    expect(result.current.childrenMap.get("g")).toEqual([{ id: "g1-fresh" }]);
+  });
 });
