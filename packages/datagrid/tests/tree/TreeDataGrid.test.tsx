@@ -296,6 +296,34 @@ describe("TreeDataGrid", () => {
     Element.prototype.getBoundingClientRect = originalRect;
   });
 
+  it("tags every row with a data-index matching its position in flatRows", () => {
+    // `@tanstack/react-virtual`'s `measureElement` (wired up via each row's
+    // `ref` when virtualizing) reads this attribute straight off the DOM
+    // node to know which row it just measured (see virtual-core's
+    // `indexFromElement`). Without it, every row resolves to index -1 and
+    // `resizeItem` discards the measurement outright (`index < 0` bails
+    // before recording anything), so a row that grows past
+    // `estimatedRowHeight` (e.g. an inline editor expanding within a cell)
+    // never gets its real height applied -- the virtualizer's positions
+    // silently drift from the actual DOM layout, which can push a
+    // still-relevant row out of the computed visible range and unmount it.
+    // Exercised below the virtualization threshold (jsdom never gives the
+    // scroll container a real layout, so the virtualized path renders no
+    // rows at all here regardless of this attribute) -- `renderRow` sets
+    // `data-index` unconditionally on both paths, so this still covers the
+    // regression.
+    const tree: Node[] = Array.from({ length: 10 }, (_, i) => ({ id: `n${i}`, name: `Node ${i}` }));
+    render(
+      <TreeDataGrid columns={columns} data={tree} getRowId={(row) => row.id} getChildren={(row) => row.children} />,
+    );
+
+    const rows = dataRows();
+    expect(rows).toHaveLength(10);
+    rows.forEach((row, i) => {
+      expect(row.getAttribute("data-index")).toBe(String(i));
+    });
+  });
+
   it("renders every row directly (no windowing) below the virtualize threshold", () => {
     const mediumTree: Node[] = Array.from({ length: 30 }, (_, i) => ({ id: `n${i}`, name: `Node ${i}` }));
     render(

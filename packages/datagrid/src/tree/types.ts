@@ -48,6 +48,29 @@ export interface TreeDataGridProps<TRow> extends TreeAccessors<TRow> {
   /** Controlled expanded state, keyed by node id. Omit for the grid to own this itself. */
   expanded?: Record<string, boolean>;
   onExpandedChange?: (expanded: Record<string, boolean>) => void;
+  /**
+   * Controlled lazy-children cache, keyed by node id — same
+   * controlled/uncontrolled convention as `expanded` above. Omit for the
+   * grid to own this itself (the common case, and the only way earlier
+   * versions of this component worked).
+   *
+   * Supply this when a caller needs to force a specific node's cached batch
+   * to be replaced with fresher data fetched *outside* the normal
+   * expand/collapse flow above (`onLoadChildren` only ever runs once per
+   * node id per the doc on it) — e.g. after an edit made to one of that
+   * node's children was saved, and the caller re-fetched that batch via its
+   * own `onLoadChildren` function to pick up the server's new state. Setting
+   * `childrenMap` to a new map containing that node's id (typically via
+   * `onChildrenMapChange`'s own setter, called by the caller's re-fetch
+   * logic) makes this component's flattened rows use the fresh batch on the
+   * very next render — without this, a caller's own separate copy of that
+   * data has nowhere to feed back into what actually gets rendered, no
+   * matter how it's refreshed, since only this component's internal cache
+   * (or an eager `getChildren(row)`) is ever consulted for a lazily-loaded
+   * node's children.
+   */
+  childrenMap?: ReadonlyMap<string, TRow[]>;
+  onChildrenMapChange?: (childrenMap: ReadonlyMap<string, TRow[]>) => void;
   /** Pixels of left padding added per depth level to the tree column's cell. Defaults to 20. */
   indentSize?: number;
   /**
