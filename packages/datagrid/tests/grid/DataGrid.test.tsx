@@ -585,11 +585,16 @@ describe("DataGrid (renderDetail)", () => {
 });
 
 describe("DataGrid (column pinning)", () => {
-  it("applies no sticky positioning to a column without `pinned`", () => {
+  it("applies no side-pinning offset to a column without `pinned`", () => {
     render(
       <DataGrid columns={columns} dataSource={{ mode: "client", data: rows }} getRowId={(row) => row.id} />,
     );
-    expect(screen.getByRole("columnheader", { name: /Name/ })).not.toHaveClass("sticky");
+    // Every header cell sticks to the top of the scroll container regardless
+    // of pinning (see the "sticky header" describe block below) -- what a
+    // *pinned* column additionally gets is a left/right inline offset.
+    const header = screen.getByRole("columnheader", { name: /Name/ });
+    expect(header.style.left).toBe("");
+    expect(header.style.right).toBe("");
   });
 
   it("pins a single left column at offset 0", () => {
@@ -675,6 +680,43 @@ describe("DataGrid (column pinning)", () => {
     );
 
     expect(screen.getByRole("columnheader", { name: /Name/ })).toHaveStyle({ left: "88px" });
+  });
+});
+
+describe("DataGrid (sticky header)", () => {
+  it("sticks every leaf header cell to the top of the scroll container", () => {
+    render(<DataGrid columns={columns} dataSource={{ mode: "client", data: rows }} getRowId={(row) => row.id} />);
+    const header = screen.getByRole("columnheader", { name: /Name/ });
+    expect(header).toHaveClass("sticky", "top-0", "z-20", "bg-muted");
+  });
+
+  it("sticks the structural selection header cell to the top of the scroll container too", () => {
+    render(
+      <DataGrid
+        columns={columns}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        selectedIds={new Set()}
+        onSelectedIdsChange={vi.fn()}
+      />,
+    );
+    const selectAllHeader = screen.getByRole("checkbox", { name: "Select all rows on this page" }).closest("th");
+    expect(selectAllHeader).toHaveClass("sticky", "top-0", "z-20");
+  });
+
+  it("keeps a pinned column's header cell both top-sticky and side-pinned at once", () => {
+    const pinned: ColumnDef<Row>[] = [{ ...columns[0]!, pinned: "left", width: 120 }, columns[1]!];
+    render(<DataGrid columns={pinned} dataSource={{ mode: "client", data: rows }} getRowId={(row) => row.id} />);
+    const header = screen.getByRole("columnheader", { name: /Name/ });
+    expect(header).toHaveClass("sticky", "top-0", "z-20");
+    expect(header).toHaveStyle({ left: "0px" });
+  });
+
+  it("does not sticky the filter row (only the leaf label row)", () => {
+    const filterable: ColumnDef<Row>[] = [{ ...columns[0]!, filterable: true, filterDisplay: "row" }, columns[1]!];
+    render(<DataGrid columns={filterable} dataSource={{ mode: "client", data: rows }} getRowId={(row) => row.id} />);
+    const filterCell = screen.getByTestId("filter-row").querySelector("th");
+    expect(filterCell).not.toHaveClass("sticky");
   });
 });
 

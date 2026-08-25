@@ -400,7 +400,10 @@ export function DataGrid<TRow extends RowData>({
     width: number,
     area: "header" | "body" = "body",
   ): { className: string; classNameOdd: string; style: CSSProperties } {
-    const base = "border-b border-border p-1 sticky z-10";
+    // A header structural cell (select-all checkbox, expand-all chevron) also
+    // sticks to the top of the scroll container -- z-20 so it stays above a
+    // body row's own z-10 side-pinned cells once both are visible at once.
+    const base = area === "header" ? "border-b border-border p-1 sticky top-0 z-20" : "border-b border-border p-1 sticky z-10";
     const bg = area === "header" ? "bg-muted" : "bg-background";
     const bgOdd = area === "header" ? "bg-muted" : STRUCTURAL_ZEBRA_BG_CLASS;
     return {
@@ -460,17 +463,31 @@ export function DataGrid<TRow extends RowData>({
   function headerCellClassAndStyle(
     column: ColumnDef<TRow>,
     base: string,
+    options: { sticky?: boolean } = {},
   ): { className: string; style?: CSSProperties } {
     const pinnedProps = pinnedCellProps(column, "header");
     const align = alignClassName(column);
-    const className = pinnedProps.className ? `${base} ${align} ${pinnedProps.className}` : `${base} ${align}`;
+    // `pinnedProps.className` (when set) comes first so `cn()`'s twMerge
+    // resolves overlapping utilities (z-10/bg-muted from side-pinning) in
+    // favor of whatever comes after -- the sticky-to-top treatment needs to
+    // win: z-20 (not the side-pin's z-10) so a pinned column's header cell
+    // still renders above a *body* row's own side-pinned cell once scrolled.
+    const className = cn(
+      base,
+      align,
+      pinnedProps.className,
+      options.sticky && "sticky top-0 z-20 bg-muted",
+    );
     return { className, style: pinnedProps.style };
   }
   // eslint-disable-next-line react-hooks/exhaustive-deps -- see bodyCellPropsByColumn above.
   const leafHeaderCellPropsByColumn = useMemo(() => {
     const map = new Map<string, { className: string; style?: CSSProperties }>();
     for (const column of visibleColumns) {
-      map.set(column.id, headerCellClassAndStyle(column, "relative border-b border-border p-2 font-medium"));
+      map.set(
+        column.id,
+        headerCellClassAndStyle(column, "relative border-b border-border p-2 font-medium", { sticky: true }),
+      );
     }
     return map;
   }, [visibleColumns, enableColumnResizing, leftPinnedOffsets, rightPinnedOffsets, columnSizing]);
@@ -654,18 +671,30 @@ export function DataGrid<TRow extends RowData>({
   }
 
   return (
-    <div className="flex flex-col gap-2" data-testid="datagrid">
+    // `h-full`/`min-h-0` here and on the two wrappers below are no-ops unless
+    // a consumer itself gives <DataGrid> a bounded height (e.g. wraps it in
+    // its own `flex-1 min-h-0` container) -- percentage heights fall back to
+    // `auto` with no definite ancestor height, so every existing natural-
+    // height usage renders unchanged. Wrap it in a bounded container, though,
+    // and this cascades down to the actual scrolling div below instead of
+    // silently rendering at full unbounded content height, which used to
+    // force any consumer wanting a bounded, page-filling grid to add its own
+    // *second* `overflow-auto` wrapper around <DataGrid> -- two nested scroll
+    // containers (that one scrolling vertically, this component's own
+    // `overflow-x-auto` div scrolling horizontally) fighting over which one
+    // a sticky header/pinned column is actually stuck relative to.
+    <div className="flex h-full min-h-0 flex-col gap-2" data-testid="datagrid">
       {showSelectionColumn && headerActions && (
-        <div className="flex items-center justify-between text-sm">
+        <div className="flex shrink-0 items-center justify-between text-sm">
           <span>{selectedRows.length} selected</span>
           <ActionsMenu items={headerActions} ctx={{ selectedRows }} triggerLabel="Bulk actions" />
         </div>
       )}
-      <div className="relative">
+      <div className="relative min-h-0 flex-1">
         {loading && (
           <div
             data-testid="datagrid-loading-overlay"
-            className="absolute inset-0 z-10 flex items-center justify-center bg-background/60"
+            className="absolute inset-0 z-30 flex items-center justify-center bg-background/60"
           >
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden />
           </div>
@@ -673,7 +702,7 @@ export function DataGrid<TRow extends RowData>({
         <div
           ref={scrollRef}
           data-testid={testId}
-          className={cn("overflow-x-auto rounded-md border", shouldVirtualize && "overflow-y-auto")}
+          className="h-full overflow-auto rounded-md border"
           style={shouldVirtualize ? { maxHeight: virtualize?.maxBodyHeight ?? 480 } : undefined}
         >
         {/*
@@ -918,7 +947,7 @@ export function DataGrid<TRow extends RowData>({
         </div>
       </div>
       {showPagination && (
-        <div className="flex items-center justify-between text-sm">
+        <div className="flex shrink-0 items-center justify-between text-sm">
           <span>
             Page {state.page + 1} of {pageCount} ({rowCount} row{rowCount === 1 ? "" : "s"})
           </span>
