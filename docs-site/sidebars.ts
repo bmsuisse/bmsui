@@ -19,6 +19,7 @@ const sidebars: SidebarsConfig = {
         'datagrid/getting-started',
         'datagrid/columns-and-filters',
         'datagrid/server-vs-client',
+        'datagrid/row-grouping',
         'datagrid/tree-data-grid',
         'datagrid/column-selector',
       ],

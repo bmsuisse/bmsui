@@ -1032,6 +1032,30 @@ describe("DataGrid (groupBy)", () => {
     const groupHeaderCell = screen.getByText("Senior (2)").closest("td")!;
     expect(groupHeaderCell).toHaveAttribute("colspan", "5");
   });
+
+  it("sticks the group-header row below the real header while its rows scroll past", () => {
+    render(
+      <DataGrid columns={columns} dataSource={{ mode: "client", data: rows }} getRowId={(row) => row.id} groupBy={groupByTier} />,
+    );
+    const groupHeaderCell = screen.getByText("Senior (2)").closest("td")!;
+    expect(groupHeaderCell).toHaveClass("sticky", "z-20", "bg-muted");
+    expect(groupHeaderCell.style.top).not.toBe("");
+  });
+
+  it("omits the group-header shading when zebra is false", () => {
+    render(
+      <DataGrid
+        columns={columns}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        groupBy={groupByTier}
+        zebra={false}
+      />,
+    );
+    const groupHeaderCell = screen.getByText("Senior (2)").closest("td")!;
+    expect(groupHeaderCell).not.toHaveClass("bg-muted");
+    expect(groupHeaderCell).toHaveClass("bg-background", "sticky");
+  });
 });
 
 describe("DataGrid (getRowProps)", () => {
