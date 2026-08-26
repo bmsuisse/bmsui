@@ -509,6 +509,77 @@ function VirtualizedScrollDemo(): ReactElement {
   );
 }
 
+// --- groupBy demo: enough departments/members to scroll a few groups past
+// each other inside the grid's own (height-bounded) scroll container, to
+// exercise the group-header row's sticky-below-thead behavior and its
+// zebra-gated shading — rather than just the single always-expanded,
+// never-scrolled group a smaller dataset would show.
+interface TeamMember {
+  id: string;
+  name: string;
+  department: string;
+  role: string;
+}
+
+const DEPARTMENTS = ["Engineering", "Sales", "Marketing", "Support", "Finance"];
+const ROLES = ["Manager", "Senior", "Associate", "Junior"];
+const FIRST_NAMES = [
+  "Alice",
+  "Bob",
+  "Carol",
+  "Dave",
+  "Eve",
+  "Frank",
+  "Grace",
+  "Heidi",
+];
+const TEAM_MEMBERS: TeamMember[] = DEPARTMENTS.flatMap((department, dIndex) =>
+  FIRST_NAMES.map((name, nIndex) => ({
+    id: `${department}-${name}`,
+    name: `${name} ${department[0]}.`,
+    department,
+    role: ROLES[(dIndex + nIndex) % ROLES.length]!,
+  })),
+);
+
+const teamMemberColumns: ColumnDef<TeamMember>[] = [
+  { id: "name", type: "string", header: "Name", accessorKey: "name" },
+  { id: "role", type: "string", header: "Role", accessorKey: "role" },
+];
+
+function GroupingDemo(): ReactElement {
+  const [zebra, setZebra] = useState(true);
+  return (
+    <div>
+      <p className="mb-2 text-sm text-muted-foreground">
+        Grouped by department — scroll within the grid to see each department's header stick
+        below the column header as its members pass underneath.
+      </p>
+      <button
+        type="button"
+        data-testid="grouping-zebra-toggle"
+        aria-pressed={zebra}
+        className="mb-2 rounded-md border px-3 py-1 text-sm"
+        onClick={() => setZebra((prev) => !prev)}
+      >
+        Zebra: {zebra ? "On" : "Off"}
+      </button>
+      <div className="h-[380px]">
+        <DataGrid
+          testId="grouping-grid"
+          columns={teamMemberColumns}
+          dataSource={{ mode: "client", data: TEAM_MEMBERS }}
+          getRowId={(row) => row.id}
+          groupBy={(row) => row.department}
+          showPagination={false}
+          initialState={{ pageSize: TEAM_MEMBERS.length }}
+          zebra={zebra}
+        />
+      </div>
+    </div>
+  );
+}
+
 /**
  * The whole demo: an engine toggle (SQL / Meilisearch, also settable via
  * ?engine=), a dark-mode toggle, and a <ColumnSelector> trigger, all driving
@@ -631,6 +702,9 @@ export function App(): ReactElement {
 
       <h2 className="mb-2 mt-8 text-lg font-semibold">headerGroup demo — spanning header cells</h2>
       <HeaderGroupDemo />
+
+      <h2 className="mb-2 mt-8 text-lg font-semibold">groupBy demo — sticky group headers</h2>
+      <GroupingDemo />
 
       <h2 className="mb-2 mt-8 text-lg font-semibold">Virtualized scrolling demo</h2>
       <VirtualizedScrollDemo />
