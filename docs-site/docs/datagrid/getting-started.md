@@ -45,7 +45,8 @@ other half of the story: paginating against a real backend.
 
 - **`<DataGrid>`** — the grid itself: column-typed filter widgets, sorting,
   pagination, row virtualization, infinite scroll, column pinning/resizing,
-  row selection, per-row/header action menus, expandable row detail.
+  row selection, per-row/header action menus, expandable row detail, and
+  [single-level row grouping](/datagrid/row-grouping).
 - **`<TreeDataGrid>`** — a [lazy-loading tree grid](/datagrid/tree-data-grid)
   for hierarchical data (org charts, nested categories), reusing the same
   column system.
