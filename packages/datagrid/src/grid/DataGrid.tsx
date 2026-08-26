@@ -4,7 +4,7 @@ import { columnResizingFeature, columnSizingFeature, flexRender, tableFeatures, 
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ChevronRight, Loader2 } from "lucide-react";
 import type { CSSProperties, ReactElement, ReactNode } from "react";
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { alignClassName, defaultFormat } from "../column/format";
 import type { ColumnDef } from "../column/types";
 import { getColumnValue, isFilterable, isSortable } from "../column/types";
@@ -510,6 +510,24 @@ export function DataGrid<TRow extends RowData>({
     () => (groupBy ? groupRows(tableRows, (row) => groupBy(row.original)) : undefined),
     [tableRows, groupBy],
   );
+  // A group-header row sticks right below the real `<thead>` while its
+  // members scroll past -- `top` has to be the header's actual rendered
+  // height (it varies with the optional filter/header-group rows and with
+  // column-resize-driven wrapping), not a guessed constant. `ResizeObserver`
+  // rather than a one-off measurement because header height can change after
+  // mount (e.g. a column's header content wrapping to a second line).
+  const theadRef = useRef<HTMLTableSectionElement>(null);
+  const [groupHeaderTop, setGroupHeaderTop] = useState(0);
+  useLayoutEffect(() => {
+    if (!groupBy) return;
+    const theadEl = theadRef.current;
+    if (!theadEl) return;
+    const updateHeight = (): void => setGroupHeaderTop(theadEl.getBoundingClientRect().height);
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(theadEl);
+    return () => observer.disconnect();
+  }, [groupBy]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const virtualizer = useVirtualizer({
     count: tableRows.length,
@@ -647,7 +665,14 @@ export function DataGrid<TRow extends RowData>({
       <Fragment key={`group-${bucket.key}`}>
         <tbody>
           <tr data-testid={`group-header-${bucket.key}`}>
-            <td colSpan={totalColumnCount} className="border-b bg-muted/50 p-2 font-medium">
+            <td
+              colSpan={totalColumnCount}
+              className={cn(
+                "sticky z-20 border-b p-2 font-medium",
+                zebra ? "bg-muted" : "bg-background",
+              )}
+              style={{ top: groupHeaderTop }}
+            >
               <button
                 type="button"
                 className="flex w-full items-center gap-1 text-left"
@@ -720,7 +745,7 @@ export function DataGrid<TRow extends RowData>({
           keeps natural, content-driven column sizing.
         */}
         <table className={cn("w-full border-collapse text-sm", enableColumnResizing && "table-fixed")}>
-        <thead className="bg-muted">
+        <thead ref={theadRef} className="bg-muted">
           {table.getHeaderGroups().map((headerGroup) => {
             // `headerById` backs both the optional spanning-label row below
             // and this leaf row — `table.getHeaderGroups()` always yields
