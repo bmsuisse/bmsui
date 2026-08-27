@@ -52,6 +52,10 @@ export function SearchBar({
         onChange={(event) => onChange(event.target.value)}
         className={cn(
           "h-11 w-full rounded-full border border-input bg-background text-[15px] text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none",
+          // Chromium/Safari render their own native clear (×) control on
+          // type="search" inputs -- left alone, it stacks on top of our own
+          // custom clear button below instead of replacing it.
+          "[&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none",
           showClear ? "pr-11" : "pr-4",
           "pl-11",
         )}
