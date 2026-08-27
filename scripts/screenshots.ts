@@ -84,6 +84,18 @@ async function captureDatagridDemo(browser: Browser, url: string): Promise<void>
   await page.waitForTimeout(100);
   await page.screenshot({ path: path.join(OUT_DIR, "datagrid-histogram.png") });
 
+  // Click the (still-static) Task cell to activate row 1's editors, then
+  // type into it — an unactivated/unedited grid wouldn't show any editors
+  // or the Save/Discard bar, the whole point of this screenshot.
+  const editingGrid = page.getByTestId("editing-grid");
+  await editingGrid.scrollIntoViewIfNeeded();
+  const editingWrapper = editingGrid.locator('xpath=ancestor::div[@data-testid="datagrid"]');
+  await editingGrid.getByTestId("cell-1-title").click();
+  const titleInput = editingGrid.getByTestId("edit-1-title");
+  await titleInput.fill("Draft Q3 roadmap (revised)");
+  await page.waitForTimeout(100);
+  await editingWrapper.screenshot({ path: path.join(OUT_DIR, "datagrid-editing.png") });
+
   const tree = page.getByTestId("tree-datagrid");
   await tree.scrollIntoViewIfNeeded();
   // Scoped to `tree`, not `page` — the orders grid's own row-detail chevrons
@@ -93,9 +105,13 @@ async function captureDatagridDemo(browser: Browser, url: string): Promise<void>
   // Each node's fake loader takes ~700ms — wait for the actual children to
   // show up rather than a fixed delay.
   await treeExpandButtons.first().click(); // Engineering
-  await page.getByText("Frontend Team").waitFor();
+  await tree.getByText("Frontend Team").waitFor();
   await treeExpandButtons.first().click(); // Frontend Team (now first in DOM order)
-  await page.getByText("Alice").waitFor();
+  // Scoped to `tree`, not `page`, same reasoning as `treeExpandButtons`
+  // above — an unscoped locator now also matches the groupBy demo's own
+  // "Alice E."/"Alice S."/etc. rows and the editing demo's Owner select
+  // (which also just renders the bare text "Alice"), all on the same page.
+  await tree.getByText("Alice").waitFor();
   await tree.screenshot({ path: path.join(OUT_DIR, "datagrid-tree.png") });
 
   await page.close();

@@ -853,6 +853,36 @@ renders above the grid once at least one pending edit exists. This is
 accumulate-then-save, not per-cell autosave: there's no partial commit, no
 undo history, only Save (all pending edits) or Discard (all of them).
 
+**Click-to-activate a whole row, not always-on inputs — at most ONE row
+active at a time.** An editable column's cell stays static text (wrapped in
+a clickable/keyboard-focusable `<span data-testid="cell-${rowId}-${column.
+id}">`) until activated — clicking it, or pressing Enter/Space on it, turns
+EVERY editable column in that same row into its editor at once, with focus
+landing on the specific cell that triggered activation (see `autoFocus`
+below). Activating a row deactivates whatever row was active before it —
+edits happen row by row, not several rows' worth of open editors at once
+(a deliberate change from an earlier multi-row-active version of this
+feature). `EditingCellContext.activeRowId` (`string | null`,
+`<DataGrid>`'s own internal state) is deliberately separate from
+`pendingEdits`: a row can be active (clicked into) with zero actual changes
+yet, and Save only clears `activeRowId` if the active row was actually part
+of what got saved — a row a caller clicked into but never edited stays
+active, since there's nothing wrong with it.
+
+**Switching rows does NOT discard the row you switch away from — it stays
+pending, just no longer shown as an editor.** `pendingEdits` still spans
+every row the user has touched this session, exactly as before; only the
+*display* of which row currently shows editors is now single-valued. This
+means a deactivated row's own cells must still show whatever's actually
+pending on them, not the row's stale original data — `toTanstackColumns`'s
+`cell` closure resolves `pendingRow?.values.get(column.id) ?? info.getValue()`
+ONCE per editable cell and reuses that resolved value for both the active
+editor AND the static (deactivated) rendering path; using `info.getValue()`
+directly in the static branch (an earlier bug, fixed together with the
+single-row change) would have made a just-edited-then-switched-away-from
+row look reverted even though its edit was still fully pending and would
+still be included in Save.
+
 **Default editors, by `column.type`** — same "every type gets a working
 default for free" pattern the filter widgets use, in
 `packages/datagrid/src/edit/registry.tsx`'s `renderDefaultEditWidget`:
@@ -865,12 +895,14 @@ default for free" pattern the filter widgets use, in
 | `enum` | single-value select over `column.options` | the selected option's `value` |
 | `date` / `datetime` | native `<input type="date">`/`"datetime-local"` | a `Date` (via `parseISO`, not the bare `new Date(...)` constructor — same UTC-midnight fix `format.ts`'s `toDate`/`DateRangeFilter`'s `parseBound` already apply), or `null` when emptied |
 
-`column.renderEditCell?: (value, row, onChange, error) => ReactNode`
-overrides the default for one column, the same pattern `renderFilter`
-overrides a filter widget. `column.validateEdit?: (value, row) => string |
-undefined` returns a message that blocks Save (shown under the cell, the
-whole Save button disabled) until fixed or reverted — runs on every change,
-not just on Save.
+`column.renderEditCell?: (value, row, onChange, error, autoFocus) =>
+ReactNode` overrides the default for one column, the same pattern
+`renderFilter` overrides a filter widget — `autoFocus` is `true` for exactly
+the one cell whose click activated the row; every built-in editor forwards
+it straight to its control's native `autoFocus` prop. `column.validateEdit?:
+(value, row) => string | undefined` returns a message that blocks Save
+(shown under the cell, the whole Save button disabled) until fixed or
+reverted — runs on every change, not just on Save.
 
 **`EditedRow<TRow>`** (`packages/datagrid/src/edit/types.ts`) is what
 `editing.onSave` receives: `{ rowId, row, values }`, where `values` is
@@ -919,7 +951,89 @@ wouldn't have caught it.
 `edit-${column.id}`** — unlike a filter widget (one instance per column,
 ever, in the header), an edit widget renders once per (row, column) pair;
 a column-id-only testid collides the moment a grid has more than one row.
-`EditWidgetProps.rowId` exists purely to build this.
+`EditWidgetProps.rowId` exists purely to build this. A not-yet-activated
+cell's own static wrapper gets `cell-${rowId}-${column.id}` (a different
+prefix, same reasoning) — that's the one to click in a test to activate a
+row before the `edit-*` testids exist at all.
+
+**Escape reverts one cell, not the row** — a plain `onKeyDown` on a `<div>`
+wrapping whatever the editor rendered (`DataGrid.tsx`, right after the
+`renderEditCell`/`renderDefaultEditWidget` call), calling `editingCtx.onEdit`
+with `getColumnValue(column, row)` (the true original, not "whatever it was
+before this keystroke session" — no per-focus snapshotting, a deliberate
+scope cut). Relies on the key event bubbling up from whatever native control
+the editor renders, so it works for every built-in editor and any custom
+`renderEditCell` without each one needing its own handler. The row stays
+active; sibling cells' own pending edits are untouched.
+
+**`autoFocusTarget` is a one-shot flag, consumed and cleared in a
+`useEffect`** (`DataGrid.tsx`, right after `activateRow`'s definition) — NOT
+redundant with native `autoFocus` only firing on a DOM node's *initial*
+mount. Under `virtualize`, a row's DOM can unmount (scrolled out of the
+windowed range) and later remount (scrolled back in); without clearing
+`autoFocusTarget` after its first use, that later remount is ALSO an
+"initial mount" as far as the DOM is concerned, silently stealing focus back
+to a cell the user scrolled away from. Found by an agent review comparing
+this implementation against AG Grid/MUI/Handsontable conventions — flagged
+as a real, unverified-by-test risk (jsdom can't easily simulate a real
+virtualizer scroll/remount cycle; the fix is verified by reasoning about
+React's `autoFocus` semantics, not by a regression test) rather than
+something caught by the existing test suite.
+
+**Every built-in editor wires `aria-describedby` to its own error text's
+`id`** (`edit/widget-types.ts`'s exported `editErrorId(rowId, columnId)`
+helper), not just `aria-invalid` — a screen reader announcing "invalid" with
+no indication of *why* is not enough on its own. The Save/Discard bar's
+message span is `aria-live="polite"`, since nothing in it is ever focused
+when it appears/changes, and the blocked-Save message names the affected row
+ids (bounded to 3, then "and N more") via `describeErrorRows` rather than a
+bare "fix the errors." The error `<span>` itself is one shared
+`EditFieldError` component (`edit/EditFieldError.tsx`), not five copies of
+the same markup — found duplicated near-verbatim across all 5 editors by a
+review agent; `BooleanEditor`'s wrapping `<div>` dropped its own `gap-0.5`
+when it switched to the shared component, since `EditFieldError`'s `mt-0.5`
+already provides the same 2px spacing (both would have doubled it).
+
+**`handleSaveEdits` clears only what it actually saved, not the whole
+`pendingEdits`/`editErrors` maps** — a real bug an agent review caught:
+nothing disables a row's inputs while `editing.onSave` is in flight
+(`editing.saving` only disables the Save/Discard *buttons*, and only if the
+caller sets it), so a user can keep typing into the active row, or activate
+and edit a different one, during the `await`. The original code did
+`setPendingEdits(new Map())` unconditionally once `onSave` resolved,
+silently discarding any edit made in that window even though it was never
+part of what got sent. The fix snapshots `pendingEdits` before the `await`,
+then after it resolves removes only the exact `(rowId, columnId)` entries
+that are STILL EQUAL to that snapshot (via `editValuesEqual`) — an entry
+changed again during the await survives, and `activeRowId` only clears if
+the active row has nothing left pending on it afterward. Covered by
+`DataGridEditing.test.tsx`'s "keeps an edit made while Save is still in
+flight" test, using a manually-resolved `Promise` to control the race
+deterministically rather than relying on real timing.
+
+**Escape must check real DOM containment, not just `stopPropagation`** —
+another bug the same review caught: the default `EnumEditor`'s Radix
+`<Select>` (or any custom `renderEditCell` popover/dropdown) is a REACT
+descendant of the wrapping `<div>` that owns the Escape handler, so its
+synthetic events still bubble up to it, even though the dropdown's actual
+DOM node lives in a portal outside that `<div>`. Radix's own
+dismiss-on-Escape handling (`@radix-ui/react-dismissable-layer`) calls
+`preventDefault()` but never `stopPropagation()`, so pressing Escape just to
+close an open dropdown would otherwise ALSO revert the cell. Fixed with
+`event.currentTarget.contains(event.target as Node)` — true DOM containment,
+which stays false for a portaled descendant regardless of React-tree
+bubbling. Covered by `DataGridEditing.test.tsx`'s "Escape closes an open
+enum dropdown without reverting" test.
+
+**`DateEditor` formats `"datetime"` values with seconds
+(`yyyy-MM-dd'T'HH:mm:ss`) and sets the input's `step={1}`** — a third bug
+from the same review: the original `yyyy-MM-dd'T'HH:mm` format (no seconds)
+meant editing a datetime cell AT ALL — even just its date portion — silently
+truncated any non-zero seconds the underlying value had, since the native
+input's own value string (built without seconds) is what `onChange`
+reconstructs the edited `Date` from. Milliseconds are still dropped — a
+documented scope cut, not fixed. Covered by `DataGridEditing.test.tsx`'s
+"preserves seconds when editing a datetime column" test.
 
 **Not carried over to `<TreeDataGrid>`** — same scope line as everything
 else in its own "not carried over" list below: build inline editing there

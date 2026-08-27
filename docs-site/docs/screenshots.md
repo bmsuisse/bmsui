@@ -31,6 +31,11 @@ you narrow the range:
 
 <img src="/bmsui/img/screenshots/datagrid-histogram.png" alt="NumberHistogramFilter demo" style={{maxWidth: '100%', border: '1px solid var(--ifm-color-emphasis-300)', borderRadius: '8px'}} />
 
+Inline editing — a pending edit, the Save/Discard bar, and the default
+editor for each column `type`:
+
+<img src="/bmsui/img/screenshots/datagrid-editing.png" alt="Inline editing demo, with a pending edit" style={{maxWidth: '100%', border: '1px solid var(--ifm-color-emphasis-300)', borderRadius: '8px'}} />
+
 `<TreeDataGrid>` — a lazy-loading org chart:
 
 <img src="/bmsui/img/screenshots/datagrid-tree.png" alt="TreeDataGrid demo" style={{maxWidth: '100%', border: '1px solid var(--ifm-color-emphasis-300)', borderRadius: '8px'}} />

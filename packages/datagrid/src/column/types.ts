@@ -90,6 +90,49 @@ export interface BaseColumn<TRow> {
    * any, since `<DataGrid>` has no way to tell your content lacks one.
    */
   renderHeader?: (column: BaseColumn<TRow>) => ReactNode;
+  /**
+   * Opt-in: defaults to false — must be explicitly set (or return true) for
+   * `<DataGrid>` to render this column's cells as inline editors. A function
+   * makes it conditional per row (e.g. a "locked" row that can't be
+   * edited). See `DataGridProps.editing` for the accumulate-then-save
+   * workflow this feeds into — editable cells with no `editing` prop
+   * supplied just render as static text, same as if `editable` were unset.
+   *
+   * A cell doesn't become an editor just because this is true, though:
+   * clicking (or Enter/Space-ing) any editable cell in a row is what
+   * activates editors for every editable column in THAT row at once — the
+   * rest of the grid's rows stay static until clicked into themselves. A
+   * row stays active until its edits are saved or discarded, and
+   * activating one row never deactivates another.
+   */
+  editable?: boolean | ((row: TRow) => boolean);
+  /**
+   * Overrides the default type-based editor (see `renderDefaultEditWidget`)
+   * for this column's cells. Receives the cell's current value (the row's
+   * original value, or a still-pending edit if the user already changed it
+   * this session), the row itself, an `onChange` to record a new pending
+   * value, this cell's current validation error message (from
+   * `validateEdit` below) if any, and whether this specific cell is the one
+   * whose click just activated the row (see `editable`'s own doc) — forward
+   * it to your control's native `autoFocus` so the row-activating click also
+   * focuses the field the user actually clicked, not just some other cell
+   * in the same row.
+   */
+  renderEditCell?: (
+    value: unknown,
+    row: TRow,
+    onChange: (next: unknown) => void,
+    error: string | undefined,
+    autoFocus: boolean,
+  ) => ReactNode;
+  /**
+   * Validates a pending edit before it's allowed into `editing.onSave`'s
+   * payload. Returning a message string blocks the Save button (and shows
+   * the message under the cell) until the value is fixed or reverted to its
+   * original; returning `undefined` means valid. Runs on every change to
+   * this cell, including the default editors' own `onChange`.
+   */
+  validateEdit?: (value: unknown, row: TRow) => string | undefined;
 }
 
 export type StringColumn<TRow> = BaseColumn<TRow> & { type: "string" };
@@ -136,4 +179,10 @@ export function isSortable<TRow>(column: ColumnDef<TRow>): boolean {
 /** True only if a column explicitly opts in (`filterable: true`) — the default is false. */
 export function isFilterable<TRow>(column: ColumnDef<TRow>): boolean {
   return column.filterable === true;
+}
+
+/** True only if a column explicitly opts in to `editable` — for this specific row, when `editable` is a predicate. Default is false. */
+export function isEditable<TRow>(column: ColumnDef<TRow>, row: TRow): boolean {
+  if (!column.editable) return false;
+  return typeof column.editable === "function" ? column.editable(row) : true;
 }

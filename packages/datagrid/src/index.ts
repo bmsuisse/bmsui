@@ -38,8 +38,20 @@ export type {
   NumberColumn,
   StringColumn,
 } from "./column/types";
-export { getColumnValue, isFilterable, isSortable } from "./column/types";
-export { alignClassName, defaultAlign, defaultFormat } from "./column/format";
+export { getColumnValue, isEditable, isFilterable, isSortable } from "./column/types";
+export { alignClassName, defaultAlign, defaultFormat, toDate } from "./column/format";
+
+// --- inline editing --------------------------------------------------------
+export type { EditedRow } from "./edit/types";
+export type { EditWidgetProps } from "./edit/widget-types";
+export { editErrorId } from "./edit/widget-types";
+export { EditFieldError } from "./edit/EditFieldError";
+export { BooleanEditor } from "./edit/BooleanEditor";
+export { DateEditor } from "./edit/DateEditor";
+export { EnumEditor } from "./edit/EnumEditor";
+export { NumberEditor } from "./edit/NumberEditor";
+export { StringEditor } from "./edit/StringEditor";
+export { renderDefaultEditWidget } from "./edit/registry";
 
 // --- column selector -----------------------------------------------------
 export type { ColumnVisibility } from "./column-selector/types";
@@ -62,7 +74,7 @@ export { resolveMenuItems } from "./menu/resolveMenuItems";
 export { ActionsMenu } from "./menu/ActionsMenu";
 
 // --- the grid ------------------------------------------------------------------
-export type { DataGridProps, DataSource } from "./grid/types";
+export type { DataGridEditingOptions, DataGridProps, DataSource } from "./grid/types";
 export type { ColumnSizingState } from "@tanstack/react-table";
 export { DataGrid } from "./grid/DataGrid";
 export type { GridStateController } from "./grid/useGridState";
