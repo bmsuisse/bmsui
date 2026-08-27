@@ -51,6 +51,7 @@ import {
   Sidebar,
   Skeleton,
   StatusBadge,
+  TagCombobox,
   Textarea,
   Tooltip,
   TooltipContent,
@@ -66,7 +67,7 @@ import {
   Percent,
 } from "lucide-react";
 import type { ReactElement } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 function Section({ title, children }: { title: string; children: ReactElement }): ReactElement {
   return (
@@ -80,6 +81,15 @@ function Section({ title, children }: { title: string; children: ReactElement })
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+const ALL_SUPPLIERS = [
+  { value: "00611", label: "00611 RIGIPS AG" },
+  { value: "01952", label: "01952 SWISSPOR ROMANDIE SA" },
+  { value: "00008817", label: "00008817 Sika Schweiz AG – VE PCI" },
+  { value: "00010381", label: "00010381 Swisspor AG" },
+  { value: "00010050", label: "00010050 Stanley Works (Europe) GmbH" },
+  { value: "00009925", label: "00009925 Creabeton AG" },
+];
 
 export function App(): ReactElement {
   // Mirrors packages/datagrid/demo's own dark-mode convention: toggle the
@@ -103,9 +113,36 @@ export function App(): ReactElement {
   const [fieldError, setFieldError] = useState<string | undefined>(undefined);
   const [country, setCountry] = useState<string | null>("ch");
   const [teamMembers, setTeamMembers] = useState<string[]>([]);
+  const [colors, setColors] = useState<string[]>(["red", "blue"]);
+  const [suppliers, setSuppliers] = useState<string[]>(["00611", "01952"]);
+  const [supplierSearch, setSupplierSearch] = useState("");
+  const [supplierResults, setSupplierResults] = useState<{ value: string; label: string }[]>([]);
+  const [supplierSearchLoading, setSupplierSearchLoading] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [syncAction, setSyncAction] = useState<"ignore" | "create" | "update">("create");
   const [syncActionSmall, setSyncActionSmall] = useState<"ignore" | "create" | "update">("update");
+
+  // Simulates a real server-driven search (debounced fetch + loading state) —
+  // TagCombobox's onSearchChange doesn't debounce or fetch itself, that's the
+  // caller's job, same contract as Combobox's own onSearchChange.
+  useEffect(() => {
+    const preselected = ALL_SUPPLIERS.filter((s) => suppliers.includes(s.value));
+    if (supplierSearch.trim().length < 2) {
+      setSupplierResults(preselected);
+      setSupplierSearchLoading(false);
+      return;
+    }
+    setSupplierSearchLoading(true);
+    const timeout = setTimeout(() => {
+      const term = supplierSearch.trim().toLowerCase();
+      const matches = ALL_SUPPLIERS.filter((s) => s.label.toLowerCase().includes(term));
+      const byValue = new Map([...preselected, ...matches].map((s) => [s.value, s]));
+      setSupplierResults([...byValue.values()]);
+      setSupplierSearchLoading(false);
+    }, 400);
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `suppliers` intentionally excluded: re-running this on every selection change would restart the debounce mid-search.
+  }, [supplierSearch]);
 
   return (
     <div>
@@ -397,6 +434,38 @@ export function App(): ReactElement {
                 onChange={setTeamMembers}
                 placeholder="Select team members"
                 searchPlaceholder="Search…"
+              />
+            </div>
+          </Section>
+
+          <Section title="TagCombobox (client-side filter)">
+            <div className="w-80">
+              <TagCombobox
+                options={[
+                  { value: "red", label: "Red" },
+                  { value: "blue", label: "Blue" },
+                  { value: "green", label: "Green" },
+                  { value: "yellow", label: "Yellow" },
+                  { value: "purple", label: "Purple" },
+                ]}
+                value={colors}
+                onChange={setColors}
+                placeholder="Select colors"
+              />
+            </div>
+          </Section>
+
+          <Section title="TagCombobox (server-driven search)">
+            <div className="w-80">
+              <TagCombobox
+                data-testid="supplier-tag-combobox"
+                options={supplierResults}
+                value={suppliers}
+                onChange={setSuppliers}
+                onSearchChange={setSupplierSearch}
+                loading={supplierSearchLoading}
+                placeholder="Search suppliers…"
+                emptyMessage={supplierSearch.trim().length < 2 ? "Type to search…" : "No matches."}
               />
             </div>
           </Section>
