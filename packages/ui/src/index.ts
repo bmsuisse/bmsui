@@ -124,5 +124,8 @@ export {
   loadingSpinnerIconVariants,
 } from "./patterns/loading-spinner/LoadingSpinner";
 
+export type { SearchBarProps } from "./patterns/search-bar/SearchBar";
+export { SearchBar } from "./patterns/search-bar/SearchBar";
+
 // --- shared utility -----------------------------------------------------------
 export { cn } from "./lib/utils";

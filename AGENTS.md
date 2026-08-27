@@ -121,6 +121,16 @@ logic above, which already had its own extraction). Structure:
     pixels) — that's specific to that app and not what the
     contract-management app's `Loader2`-based ad hoc spinners (the thing
     actually being consolidated) look like.
+  - `search-bar/` — `SearchBar` (v0.6.0), a pill-shaped search input:
+    leading icon (swaps to a `LoadingSpinner` while `isLoading`), trailing
+    clear button once `value` is non-empty (`onClear`, defaulting to
+    `onChange("")`; pass `onClear={false}` to hide it outright). Unlike
+    `Combobox`, it renders no dropdown/result list of its own — just the
+    input chrome, same shape OneSales's mobile customer list and product
+    search pages had each hand-rolled independently. `clearLabel` (default
+    `"Clear search"`) follows the same "labels are props with an English
+    default" convention as `ConfirmDialog`'s `confirmLabel`/`cancelLabel`,
+    for callers that localize.
   - `combobox/` — `Combobox`, a searchable single- or multi-select
     ("autocomplete box") discriminated on a `multiple` prop (omitted/`false`
     keeps the original `value: string | null` shape unchanged; `multiple:
@@ -790,6 +800,111 @@ index space to virtualize correctly (the same technique `<TreeDataGrid>`
 uses for its own flattened tree) — out of scope for this pass. Setting both
 `groupBy` and `virtualize` silently disables virtualization rather than
 mis-rendering; see "Known limitations" below.
+
+### `editable` / `editing` — inline cell editing, accumulate-then-save
+
+`BaseColumn.editable?: boolean | ((row: TRow) => boolean)` turns a column's
+cells into interactive editors instead of static `cell`/`defaultFormat`
+output; `DataGridProps.editing?: DataGridEditingOptions<TRow>` turns on the
+workflow that goes with it. The two are independent switches — a column with
+`editable` set but no `editing` prop on `<DataGrid>` just renders as static
+text, same as if `editable` were never set (mirrors `sortable`/`filterable`'s
+own opt-in-per-column, gate-defaults-shut convention).
+
+```tsx
+<DataGrid
+  columns={columns}
+  dataSource={{ mode: "client", data: tasks }}
+  getRowId={(row) => row.id}
+  editing={{
+    onSave: async (edits) => {
+      await api.updateTasks(edits);
+      setTasks((prev) => prev.map((t) => {
+        const edit = edits.find((e) => e.rowId === t.id);
+        return edit ? { ...t, ...edit.values } : t;
+      }));
+    },
+  }}
+/>
+```
+
+Edits **accumulate locally** — never written back onto the caller's `data`,
+never sent anywhere — until the user clicks Save in a bar `<DataGrid>`
+renders above the grid once at least one pending edit exists. This is
+accumulate-then-save, not per-cell autosave: there's no partial commit, no
+undo history, only Save (all pending edits) or Discard (all of them).
+
+**Default editors, by `column.type`** — same "every type gets a working
+default for free" pattern the filter widgets use, in
+`packages/datagrid/src/edit/registry.tsx`'s `renderDefaultEditWidget`:
+
+| `type` | default editor | emits |
+|---|---|---|
+| `string` | text input | `string` |
+| `number` / `currency` | number input | `number`, or `null` when emptied |
+| `boolean` | checkbox | `boolean` |
+| `enum` | single-value select over `column.options` | the selected option's `value` |
+| `date` / `datetime` | native `<input type="date">`/`"datetime-local"` | a `Date` (via `parseISO`, not the bare `new Date(...)` constructor — same UTC-midnight fix `format.ts`'s `toDate`/`DateRangeFilter`'s `parseBound` already apply), or `null` when emptied |
+
+`column.renderEditCell?: (value, row, onChange, error) => ReactNode`
+overrides the default for one column, the same pattern `renderFilter`
+overrides a filter widget. `column.validateEdit?: (value, row) => string |
+undefined` returns a message that blocks Save (shown under the cell, the
+whole Save button disabled) until fixed or reverted — runs on every change,
+not just on Save.
+
+**`EditedRow<TRow>`** (`packages/datagrid/src/edit/types.ts`) is what
+`editing.onSave` receives: `{ rowId, row, values }`, where `values` is
+`Record<string, unknown>` keyed by column id — changed columns only, **not**
+a patched `TRow`. Keyed by column id rather than patching `TRow` directly
+because an `accessorFn` column has no single field of `TRow` an edit could
+write back onto; an `accessorKey` column's obvious field works the same way
+either way. `row` is the row as it looked when its *first* still-pending
+edit on it was made this session — not necessarily its current on-screen
+data if a background refetch changed it since (documented limitation, not
+handled).
+
+**Reject to keep edits, resolve to clear them** — `<DataGrid>` keeps its
+pending-edit state exactly as it was until `onSave` settles: throwing/
+rejecting leaves every pending edit in place (the caller's own save request
+failed; show your own error UI, `<DataGrid>` surfaces nothing of its own for
+that case) rather than losing the user's in-progress work. Resolving (or
+just returning) clears every pending edit that was included in that call.
+
+**No i18n/templating layer** (this repo has none, anywhere) — `saveLabel`/
+`discardLabel` are a plain string (rendered as-is, no `{count}` placeholder
+substitution) or a `(changedRowCount) => ReactNode` function for a
+count-aware label. Defaults to `` `Save ${count} change${count === 1 ? "" :
+"s"}` `` and `"Discard"`.
+
+**Implementation footgun worth knowing before touching `DataGrid.tsx`'s
+editing code**: `toTanstackColumns`'s `cell` closures must NOT close over
+`pendingEdits`/`editErrors` directly. `flexRender` renders `columnDef.cell`
+as a component (its effective "type" for React's reconciliation, not just a
+value) — a `cell` function recreated on every `pendingEdits` change (i.e. on
+every keystroke in any editor, if it were a `tanstackColumns` dependency)
+gets a new identity each time, so React sees a changed component type at the
+same tree position and remounts the ENTIRE table body under it, silently
+dropping focus out from under the very input the user is typing into. Fixed
+via `editingCtxRef` (a `useRef`, reassigned every render as a plain
+statement, not in an effect): `tanstackColumns`'s memo depends only on
+`visibleColumns`, exactly as it did before editing existed, while each
+column's stable `cell` closure reads `editingCtxRef.current` fresh at actual
+render time. Caught by `tests/grid/DataGridEditing.test.tsx`, which does
+real multi-character `userEvent.type()` typing (not single atomic
+`fireEvent.change` calls) specifically because that's what surfaces this
+class of remount bug — a test using only single-shot value-replacement
+wouldn't have caught it.
+
+**Per-cell `data-testid`s are `edit-${rowId}-${column.id}`, not
+`edit-${column.id}`** — unlike a filter widget (one instance per column,
+ever, in the header), an edit widget renders once per (row, column) pair;
+a column-id-only testid collides the moment a grid has more than one row.
+`EditWidgetProps.rowId` exists purely to build this.
+
+**Not carried over to `<TreeDataGrid>`** — same scope line as everything
+else in its own "not carried over" list below: build inline editing there
+via a custom `column.cell` renderer and your own state.
 
 ## `<TreeDataGrid>` — lazy-loading tree grid
 
