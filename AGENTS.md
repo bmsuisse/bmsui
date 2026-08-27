@@ -130,7 +130,13 @@ logic above, which already had its own extraction). Structure:
     search pages had each hand-rolled independently. `clearLabel` (default
     `"Clear search"`) follows the same "labels are props with an English
     default" convention as `ConfirmDialog`'s `confirmLabel`/`cancelLabel`,
-    for callers that localize.
+    for callers that localize. The input strips Chromium/Safari's own
+    native `type="search"` clear/decoration controls
+    (`[&::-webkit-search-cancel-button]`/`[&::-webkit-search-decoration]`
+    `appearance-none`, v0.6.3) — left alone, the browser draws its own ×
+    on top of this component's custom one, so a non-empty value showed two
+    overlapping clear buttons. Found integrating this into OneSales's
+    mobile customer list.
   - `combobox/` — `Combobox`, a searchable single- or multi-select
     ("autocomplete box") discriminated on a `multiple` prop (omitted/`false`
     keeps the original `value: string | null` shape unchanged; `multiple:

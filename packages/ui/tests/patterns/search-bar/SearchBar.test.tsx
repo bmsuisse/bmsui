@@ -49,4 +49,11 @@ describe("SearchBar", () => {
     rerender(<SearchBar value="" onChange={() => {}} isLoading />);
     expect(container.querySelector('[role="status"]')).toBeInTheDocument();
   });
+
+  it("suppresses the native type=search clear/decoration controls, so only our own clear button shows", () => {
+    render(<SearchBar value="foo" onChange={() => {}} placeholder="Search…" />);
+    const input = screen.getByPlaceholderText("Search…");
+    expect(input.className).toContain("[&::-webkit-search-cancel-button]:appearance-none");
+    expect(input.className).toContain("[&::-webkit-search-decoration]:appearance-none");
+  });
 });
