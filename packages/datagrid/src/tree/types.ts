@@ -1,4 +1,5 @@
 import type { ColumnDef } from "../column/types";
+import type { EditingOptions } from "../edit/types";
 import type { MenuItem } from "../menu/types";
 
 /**
@@ -164,4 +165,16 @@ export interface TreeDataGridProps<TRow> extends TreeAccessors<TRow> {
   isRowSelectionDisabled?: (row: TRow) => boolean;
   /** Alternates body row backgrounds for readability on wide/dense tables. Defaults to true. */
   zebra?: boolean;
+  /**
+   * Enables the same built-in inline-editing workflow `<DataGrid>` has:
+   * any column with `editable` set renders as an interactive editor
+   * (clicking one editable cell activates every editable column in that
+   * row, one row active at a time), edits accumulate locally, and a
+   * Save/Discard bar appears above the tree once at least one exists. Omit
+   * entirely to disable — every `editable` column then just falls back to
+   * its normal static `cell`/`defaultFormat` rendering, same as if
+   * `editable` were never set. See `EditingOptions` (shared with
+   * `<DataGrid>`) for the full contract.
+   */
+  editing?: EditingOptions<TRow>;
 }

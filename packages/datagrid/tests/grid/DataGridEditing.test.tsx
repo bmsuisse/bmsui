@@ -327,6 +327,28 @@ describe("DataGrid inline editing", () => {
     expect(edits[0]!.values.age).toBe(31);
   });
 
+  it("keeps a decimal point visible while typing it, and commits the full decimal value", async () => {
+    // Regression test for a real bug: deriving the number input's displayed
+    // `value` straight from `String(parsedNumber)` loses an in-progress
+    // decimal point or leading minus sign, because a native
+    // `type="number"` input's own `.value` reads back as `""` while the
+    // typed text isn't yet a complete valid float — feeding that back
+    // through a controlled `value` prop wipes what the user just typed.
+    const onSave = vi.fn();
+    render(<EditableGrid onSave={onSave} />);
+    await activateCell("1", "age");
+
+    const ageInput = screen.getByTestId("edit-1-age");
+    await userEvent.clear(ageInput);
+    await userEvent.type(ageInput, "12.5");
+
+    expect(ageInput).toHaveValue(12.5);
+    await userEvent.click(screen.getByTestId("datagrid-save-edits"));
+
+    const edits = onSave.mock.calls[0]![0] as EditedRow<Row>[];
+    expect(edits[0]!.values.age).toBe(12.5);
+  });
+
   it("commits a real boolean from the default boolean editor", async () => {
     const onSave = vi.fn();
     render(<EditableGrid onSave={onSave} />);

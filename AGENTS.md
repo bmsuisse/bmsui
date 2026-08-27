@@ -901,11 +901,25 @@ mis-rendering; see "Known limitations" below.
 
 `BaseColumn.editable?: boolean | ((row: TRow) => boolean)` turns a column's
 cells into interactive editors instead of static `cell`/`defaultFormat`
-output; `DataGridProps.editing?: DataGridEditingOptions<TRow>` turns on the
-workflow that goes with it. The two are independent switches — a column with
+output; `DataGridProps.editing?: EditingOptions<TRow>` turns on the workflow
+that goes with it. The two are independent switches — a column with
 `editable` set but no `editing` prop on `<DataGrid>` just renders as static
 text, same as if `editable` were never set (mirrors `sortable`/`filterable`'s
 own opt-in-per-column, gate-defaults-shut convention).
+
+Everything in this section applies equally to `<TreeDataGrid>`'s own
+`editing` prop (same `EditingOptions<TRow>` type, same per-cell contract) —
+see that component's own section below for the handful of things that
+differ (testid prefix, no `ctxRef` indirection needed). The whole state
+machine — pending edits, validation errors, which row is active, autofocus
+targeting, the Save/Discard commit logic — lives in ONE place,
+`packages/datagrid/src/edit/editingState.ts`'s `useEditingState` hook, used
+by both grids; the per-cell render decision (editor vs. static, click-to-
+activate, Escape-to-revert) lives in `edit/renderEditableCell.tsx`, and the
+Save/Discard bar UI in `edit/EditingBar.tsx`. Extracted this way specifically
+so `<TreeDataGrid>` could reuse the same, already-bug-fixed logic rather than
+risking a second, subtly-different copy — see "Implementation footgun" below
+for why that would have been easy to get wrong twice.
 
 ```tsx
 <DataGrid
@@ -951,14 +965,14 @@ pending, just no longer shown as an editor.** `pendingEdits` still spans
 every row the user has touched this session, exactly as before; only the
 *display* of which row currently shows editors is now single-valued. This
 means a deactivated row's own cells must still show whatever's actually
-pending on them, not the row's stale original data — `toTanstackColumns`'s
-`cell` closure resolves `pendingRow?.values.get(column.id) ?? info.getValue()`
-ONCE per editable cell and reuses that resolved value for both the active
-editor AND the static (deactivated) rendering path; using `info.getValue()`
-directly in the static branch (an earlier bug, fixed together with the
-single-row change) would have made a just-edited-then-switched-away-from
-row look reverted even though its edit was still fully pending and would
-still be included in Save.
+pending on them, not the row's stale original data —
+`renderEditableCell` resolves `pendingRow?.values.get(column.id) ??
+rawValue` ONCE per editable cell and reuses that resolved value for both
+the active editor AND the static (deactivated) rendering path; using the
+raw value directly in the static branch (an earlier bug, fixed together
+with the single-row change) would have made a just-edited-then-switched-
+away-from row look reverted even though its edit was still fully pending
+and would still be included in Save.
 
 **Default editors, by `column.type`** — same "every type gets a working
 default for free" pattern the filter widgets use, in
@@ -1005,24 +1019,29 @@ substitution) or a `(changedRowCount) => ReactNode` function for a
 count-aware label. Defaults to `` `Save ${count} change${count === 1 ? "" :
 "s"}` `` and `"Discard"`.
 
-**Implementation footgun worth knowing before touching `DataGrid.tsx`'s
-editing code**: `toTanstackColumns`'s `cell` closures must NOT close over
-`pendingEdits`/`editErrors` directly. `flexRender` renders `columnDef.cell`
-as a component (its effective "type" for React's reconciliation, not just a
-value) — a `cell` function recreated on every `pendingEdits` change (i.e. on
-every keystroke in any editor, if it were a `tanstackColumns` dependency)
-gets a new identity each time, so React sees a changed component type at the
-same tree position and remounts the ENTIRE table body under it, silently
-dropping focus out from under the very input the user is typing into. Fixed
-via `editingCtxRef` (a `useRef`, reassigned every render as a plain
-statement, not in an effect): `tanstackColumns`'s memo depends only on
-`visibleColumns`, exactly as it did before editing existed, while each
-column's stable `cell` closure reads `editingCtxRef.current` fresh at actual
-render time. Caught by `tests/grid/DataGridEditing.test.tsx`, which does
-real multi-character `userEvent.type()` typing (not single atomic
-`fireEvent.change` calls) specifically because that's what surfaces this
-class of remount bug — a test using only single-shot value-replacement
-wouldn't have caught it.
+**Implementation footgun worth knowing before touching `<DataGrid>`'s
+editing wiring**: `toTanstackColumns`'s `cell` closures (in `grid/
+DataGrid.tsx`) must NOT close over `pendingEdits`/`editErrors` directly.
+`flexRender` renders `columnDef.cell` as a component (its effective "type"
+for React's reconciliation, not just a value) — a `cell` function recreated
+on every `pendingEdits` change (i.e. on every keystroke in any editor, if it
+were a `tanstackColumns` dependency) gets a new identity each time, so React
+sees a changed component type at the same tree position and remounts the
+ENTIRE table body under it, silently dropping focus out from under the very
+input the user is typing into. Fixed via `useEditingState`'s `ctxRef` (a
+`useRef`, reassigned every render as a plain statement, not in an effect):
+`tanstackColumns`'s memo depends only on `visibleColumns`, exactly as it did
+before editing existed, while each column's stable `cell` closure (which
+just calls `renderEditableCell(column, row, value, ctxRef.current)`) reads
+`ctxRef.current` fresh at actual render time. `<TreeDataGrid>` has no such
+memoized column-def layer — it maps rows to `<tr>`s directly on every
+render, not through TanStack Table — so it reads `useEditingState`'s plain
+`ctx` value instead; this footgun is specific to `<DataGrid>`'s own
+TanStack integration, not to `renderEditableCell` itself. Caught by
+`tests/grid/DataGridEditing.test.tsx`, which does real multi-character
+`userEvent.type()` typing (not single atomic `fireEvent.change` calls)
+specifically because that's what surfaces this class of remount bug — a
+test using only single-shot value-replacement wouldn't have caught it.
 
 **Per-cell `data-testid`s are `edit-${rowId}-${column.id}`, not
 `edit-${column.id}`** — unlike a filter widget (one instance per column,
@@ -1034,28 +1053,30 @@ prefix, same reasoning) — that's the one to click in a test to activate a
 row before the `edit-*` testids exist at all.
 
 **Escape reverts one cell, not the row** — a plain `onKeyDown` on a `<div>`
-wrapping whatever the editor rendered (`DataGrid.tsx`, right after the
-`renderEditCell`/`renderDefaultEditWidget` call), calling `editingCtx.onEdit`
-with `getColumnValue(column, row)` (the true original, not "whatever it was
-before this keystroke session" — no per-focus snapshotting, a deliberate
-scope cut). Relies on the key event bubbling up from whatever native control
-the editor renders, so it works for every built-in editor and any custom
-`renderEditCell` without each one needing its own handler. The row stays
-active; sibling cells' own pending edits are untouched.
+wrapping whatever the editor rendered (`edit/renderEditableCell.tsx`, right
+after the `renderEditCell`/`renderDefaultEditWidget` call), calling
+`ctx.onEdit` with `getColumnValue(column, row)` (the true original, not
+"whatever it was before this keystroke session" — no per-focus
+snapshotting, a deliberate scope cut). Relies on the key event bubbling up
+from whatever native control the editor renders, so it works for every
+built-in editor and any custom `renderEditCell` without each one needing
+its own handler. The row stays active; sibling cells' own pending edits are
+untouched. See "Escape must check real DOM containment" below for a real
+bug in this exact handler an agent review caught.
 
 **`autoFocusTarget` is a one-shot flag, consumed and cleared in a
-`useEffect`** (`DataGrid.tsx`, right after `activateRow`'s definition) — NOT
-redundant with native `autoFocus` only firing on a DOM node's *initial*
-mount. Under `virtualize`, a row's DOM can unmount (scrolled out of the
-windowed range) and later remount (scrolled back in); without clearing
-`autoFocusTarget` after its first use, that later remount is ALSO an
-"initial mount" as far as the DOM is concerned, silently stealing focus back
-to a cell the user scrolled away from. Found by an agent review comparing
-this implementation against AG Grid/MUI/Handsontable conventions — flagged
-as a real, unverified-by-test risk (jsdom can't easily simulate a real
-virtualizer scroll/remount cycle; the fix is verified by reasoning about
-React's `autoFocus` semantics, not by a regression test) rather than
-something caught by the existing test suite.
+`useEffect`** (`edit/editingState.ts`, right after `activateRow`'s
+definition) — NOT redundant with native `autoFocus` only firing on a DOM
+node's *initial* mount. Under `virtualize`, a row's DOM can unmount
+(scrolled out of the windowed range) and later remount (scrolled back in);
+without clearing `autoFocusTarget` after its first use, that later remount
+is ALSO an "initial mount" as far as the DOM is concerned, silently
+stealing focus back to a cell the user scrolled away from. Found by an
+agent review comparing this implementation against AG Grid/MUI/Handsontable
+conventions — flagged as a real, unverified-by-test risk (jsdom can't
+easily simulate a real virtualizer scroll/remount cycle; the fix is
+verified by reasoning about React's `autoFocus` semantics, not by a
+regression test) rather than something caught by the existing test suite.
 
 **Every built-in editor wires `aria-describedby` to its own error text's
 `id`** (`edit/widget-types.ts`'s exported `editErrorId(rowId, columnId)`
@@ -1112,9 +1133,28 @@ reconstructs the edited `Date` from. Milliseconds are still dropped — a
 documented scope cut, not fixed. Covered by `DataGridEditing.test.tsx`'s
 "preserves seconds when editing a datetime column" test.
 
-**Not carried over to `<TreeDataGrid>`** — same scope line as everything
-else in its own "not carried over" list below: build inline editing there
-via a custom `column.cell` renderer and your own state.
+**`NumberEditor` keeps local `text` state instead of deriving its input's
+`value` straight from the (parsed) `value` prop** — a later review flagged
+this as the exact same class of footgun `NumberComparisonFilter` already
+guards against (see that component's own doc): a native `type="number"`
+input's `.value` getter can read back without a just-typed trailing decimal
+point or leading minus sign mid-keystroke, even though the field still
+visually shows it — empirically confirmed via a real-Chromium Playwright
+check (`.value` after typing "12." read back as "12", after a lone "-" as
+""), though in that same check both the old and new code still ended up at
+the correct final value once typing finished, so this wasn't reproduced as
+an actual user-visible loss in this Chromium build specifically. Fixed
+anyway, matching `NumberComparisonFilter`'s established `lastEmittedRef` +
+resync-on-external-change pattern, since it's strictly more robust and
+removes the theoretical risk rather than relying on this build's behavior
+holding. Covered by `DataGridEditing.test.tsx`'s "keeps a decimal point
+visible while typing it" test (which does NOT reproduce the failure in
+jsdom either — included as a logic/regression check for the fix itself,
+not as proof the original bug was real).
+
+**Shared with `<TreeDataGrid>`** — see that component's own `editing`
+paragraph below for the small handful of things that differ (testid
+prefix, no `ctxRef` indirection needed there).
 
 ## `<TreeDataGrid>` — lazy-loading tree grid
 
@@ -1174,17 +1214,32 @@ generalizes.
   `<DataGrid>`'s `rowActions` prop uses — a deliberate improvement over
   `ContractTreelist`'s always-visible bespoke icon buttons, for consistency
   between the two grids' per-row action UIs.
-- **Not carried over from `ContractTreelist`, on purpose, as out of scope for
-  a generic component**: inline cell editing (`edited_rebate`'s
-  `RebateInputGraduate` + debounced autosave) and server-driven filtering —
-  business-logic-specific to that one screen, not generalizable patterns. A
-  consumer that needs inline editing should build it via a custom
-  `column.cell` renderer + its own state, the same way it would for
-  `<DataGrid>`. Row selection now has a minimal, generic primitive (below) —
-  but any *cascade* semantics (selecting a parent selects/deselects its
-  descendants, "whole group vs. split into individual children once
-  loaded") stays entirely the caller's job, the same way it would for
-  `<DataGrid>`.
+- **`editing`** — same built-in inline-editing workflow `<DataGrid>` has
+  (click-to-activate a whole row, one row active at a time, accumulate-then-
+  Save via `EditingOptions`), added after this component's initial port —
+  the original `ContractTreelist`'s own bespoke version
+  (`edited_rebate`'s `RebateInputGraduate` + debounced autosave) was
+  business-logic-specific to that one screen and NOT what got generalized
+  here; this is a fresh implementation sharing the same
+  `useEditingState`/`renderEditableCell`/`EditingBar` machinery
+  `<DataGrid>` uses (see that section's own doc), not a port of
+  `RebateInputGraduate`. `<TreeDataGrid>` has no `flexRender`-as-component
+  layer standing between it and every render (it maps rows to `<tr>`s
+  directly, not through TanStack Table), so it reads `useEditingState`'s
+  plain `ctx` value each render instead of needing `<DataGrid>`'s `ctxRef`
+  indirection — the remount footgun that indirection exists for is specific
+  to TanStack's own cell-rendering contract, not a concern here. Save/
+  Discard testids are prefixed `tree-datagrid-` (`tree-datagrid-edit-bar`/
+  `-save-edits`/`-discard-edits`) instead of `datagrid-`, via
+  `EditingBar`'s `testIdPrefix` prop — everything else (per-cell
+  `cell-${rowId}-${column.id}`/`edit-${rowId}-${column.id}` testids,
+  `validateEdit`, `renderEditCell`, Escape-to-revert, the async-save race
+  fix) is identical to `<DataGrid>`'s own contract, documented in full
+  under `editable`/`editing` above. Row selection now has a minimal,
+  generic primitive (below) — but any *cascade* semantics (selecting a
+  parent selects/deselects its descendants, "whole group vs. split into
+  individual children once loaded") stays entirely the caller's job, the
+  same way it would for `<DataGrid>`.
 - See `packages/datagrid/demo/src/App.tsx`'s `<OrgTreeDemo>` for a complete
   worked example: a 3-level lazy org chart with a `setTimeout`-simulated API
   and one node whose first load intentionally fails, to exercise the

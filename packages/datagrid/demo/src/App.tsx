@@ -1,4 +1,4 @@
-import type { ColumnDef, ColumnVisibility, DataSource, GridState, NumberColumn } from "@bmsuisse/datagrid";
+import type { ColumnDef, ColumnVisibility, DataSource, EditedRow, GridState, NumberColumn } from "@bmsuisse/datagrid";
 import {
   ColumnSelector,
   DataGrid,
@@ -244,6 +244,91 @@ function OrgTreeDemo(): ReactElement {
         },
       ]}
     />
+  );
+}
+
+// --- <TreeDataGrid> inline editing demo: a small eager 2-level project/task
+// tree — mirrors the flat <DataGrid> editing demo's column shape (name/
+// owner/hours/done) so the two demos read as the same feature at two
+// different grid types, minus a "due" column to keep it compact next to the
+// tree's own indentation. Deterministic data (no Math.random/Date.now), same
+// convention as the rest of this file.
+interface TaskNode {
+  id: string;
+  name: string;
+  owner: string;
+  hours: number;
+  done: boolean;
+  children?: TaskNode[];
+}
+
+const TASK_TREE: TaskNode[] = [
+  {
+    id: "website",
+    name: "Website Redesign",
+    owner: "alice",
+    hours: 0,
+    done: false,
+    children: [
+      { id: "website-design", name: "Design mockups", owner: "alice", hours: 8, done: true },
+      { id: "website-fe", name: "Implement frontend", owner: "bob", hours: 16, done: false },
+    ],
+  },
+  {
+    id: "mobile",
+    name: "Mobile App",
+    owner: "carol",
+    hours: 0,
+    done: false,
+    children: [{ id: "mobile-ci", name: "Set up CI", owner: "bob", hours: 4, done: false }],
+  },
+];
+
+function applyTaskEdits(nodes: TaskNode[], edits: EditedRow<TaskNode>[]): TaskNode[] {
+  return nodes.map((node) => {
+    const edit = edits.find((e) => e.rowId === node.id);
+    const updated = edit ? { ...node, ...edit.values } : node;
+    return updated.children ? { ...updated, children: applyTaskEdits(updated.children, edits) } : updated;
+  });
+}
+
+function TreeEditingDemo(): ReactElement {
+  const [tasks, setTasks] = useState(TASK_TREE);
+  const [saving, setSaving] = useState(false);
+
+  const taskTreeColumns: ColumnDef<TaskNode>[] = [
+    { id: "name", type: "string", header: "Task", accessorKey: "name", width: 240, editable: true },
+    { id: "owner", type: "enum", header: "Owner", accessorKey: "owner", editable: true, options: TASK_OWNERS },
+    { id: "hours", type: "number", header: "Est. hours", accessorKey: "hours", editable: true },
+    { id: "done", type: "boolean", header: "Done", accessorKey: "done", editable: true },
+  ];
+
+  return (
+    <div>
+      <p className="mb-2 text-sm text-muted-foreground">
+        Same inline-editing workflow as the flat grid above, on a tree — expand a project to
+        edit its tasks; click any editable cell in a row (root or child) to activate that row.
+      </p>
+      <TreeDataGrid
+        columns={taskTreeColumns}
+        data={tasks}
+        getRowId={(row) => row.id}
+        getChildren={(row) => row.children}
+        initialExpandedLevel={1}
+        editing={{
+          saving,
+          onSave: (edits) =>
+            new Promise<void>((resolve) => {
+              setSaving(true);
+              setTimeout(() => {
+                setTasks((prev) => applyTaskEdits(prev, edits));
+                setSaving(false);
+                resolve();
+              }, 600);
+            }),
+        }}
+      />
+    </div>
   );
 }
 
@@ -812,6 +897,11 @@ export function App(): ReactElement {
         Expand "Sales" to see the inline error+retry UX (its first load always fails).
       </p>
       <OrgTreeDemo />
+
+      <h2 className="mb-2 mt-8 text-lg font-semibold">
+        &lt;TreeDataGrid&gt; editable demo — inline editing on a tree
+      </h2>
+      <TreeEditingDemo />
     </div>
   );
 }
