@@ -347,11 +347,16 @@ export function Combobox(props: ComboboxProps): ReactElement {
                 const isActive = index === activeIndex;
                 const headerState = headerGroup ? groupCheckState(options, selectedValues, headerGroup) : undefined;
                 return (
-                  <div key={option.value}>
+                  <div key={option.value} className={headerGroup ? "pt-1 first:pt-0" : undefined}>
                     {headerGroup ? (
+                      // Spacing above a group header lives on this row's `pt-1` (above), not on
+                      // the header itself -- a margin here would travel with the header once it
+                      // sticks, leaving a gap at the scrollport's top that the row behind it
+                      // shows through. Background must stay fully opaque for the same reason:
+                      // it's covering whatever scrolled underneath it.
                       <div
                         data-group-header
-                        className="mt-1 flex items-center gap-2 rounded-sm bg-muted/50 px-2 py-1.5 text-sm font-semibold text-foreground first:mt-0"
+                        className="sticky top-0 z-10 flex items-center gap-2 rounded-sm bg-muted px-2 py-1.5 text-sm font-semibold text-foreground"
                       >
                         {props.multiple ? (
                           <input

@@ -367,12 +367,21 @@ export function App(): ReactElement {
                 multiple
                 options={[
                   { value: "alice", label: "Alice", group: "team-a" },
+                  { value: "andrew", label: "Andrew", group: "team-a" },
+                  { value: "amy", label: "Amy", group: "team-a" },
                   { value: "bob", label: "Bob", group: "team-a" },
+                  { value: "bella", label: "Bella", group: "team-a" },
                   { value: "carol", label: "Carol", group: "team-b" },
+                  { value: "cyrus", label: "Cyrus", group: "team-b" },
+                  { value: "cindy", label: "Cindy", group: "team-b" },
                   { value: "dave", label: "Dave", group: "team-b" },
+                  { value: "diana", label: "Diana", group: "team-b" },
+                  { value: "frank", label: "Frank", group: "team-c" },
+                  { value: "fiona", label: "Fiona", group: "team-c" },
+                  { value: "george", label: "George", group: "team-c" },
                   { value: "eve", label: "Eve" },
                 ]}
-                groupLabels={{ "team-a": "Team A", "team-b": "Team B" }}
+                groupLabels={{ "team-a": "Team A", "team-b": "Team B", "team-c": "Team C" }}
                 value={teamMembers}
                 onChange={setTeamMembers}
                 placeholder="Select team members"

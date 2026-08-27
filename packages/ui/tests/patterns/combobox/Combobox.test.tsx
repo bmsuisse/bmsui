@@ -270,6 +270,21 @@ describe("Combobox (grouped, multiple)", () => {
     expect(screen.queryByText("Eve", { selector: "[data-group-header]" })).not.toBeInTheDocument();
   });
 
+  it("group headers stick to the top of the scrolling listbox with an opaque background", async () => {
+    render(<Combobox options={GROUPED_OPTIONS} groupLabels={GROUP_LABELS} value={[]} onChange={vi.fn()} multiple />);
+    await userEvent.click(screen.getByRole("combobox"));
+    const listbox = await screen.findByRole("listbox");
+    const headers = Array.from(listbox.querySelectorAll("[data-group-header]"));
+    expect(headers).toHaveLength(2);
+    for (const header of headers) {
+      expect(header.className).toMatch(/\bsticky\b/);
+      expect(header.className).toMatch(/\btop-0\b/);
+      // Opaque, not e.g. bg-muted/50 -- a translucent sticky header would let
+      // rows scrolled underneath it show through.
+      expect(header.className).not.toMatch(/bg-muted\/\d/);
+    }
+  });
+
   it("a group's checkbox is unchecked when none of its members are selected", async () => {
     render(<Combobox options={GROUPED_OPTIONS} groupLabels={GROUP_LABELS} value={[]} onChange={vi.fn()} multiple />);
     await userEvent.click(screen.getByRole("combobox"));
