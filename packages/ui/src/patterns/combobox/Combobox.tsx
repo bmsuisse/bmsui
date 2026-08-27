@@ -133,21 +133,43 @@ function resolveGroupTriggerLabel(
 interface OptionRow {
   option: ComboboxOption;
   index: number;
-  /** Set when this option starts a new group — i.e. it's the first (post-filter)
-   * option carrying this `group` key. Render a header right before it. */
-  headerGroup: string | undefined;
 }
 
-/** Decorates `visibleOptions` with where a group header belongs, in one linear pass —
- * kept separate from JSX so the render below is a plain `.map()` with no per-row
- * bookkeeping of its own. */
-function buildOptionRows(visibleOptions: ComboboxOption[]): OptionRow[] {
-  let lastGroup: string | undefined;
-  return visibleOptions.map((option, index) => {
-    const headerGroup = option.group && option.group !== lastGroup ? option.group : undefined;
-    lastGroup = option.group ?? lastGroup;
-    return { option, index, headerGroup };
+interface GroupChunk {
+  kind: "group";
+  group: string;
+  rows: OptionRow[];
+}
+interface SingleChunk {
+  kind: "single";
+  row: OptionRow;
+}
+type RenderChunk = GroupChunk | SingleChunk;
+
+/** Chunks `visibleOptions` into per-group chunks (a header plus all of that group's
+ * rows, relying on the "a group's options are contiguous" invariant `ComboboxOption.group`
+ * already documents) versus lone ungrouped rows, in one linear pass -- kept separate
+ * from JSX so the render below is a plain `.map()` with no per-row bookkeeping of its
+ * own. A sticky header can only stay pinned within its own containing block -- the
+ * nearest ancestor that isn't itself sticky/statically laid out -- so the header and
+ * every one of its group's rows must share one wrapper `<div>`. Rendering each row in
+ * its own top-level sibling div (rather than chunking by group) gave the header a
+ * containing block of just itself plus the group's first row, so it unstuck after a
+ * single row instead of staying pinned for the group's full scroll extent. */
+function buildRenderChunks(visibleOptions: ComboboxOption[]): RenderChunk[] {
+  const chunks: RenderChunk[] = [];
+  visibleOptions.forEach((option, index) => {
+    const row: OptionRow = { option, index };
+    const last = chunks[chunks.length - 1];
+    if (option.group && last?.kind === "group" && last.group === option.group) {
+      last.rows.push(row);
+    } else if (option.group) {
+      chunks.push({ kind: "group", group: option.group, rows: [row] });
+    } else {
+      chunks.push({ kind: "single", row });
+    }
   });
+  return chunks;
 }
 
 /**
@@ -277,7 +299,42 @@ export function Combobox(props: ComboboxProps): ReactElement {
         : (props.multiple ? resolveGroupTriggerLabel(options, selectedValues, groupLabel) : null) ??
           `${selectedOptions.length} selected`;
 
-  const optionRows = useMemo(() => buildOptionRows(visibleOptions), [visibleOptions]);
+  const renderChunks = useMemo(() => buildRenderChunks(visibleOptions), [visibleOptions]);
+
+  function renderOption({ option, index }: OptionRow): ReactElement {
+    const isSelected = selectedValues.includes(option.value);
+    const isActive = index === activeIndex;
+    return (
+      <button
+        key={option.value}
+        type="button"
+        role="option"
+        aria-selected={isSelected}
+        disabled={option.disabled}
+        data-testid={testId ? `${testId}-option` : undefined}
+        data-option-value={option.value}
+        onMouseEnter={() => setActiveIndex(index)}
+        onClick={() => selectOption(option)}
+        className={cn(
+          "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm outline-none disabled:pointer-events-none disabled:opacity-50",
+          isActive && "bg-accent text-accent-foreground",
+        )}
+      >
+        {props.multiple ? (
+          <input
+            type="checkbox"
+            checked={isSelected}
+            readOnly
+            tabIndex={-1}
+            className="pointer-events-none h-3.5 w-3.5 shrink-0 accent-primary"
+          />
+        ) : (
+          <Check className={cn("h-4 w-4 shrink-0", isSelected ? "opacity-100" : "opacity-0")} />
+        )}
+        <span className="truncate">{option.label}</span>
+      </button>
+    );
+  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -339,68 +396,41 @@ export function Combobox(props: ComboboxProps): ReactElement {
             aria-label={searchPlaceholder}
           />
           <div role="listbox" className="flex max-h-60 flex-col gap-0.5 overflow-y-auto">
-            {optionRows.length === 0 ? (
+            {renderChunks.length === 0 ? (
               <p className="py-2 text-center text-sm text-muted-foreground">{emptyMessage}</p>
             ) : (
-              optionRows.map(({ option, index, headerGroup }) => {
-                const isSelected = selectedValues.includes(option.value);
-                const isActive = index === activeIndex;
-                const headerState = headerGroup ? groupCheckState(options, selectedValues, headerGroup) : undefined;
+              renderChunks.map((chunk) => {
+                if (chunk.kind === "single") return renderOption(chunk.row);
+                const headerState = groupCheckState(options, selectedValues, chunk.group);
                 return (
-                  <div key={option.value} className={headerGroup ? "pt-1 first:pt-0" : undefined}>
-                    {headerGroup ? (
-                      // Spacing above a group header lives on this row's `pt-1` (above), not on
-                      // the header itself -- a margin here would travel with the header once it
-                      // sticks, leaving a gap at the scrollport's top that the row behind it
-                      // shows through. Background must stay fully opaque for the same reason:
-                      // it's covering whatever scrolled underneath it.
-                      <div
-                        data-group-header
-                        className="sticky top-0 z-10 flex items-center gap-2 rounded-sm bg-muted px-2 py-1.5 text-sm font-semibold text-foreground"
-                      >
-                        {props.multiple ? (
-                          <input
-                            type="checkbox"
-                            checked={headerState === "checked"}
-                            ref={(el) => {
-                              if (el) el.indeterminate = headerState === "indeterminate";
-                            }}
-                            onChange={() => toggleGroup(headerGroup)}
-                            onClick={(event) => event.stopPropagation()}
-                            className="h-3.5 w-3.5 shrink-0 accent-primary"
-                            aria-label={`Select all of ${groupLabel(headerGroup)}`}
-                          />
-                        ) : null}
-                        <span className="truncate">{groupLabel(headerGroup)}</span>
-                      </div>
-                    ) : null}
-                    <button
-                      type="button"
-                      role="option"
-                      aria-selected={isSelected}
-                      disabled={option.disabled}
-                      data-testid={testId ? `${testId}-option` : undefined}
-                      data-option-value={option.value}
-                      onMouseEnter={() => setActiveIndex(index)}
-                      onClick={() => selectOption(option)}
-                      className={cn(
-                        "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm outline-none disabled:pointer-events-none disabled:opacity-50",
-                        isActive && "bg-accent text-accent-foreground",
-                      )}
+                  // The header and every one of its group's rows share this wrapper --
+                  // its bounds are the sticky header's containing block, so `sticky top-0`
+                  // keeps the header pinned for the group's whole scroll extent instead of
+                  // just past its first row (see buildRenderChunks). Spacing above a group
+                  // lives on this wrapper's `pt-1`, not on the header itself -- a margin on
+                  // the sticky element would travel with it once stuck, leaving a gap at the
+                  // scrollport's top that the row behind it shows through.
+                  <div key={`group-${chunk.group}`} className="flex flex-col gap-0.5 pt-1 first:pt-0">
+                    <div
+                      data-group-header
+                      className="sticky top-0 z-10 flex items-center gap-2 rounded-sm bg-muted px-2 py-1.5 text-sm font-semibold text-foreground"
                     >
                       {props.multiple ? (
                         <input
                           type="checkbox"
-                          checked={isSelected}
-                          readOnly
-                          tabIndex={-1}
-                          className="pointer-events-none h-3.5 w-3.5 shrink-0 accent-primary"
+                          checked={headerState === "checked"}
+                          ref={(el) => {
+                            if (el) el.indeterminate = headerState === "indeterminate";
+                          }}
+                          onChange={() => toggleGroup(chunk.group)}
+                          onClick={(event) => event.stopPropagation()}
+                          className="h-3.5 w-3.5 shrink-0 accent-primary"
+                          aria-label={`Select all of ${groupLabel(chunk.group)}`}
                         />
-                      ) : (
-                        <Check className={cn("h-4 w-4 shrink-0", isSelected ? "opacity-100" : "opacity-0")} />
-                      )}
-                      <span className="truncate">{option.label}</span>
-                    </button>
+                      ) : null}
+                      <span className="truncate">{groupLabel(chunk.group)}</span>
+                    </div>
+                    {chunk.rows.map(renderOption)}
                   </div>
                 );
               })

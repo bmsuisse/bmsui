@@ -166,12 +166,18 @@ logic above, which already had its own extraction). Structure:
     the sales app's sales-agent filter, which previously faked grouping with
     page-local sentinel option rows (see AGENTS.md's UI-hack rule).
     A group header sticks to the top of the scrolling option list while its
-    members scroll past (v0.5.1, mirroring `@bmsuisse/datagrid`'s own
+    members scroll past (v0.6.2, mirroring `@bmsuisse/datagrid`'s own
     sticky-group-header fix) — `sticky top-0` with an opaque `bg-muted`
-    background so scrolled rows don't show through. The spacing between
-    groups moved from a margin on the header itself to `pt-1`/`first:pt-0`
-    on the row wrapper, since a margin on a sticky element travels with it
-    once stuck and leaves a gap at the scrollport's top.
+    background so scrolled rows don't show through. Options render grouped
+    into per-group chunks (a header plus all of that group's rows sharing one
+    wrapper `<div>`, see `buildRenderChunks`) rather than each row getting its
+    own top-level sibling div — a sticky element can't stay pinned beyond its
+    containing block, so the earlier per-row-div shape unstuck the header
+    after just one row instead of the whole group (caught in v0.6.1's review,
+    fixed same-day in v0.6.2 before wider adoption). Group spacing lives on
+    the chunk wrapper's `pt-1`/`first:pt-0`, not on the header itself, since a
+    margin on a sticky element travels with it once stuck and would leave a
+    gap at the scrollport's top.
 - `packages/ui/demo/` — same pattern as `packages/datagrid/demo`: a Vite
   app aliasing `@bmsuisse/ui` straight to `src/index.ts`, using the same
   reference-app-derived Tailwind v4 tokens, for visual QA.
