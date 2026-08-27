@@ -7,10 +7,12 @@ import type { CSSProperties, ReactElement, ReactNode } from "react";
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { alignClassName, defaultFormat } from "../column/format";
 import type { ColumnDef } from "../column/types";
-import { getColumnValue, isFilterable, isSortable } from "../column/types";
+import { getColumnValue, isEditable, isFilterable, isSortable } from "../column/types";
 import { isColumnVisible } from "../column-selector/visibility";
 import { Button } from "../components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
+import { renderDefaultEditWidget } from "../edit/registry";
+import type { EditedRow } from "../edit/types";
 import { renderDefaultFilterWidget } from "../filter/registry";
 import type { FilterDescriptor } from "../filter/types";
 import { cn, stopRowClick } from "../lib/utils";
@@ -111,19 +113,94 @@ function computeHeaderRuns<TRow>(columns: ColumnDef<TRow>[]): HeaderRun<TRow>[] 
   return runs;
 }
 
+/** One row's accumulated pending edits — see `DataGrid`'s own `pendingEdits` state doc. */
+interface PendingRowEdit<TRow> {
+  /** The row as it looked when its first still-pending edit was made this session. */
+  row: TRow;
+  values: Map<string, unknown>;
+}
+
+/**
+ * Everything `toTanstackColumns` needs to render an editable column's cells
+ * as interactive editors instead of static text — bundled into one object so
+ * the `cell` closures below don't have to reach five levels up into
+ * `<DataGrid>`'s own component scope. `undefined` (rather than each field
+ * being optional) is what actually gates editing off entirely when no
+ * `editing` prop was supplied — see its only call site below.
+ */
+interface EditingCellContext<TRow> {
+  pendingEdits: Map<string, PendingRowEdit<TRow>>;
+  editErrors: Map<string, Map<string, string>>;
+  getRowId: (row: TRow) => string;
+  onEdit: (column: ColumnDef<TRow>, row: TRow, value: unknown) => void;
+}
+
+/**
+ * `toTanstackColumns` takes a ref (a stable object identity for the whole
+ * component's lifetime) rather than the editing context object directly —
+ * `flexRender` renders `columnDef.cell` as a component (its own effective
+ * "type" for React's reconciliation, not just a value), so a `cell` function
+ * that closes over `pendingEdits`/`editErrors` directly would get a new
+ * identity every time either changes, i.e. on every keystroke in any editor.
+ * React would then see a changed component type at the same tree position
+ * and remount the ENTIRE table body under it — every cell in every row,
+ * losing focus (and any other DOM/component state) out from under the very
+ * input the user is typing into. Reading through a ref instead keeps every
+ * `cell` closure's identity fixed to `visibleColumns` alone (exactly the
+ * `tanstackColumns` memo's pre-editing dependency set below), while still
+ * reading whatever `pendingEdits`/`editErrors`/`onEdit` actually is at the
+ * moment a cell renders — the ref is reassigned every render, synchronously,
+ * before the JSX returned below is processed.
+ */
 function toTanstackColumns<TRow extends RowData>(
   columns: ColumnDef<TRow>[],
+  editingCtxRef: { current: EditingCellContext<TRow> | undefined },
 ): TanstackColumnDef<GridTableFeatures, TRow, unknown>[] {
   return columns.map((column) => ({
     id: column.id,
     header: column.header,
     size: column.width,
     accessorFn: (row: TRow) => getColumnValue(column, row),
-    cell: (info: CellContext<GridTableFeatures, TRow, unknown>): ReactNode =>
-      column.cell
-        ? column.cell(info.getValue(), info.row.original)
-        : defaultFormat(column, info.getValue()),
+    cell: (info: CellContext<GridTableFeatures, TRow, unknown>): ReactNode => {
+      const row = info.row.original;
+      const editingCtx = editingCtxRef.current;
+      if (editingCtx && isEditable(column, row)) {
+        const rowId = editingCtx.getRowId(row);
+        const pendingRow = editingCtx.pendingEdits.get(rowId);
+        const value = pendingRow?.values.has(column.id) ? pendingRow.values.get(column.id) : info.getValue();
+        const error = editingCtx.editErrors.get(rowId)?.get(column.id);
+        const onChange = (next: unknown): void => editingCtx.onEdit(column, row, next);
+        return column.renderEditCell
+          ? column.renderEditCell(value, row, onChange, error)
+          : renderDefaultEditWidget(column, rowId, value, onChange, error);
+      }
+      return column.cell ? column.cell(info.getValue(), row) : defaultFormat(column, info.getValue());
+    },
   }));
+}
+
+/**
+ * Same convention `defaultFormat`'s docs point to for other primitive
+ * comparisons, extended to `Date`: the default `DateEditor` emits real `Date`
+ * objects, and two distinct `Date` instances for the same instant are never
+ * `===` to each other — without this, editing a date cell back to its
+ * original value (a real thing to do while fixing a typo) would never clear
+ * its own pending-edit entry, since the equality check below would always
+ * see "changed."
+ */
+function editValuesEqual(a: unknown, b: unknown): boolean {
+  if (a instanceof Date && b instanceof Date) return a.getTime() === b.getTime();
+  return a === b;
+}
+
+/** Resolves a `saveLabel`/`discardLabel`-shaped prop to what actually renders — see `DataGridEditingOptions`'s own doc for why there's no placeholder substitution for the plain-string case. */
+function resolveEditLabel(
+  label: string | ((changedRowCount: number) => ReactNode) | undefined,
+  changedRowCount: number,
+  fallback: (changedRowCount: number) => ReactNode,
+): ReactNode {
+  if (label === undefined) return fallback(changedRowCount);
+  return typeof label === "function" ? label(changedRowCount) : label;
 }
 
 /**
@@ -163,6 +240,7 @@ export function DataGrid<TRow extends RowData>({
   expandedGroups: controlledExpandedGroups,
   onExpandedGroupsChange,
   zebra = true,
+  editing,
 }: DataGridProps<TRow>): ReactElement {
   const { state, filtersByColumn, setColumnFilter, toggleSort, setPage } = useGridState(
     dataSource,
@@ -217,6 +295,76 @@ export function DataGrid<TRow extends RowData>({
     updateExpandedGroups({ ...expandedGroupsState, [key]: !isGroupExpanded(key) });
   }
 
+  // Uncontrolled-only (unlike `selectedIds`/`columnSizing` above) — there's
+  // no scenario where a caller wants to seed or drive pending edits from
+  // outside, only to read them back out via `editing.onSave` once the user
+  // commits. Keyed by row id, not by (row id, column id) pair: storing the
+  // row snapshot once per row (not once per edited cell) is what lets
+  // `handleSaveEdits` hand back a real `TRow` per edited row without a
+  // second id-keyed lookup across whatever page/filter state the grid is in
+  // by the time Save is actually clicked.
+  const [pendingEdits, setPendingEdits] = useState<Map<string, PendingRowEdit<TRow>>>(new Map());
+  const [editErrors, setEditErrors] = useState<Map<string, Map<string, string>>>(new Map());
+  const hasEditErrors = editErrors.size > 0;
+
+  function commitEdit(column: ColumnDef<TRow>, row: TRow, value: unknown): void {
+    const rowId = getRowId(row);
+    const baseline = getColumnValue(column, row);
+    setPendingEdits((prev) => {
+      const next = new Map(prev);
+      const values = new Map(next.get(rowId)?.values);
+      if (editValuesEqual(value, baseline)) values.delete(column.id);
+      else values.set(column.id, value);
+      if (values.size === 0) next.delete(rowId);
+      else next.set(rowId, { row, values });
+      return next;
+    });
+    const message = column.validateEdit?.(value, row);
+    setEditErrors((prev) => {
+      const next = new Map(prev);
+      const rowErrors = new Map(next.get(rowId));
+      if (message) rowErrors.set(column.id, message);
+      else rowErrors.delete(column.id);
+      if (rowErrors.size === 0) next.delete(rowId);
+      else next.set(rowId, rowErrors);
+      return next;
+    });
+  }
+
+  async function handleSaveEdits(): Promise<void> {
+    if (!editing || pendingEdits.size === 0) return;
+    const edited: EditedRow<TRow>[] = [...pendingEdits.entries()].map(([rowId, entry]) => ({
+      rowId,
+      row: entry.row,
+      values: Object.fromEntries(entry.values),
+    }));
+    try {
+      await editing.onSave(edited);
+    } catch {
+      // `onSave`'s own doc: rejecting means "keep every pending edit exactly
+      // as it was" — the caller is responsible for its own error UI; this
+      // catch exists only so that rejection doesn't also surface as an
+      // unhandled promise rejection on top of whatever the caller already
+      // shows.
+      return;
+    }
+    setPendingEdits(new Map());
+    setEditErrors(new Map());
+  }
+
+  function handleDiscardEdits(): void {
+    setPendingEdits(new Map());
+    setEditErrors(new Map());
+    editing?.onDiscard?.();
+  }
+
+  // Reassigned every render (a plain statement, not an effect) so it's
+  // already current by the time `tanstackColumns` below actually renders a
+  // cell in this same pass — see `toTanstackColumns`'s own doc for why this
+  // indirection exists at all instead of just closing over these directly.
+  const editingCtxRef = useRef<EditingCellContext<TRow> | undefined>(undefined);
+  editingCtxRef.current = editing ? { pendingEdits, editErrors, getRowId, onEdit: commitEdit } : undefined;
+
   // Single source of truth for "which columns actually render": every other
   // representation below (the TanStack column defs, the header lookup map,
   // the "No results" colSpan) is derived from this, not from `columns`
@@ -263,7 +411,13 @@ export function DataGrid<TRow extends RowData>({
     updateSelectedIds(next);
   }
 
-  const tanstackColumns = useMemo(() => toTanstackColumns(visibleColumns), [visibleColumns]);
+  // Depends only on `visibleColumns` — exactly as before editing existed.
+  // `editingCtxRef` is a `useRef` object, whose own identity never changes,
+  // so it contributes nothing to this memo's invalidation; each column's
+  // `cell` closure reads `editingCtxRef.current` fresh on every actual
+  // render regardless (see `toTanstackColumns`'s doc for why that
+  // indirection is what keeps typing in an editor from remounting the grid).
+  const tanstackColumns = useMemo(() => toTanstackColumns(visibleColumns, editingCtxRef), [visibleColumns]);
 
   // A Map lookup instead of visibleColumns.find(...) inside the header
   // render loop below — the latter would make header rendering O(columns²)
@@ -709,6 +863,44 @@ export function DataGrid<TRow extends RowData>({
     // `overflow-x-auto` div scrolling horizontally) fighting over which one
     // a sticky header/pinned column is actually stuck relative to.
     <div className="flex h-full min-h-0 flex-col gap-2" data-testid="datagrid">
+      {editing && pendingEdits.size > 0 && (
+        <div
+          data-testid="datagrid-edit-bar"
+          className="flex shrink-0 flex-wrap items-center justify-between gap-2 rounded-md border bg-muted/50 px-3 py-2 text-sm"
+        >
+          <span>
+            {pendingEdits.size} row{pendingEdits.size === 1 ? "" : "s"} changed
+            {hasEditErrors && (
+              <span className="ml-2 text-destructive">Fix the highlighted errors before saving.</span>
+            )}
+          </span>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              data-testid="datagrid-discard-edits"
+              disabled={editing.saving}
+              onClick={handleDiscardEdits}
+            >
+              {resolveEditLabel(editing.discardLabel, pendingEdits.size, () => "Discard")}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              data-testid="datagrid-save-edits"
+              disabled={editing.saving || hasEditErrors}
+              onClick={() => void handleSaveEdits()}
+            >
+              {resolveEditLabel(
+                editing.saveLabel,
+                pendingEdits.size,
+                (count) => `Save ${count} change${count === 1 ? "" : "s"}`,
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
       {showSelectionColumn && headerActions && (
         <div className="flex shrink-0 items-center justify-between text-sm">
           <span>{selectedRows.length} selected</span>

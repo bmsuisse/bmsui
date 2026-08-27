@@ -580,6 +580,97 @@ function GroupingDemo(): ReactElement {
   );
 }
 
+// --- inline editing demo: a small, deterministic task list (no
+// Math.random/Date.now — see STATIC_ORDERS's own comment on why screenshots
+// need reproducible data) with one column of each editable `type`, a
+// required-field `validateEdit`, and a fake ~600ms `onSave` (setTimeout, not
+// a real endpoint — this demo has no backend call to make) so the Save
+// button's disabled/pending state is visible in a screenshot, not just
+// theoretical.
+interface Task {
+  id: string;
+  title: string;
+  owner: string;
+  hours: number;
+  done: boolean;
+  due: string;
+}
+
+const TASK_OWNERS: { value: string; label: string }[] = [
+  { value: "alice", label: "Alice" },
+  { value: "bob", label: "Bob" },
+  { value: "carol", label: "Carol" },
+];
+
+const INITIAL_TASKS: Task[] = [
+  { id: "1", title: "Draft Q3 roadmap", owner: "alice", hours: 6, done: false, due: "2026-09-05" },
+  { id: "2", title: "Fix flaky checkout test", owner: "bob", hours: 2, done: true, due: "2026-08-28" },
+  { id: "3", title: "Review vendor contract", owner: "carol", hours: 3, done: false, due: "2026-09-12" },
+];
+
+function InlineEditingDemo(): ReactElement {
+  const [tasks, setTasks] = useState(INITIAL_TASKS);
+  const [saving, setSaving] = useState(false);
+
+  const taskColumns: ColumnDef<Task>[] = [
+    {
+      id: "title",
+      type: "string",
+      header: "Task",
+      accessorKey: "title",
+      editable: true,
+      validateEdit: (value) => (typeof value === "string" && value.trim() === "" ? "Title is required" : undefined),
+    },
+    {
+      id: "owner",
+      type: "enum",
+      header: "Owner",
+      accessorKey: "owner",
+      editable: true,
+      options: TASK_OWNERS,
+    },
+    { id: "hours", type: "number", header: "Est. hours", accessorKey: "hours", editable: true },
+    { id: "done", type: "boolean", header: "Done", accessorKey: "done", editable: true },
+    { id: "due", type: "date", header: "Due", accessorKey: "due", editable: true },
+  ];
+
+  return (
+    <div>
+      <p className="mb-2 text-sm text-muted-foreground">
+        Every column here is <code>editable</code> — click into a cell to change it. Edits accumulate
+        locally (nothing is sent anywhere yet); the bar above the grid appears once something has
+        changed, with a Save button whose label counts the changed rows. Clearing the Task column shows
+        the built-in <code>validateEdit</code> error state, which blocks Save until it's fixed.
+      </p>
+      <DataGrid
+        testId="editing-grid"
+        columns={taskColumns}
+        dataSource={{ mode: "client", data: tasks }}
+        getRowId={(row) => row.id}
+        showPagination={false}
+        editing={{
+          saving,
+          onSave: (edits) =>
+            new Promise<void>((resolve) => {
+              setSaving(true);
+              setTimeout(() => {
+                setTasks((prev) =>
+                  prev.map((task) => {
+                    const edit = edits.find((e) => e.rowId === task.id);
+                    return edit ? { ...task, ...edit.values } : task;
+                  }),
+                );
+                setSaving(false);
+                resolve();
+              }, 600);
+            }),
+          saveLabel: (count) => `Save ${count} change${count === 1 ? "" : "s"}`,
+        }}
+      />
+    </div>
+  );
+}
+
 /**
  * The whole demo: an engine toggle (SQL / Meilisearch, also settable via
  * ?engine=), a dark-mode toggle, and a <ColumnSelector> trigger, all driving
@@ -705,6 +796,9 @@ export function App(): ReactElement {
 
       <h2 className="mb-2 mt-8 text-lg font-semibold">groupBy demo — sticky group headers</h2>
       <GroupingDemo />
+
+      <h2 className="mb-2 mt-8 text-lg font-semibold">editable demo — inline editing + Save/Discard</h2>
+      <InlineEditingDemo />
 
       <h2 className="mb-2 mt-8 text-lg font-semibold">Virtualized scrolling demo</h2>
       <VirtualizedScrollDemo />

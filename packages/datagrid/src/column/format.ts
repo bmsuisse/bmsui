@@ -36,7 +36,14 @@ export function alignClassName<TRow>(column: ColumnDef<TRow>): string {
   return ALIGN_CLASS_NAME[defaultAlign(column)];
 }
 
-function toDate(value: unknown): Date | null {
+/**
+ * Parses an arbitrary raw cell value into a `Date`, or `null` if it isn't
+ * one. Exported (unlike `toNumber` below, which stays internal) because
+ * `edit/DateEditor.tsx` needs the exact same date-only-vs-datetime parsing
+ * this module already uses for display — a second copy would risk drifting
+ * from the UTC-midnight fix documented below.
+ */
+export function toDate(value: unknown): Date | null {
   if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
   if (typeof value === "number") {
     const date = new Date(value);
