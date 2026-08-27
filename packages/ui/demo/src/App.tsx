@@ -125,25 +125,31 @@ export function App(): ReactElement {
 
   // Simulates a real server-driven search (debounced fetch + loading state) —
   // TagCombobox's onSearchChange doesn't debounce or fetch itself, that's the
-  // caller's job, same contract as Combobox's own onSearchChange.
+  // caller's job, same contract as Combobox's own onSearchChange. Holds only
+  // the raw search matches, deliberately not merged with the currently
+  // selected suppliers here -- see `supplierOptions` below for why.
   useEffect(() => {
-    const preselected = ALL_SUPPLIERS.filter((s) => suppliers.includes(s.value));
     if (supplierSearch.trim().length < 2) {
-      setSupplierResults(preselected);
+      setSupplierResults([]);
       setSupplierSearchLoading(false);
       return;
     }
     setSupplierSearchLoading(true);
     const timeout = setTimeout(() => {
       const term = supplierSearch.trim().toLowerCase();
-      const matches = ALL_SUPPLIERS.filter((s) => s.label.toLowerCase().includes(term));
-      const byValue = new Map([...preselected, ...matches].map((s) => [s.value, s]));
-      setSupplierResults([...byValue.values()]);
+      setSupplierResults(ALL_SUPPLIERS.filter((s) => s.label.toLowerCase().includes(term)));
       setSupplierSearchLoading(false);
     }, 400);
     return () => clearTimeout(timeout);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- `suppliers` intentionally excluded: re-running this on every selection change would restart the debounce mid-search.
   }, [supplierSearch]);
+
+  // Merging the currently-selected suppliers back in happens here, outside the
+  // debounced effect above, specifically so it stays in sync with `suppliers`
+  // on every render -- e.g. removing a chip immediately drops it from `options`
+  // too, rather than waiting for the next keystroke to re-run that effect.
+  const supplierOptions = ALL_SUPPLIERS.filter((s) => suppliers.includes(s.value)).concat(
+    supplierResults.filter((s) => !suppliers.includes(s.value)),
+  );
 
   return (
     <div>
@@ -460,7 +466,7 @@ export function App(): ReactElement {
             <div className="w-80">
               <TagCombobox
                 data-testid="supplier-tag-combobox"
-                options={supplierResults}
+                options={supplierOptions}
                 value={suppliers}
                 onChange={setSuppliers}
                 onSearchChange={setSupplierSearch}

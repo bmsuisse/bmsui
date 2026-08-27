@@ -183,7 +183,46 @@ logic above, which already had its own extraction). Structure:
     fixed same-day in v0.6.2 before wider adoption). Group spacing lives on
     the chunk wrapper's `pt-1`/`first:pt-0`, not on the header itself, since a
     margin on a sticky element travels with it once stuck and would leave a
-    gap at the scrollport's top.
+    gap at the scrollport's top. The group-chunking machinery (`groupMembers`,
+    `groupCheckState`, `buildRenderChunks`, and the `OptionRow`/`GroupChunk`/
+    `SingleChunk`/`RenderChunk` shapes) lives in `../../lib/optionGrouping.ts`
+    (v0.8.0), generic over any option carrying `{value, group?, disabled?}` —
+    factored out once `tag-combobox/` needed the identical logic, so a future
+    fix to either lands in one place instead of two.
+  - `tag-combobox/` — `TagCombobox` (v0.8.0), a tags-and-search multi-select:
+    selected options render as removable chips inline inside one bordered
+    field, with the search input immediately after the last chip — typing
+    opens a popover listing matches below the field, picking one adds a chip
+    right where the caret was and clears the search term so the user can keep
+    typing. Complements `Combobox`'s own `multiple` mode (a trigger button + a
+    summary count) for the case where every individual selection needs to
+    stay visible and removable at a glance — CCMT2's bonus-rule filter
+    template supplier picker is the driving use case. Built on the same
+    `Popover`/keyboard-nav shape as `Combobox` (same `onSearchChange`
+    server-driven-search contract, same shared grouping module above,
+    including the same `group`/`groupLabels` support) rather than forking it.
+    Backspace on an empty search field removes the most recently added chip,
+    matching standard tag-input convention.
+    Uses `PopoverAnchor`, not `PopoverTrigger` — `PopoverTrigger`'s own
+    composed `onClick` (`onOpenToggle`) raced this component's focus-driven
+    open logic on a real click landing directly on the search input (the
+    focus event opens it, then the bubbled click's `onOpenToggle` immediately
+    closed it again), invisible to jsdom-based unit tests since they only
+    ever click the field's outer div, not the input directly — only caught by
+    driving it in a real browser. `PopoverAnchor` has no such click side
+    effect, but doesn't register Radix's `triggerRef`, so its non-modal
+    content's own outside-focus detection didn't recognize `toggleOption`'s
+    post-pick `inputRef.focus()` (the input lives outside the popover's
+    portaled content, in the anchor) as a legitimate return to the trigger —
+    `PopoverContent`'s `onInteractOutside` carries an explicit guard that
+    treats a focus/pointer event inside the field's own ref as "not outside"
+    instead, replacing the `triggerRef`-based recognition `PopoverTrigger`
+    would otherwise have provided.
+    A group's checkbox/toggle (`toggleGroup`, and the header's checked/
+    indeterminate state) deliberately reads the full `options` list, not the
+    search-filtered `visibleOptions` — a group's "select all" must reflect
+    and act on every member even when the current search term hides some of
+    them, matching `Combobox`'s own identical choice for the same reason.
   - `sidebar/` — `Sidebar`, `SidebarNav`, `NavGroup`, `NavItem` (v0.7.0), the
     app shell's left navigation panel. Extracted from a side-by-side
     comparison of the contract-management app's own `Sidebar.tsx` (plain

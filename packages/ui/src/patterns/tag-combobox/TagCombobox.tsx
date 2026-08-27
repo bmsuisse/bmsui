@@ -2,6 +2,12 @@ import { X } from "lucide-react";
 import type { ComponentProps, KeyboardEvent, ReactElement } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "../../lib/utils";
+import {
+  buildRenderChunks,
+  groupCheckState,
+  groupMembers,
+  type OptionRow,
+} from "../../lib/optionGrouping";
 import { Popover, PopoverAnchor, PopoverContent } from "../../primitives/popover";
 
 export interface TagComboboxOption {
@@ -52,55 +58,6 @@ export interface TagComboboxProps {
   /** Display label for a group key (`TagComboboxOption.group`). Falls back to the raw
    * key when an entry is missing. Only relevant when at least one option sets `group`. */
   groupLabels?: Record<string, string>;
-}
-
-function groupMembers(options: TagComboboxOption[], group: string): string[] {
-  return options.filter((o) => o.group === group && !o.disabled).map((o) => o.value);
-}
-
-type GroupCheckState = "checked" | "unchecked" | "indeterminate";
-
-function groupCheckState(options: TagComboboxOption[], value: string[], group: string): GroupCheckState {
-  const members = groupMembers(options, group);
-  const selectedCount = members.filter((v) => value.includes(v)).length;
-  if (selectedCount === 0) return "unchecked";
-  return selectedCount === members.length ? "checked" : "indeterminate";
-}
-
-interface OptionRow {
-  option: TagComboboxOption;
-  index: number;
-}
-interface GroupChunk {
-  kind: "group";
-  group: string;
-  rows: OptionRow[];
-}
-interface SingleChunk {
-  kind: "single";
-  row: OptionRow;
-}
-type RenderChunk = GroupChunk | SingleChunk;
-
-/** Chunks `visibleOptions` into per-group chunks versus lone ungrouped rows, in one
- * linear pass — same shape (and same "a group's rows must be contiguous" invariant)
- * as `Combobox`'s own `buildRenderChunks`, kept here rather than shared since the two
- * components' row types differ and neither is worth a factored-out generic for just
- * this one helper. */
-function buildRenderChunks(visibleOptions: TagComboboxOption[]): RenderChunk[] {
-  const chunks: RenderChunk[] = [];
-  visibleOptions.forEach((option, index) => {
-    const row: OptionRow = { option, index };
-    const last = chunks[chunks.length - 1];
-    if (option.group && last?.kind === "group" && last.group === option.group) {
-      last.rows.push(row);
-    } else if (option.group) {
-      chunks.push({ kind: "group", group: option.group, rows: [row] });
-    } else {
-      chunks.push({ kind: "single", row });
-    }
-  });
-  return chunks;
 }
 
 /**
@@ -154,10 +111,26 @@ export function TagCombobox({
   }, [options, search, onSearchChange]);
 
   useEffect(() => {
-    setActiveIndex((i) => Math.min(i, Math.max(visibleOptions.length - 1, 0)));
+    setActiveIndex((i) => Math.min(Math.max(i, 0), Math.max(visibleOptions.length - 1, 0)));
   }, [visibleOptions.length]);
 
   const renderChunks = useMemo(() => buildRenderChunks(visibleOptions), [visibleOptions]);
+
+  // Reset the search term and re-point `activeIndex` each time the popover
+  // opens -- intentionally NOT reactive to `options`/`value` changes while it
+  // stays open, only to the open transition itself, mirroring `Combobox`'s
+  // own identical effect. Harmless (and idempotent) when `open` becomes true
+  // via focus right before the user starts typing: search is already "" at
+  // that point, since typing is what would change it.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!open) return;
+    setSearch("");
+    onSearchChange?.("");
+    const firstSelected = value[0];
+    const selectedIdx = firstSelected ? options.findIndex((o) => o.value === firstSelected) : -1;
+    setActiveIndex(selectedIdx >= 0 ? selectedIdx : 0);
+  }, [open]);
 
   function updateSearch(next: string): void {
     setSearch(next);
@@ -174,15 +147,24 @@ export function TagCombobox({
   }
 
   function removeValue(v: string): void {
+    // Mirrors toggleOption's own guard: an option disabled in the caller's
+    // `options` list can't be deselected via its dropdown row, so its chip's
+    // own remove button (and the Backspace shortcut, which calls this too)
+    // must refuse it the same way instead of silently bypassing that.
+    if (options.find((o) => o.value === v)?.disabled) return;
     onChange(value.filter((existing) => existing !== v));
   }
 
   const groupLabel = (group: string): string => groupLabels?.[group] ?? group;
 
+  // Deliberately uses the full `options` list, not `visibleOptions` -- a
+  // group's checkbox/toggle must reflect and act on every member, including
+  // ones the current search term is hiding, matching `Combobox`'s own
+  // `toggleGroup`/header-state contract for the same reason.
   function toggleGroup(group: string): void {
-    const members = groupMembers(visibleOptions, group);
+    const members = groupMembers(options, group);
     const next =
-      groupCheckState(visibleOptions, value, group) === "checked"
+      groupCheckState(options, value, group) === "checked"
         ? value.filter((v) => !members.includes(v))
         : Array.from(new Set([...value, ...members]));
     onChange(next);
@@ -193,7 +175,7 @@ export function TagCombobox({
     if (event.key === "ArrowDown") {
       event.preventDefault();
       setOpen(true);
-      setActiveIndex((i) => Math.min(i + 1, visibleOptions.length - 1));
+      setActiveIndex((i) => Math.min(i + 1, Math.max(visibleOptions.length - 1, 0)));
     } else if (event.key === "ArrowUp") {
       event.preventDefault();
       setActiveIndex((i) => Math.max(i - 1, 0));
@@ -211,7 +193,7 @@ export function TagCombobox({
     }
   }
 
-  function renderOption({ option, index }: OptionRow): ReactElement {
+  function renderOption({ option, index }: OptionRow<TagComboboxOption>): ReactElement {
     const isSelected = value.includes(option.value);
     const isActive = index === activeIndex;
     return (
@@ -323,7 +305,7 @@ export function TagCombobox({
           ) : (
             renderChunks.map((chunk) => {
               if (chunk.kind === "single") return renderOption(chunk.row);
-              const headerState = groupCheckState(visibleOptions, value, chunk.group);
+              const headerState = groupCheckState(options, value, chunk.group);
               return (
                 // The header and every one of its group's rows share this wrapper -- its
                 // bounds are the sticky header's containing block, so `sticky top-0` keeps

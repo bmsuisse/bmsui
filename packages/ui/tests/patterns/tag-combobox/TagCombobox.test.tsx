@@ -131,6 +131,39 @@ describe("TagCombobox", () => {
     expect(screen.queryByRole("button", { name: "Remove Germany" })).not.toBeInTheDocument();
     expect(screen.getByRole("combobox").querySelector("input")).toBeDisabled();
   });
+
+  it("does not remove a chip for an option disabled in the options list, via its own remove button", async () => {
+    // "us" is seeded into `value` directly (e.g. selected before being disabled
+    // server-side) -- its dropdown row would refuse to uncheck it too, per
+    // "does not select a disabled option" above; its chip must refuse the same way.
+    const onChange = vi.fn();
+    render(<TagCombobox options={OPTIONS} value={["us"]} onChange={onChange} />);
+    await userEvent.click(screen.getByRole("button", { name: "Remove United States" }));
+    expect(onChange).not.toHaveBeenCalled();
+    expect(screen.getByText("United States")).toBeInTheDocument();
+  });
+
+  it("does not remove a disabled option's chip on Backspace either", async () => {
+    const onChange = vi.fn();
+    render(<TagCombobox options={OPTIONS} value={["us"]} onChange={onChange} />);
+    const search = screen.getByRole("combobox").querySelector("input")!;
+    await userEvent.click(search);
+    await userEvent.keyboard("{Backspace}");
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("recovers from ArrowDown on a momentarily-empty filtered list once matches reappear", async () => {
+    render(<ControlledTagCombobox initialValue={[]} />);
+    const search = screen.getByRole("combobox").querySelector("input")!;
+    await userEvent.click(search);
+    await userEvent.type(search, "zzz{ArrowDown}{ArrowDown}");
+    for (let i = 0; i < 3; i++) await userEvent.keyboard("{Backspace}");
+    // Back to an empty search term -- every option matches again; Enter must
+    // land on a real option (index 0), not stay stuck below zero (which would
+    // read `visibleOptions[-1]` -- `undefined` -- and silently no-op instead).
+    await userEvent.keyboard("{Enter}");
+    expect(screen.getByRole("button", { name: "Remove Switzerland" })).toBeInTheDocument();
+  });
 });
 
 describe("TagCombobox (grouped)", () => {
@@ -246,5 +279,28 @@ describe("TagCombobox (grouped)", () => {
     render(<TagCombobox options={GROUPED_OPTIONS} value={[]} onChange={vi.fn()} />);
     await userEvent.click(screen.getByRole("combobox"));
     expect(await screen.findByText("team-a")).toBeInTheDocument();
+  });
+
+  it("a group's checkbox reflects every member's state, not just the ones a search term leaves visible", async () => {
+    // alice (team-a) is selected but hidden once the list is filtered down to "bob" --
+    // the header must still read indeterminate (one of two members selected), not
+    // "unchecked" just because the selected member itself isn't currently rendered.
+    render(<TagCombobox options={GROUPED_OPTIONS} groupLabels={GROUP_LABELS} value={["alice"]} onChange={vi.fn()} />);
+    await userEvent.click(screen.getByRole("combobox"));
+    const search = screen.getByRole("combobox").querySelector("input")!;
+    await userEvent.type(search, "bob");
+    const cb = groupCheckbox("Select all of Team A");
+    expect(cb.checked).toBe(false);
+    expect(cb.indeterminate).toBe(true);
+  });
+
+  it("toggling a group checkbox while a search is active still selects every member, including ones the search hides", async () => {
+    const onChange = vi.fn();
+    render(<TagCombobox options={GROUPED_OPTIONS} groupLabels={GROUP_LABELS} value={[]} onChange={onChange} />);
+    await userEvent.click(screen.getByRole("combobox"));
+    const search = screen.getByRole("combobox").querySelector("input")!;
+    await userEvent.type(search, "bob");
+    await userEvent.click(groupCheckbox("Select all of Team A"));
+    expect(onChange.mock.calls[0]![0].slice().sort()).toEqual(["alice", "bob"]);
   });
 });
