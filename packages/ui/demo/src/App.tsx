@@ -114,6 +114,7 @@ export function App(): ReactElement {
   const [country, setCountry] = useState<string | null>("ch");
   const [teamMembers, setTeamMembers] = useState<string[]>([]);
   const [colors, setColors] = useState<string[]>(["red", "blue"]);
+  const [tagTeamMembers, setTagTeamMembers] = useState<string[]>(["alice"]);
   const [suppliers, setSuppliers] = useState<string[]>(["00611", "01952"]);
   const [supplierSearch, setSupplierSearch] = useState("");
   const [supplierResults, setSupplierResults] = useState<{ value: string; label: string }[]>([]);
@@ -466,6 +467,25 @@ export function App(): ReactElement {
                 loading={supplierSearchLoading}
                 placeholder="Search suppliers…"
                 emptyMessage={supplierSearch.trim().length < 2 ? "Type to search…" : "No matches."}
+              />
+            </div>
+          </Section>
+
+          <Section title="TagCombobox (grouped)">
+            <div className="w-80">
+              <TagCombobox
+                options={[
+                  { value: "alice", label: "Alice", group: "team-a" },
+                  { value: "andrew", label: "Andrew", group: "team-a" },
+                  { value: "amy", label: "Amy", group: "team-a" },
+                  { value: "carol", label: "Carol", group: "team-b" },
+                  { value: "cyrus", label: "Cyrus", group: "team-b" },
+                  { value: "eve", label: "Eve" },
+                ]}
+                groupLabels={{ "team-a": "Team A", "team-b": "Team B" }}
+                value={tagTeamMembers}
+                onChange={setTagTeamMembers}
+                placeholder="Select team members"
               />
             </div>
           </Section>

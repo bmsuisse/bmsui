@@ -2,12 +2,18 @@ import { X } from "lucide-react";
 import type { ComponentProps, KeyboardEvent, ReactElement } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "../../lib/utils";
-import { Popover, PopoverTrigger, PopoverContent } from "../../primitives/popover";
+import { Popover, PopoverAnchor, PopoverContent } from "../../primitives/popover";
 
 export interface TagComboboxOption {
   value: string;
   label: string;
   disabled?: boolean;
+  /** Groups this option under a header with the given key, rendered as a bold label
+   * plus a tri-state "select all" checkbox (unchecked/checked/indeterminate, reflecting
+   * how many of the group's members are selected — toggling it selects or clears the
+   * whole group). Options sharing a `group` must be contiguous in `options` — see
+   * `Combobox`'s own `group` doc for the same constraint and the reasoning behind it. */
+  group?: string;
 }
 
 export interface TagComboboxProps {
@@ -43,6 +49,58 @@ export interface TagComboboxProps {
    * Dialog/Sheet content element so the popover portals inside it instead of
    * `document.body`, which would otherwise fight with the Dialog's focus trap. */
   container?: ComponentProps<typeof PopoverContent>["container"];
+  /** Display label for a group key (`TagComboboxOption.group`). Falls back to the raw
+   * key when an entry is missing. Only relevant when at least one option sets `group`. */
+  groupLabels?: Record<string, string>;
+}
+
+function groupMembers(options: TagComboboxOption[], group: string): string[] {
+  return options.filter((o) => o.group === group && !o.disabled).map((o) => o.value);
+}
+
+type GroupCheckState = "checked" | "unchecked" | "indeterminate";
+
+function groupCheckState(options: TagComboboxOption[], value: string[], group: string): GroupCheckState {
+  const members = groupMembers(options, group);
+  const selectedCount = members.filter((v) => value.includes(v)).length;
+  if (selectedCount === 0) return "unchecked";
+  return selectedCount === members.length ? "checked" : "indeterminate";
+}
+
+interface OptionRow {
+  option: TagComboboxOption;
+  index: number;
+}
+interface GroupChunk {
+  kind: "group";
+  group: string;
+  rows: OptionRow[];
+}
+interface SingleChunk {
+  kind: "single";
+  row: OptionRow;
+}
+type RenderChunk = GroupChunk | SingleChunk;
+
+/** Chunks `visibleOptions` into per-group chunks versus lone ungrouped rows, in one
+ * linear pass — same shape (and same "a group's rows must be contiguous" invariant)
+ * as `Combobox`'s own `buildRenderChunks`, kept here rather than shared since the two
+ * components' row types differ and neither is worth a factored-out generic for just
+ * this one helper. */
+function buildRenderChunks(visibleOptions: TagComboboxOption[]): RenderChunk[] {
+  const chunks: RenderChunk[] = [];
+  visibleOptions.forEach((option, index) => {
+    const row: OptionRow = { option, index };
+    const last = chunks[chunks.length - 1];
+    if (option.group && last?.kind === "group" && last.group === option.group) {
+      last.rows.push(row);
+    } else if (option.group) {
+      chunks.push({ kind: "group", group: option.group, rows: [row] });
+    } else {
+      chunks.push({ kind: "single", row });
+    }
+  });
+  return chunks;
 }
 
 /**
@@ -69,6 +127,7 @@ export function TagCombobox({
   id,
   onSearchChange,
   container,
+  groupLabels,
   ...rest
 }: TagComboboxProps): ReactElement {
   const testId = rest["data-testid"];
@@ -98,6 +157,8 @@ export function TagCombobox({
     setActiveIndex((i) => Math.min(i, Math.max(visibleOptions.length - 1, 0)));
   }, [visibleOptions.length]);
 
+  const renderChunks = useMemo(() => buildRenderChunks(visibleOptions), [visibleOptions]);
+
   function updateSearch(next: string): void {
     setSearch(next);
     onSearchChange?.(next);
@@ -114,6 +175,18 @@ export function TagCombobox({
 
   function removeValue(v: string): void {
     onChange(value.filter((existing) => existing !== v));
+  }
+
+  const groupLabel = (group: string): string => groupLabels?.[group] ?? group;
+
+  function toggleGroup(group: string): void {
+    const members = groupMembers(visibleOptions, group);
+    const next =
+      groupCheckState(visibleOptions, value, group) === "checked"
+        ? value.filter((v) => !members.includes(v))
+        : Array.from(new Set([...value, ...members]));
+    onChange(next);
+    inputRef.current?.focus();
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>): void {
@@ -138,9 +211,40 @@ export function TagCombobox({
     }
   }
 
+  function renderOption({ option, index }: OptionRow): ReactElement {
+    const isSelected = value.includes(option.value);
+    const isActive = index === activeIndex;
+    return (
+      <button
+        key={option.value}
+        type="button"
+        role="option"
+        aria-selected={isSelected}
+        disabled={option.disabled}
+        data-testid={testId ? `${testId}-option` : undefined}
+        data-option-value={option.value}
+        onMouseEnter={() => setActiveIndex(index)}
+        onClick={() => toggleOption(option)}
+        className={cn(
+          "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm outline-none disabled:pointer-events-none disabled:opacity-50",
+          isActive && "bg-accent text-accent-foreground",
+        )}
+      >
+        <input
+          type="checkbox"
+          checked={isSelected}
+          readOnly
+          tabIndex={-1}
+          className="pointer-events-none h-3.5 w-3.5 shrink-0 accent-primary"
+        />
+        <span className="truncate">{option.label}</span>
+      </button>
+    );
+  }
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+      <PopoverAnchor asChild>
         <div
           ref={fieldRef}
           data-testid={testId}
@@ -191,48 +295,62 @@ export function TagCombobox({
             onKeyDown={handleKeyDown}
           />
         </div>
-      </PopoverTrigger>
+      </PopoverAnchor>
       <PopoverContent
         align="start"
         container={container}
         className="w-[var(--radix-popover-trigger-width)] min-w-[10rem] p-2"
         onOpenAutoFocus={(event) => event.preventDefault()}
         onCloseAutoFocus={(event) => event.preventDefault()}
+        // Radix's non-modal Popover content treats a focus/pointer event as
+        // "outside" (and dismisses) unless the target is inside the content
+        // itself or is the registered `PopoverTrigger` -- but this field uses
+        // `PopoverAnchor`, which never registers a trigger ref, and
+        // `toggleOption`/`removeValue` deliberately refocus `inputRef` (which
+        // lives in the anchor, not inside this portaled content) after every
+        // pick so the user can keep typing. Without this guard, that refocus
+        // itself reads as "focus left to somewhere outside" and closes the
+        // popover right after each selection.
+        onInteractOutside={(event) => {
+          if (fieldRef.current?.contains(event.target as Node)) event.preventDefault();
+        }}
       >
         <div role="listbox" className="flex max-h-60 flex-col gap-0.5 overflow-y-auto">
           {loading ? (
             <p className="py-2 text-center text-sm text-muted-foreground">{loadingMessage}</p>
-          ) : visibleOptions.length === 0 ? (
+          ) : renderChunks.length === 0 ? (
             <p className="py-2 text-center text-sm text-muted-foreground">{emptyMessage}</p>
           ) : (
-            visibleOptions.map((option, index) => {
-              const isSelected = value.includes(option.value);
-              const isActive = index === activeIndex;
+            renderChunks.map((chunk) => {
+              if (chunk.kind === "single") return renderOption(chunk.row);
+              const headerState = groupCheckState(visibleOptions, value, chunk.group);
               return (
-                <button
-                  key={option.value}
-                  type="button"
-                  role="option"
-                  aria-selected={isSelected}
-                  disabled={option.disabled}
-                  data-testid={testId ? `${testId}-option` : undefined}
-                  data-option-value={option.value}
-                  onMouseEnter={() => setActiveIndex(index)}
-                  onClick={() => toggleOption(option)}
-                  className={cn(
-                    "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm outline-none disabled:pointer-events-none disabled:opacity-50",
-                    isActive && "bg-accent text-accent-foreground",
-                  )}
-                >
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    readOnly
-                    tabIndex={-1}
-                    className="pointer-events-none h-3.5 w-3.5 shrink-0 accent-primary"
-                  />
-                  <span className="truncate">{option.label}</span>
-                </button>
+                // The header and every one of its group's rows share this wrapper -- its
+                // bounds are the sticky header's containing block, so `sticky top-0` keeps
+                // the header pinned for the group's whole scroll extent instead of just
+                // past its first row. Spacing above a group lives on this wrapper's
+                // `pt-1`/`first:pt-0`, not on the header itself -- see `Combobox`'s own
+                // identical structure for why both of these matter.
+                <div key={`group-${chunk.group}`} className="flex flex-col gap-0.5 pt-1 first:pt-0">
+                  <div
+                    data-group-header
+                    className="sticky top-0 z-10 flex items-center gap-2 rounded-sm bg-muted px-2 py-1.5 text-sm font-semibold text-foreground"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={headerState === "checked"}
+                      ref={(el) => {
+                        if (el) el.indeterminate = headerState === "indeterminate";
+                      }}
+                      onChange={() => toggleGroup(chunk.group)}
+                      onClick={(event) => event.stopPropagation()}
+                      className="h-3.5 w-3.5 shrink-0 accent-primary"
+                      aria-label={`Select all of ${groupLabel(chunk.group)}`}
+                    />
+                    <span className="truncate">{groupLabel(chunk.group)}</span>
+                  </div>
+                  {chunk.rows.map(renderOption)}
+                </div>
               );
             })
           )}

@@ -24,6 +24,19 @@ function ControlledTagCombobox({
   return <TagCombobox options={options} value={value} onChange={setValue} onSearchChange={onSearchChange} />;
 }
 
+const GROUPED_OPTIONS: TagComboboxOption[] = [
+  { value: "alice", label: "Alice", group: "team-a" },
+  { value: "bob", label: "Bob", group: "team-a" },
+  { value: "carol", label: "Carol", group: "team-b" },
+  { value: "dave", label: "Dave", group: "team-b" },
+  { value: "eve", label: "Eve" },
+];
+const GROUP_LABELS = { "team-a": "Team A", "team-b": "Team B" };
+
+function groupCheckbox(name: string): HTMLInputElement {
+  return screen.getByRole("checkbox", { name }) as HTMLInputElement;
+}
+
 describe("TagCombobox", () => {
   it("shows the placeholder when nothing is selected, and a chip per selected value otherwise", () => {
     render(<TagCombobox options={OPTIONS} value={["de", "fr"]} onChange={vi.fn()} placeholder="Add countries" />);
@@ -117,5 +130,121 @@ describe("TagCombobox", () => {
     expect(screen.getByText("Germany")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Remove Germany" })).not.toBeInTheDocument();
     expect(screen.getByRole("combobox").querySelector("input")).toBeDisabled();
+  });
+});
+
+describe("TagCombobox (grouped)", () => {
+  it("renders a header for each group, before its members, in the array's order", async () => {
+    render(<TagCombobox options={GROUPED_OPTIONS} groupLabels={GROUP_LABELS} value={[]} onChange={vi.fn()} />);
+    await userEvent.click(screen.getByRole("combobox"));
+    const listbox = await screen.findByRole("listbox");
+    const rendered = Array.from(listbox.querySelectorAll("[role=option], [data-group-header]")).map(
+      (el) => el.textContent,
+    );
+    expect(rendered).toEqual(["Team A", "Alice", "Bob", "Team B", "Carol", "Dave", "Eve"]);
+  });
+
+  it("does not render a header for ungrouped options", async () => {
+    render(<TagCombobox options={GROUPED_OPTIONS} groupLabels={GROUP_LABELS} value={[]} onChange={vi.fn()} />);
+    await userEvent.click(screen.getByRole("combobox"));
+    expect(await screen.findByRole("option", { name: "Eve" })).toBeInTheDocument();
+    expect(screen.queryByText("Eve", { selector: "[data-group-header]" })).not.toBeInTheDocument();
+  });
+
+  it("a group header shares its containing block with every one of its group's rows, not just the first", async () => {
+    render(<TagCombobox options={GROUPED_OPTIONS} groupLabels={GROUP_LABELS} value={[]} onChange={vi.fn()} />);
+    await userEvent.click(screen.getByRole("combobox"));
+    const listbox = await screen.findByRole("listbox");
+    const teamAHeader = Array.from(listbox.querySelectorAll("[data-group-header]")).find(
+      (el) => el.textContent === "Team A",
+    );
+    expect(teamAHeader).toBeTruthy();
+    const container = teamAHeader!.parentElement!;
+    expect(container.querySelector('[data-option-value="alice"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-option-value="bob"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-option-value="carol"]')).not.toBeInTheDocument();
+  });
+
+  it("group headers stick to the top of the scrolling listbox with an opaque background", async () => {
+    render(<TagCombobox options={GROUPED_OPTIONS} groupLabels={GROUP_LABELS} value={[]} onChange={vi.fn()} />);
+    await userEvent.click(screen.getByRole("combobox"));
+    const listbox = await screen.findByRole("listbox");
+    const headers = Array.from(listbox.querySelectorAll("[data-group-header]"));
+    expect(headers).toHaveLength(2);
+    for (const header of headers) {
+      expect(header.className).toMatch(/\bsticky\b/);
+      expect(header.className).toMatch(/\btop-0\b/);
+      expect(header.className).not.toMatch(/bg-muted\/\d/);
+    }
+  });
+
+  it("a group's checkbox is unchecked when none of its members are selected", async () => {
+    render(<TagCombobox options={GROUPED_OPTIONS} groupLabels={GROUP_LABELS} value={[]} onChange={vi.fn()} />);
+    await userEvent.click(screen.getByRole("combobox"));
+    const cb = groupCheckbox("Select all of Team A");
+    expect(cb.checked).toBe(false);
+    expect(cb.indeterminate).toBe(false);
+  });
+
+  it("a group's checkbox is indeterminate when some but not all of its members are selected", async () => {
+    render(
+      <TagCombobox options={GROUPED_OPTIONS} groupLabels={GROUP_LABELS} value={["alice"]} onChange={vi.fn()} />,
+    );
+    await userEvent.click(screen.getByRole("combobox"));
+    const cb = groupCheckbox("Select all of Team A");
+    expect(cb.checked).toBe(false);
+    expect(cb.indeterminate).toBe(true);
+  });
+
+  it("a group's checkbox is checked when every one of its members is selected", async () => {
+    render(
+      <TagCombobox
+        options={GROUPED_OPTIONS}
+        groupLabels={GROUP_LABELS}
+        value={["alice", "bob"]}
+        onChange={vi.fn()}
+      />,
+    );
+    await userEvent.click(screen.getByRole("combobox"));
+    const cb = groupCheckbox("Select all of Team A");
+    expect(cb.checked).toBe(true);
+    expect(cb.indeterminate).toBe(false);
+  });
+
+  it("clicking an unchecked/indeterminate group checkbox selects every member of that group, keeping other selections", async () => {
+    const onChange = vi.fn();
+    render(<TagCombobox options={GROUPED_OPTIONS} groupLabels={GROUP_LABELS} value={["eve"]} onChange={onChange} />);
+    await userEvent.click(screen.getByRole("combobox"));
+    await userEvent.click(groupCheckbox("Select all of Team A"));
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange.mock.calls[0]![0].slice().sort()).toEqual(["alice", "bob", "eve"]);
+  });
+
+  it("clicking a fully-checked group checkbox deselects every member of that group, keeping other selections", async () => {
+    const onChange = vi.fn();
+    render(
+      <TagCombobox
+        options={GROUPED_OPTIONS}
+        groupLabels={GROUP_LABELS}
+        value={["alice", "bob", "eve"]}
+        onChange={onChange}
+      />,
+    );
+    await userEvent.click(screen.getByRole("combobox"));
+    await userEvent.click(groupCheckbox("Select all of Team A"));
+    expect(onChange).toHaveBeenCalledWith(["eve"]);
+  });
+
+  it("keeps the popover open after toggling a group checkbox", async () => {
+    render(<TagCombobox options={GROUPED_OPTIONS} groupLabels={GROUP_LABELS} value={[]} onChange={vi.fn()} />);
+    await userEvent.click(screen.getByRole("combobox"));
+    await userEvent.click(groupCheckbox("Select all of Team A"));
+    expect(screen.getByRole("listbox")).toBeInTheDocument();
+  });
+
+  it("falls back to the raw group key when groupLabels has no entry for it", async () => {
+    render(<TagCombobox options={GROUPED_OPTIONS} value={[]} onChange={vi.fn()} />);
+    await userEvent.click(screen.getByRole("combobox"));
+    expect(await screen.findByText("team-a")).toBeInTheDocument();
   });
 });
