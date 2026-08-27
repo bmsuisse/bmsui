@@ -66,6 +66,11 @@ widgets use:
 | `enum` | single-value select over `column.options` | the selected option's `value` |
 | `date` / `datetime` | native date / datetime-local input | a `Date`, or `null` when emptied |
 
+`datetime`'s editor preserves seconds (the input's own value string includes
+them, with `step={1}` so the browser's picker shows a seconds field) —
+milliseconds are still dropped, since sub-second precision on a
+grid-edited datetime column is enough of an edge case to leave unhandled.
+
 `editable` can also be a predicate, for per-row control (e.g. a locked row):
 
 ```tsx

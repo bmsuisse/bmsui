@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 import type { NumberColumn } from "../column/types";
 import { Input } from "../components/ui/input";
+import { EditFieldError } from "./EditFieldError";
 import { editErrorId, type EditWidgetProps } from "./widget-types";
 
 /**
@@ -31,11 +32,7 @@ export function NumberEditor<TRow>({
         value={value === null || value === undefined ? "" : String(value)}
         onChange={(event) => onChange(event.target.value === "" ? null : Number(event.target.value))}
       />
-      {error && (
-        <span id={errorId} className="mt-0.5 block text-xs text-destructive">
-          {error}
-        </span>
-      )}
+      {error && <EditFieldError id={errorId} message={error} />}
     </div>
   );
 }

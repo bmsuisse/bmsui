@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 import type { StringColumn } from "../column/types";
 import { Input } from "../components/ui/input";
+import { EditFieldError } from "./EditFieldError";
 import { editErrorId, type EditWidgetProps } from "./widget-types";
 
 /** Default inline editor for `type: "string"` columns: a plain text input. */
@@ -25,11 +26,7 @@ export function StringEditor<TRow>({
         value={value === null || value === undefined ? "" : String(value)}
         onChange={(event) => onChange(event.target.value)}
       />
-      {error && (
-        <span id={errorId} className="mt-0.5 block text-xs text-destructive">
-          {error}
-        </span>
-      )}
+      {error && <EditFieldError id={errorId} message={error} />}
     </div>
   );
 }

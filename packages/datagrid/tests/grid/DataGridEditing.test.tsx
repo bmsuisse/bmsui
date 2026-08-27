@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { useState } from "react";
@@ -403,5 +403,86 @@ describe("DataGrid inline editing", () => {
     expect(screen.getByTestId("cell-1-name")).toBeInTheDocument(); // row 1: editable (clickable)
     expect(screen.queryByTestId("cell-2-name")).not.toBeInTheDocument(); // row 2: locked, plain static text
     expect(screen.getByRole("cell", { name: "Alice" })).toBeInTheDocument();
+  });
+
+  it("keeps an edit made while Save is still in flight, instead of wiping it once the save resolves", async () => {
+    let resolveSave: () => void = () => {};
+    const onSave = vi.fn(() => new Promise<void>((resolve) => { resolveSave = resolve; }));
+    render(<EditableGrid onSave={onSave} />);
+    await activateCell("1", "name");
+
+    const nameInput = screen.getByTestId("edit-1-name");
+    await userEvent.clear(nameInput);
+    await userEvent.type(nameInput, "Charles");
+
+    await userEvent.click(screen.getByTestId("datagrid-save-edits"));
+    expect(onSave).toHaveBeenCalledTimes(1); // in flight, not yet resolved
+
+    // A second edit — on a different column of the SAME row — lands while
+    // the first save is still awaiting `onSave`. Nothing disables this row's
+    // inputs during the save (that's opt-in via `editing.saving`), so this
+    // is a legitimate thing for a user to do.
+    const ageInput = screen.getByTestId("edit-1-age");
+    await userEvent.clear(ageInput);
+    await userEvent.type(ageInput, "99");
+
+    resolveSave();
+    await waitFor(() => expect(screen.getByTestId("edit-1-age")).toHaveValue(99));
+
+    // The name edit (included in the resolved save) is gone; the age edit
+    // (made during the await, never part of that save) must survive.
+    expect(screen.getByTestId("datagrid-edit-bar")).toHaveTextContent("1 row changed");
+    expect(screen.getByTestId("edit-1-age")).toHaveValue(99);
+  });
+
+  it("Escape closes an open enum dropdown without reverting the cell's already-changed value", async () => {
+    render(<EditableGrid onSave={vi.fn()} />);
+    await activateCell("1", "status");
+
+    await userEvent.click(screen.getByTestId("edit-1-status"));
+    await userEvent.click(await screen.findByRole("option", { name: "Shipped" }));
+    expect(screen.getByTestId("edit-1-status")).toHaveTextContent("Shipped");
+
+    // Reopen the dropdown, then Escape just to close IT — not to revert the
+    // cell. Radix's own dismiss-on-Escape handling doesn't stopPropagation,
+    // so without the DOM-containment guard in DataGrid.tsx, this would also
+    // revert the cell back to "Pending".
+    await userEvent.click(screen.getByTestId("edit-1-status"));
+    await screen.findByRole("listbox");
+    await userEvent.keyboard("{Escape}");
+
+    expect(screen.getByTestId("edit-1-status")).toHaveTextContent("Shipped");
+  });
+
+  it("preserves seconds when editing a datetime column, instead of silently truncating to minute precision", async () => {
+    const onSave = vi.fn();
+    interface DatetimeRow {
+      id: string;
+      startedAt: string;
+    }
+    const datetimeColumns: ColumnDef<DatetimeRow>[] = [
+      { id: "startedAt", type: "datetime", header: "Started", accessorKey: "startedAt", editable: true },
+    ];
+    render(
+      <DataGrid
+        columns={datetimeColumns}
+        dataSource={{ mode: "client", data: [{ id: "1", startedAt: "2026-01-15T10:15:42" }] }}
+        getRowId={(row) => row.id}
+        showPagination={false}
+        editing={{ onSave }}
+      />,
+    );
+    await activateCell("1", "startedAt");
+
+    // Change only the date portion — the input's own value must already
+    // include the original seconds, or this round-trip truncates them.
+    const input = screen.getByTestId("edit-1-startedAt");
+    await userEvent.clear(input);
+    await userEvent.type(input, "2026-01-16T10:15:42");
+    await userEvent.click(screen.getByTestId("datagrid-save-edits"));
+
+    const edits = onSave.mock.calls[0]![0] as EditedRow<DatetimeRow>[];
+    const value = edits[0]!.values.startedAt as Date;
+    expect(value.getSeconds()).toBe(42);
   });
 });

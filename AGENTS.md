@@ -987,7 +987,53 @@ no indication of *why* is not enough on its own. The Save/Discard bar's
 message span is `aria-live="polite"`, since nothing in it is ever focused
 when it appears/changes, and the blocked-Save message names the affected row
 ids (bounded to 3, then "and N more") via `describeErrorRows` rather than a
-bare "fix the errors."
+bare "fix the errors." The error `<span>` itself is one shared
+`EditFieldError` component (`edit/EditFieldError.tsx`), not five copies of
+the same markup — found duplicated near-verbatim across all 5 editors by a
+review agent; `BooleanEditor`'s wrapping `<div>` dropped its own `gap-0.5`
+when it switched to the shared component, since `EditFieldError`'s `mt-0.5`
+already provides the same 2px spacing (both would have doubled it).
+
+**`handleSaveEdits` clears only what it actually saved, not the whole
+`pendingEdits`/`editErrors` maps** — a real bug an agent review caught:
+nothing disables a row's inputs while `editing.onSave` is in flight
+(`editing.saving` only disables the Save/Discard *buttons*, and only if the
+caller sets it), so a user can keep typing into the active row, or activate
+and edit a different one, during the `await`. The original code did
+`setPendingEdits(new Map())` unconditionally once `onSave` resolved,
+silently discarding any edit made in that window even though it was never
+part of what got sent. The fix snapshots `pendingEdits` before the `await`,
+then after it resolves removes only the exact `(rowId, columnId)` entries
+that are STILL EQUAL to that snapshot (via `editValuesEqual`) — an entry
+changed again during the await survives, and `activeRowId` only clears if
+the active row has nothing left pending on it afterward. Covered by
+`DataGridEditing.test.tsx`'s "keeps an edit made while Save is still in
+flight" test, using a manually-resolved `Promise` to control the race
+deterministically rather than relying on real timing.
+
+**Escape must check real DOM containment, not just `stopPropagation`** —
+another bug the same review caught: the default `EnumEditor`'s Radix
+`<Select>` (or any custom `renderEditCell` popover/dropdown) is a REACT
+descendant of the wrapping `<div>` that owns the Escape handler, so its
+synthetic events still bubble up to it, even though the dropdown's actual
+DOM node lives in a portal outside that `<div>`. Radix's own
+dismiss-on-Escape handling (`@radix-ui/react-dismissable-layer`) calls
+`preventDefault()` but never `stopPropagation()`, so pressing Escape just to
+close an open dropdown would otherwise ALSO revert the cell. Fixed with
+`event.currentTarget.contains(event.target as Node)` — true DOM containment,
+which stays false for a portaled descendant regardless of React-tree
+bubbling. Covered by `DataGridEditing.test.tsx`'s "Escape closes an open
+enum dropdown without reverting" test.
+
+**`DateEditor` formats `"datetime"` values with seconds
+(`yyyy-MM-dd'T'HH:mm:ss`) and sets the input's `step={1}`** — a third bug
+from the same review: the original `yyyy-MM-dd'T'HH:mm` format (no seconds)
+meant editing a datetime cell AT ALL — even just its date portion — silently
+truncated any non-zero seconds the underlying value had, since the native
+input's own value string (built without seconds) is what `onChange`
+reconstructs the edited `Date` from. Milliseconds are still dropped — a
+documented scope cut, not fixed. Covered by `DataGridEditing.test.tsx`'s
+"preserves seconds when editing a datetime column" test.
 
 **Not carried over to `<TreeDataGrid>`** — same scope line as everything
 else in its own "not carried over" list below: build inline editing there

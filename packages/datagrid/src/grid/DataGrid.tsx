@@ -218,6 +218,16 @@ function toTanstackColumns<TRow extends RowData>(
             <div
               onKeyDown={(event) => {
                 if (event.key !== "Escape") return;
+                // The default EnumEditor's Radix <Select> (or any custom
+                // `renderEditCell` popover/dropdown) is a REACT descendant
+                // of this `<div>` — so its synthetic events still bubble up
+                // to this handler — but its actual DOM node lives in a
+                // portal OUTSIDE this `<div>`. Radix's own Escape-closes-
+                // the-dropdown handling doesn't stopPropagation, so without
+                // this real-DOM containment check, pressing Escape just to
+                // close an open dropdown would ALSO silently revert
+                // whatever this cell already had selected.
+                if (!event.currentTarget.contains(event.target as Node)) return;
                 event.stopPropagation();
                 editingCtx.onEdit(column, row, getColumnValue(column, row));
               }}
@@ -447,7 +457,8 @@ export function DataGrid<TRow extends RowData>({
 
   async function handleSaveEdits(): Promise<void> {
     if (!editing || pendingEdits.size === 0) return;
-    const edited: EditedRow<TRow>[] = [...pendingEdits.entries()].map(([rowId, entry]) => ({
+    const snapshot = pendingEdits;
+    const edited: EditedRow<TRow>[] = [...snapshot.entries()].map(([rowId, entry]) => ({
       rowId,
       row: entry.row,
       values: Object.fromEntries(entry.values),
@@ -462,15 +473,61 @@ export function DataGrid<TRow extends RowData>({
       // shows.
       return;
     }
-    const savedRowIds = new Set(edited.map((entry) => entry.rowId));
-    setPendingEdits(new Map());
-    setEditErrors(new Map());
-    // Deactivates the active row only if it was actually part of what got
-    // saved — a row the user clicked into but never changed (so it was
-    // never part of `edited`) has nothing to save, but also nothing wrong
-    // with it; there's no reason Save should kick the user out of it. Since
-    // at most one row is ever active, this either clears it or leaves it.
-    setActiveRowId((prev) => (prev !== null && savedRowIds.has(prev) ? null : prev));
+    // Clear only what THIS save actually covered, and only where it hasn't
+    // changed since — nothing here disables a cell's inputs while `onSave`
+    // is in flight (that's the caller's own `editing.saving` to act on;
+    // `<DataGrid>` doesn't force it), so the user can keep typing into the
+    // active row, or even switch to and edit a different one, during the
+    // await. A blanket `setPendingEdits(new Map())` here would silently
+    // discard whatever they typed in that window, even though it was never
+    // part of `edited` at all. `survivedRowIds`/`clearedErrorKeys` are
+    // plain synchronous side-channels from the `setPendingEdits` updater
+    // below to the two updaters after it — safe because React runs queued
+    // updater functions in order, synchronously, before committing.
+    const snapshotRowIds = new Set(snapshot.keys());
+    const survivedRowIds = new Set<string>();
+    const clearedErrorKeys: { rowId: string; columnId: string }[] = [];
+    setPendingEdits((prev) => {
+      const next = new Map(prev);
+      for (const [rowId, snapshotEntry] of snapshot) {
+        const current = next.get(rowId);
+        if (!current) continue;
+        const values = new Map(current.values);
+        for (const [columnId, snapshotValue] of snapshotEntry.values) {
+          if (values.has(columnId) && editValuesEqual(values.get(columnId), snapshotValue)) {
+            values.delete(columnId);
+            clearedErrorKeys.push({ rowId, columnId });
+          }
+        }
+        if (values.size === 0) next.delete(rowId);
+        else {
+          next.set(rowId, { row: current.row, values });
+          survivedRowIds.add(rowId);
+        }
+      }
+      return next;
+    });
+    setEditErrors((prev) => {
+      if (clearedErrorKeys.length === 0) return prev;
+      const next = new Map(prev);
+      for (const { rowId, columnId } of clearedErrorKeys) {
+        const rowErrors = next.get(rowId);
+        if (!rowErrors) continue;
+        const nextRowErrors = new Map(rowErrors);
+        nextRowErrors.delete(columnId);
+        if (nextRowErrors.size === 0) next.delete(rowId);
+        else next.set(rowId, nextRowErrors);
+      }
+      return next;
+    });
+    // Deactivates the active row only if it was part of this save AND has
+    // nothing left pending on it afterward — a caller clicked into but
+    // never actually changed (never part of `edited`) has nothing to save
+    // but also nothing wrong with it, and one that got a NEW edit during
+    // the await still has work in progress, so neither should be kicked out.
+    setActiveRowId((prev) =>
+      prev !== null && snapshotRowIds.has(prev) && !survivedRowIds.has(prev) ? null : prev,
+    );
   }
 
   function handleDiscardEdits(): void {

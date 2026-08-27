@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 import type { BooleanColumn } from "../column/types";
 import { Checkbox } from "../components/ui/checkbox";
+import { EditFieldError } from "./EditFieldError";
 import { editErrorId, type EditWidgetProps } from "./widget-types";
 
 /**
@@ -26,7 +27,10 @@ export function BooleanEditor<TRow>({
 }: EditWidgetProps<BooleanColumn<TRow>>): ReactElement {
   const errorId = editErrorId(rowId, column.id);
   return (
-    <div className="flex flex-col items-center gap-0.5">
+    // No `gap-*` here (unlike a plain flex stack) — `EditFieldError`'s own
+    // `mt-0.5` already provides the same spacing every other editor gets;
+    // adding both would double it for this one editor only.
+    <div className="flex flex-col items-center">
       <Checkbox
         aria-label={`Edit ${column.header}`}
         aria-invalid={error ? true : undefined}
@@ -36,11 +40,7 @@ export function BooleanEditor<TRow>({
         checked={toBoolean(value)}
         onCheckedChange={(next) => onChange(next === true)}
       />
-      {error && (
-        <span id={errorId} className="text-xs text-destructive">
-          {error}
-        </span>
-      )}
+      {error && <EditFieldError id={errorId} message={error} />}
     </div>
   );
 }

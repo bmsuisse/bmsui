@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 import type { EnumColumn } from "../column/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
+import { EditFieldError } from "./EditFieldError";
 import { editErrorId, type EditWidgetProps } from "./widget-types";
 
 /** Default inline editor for `type: "enum"` columns: a single-value select over `column.options`. */
@@ -34,11 +35,7 @@ export function EnumEditor<TRow>({
           ))}
         </SelectContent>
       </Select>
-      {error && (
-        <span id={errorId} className="mt-0.5 block text-xs text-destructive">
-          {error}
-        </span>
-      )}
+      {error && <EditFieldError id={errorId} message={error} />}
     </div>
   );
 }
