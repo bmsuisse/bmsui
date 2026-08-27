@@ -32,6 +32,8 @@ import {
   LoadingOverlay,
   LoadingSpinner,
   Modal,
+  NavGroup,
+  NavItem,
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -46,6 +48,7 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
+  Sidebar,
   Skeleton,
   StatusBadge,
   Textarea,
@@ -54,6 +57,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@bmsuisse/ui";
+import {
+  ClipboardCheck,
+  Cog,
+  Info,
+  LayoutGrid,
+  ListFilter,
+  Percent,
+} from "lucide-react";
 import type { ReactElement } from "react";
 import { useState } from "react";
 
@@ -441,7 +452,57 @@ export function App(): ReactElement {
               </Tooltip>
             </TooltipProvider>
           </Section>
+
+          <Section title="Sidebar / NavGroup / NavItem">
+            <SidebarDemo />
+          </Section>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function SidebarDemo(): ReactElement {
+  const [collapsed, setCollapsed] = useState(false);
+  const [active, setActive] = useState("overview");
+
+  const item = (key: string, icon: typeof LayoutGrid, label: string) => (
+    <NavItem
+      as="button"
+      type="button"
+      icon={icon}
+      label={label}
+      active={active === key}
+      onClick={() => setActive(key)}
+    />
+  );
+
+  return (
+    <div className="flex h-[420px] overflow-hidden rounded-lg border border-border">
+      <Sidebar
+        collapsed={collapsed}
+        onCollapsedChange={setCollapsed}
+        resizable
+        header={(isCollapsed) => (
+          <span className="truncate text-sm font-semibold">{isCollapsed ? "D" : "Demo App"}</span>
+        )}
+        footer="v0.7.0"
+      >
+        <NavGroup label="Work">
+          {item("overview", LayoutGrid, "Overview")}
+          {item("approvals", ClipboardCheck, "Approvals")}
+        </NavGroup>
+        <NavGroup label="Bonus rules" defaultCollapsed>
+          {item("rules", Percent, "Bonus Rules")}
+          {item("templates", ListFilter, "Filter Templates")}
+        </NavGroup>
+        <NavGroup label="Info">
+          {item("info", Info, "Info")}
+          {item("settings", Cog, "Settings")}
+        </NavGroup>
+      </Sidebar>
+      <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
+        Drag the sidebar's right edge to resize, or use the header button to rail-collapse it.
       </div>
     </div>
   );

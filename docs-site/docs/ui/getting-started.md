@@ -35,6 +35,33 @@ shadcn/ui component wouldn't. If you're not already using shadcn/ui, see
 [its theming docs](https://ui.shadcn.com/docs/theming) for the token set to
 add.
 
+### Sidebar tokens
+
+`Sidebar`/`NavItem` use two extra tokens beyond the base shadcn/ui set,
+`--nav-primary` (active-row accent) and `--sidebar` (panel background) —
+kept separate from `--primary`/`--background` so a multi-brand app can theme
+just its sidebar per brand. Register them the same way as the base tokens,
+in your `@theme` block and `:root`:
+
+```css
+@theme inline {
+  /* ...your existing tokens... */
+  --color-nav-primary: var(--nav-primary);
+  --color-sidebar: var(--sidebar);
+}
+
+:root {
+  /* Single-brand apps can just reuse the existing tokens: */
+  --nav-primary: var(--primary);
+  --sidebar: var(--background);
+}
+
+/* A multi-brand app overrides just these two, per brand: */
+[data-brand="acme"] {
+  --nav-primary: oklch(0.55 0.2 25);
+}
+```
+
 ## What's in the package
 
 - **[Primitives](/ui/primitives)** — base components: `Button`, `Input`,
@@ -43,7 +70,8 @@ add.
 - **[Patterns](/ui/patterns)** — components composed on top of the
   primitives for a specific recurring shape: `Modal`/`ConfirmDialog`/
   `FormModal`, `FormField`, `AlertBox`, `StatusBadge`,
-  `LoadingSpinner`/`LoadingOverlay`, `Combobox`.
+  `LoadingSpinner`/`LoadingOverlay`, `Combobox`, `Sidebar`/`NavGroup`/
+  `NavItem`.
 
 ## Try it live
 
