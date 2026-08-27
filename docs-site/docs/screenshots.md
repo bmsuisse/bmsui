@@ -40,4 +40,8 @@ editor for each column `type`:
 
 <img src="/bmsui/img/screenshots/datagrid-tree.png" alt="TreeDataGrid demo" style={{maxWidth: '100%', border: '1px solid var(--ifm-color-emphasis-300)', borderRadius: '8px'}} />
 
+`<TreeDataGrid>` inline editing — the same workflow as the flat grid above, editing a child node:
+
+<img src="/bmsui/img/screenshots/datagrid-tree-editing.png" alt="TreeDataGrid inline editing demo, with a pending edit on a child row" style={{maxWidth: '100%', border: '1px solid var(--ifm-color-emphasis-300)', borderRadius: '8px'}} />
+
 Want to click around instead? **[Open the live demos →](/intro#try-it-live)**
