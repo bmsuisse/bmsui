@@ -44,6 +44,7 @@ export { alignClassName, defaultAlign, defaultFormat, toDate } from "./column/fo
 // --- inline editing --------------------------------------------------------
 export type { EditedRow } from "./edit/types";
 export type { EditWidgetProps } from "./edit/widget-types";
+export { editErrorId } from "./edit/widget-types";
 export { BooleanEditor } from "./edit/BooleanEditor";
 export { DateEditor } from "./edit/DateEditor";
 export { EnumEditor } from "./edit/EnumEditor";

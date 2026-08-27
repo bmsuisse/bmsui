@@ -190,9 +190,29 @@ function toTanstackColumns<TRow extends RowData>(
           const autoFocus =
             editingCtx.autoFocusTarget?.rowId === rowId && editingCtx.autoFocusTarget.columnId === column.id;
           const onChange = (next: unknown): void => editingCtx.onEdit(column, row, next);
-          return column.renderEditCell
+          const editor = column.renderEditCell
             ? column.renderEditCell(value, row, onChange, error, autoFocus)
             : renderDefaultEditWidget(column, rowId, value, onChange, error, autoFocus);
+          // Escape reverts this ONE cell back to its original (never-edited)
+          // value — not a multi-step undo back through every prior edit this
+          // session, just "give up on what I just typed here." A plain
+          // `onKeyDown` here (rather than plumbing it through every default
+          // editor + `renderEditCell`) works because the key event bubbles up
+          // from whatever native control the editor renders; the row itself
+          // stays active (only this cell's value changes) — deactivating the
+          // whole row on Escape would also discard sibling cells' edits the
+          // user had no intention of touching.
+          return (
+            <div
+              onKeyDown={(event) => {
+                if (event.key !== "Escape") return;
+                event.stopPropagation();
+                editingCtx.onEdit(column, row, getColumnValue(column, row));
+              }}
+            >
+              {editor}
+            </div>
+          );
         }
         // Not yet activated: static content, but a click on it (any editable
         // column's cell) activates every editable column in this row at
@@ -247,6 +267,18 @@ function resolveEditLabel(
 ): ReactNode {
   if (label === undefined) return fallback(changedRowCount);
   return typeof label === "function" ? label(changedRowCount) : label;
+}
+
+// Bounded to 3 named ids, then "and N more" — a grid with dozens of
+// simultaneously-broken rows would otherwise turn this into an unreadable
+// wall of ids; `<DataGrid>` has no general "human label for a row" concept
+// to fall back on, so a row id (whatever the caller's own `getRowId`
+// returns) is the only identifying string available here.
+function describeErrorRows(editErrors: Map<string, Map<string, string>>): string {
+  const rowIds = [...editErrors.keys()];
+  const shown = rowIds.slice(0, 3);
+  const suffix = rowIds.length > shown.length ? `, and ${rowIds.length - shown.length} more` : "";
+  return `row${rowIds.length === 1 ? "" : "s"} ${shown.join(", ")}${suffix}`;
 }
 
 /**
@@ -356,9 +388,7 @@ export function DataGrid<TRow extends RowData>({
   // Which rows currently show editors — see `EditingCellContext.activeRowIds`'s
   // own doc for why this is deliberately its own state, not derived from
   // `pendingEdits`. `autoFocusTarget` is set alongside it, once, by whichever
-  // click actually activated a row; it's read exactly once (native
-  // `autoFocus` only fires on that control's initial mount) so there's no
-  // need to ever clear it back to `null` afterward.
+  // click actually activated a row.
   const [activeRowIds, setActiveRowIds] = useState<ReadonlySet<string>>(new Set());
   const [autoFocusTarget, setAutoFocusTarget] = useState<{ rowId: string; columnId: string } | null>(null);
 
@@ -366,6 +396,18 @@ export function DataGrid<TRow extends RowData>({
     setActiveRowIds((prev) => (prev.has(rowId) ? prev : new Set(prev).add(rowId)));
     setAutoFocusTarget({ rowId, columnId });
   }
+
+  // Consumes `autoFocusTarget` exactly once, right after the render that
+  // used it — NOT redundant with native `autoFocus` only firing on a DOM
+  // node's initial mount. Under `virtualize`, the targeted row's DOM node
+  // can unmount (scrolled out of the windowed range) and later remount
+  // (scrolled back in) while `autoFocusTarget` is still sitting there
+  // unconsumed; without this, that later remount is ALSO a fresh "initial
+  // mount" as far as the DOM is concerned, so it would silently steal focus
+  // back to a cell the user scrolled away from and is no longer looking at.
+  useEffect(() => {
+    if (autoFocusTarget) setAutoFocusTarget(null);
+  }, [autoFocusTarget]);
 
   function commitEdit(column: ColumnDef<TRow>, row: TRow, value: unknown): void {
     const rowId = getRowId(row);
@@ -941,10 +983,14 @@ export function DataGrid<TRow extends RowData>({
           data-testid="datagrid-edit-bar"
           className="flex shrink-0 flex-wrap items-center justify-between gap-2 rounded-md border bg-muted/50 px-3 py-2 text-sm"
         >
-          <span>
+          {/* `aria-live="polite"` — a screen-reader user gets no other signal that this bar exists at all, let alone that
+              its row count or error state just changed, since nothing here is itself focused when it appears. */}
+          <span aria-live="polite">
             {pendingEdits.size} row{pendingEdits.size === 1 ? "" : "s"} changed
             {hasEditErrors && (
-              <span className="ml-2 text-destructive">Fix the highlighted errors before saving.</span>
+              <span className="ml-2 text-destructive">
+                Fix the highlighted errors before saving ({describeErrorRows(editErrors)}).
+              </span>
             )}
           </span>
           <div className="flex gap-2">

@@ -3,7 +3,7 @@ import type { ReactElement } from "react";
 import type { DateColumn } from "../column/types";
 import { toDate } from "../column/format";
 import { Input } from "../components/ui/input";
-import type { EditWidgetProps } from "./widget-types";
+import { editErrorId, type EditWidgetProps } from "./widget-types";
 
 /** Formats a raw cell value into the string a native date/datetime-local input expects, or `""` if it isn't a valid date. */
 function inputValueOf(value: unknown, columnType: "date" | "datetime"): string {
@@ -30,6 +30,7 @@ export function DateEditor<TRow>({
   error,
   autoFocus,
 }: EditWidgetProps<DateColumn<TRow>>): ReactElement {
+  const errorId = editErrorId(rowId, column.id);
   return (
     <div>
       <Input
@@ -37,12 +38,17 @@ export function DateEditor<TRow>({
         className="h-8"
         aria-label={`Edit ${column.header}`}
         aria-invalid={error ? true : undefined}
+        aria-describedby={error ? errorId : undefined}
         data-testid={`edit-${rowId}-${column.id}`}
         autoFocus={autoFocus}
         value={inputValueOf(value, column.type)}
         onChange={(event) => onChange(event.target.value === "" ? null : parseISO(event.target.value))}
       />
-      {error && <span className="mt-0.5 block text-xs text-destructive">{error}</span>}
+      {error && (
+        <span id={errorId} className="mt-0.5 block text-xs text-destructive">
+          {error}
+        </span>
+      )}
     </div>
   );
 }

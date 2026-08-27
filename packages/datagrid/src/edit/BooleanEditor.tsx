@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
 import type { BooleanColumn } from "../column/types";
 import { Checkbox } from "../components/ui/checkbox";
-import type { EditWidgetProps } from "./widget-types";
+import { editErrorId, type EditWidgetProps } from "./widget-types";
 
 /**
  * Same explicit-comparison convention as `defaultFormat`'s boolean case
@@ -24,17 +24,23 @@ export function BooleanEditor<TRow>({
   error,
   autoFocus,
 }: EditWidgetProps<BooleanColumn<TRow>>): ReactElement {
+  const errorId = editErrorId(rowId, column.id);
   return (
     <div className="flex flex-col items-center gap-0.5">
       <Checkbox
         aria-label={`Edit ${column.header}`}
         aria-invalid={error ? true : undefined}
+        aria-describedby={error ? errorId : undefined}
         data-testid={`edit-${rowId}-${column.id}`}
         autoFocus={autoFocus}
         checked={toBoolean(value)}
         onCheckedChange={(next) => onChange(next === true)}
       />
-      {error && <span className="text-xs text-destructive">{error}</span>}
+      {error && (
+        <span id={errorId} className="text-xs text-destructive">
+          {error}
+        </span>
+      )}
     </div>
   );
 }

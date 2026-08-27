@@ -34,3 +34,14 @@ export interface EditWidgetProps<TColumn> {
   error?: string;
   autoFocus?: boolean;
 }
+
+/**
+ * The `id` every built-in widget gives its own error `<span>`, so its
+ * control's `aria-describedby` can point at it — a screen reader announces
+ * `aria-invalid` alone with no indication of *why*, so the association
+ * matters, not just the flag. Exported for a custom `renderEditCell` that
+ * wants the same convention instead of inventing its own id scheme.
+ */
+export function editErrorId(rowId: string, columnId: string): string {
+  return `edit-error-${rowId}-${columnId}`;
+}

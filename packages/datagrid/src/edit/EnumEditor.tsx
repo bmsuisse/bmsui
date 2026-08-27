@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
 import type { EnumColumn } from "../column/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import type { EditWidgetProps } from "./widget-types";
+import { editErrorId, type EditWidgetProps } from "./widget-types";
 
 /** Default inline editor for `type: "enum"` columns: a single-value select over `column.options`. */
 export function EnumEditor<TRow>({
@@ -12,6 +12,7 @@ export function EnumEditor<TRow>({
   error,
   autoFocus,
 }: EditWidgetProps<EnumColumn<TRow>>): ReactElement {
+  const errorId = editErrorId(rowId, column.id);
   return (
     <div>
       <Select value={value === null || value === undefined ? "" : String(value)} onValueChange={onChange}>
@@ -19,6 +20,7 @@ export function EnumEditor<TRow>({
           className="h-8"
           aria-label={`Edit ${column.header}`}
           aria-invalid={error ? true : undefined}
+          aria-describedby={error ? errorId : undefined}
           data-testid={`edit-${rowId}-${column.id}`}
           autoFocus={autoFocus}
         >
@@ -32,7 +34,11 @@ export function EnumEditor<TRow>({
           ))}
         </SelectContent>
       </Select>
-      {error && <span className="mt-0.5 block text-xs text-destructive">{error}</span>}
+      {error && (
+        <span id={errorId} className="mt-0.5 block text-xs text-destructive">
+          {error}
+        </span>
+      )}
     </div>
   );
 }

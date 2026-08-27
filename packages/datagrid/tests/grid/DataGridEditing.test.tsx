@@ -230,12 +230,38 @@ describe("DataGrid inline editing", () => {
 
     expect(screen.getByText("Name is required")).toBeInTheDocument();
     expect(screen.getByTestId("datagrid-save-edits")).toBeDisabled();
-    expect(screen.getByTestId("datagrid-edit-bar")).toHaveTextContent("Fix the highlighted errors before saving.");
+    // Names the affected row(s), not just a generic "something's wrong" message.
+    expect(screen.getByTestId("datagrid-edit-bar")).toHaveTextContent(
+      "Fix the highlighted errors before saving (row 1).",
+    );
+    // The error text is wired up via aria-describedby, not just aria-invalid.
+    const nameInputEl = screen.getByTestId("edit-1-name");
+    const describedBy = nameInputEl.getAttribute("aria-describedby");
+    expect(describedBy).toBeTruthy();
+    expect(document.getElementById(describedBy!)).toHaveTextContent("Name is required");
 
     await userEvent.type(nameInput, "Charles");
 
     expect(screen.queryByText("Name is required")).not.toBeInTheDocument();
     expect(screen.getByTestId("datagrid-save-edits")).not.toBeDisabled();
+    expect(screen.getByTestId("edit-1-name")).not.toHaveAttribute("aria-describedby");
+  });
+
+  it("Escape reverts just the focused cell to its original value, leaving the row active and other cells' edits intact", async () => {
+    render(<EditableGrid onSave={vi.fn()} />);
+    await activateCell("1", "name");
+
+    const nameInput = screen.getByTestId("edit-1-name");
+    await userEvent.clear(nameInput);
+    await userEvent.type(nameInput, "Charles");
+    await userEvent.type(screen.getByTestId("edit-1-age"), "1"); // -> "301", a second pending edit on the same row
+
+    await userEvent.type(nameInput, "{Escape}");
+
+    expect(nameInput).toHaveValue("Charlie"); // reverted
+    expect(screen.getByTestId("edit-1-name")).toBeInTheDocument(); // row stays active
+    expect(screen.getByTestId("edit-1-age")).toHaveValue(301); // untouched by the other cell's Escape
+    expect(screen.getByTestId("datagrid-edit-bar")).toHaveTextContent("1 row changed"); // age edit alone still pending
   });
 
   it("customizes the Save/Discard labels via a count-aware function, and via a plain string", async () => {

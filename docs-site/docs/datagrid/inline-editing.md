@@ -186,6 +186,23 @@ has actually changed yet — clicking into a row and then clicking away
 without typing anything leaves that row active (still showing editors) with
 zero pending edits, and it stays that way until Save or Discard.
 
+## Keyboard, focus, and accessibility
+
+- **Escape** reverts the focused cell to its original (never-edited) value —
+  just that one cell, not the whole row, and the row stays active. Other
+  cells' pending edits on the same row are untouched.
+- Every built-in editor sets `aria-invalid` **and** `aria-describedby`
+  (pointing at the error text's own `id`, via the exported `editErrorId(rowId,
+  columnId)` helper) whenever `validateEdit` fails — a screen reader reads the
+  actual message, not just "invalid." A custom `renderEditCell` should do the
+  same for its own error text.
+- The Save/Discard bar's message is `aria-live="polite"`, so its row count
+  and "fix the highlighted errors" text are announced as they change — the
+  bar itself is never focused when it appears, so without this a screen
+  reader user would have no signal it exists.
+- The blocked-Save message names which rows still have errors (bounded to 3
+  ids, then "and N more"), not just a generic "something's wrong."
+
 ## Limitations
 
 - No cell-level autosave and no undo history — it's accumulate-then-save,

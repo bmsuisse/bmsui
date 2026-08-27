@@ -917,7 +917,43 @@ wouldn't have caught it.
 `edit-${column.id}`** — unlike a filter widget (one instance per column,
 ever, in the header), an edit widget renders once per (row, column) pair;
 a column-id-only testid collides the moment a grid has more than one row.
-`EditWidgetProps.rowId` exists purely to build this.
+`EditWidgetProps.rowId` exists purely to build this. A not-yet-activated
+cell's own static wrapper gets `cell-${rowId}-${column.id}` (a different
+prefix, same reasoning) — that's the one to click in a test to activate a
+row before the `edit-*` testids exist at all.
+
+**Escape reverts one cell, not the row** — a plain `onKeyDown` on a `<div>`
+wrapping whatever the editor rendered (`DataGrid.tsx`, right after the
+`renderEditCell`/`renderDefaultEditWidget` call), calling `editingCtx.onEdit`
+with `getColumnValue(column, row)` (the true original, not "whatever it was
+before this keystroke session" — no per-focus snapshotting, a deliberate
+scope cut). Relies on the key event bubbling up from whatever native control
+the editor renders, so it works for every built-in editor and any custom
+`renderEditCell` without each one needing its own handler. The row stays
+active; sibling cells' own pending edits are untouched.
+
+**`autoFocusTarget` is a one-shot flag, consumed and cleared in a
+`useEffect`** (`DataGrid.tsx`, right after `activateRow`'s definition) — NOT
+redundant with native `autoFocus` only firing on a DOM node's *initial*
+mount. Under `virtualize`, a row's DOM can unmount (scrolled out of the
+windowed range) and later remount (scrolled back in); without clearing
+`autoFocusTarget` after its first use, that later remount is ALSO an
+"initial mount" as far as the DOM is concerned, silently stealing focus back
+to a cell the user scrolled away from. Found by an agent review comparing
+this implementation against AG Grid/MUI/Handsontable conventions — flagged
+as a real, unverified-by-test risk (jsdom can't easily simulate a real
+virtualizer scroll/remount cycle; the fix is verified by reasoning about
+React's `autoFocus` semantics, not by a regression test) rather than
+something caught by the existing test suite.
+
+**Every built-in editor wires `aria-describedby` to its own error text's
+`id`** (`edit/widget-types.ts`'s exported `editErrorId(rowId, columnId)`
+helper), not just `aria-invalid` — a screen reader announcing "invalid" with
+no indication of *why* is not enough on its own. The Save/Discard bar's
+message span is `aria-live="polite"`, since nothing in it is ever focused
+when it appears/changes, and the blocked-Save message names the affected row
+ids (bounded to 3, then "and N more") via `describeErrorRows` rather than a
+bare "fix the errors."
 
 **Not carried over to `<TreeDataGrid>`** — same scope line as everything
 else in its own "not carried over" list below: build inline editing there
