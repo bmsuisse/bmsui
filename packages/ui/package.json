@@ -1,7 +1,7 @@
 {
   "name": "@bmsuisse/ui",
-  "version": "0.7.0",
-  "description": "Shared shadcn/ui-based React primitives and composed UI patterns (Modal, FormField, AlertBox, StatusBadge, ButtonGroup, LoadingSpinner, SearchBar, Sidebar, Sheet, Tooltip).",
+  "version": "0.8.0",
+  "description": "Shared shadcn/ui-based React primitives and composed UI patterns (Modal, FormField, AlertBox, StatusBadge, ButtonGroup, LoadingSpinner, SearchBar, Sidebar, Sheet, Tooltip, TagCombobox).",
   "type": "module",
   "license": "MIT",
   "repository": {

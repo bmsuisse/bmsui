@@ -2,6 +2,12 @@ import { Check, ChevronsUpDown, X } from "lucide-react";
 import type { ComponentProps, KeyboardEvent, ReactElement } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "../../lib/utils";
+import {
+  buildRenderChunks,
+  groupCheckState,
+  groupMembers,
+  type OptionRow as ImportedOptionRow,
+} from "../../lib/optionGrouping";
 import { Button } from "../../primitives/button";
 import { Input } from "../../primitives/input";
 import { Popover, PopoverContent, PopoverTrigger } from "../../primitives/popover";
@@ -86,19 +92,6 @@ export interface ComboboxMultiProps extends ComboboxBaseProps {
  */
 export type ComboboxProps = ComboboxSingleProps | ComboboxMultiProps;
 
-function groupMembers(options: ComboboxOption[], group: string): string[] {
-  return options.filter((o) => o.group === group && !o.disabled).map((o) => o.value);
-}
-
-type GroupCheckState = "checked" | "unchecked" | "indeterminate";
-
-function groupCheckState(options: ComboboxOption[], selectedValues: string[], group: string): GroupCheckState {
-  const members = groupMembers(options, group);
-  const selectedCount = members.filter((v) => selectedValues.includes(v)).length;
-  if (selectedCount === 0) return "unchecked";
-  return selectedCount === members.length ? "checked" : "indeterminate";
-}
-
 /** If the current multi-select selection is exactly one or more *fully* selected
  * groups and nothing else, returns those groups' labels joined by ", " (e.g. "Team A"
  * or "Team A, Team B") — so picking a manager's whole team via its header checkbox
@@ -130,47 +123,7 @@ function resolveGroupTriggerLabel(
   return fullyCoveredGroups.map(groupLabel).join(", ");
 }
 
-interface OptionRow {
-  option: ComboboxOption;
-  index: number;
-}
-
-interface GroupChunk {
-  kind: "group";
-  group: string;
-  rows: OptionRow[];
-}
-interface SingleChunk {
-  kind: "single";
-  row: OptionRow;
-}
-type RenderChunk = GroupChunk | SingleChunk;
-
-/** Chunks `visibleOptions` into per-group chunks (a header plus all of that group's
- * rows, relying on the "a group's options are contiguous" invariant `ComboboxOption.group`
- * already documents) versus lone ungrouped rows, in one linear pass -- kept separate
- * from JSX so the render below is a plain `.map()` with no per-row bookkeeping of its
- * own. A sticky header can only stay pinned within its own containing block -- the
- * nearest ancestor that isn't itself sticky/statically laid out -- so the header and
- * every one of its group's rows must share one wrapper `<div>`. Rendering each row in
- * its own top-level sibling div (rather than chunking by group) gave the header a
- * containing block of just itself plus the group's first row, so it unstuck after a
- * single row instead of staying pinned for the group's full scroll extent. */
-function buildRenderChunks(visibleOptions: ComboboxOption[]): RenderChunk[] {
-  const chunks: RenderChunk[] = [];
-  visibleOptions.forEach((option, index) => {
-    const row: OptionRow = { option, index };
-    const last = chunks[chunks.length - 1];
-    if (option.group && last?.kind === "group" && last.group === option.group) {
-      last.rows.push(row);
-    } else if (option.group) {
-      chunks.push({ kind: "group", group: option.group, rows: [row] });
-    } else {
-      chunks.push({ kind: "single", row });
-    }
-  });
-  return chunks;
-}
+type OptionRow = ImportedOptionRow<ComboboxOption>;
 
 /**
  * A searchable dropdown ("autocomplete box"), single- or multi-select

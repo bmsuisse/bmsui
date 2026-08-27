@@ -105,6 +105,9 @@ export type {
 } from "./patterns/combobox/Combobox";
 export { Combobox } from "./patterns/combobox/Combobox";
 
+export type { TagComboboxOption, TagComboboxProps } from "./patterns/tag-combobox/TagCombobox";
+export { TagCombobox } from "./patterns/tag-combobox/TagCombobox";
+
 export type { AlertBoxProps, AlertBoxVariant } from "./patterns/alert-box/AlertBox";
 export { AlertBox } from "./patterns/alert-box/AlertBox";
 
