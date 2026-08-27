@@ -101,9 +101,20 @@ export interface BaseColumn<TRow> {
    * A cell doesn't become an editor just because this is true, though:
    * clicking (or Enter/Space-ing) any editable cell in a row is what
    * activates editors for every editable column in THAT row at once — the
-   * rest of the grid's rows stay static until clicked into themselves. A
-   * row stays active until its edits are saved or discarded, and
-   * activating one row never deactivates another.
+   * rest of the grid's rows stay static until clicked into themselves. At
+   * most one row is active at a time: activating a row deactivates whatever
+   * row was active before it (edit row by row, not several open at once) —
+   * this does NOT discard the row you switch away from, its own pending
+   * edits stay exactly as they were, just no longer shown as editors.
+   *
+   * Until a cell is activated, its content renders inside a clickable
+   * `<span role="button">` (this is what makes clicking it activate the
+   * row) — a column that's both `editable` and has a custom `cell`
+   * returning its own focusable content (a link, a button) produces nested
+   * interactive elements once wrapped this way. Prefer a non-focusable
+   * element (styled to look like a link, e.g.) in `cell` for a column
+   * that's also `editable`, the same caution `renderHeader` needs under
+   * `sortable`.
    */
   editable?: boolean | ((row: TRow) => boolean);
   /**

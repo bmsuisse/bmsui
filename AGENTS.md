@@ -1056,6 +1056,25 @@ reconstructs the edited `Date` from. Milliseconds are still dropped — a
 documented scope cut, not fixed. Covered by `DataGridEditing.test.tsx`'s
 "preserves seconds when editing a datetime column" test.
 
+**`NumberEditor` keeps local `text` state instead of deriving its input's
+`value` straight from the (parsed) `value` prop** — a later review flagged
+this as the exact same class of footgun `NumberComparisonFilter` already
+guards against (see that component's own doc): a native `type="number"`
+input's `.value` getter can read back without a just-typed trailing decimal
+point or leading minus sign mid-keystroke, even though the field still
+visually shows it — empirically confirmed via a real-Chromium Playwright
+check (`.value` after typing "12." read back as "12", after a lone "-" as
+""), though in that same check both the old and new code still ended up at
+the correct final value once typing finished, so this wasn't reproduced as
+an actual user-visible loss in this Chromium build specifically. Fixed
+anyway, matching `NumberComparisonFilter`'s established `lastEmittedRef` +
+resync-on-external-change pattern, since it's strictly more robust and
+removes the theoretical risk rather than relying on this build's behavior
+holding. Covered by `DataGridEditing.test.tsx`'s "keeps a decimal point
+visible while typing it" test (which does NOT reproduce the failure in
+jsdom either — included as a logic/regression check for the fix itself,
+not as proof the original bug was real).
+
 **Shared with `<TreeDataGrid>`** — see that component's own `editing`
 paragraph below for the small handful of things that differ (testid
 prefix, no `ctxRef` indirection needed there).
