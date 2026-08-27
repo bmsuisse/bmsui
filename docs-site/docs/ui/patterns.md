@@ -65,5 +65,44 @@ this package's own `Popover`/`Input` rather than pulling in `cmdk` — a
 plain substring filter over a manually rendered list is enough for the
 sizes this component is used at.
 
+### `Sidebar` / `SidebarNav` / `NavGroup` / `NavItem`
+
+The app shell's left navigation panel: fixed-width or drag-resizable
+(`resizable`), with an optional icon-only rail-collapse mode (`collapsed` +
+`onCollapsedChange`) that shows each `NavItem`'s label in a hover tooltip
+instead. `NavGroup` sections are independently collapsible; a group's header
+shrinks to a thin divider — not disappear — while the sidebar itself is
+rail-collapsed, since its items (icons only) stay visible.
+
+```tsx
+<Sidebar
+  collapsed={collapsed}
+  onCollapsedChange={setCollapsed}
+  resizable
+  header={(isCollapsed) => (isCollapsed ? <CompactLogo /> : <Logo />)}
+  footer={<UserMenu />}
+>
+  <NavGroup label="Work">
+    <NavItem as={Link} to="/overview" icon={LayoutGrid} label="Overview" active={pathname === "/overview"} />
+    <NavItem as={Link} to="/approvals" icon={ClipboardCheck} label="Approvals" active={pathname.startsWith("/approvals")} />
+  </NavGroup>
+</Sidebar>
+```
+
+`NavItem` is polymorphic via `as` (defaults to `<a>`) so it renders whichever
+router `Link` the app uses — it has no router opinion, so `active` is always
+computed by the caller. For a mobile drawer, don't reuse `Sidebar` itself
+(the resize handle and rail-collapse toggle don't apply there); render the
+same `NavGroup`/`NavItem` children inside a `Sheet`, wrapped in `SidebarNav`
+for the same scroll-fade behavior.
+
+The active-row accent and the panel background are driven by two dedicated
+tokens, `--nav-primary` and `--sidebar`, kept separate from `--primary`/
+`--background` specifically so a multi-brand app can theme its sidebar
+independently per brand (e.g. via a `[data-brand="..."]` attribute) without
+touching the rest of its palette. See
+[Getting started](/ui/getting-started#sidebar-tokens) for how to register
+them.
+
 See the [interactive demo](https://bmsuisse.github.io/bmsui/demo/ui/) for all of these rendered
 together.

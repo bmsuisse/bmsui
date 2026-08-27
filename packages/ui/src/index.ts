@@ -127,5 +127,13 @@ export {
 export type { SearchBarProps } from "./patterns/search-bar/SearchBar";
 export { SearchBar } from "./patterns/search-bar/SearchBar";
 
+export type { NavIconProps, NavItemProps } from "./patterns/sidebar/NavItem";
+export { NavItem } from "./patterns/sidebar/NavItem";
+export type { NavGroupProps } from "./patterns/sidebar/NavGroup";
+export { NavGroup } from "./patterns/sidebar/NavGroup";
+export type { SidebarNavProps, SidebarProps } from "./patterns/sidebar/Sidebar";
+export { Sidebar, SidebarNav } from "./patterns/sidebar/Sidebar";
+export { useSidebarCollapsed } from "./patterns/sidebar/context";
+
 // --- shared utility -----------------------------------------------------------
 export { cn } from "./lib/utils";

@@ -184,6 +184,44 @@ logic above, which already had its own extraction). Structure:
     the chunk wrapper's `pt-1`/`first:pt-0`, not on the header itself, since a
     margin on a sticky element travels with it once stuck and would leave a
     gap at the scrollport's top.
+  - `sidebar/` — `Sidebar`, `SidebarNav`, `NavGroup`, `NavItem` (v0.7.0), the
+    app shell's left navigation panel. Extracted from a side-by-side
+    comparison of the contract-management app's own `Sidebar.tsx` (plain
+    Tailwind + TanStack Router, fixed-width, no rail-collapse) and
+    OneSales's hand-rolled equivalent (`Sidebar.tsx`/`NavGroup.tsx`/
+    `NavItemLink.tsx`, base-ui + heroicons) — the latter's active-state
+    formula (`bg-<accent>/8` tint, `font-semibold`, icon `strokeWidth`
+    1.75→2) had already been informally copied into the former by hand, but
+    everything else (collapsible `NavGroup` sections, icon-only rail
+    collapse with hover tooltips, drag-to-resize, a distinct nav accent
+    color, scroll-fade) existed only in OneSales and had never been shared.
+    `Sidebar` owns the shell (header/footer slots, resize handle,
+    rail-collapse toggle button) and delegates content entirely to children
+    — `NavGroup` (independently collapsible sections) and `NavItem`
+    (polymorphic via `as`, so it renders whichever router `Link` the app
+    uses; no router opinion of its own, so `active` is always a caller-
+    computed prop, not auto-derived). `NavItem`/`NavGroup` read rail-collapse
+    state from a small internal context (`useSidebarCollapsed`) rather than
+    a prop threaded through every call site — defaults to `false` with no
+    ancestor `Sidebar`, which is what lets the same `NavGroup`/`NavItem` tree
+    be reused verbatim inside a `Sheet` for a mobile drawer (`SidebarNav` is
+    exported separately for exactly that: the scroll-fade wrapper without
+    the rest of the desktop shell). Introduces two new theme tokens,
+    `--nav-primary` and `--sidebar` (see getting-started.md's "Sidebar
+    tokens" section) — kept separate from `--primary`/`--background`
+    specifically because OneSales is multi-brand (`[data-brand="..."]`
+    swaps `--nav-primary` per tenant) and needs to layer that on top of a
+    shared component; a single-brand app just points both at the existing
+    tokens. A group's header collapses to a thin divider (not gone
+    entirely) when the sidebar is rail-collapsed, since its items — icons
+    only at that point — stay visible regardless of the group's own
+    collapsed state; the two collapse mechanisms (rail vs. per-group) are
+    intentionally independent state, matching OneSales's behavior. Scroll-
+    fade is a plain scroll-listener + `ResizeObserver` toggling a bottom
+    gradient overlay, not the CSS-only `background-attachment: local` trick,
+    to avoid fighting Radix `ScrollArea`'s nested viewport — `SidebarNav`
+    uses a plain `overflow-y-auto` div instead, matching what both source
+    apps already did.
 - `packages/ui/demo/` — same pattern as `packages/datagrid/demo`: a Vite
   app aliasing `@bmsuisse/ui` straight to `src/index.ts`, using the same
   reference-app-derived Tailwind v4 tokens, for visual QA.
