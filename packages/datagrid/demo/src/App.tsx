@@ -638,10 +638,11 @@ function InlineEditingDemo(): ReactElement {
     <div>
       <p className="mb-2 text-sm text-muted-foreground">
         Every column here is <code>editable</code> — click any cell in a row to turn that whole row into
-        editors (focus lands on the cell you clicked). Edits accumulate locally (nothing is sent anywhere
-        yet); the bar above the grid appears once something has changed, with a Save button whose label
-        counts the changed rows. Clearing the Task column shows the built-in <code>validateEdit</code>
-        error state, which blocks Save until it's fixed.
+        editors (focus lands on the cell you clicked); clicking into another row switches to it, one row
+        in edit mode at a time. Edits accumulate locally across rows (nothing is sent anywhere yet); the
+        bar above the grid appears once something has changed, with a Save button whose label counts the
+        changed rows. Clearing the Task column shows the built-in <code>validateEdit</code> error state,
+        which blocks Save until it's fixed.
       </p>
       <DataGrid
         testId="editing-grid"

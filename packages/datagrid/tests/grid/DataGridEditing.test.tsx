@@ -130,14 +130,32 @@ describe("DataGrid inline editing", () => {
     expect(screen.getByTestId("edit-1-name")).not.toHaveFocus();
   });
 
-  it("activating a second row keeps the first row's editors active too (accumulate, not replace)", async () => {
+  it("activating a second row deactivates the first — at most one row in edit mode at a time", async () => {
     render(<EditableGrid onSave={vi.fn()} />);
 
     await activateCell("1", "name");
+    expect(screen.getByTestId("edit-1-name")).toBeInTheDocument();
+
     await activateCell("2", "name");
 
-    expect(screen.getByTestId("edit-1-name")).toBeInTheDocument();
     expect(screen.getByTestId("edit-2-name")).toBeInTheDocument();
+    expect(screen.queryByTestId("edit-1-name")).not.toBeInTheDocument();
+    expect(screen.getByTestId("cell-1-name")).toHaveTextContent("Charlie");
+  });
+
+  it("switching to another row keeps the first row's pending edit (just no longer shown as an editor)", async () => {
+    render(<EditableGrid onSave={vi.fn()} />);
+    await activateCell("1", "name");
+
+    const nameInput = screen.getByTestId("edit-1-name");
+    await userEvent.clear(nameInput);
+    await userEvent.type(nameInput, "Charles");
+
+    await activateCell("2", "name"); // switch away without saving
+
+    expect(screen.queryByTestId("edit-1-name")).not.toBeInTheDocument();
+    expect(screen.getByTestId("cell-1-name")).toHaveTextContent("Charles"); // pending edit still reflected
+    expect(screen.getByTestId("datagrid-edit-bar")).toHaveTextContent("1 row changed");
   });
 
   it("Enter/Space on a static cell activates its row too (keyboard-reachable)", async () => {

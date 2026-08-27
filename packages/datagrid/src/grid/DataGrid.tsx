@@ -135,18 +135,24 @@ interface EditingCellContext<TRow> {
    * Rows currently showing editors instead of static text — a row enters
    * this set when the user clicks any of its editable cells (see
    * `onActivateRow`), and only leaves it once its edits are saved or
-   * discarded. Deliberately NOT the same thing as "has a pending edit": a
-   * row can be active with nothing changed yet (just clicked into), and
-   * activating one row never deactivates another — clicking around several
-   * rows before Save is exactly the accumulate-then-save workflow
-   * `editing` is for.
+   * discarded (or another row is activated — see below). Deliberately NOT
+   * the same thing as "has a pending edit": a row can be active with
+   * nothing changed yet (just clicked into).
+   *
+   * At most ONE row at a time — activating a row deactivates whatever was
+   * active before it (edits row by row, not several open at once). This is
+   * purely a display-mode switch, not a discard: a previously-active row's
+   * OWN pending edits (in `pendingEdits`, not this) stay exactly as they
+   * were, just no longer shown as editors — the user can still accumulate
+   * edits across several rows before one Save, they just look at (and type
+   * into) one row's fields at a time to do it.
    */
-  activeRowIds: ReadonlySet<string>;
+  activeRowId: string | null;
   /** Set only by the click that activated a row — see `EditWidgetProps.autoFocus`'s own doc for why this exists. */
   autoFocusTarget: { rowId: string; columnId: string } | null;
   getRowId: (row: TRow) => string;
   onEdit: (column: ColumnDef<TRow>, row: TRow, value: unknown) => void;
-  /** Activates `rowId`'s editors (idempotent) and requests autofocus on `columnId`'s editor specifically — the column whose static cell was actually clicked. */
+  /** Activates `rowId` (deactivating whatever row was active before it) and requests autofocus on `columnId`'s editor specifically — the column whose static cell was actually clicked. */
   onActivateRow: (rowId: string, columnId: string) => void;
 }
 
@@ -179,13 +185,19 @@ function toTanstackColumns<TRow extends RowData>(
     cell: (info: CellContext<GridTableFeatures, TRow, unknown>): ReactNode => {
       const row = info.row.original;
       const editingCtx = editingCtxRef.current;
-      const staticContent = (): ReactNode =>
-        column.cell ? column.cell(info.getValue(), row) : defaultFormat(column, info.getValue());
+      const staticContent = (value: unknown): ReactNode =>
+        column.cell ? column.cell(value, row) : defaultFormat(column, value);
       if (editingCtx && isEditable(column, row)) {
         const rowId = editingCtx.getRowId(row);
-        if (editingCtx.activeRowIds.has(rowId)) {
-          const pendingRow = editingCtx.pendingEdits.get(rowId);
-          const value = pendingRow?.values.has(column.id) ? pendingRow.values.get(column.id) : info.getValue();
+        // A pending edit on this cell wins over the row's real data
+        // regardless of whether the row is currently active — switching to
+        // another row (see `activeRowId`'s "one row at a time" doc) must
+        // not make an already-typed value look reverted/lost just because
+        // its editor isn't on screen anymore; it's still fully pending and
+        // will still be included in Save.
+        const pendingRow = editingCtx.pendingEdits.get(rowId);
+        const value = pendingRow?.values.has(column.id) ? pendingRow.values.get(column.id) : info.getValue();
+        if (editingCtx.activeRowId === rowId) {
           const error = editingCtx.editErrors.get(rowId)?.get(column.id);
           const autoFocus =
             editingCtx.autoFocusTarget?.rowId === rowId && editingCtx.autoFocusTarget.columnId === column.id;
@@ -216,7 +228,7 @@ function toTanstackColumns<TRow extends RowData>(
         }
         // Not yet activated: static content, but a click on it (any editable
         // column's cell) activates every editable column in this row at
-        // once — see `EditingCellContext.activeRowIds`'s own doc. `role`/
+        // once — see `EditingCellContext.activeRowId`'s own doc. `role`/
         // `tabIndex` make this keyboard-reachable (Enter/Space) too, not
         // just clickable.
         return (
@@ -236,11 +248,11 @@ function toTanstackColumns<TRow extends RowData>(
               editingCtx.onActivateRow(rowId, column.id);
             }}
           >
-            {staticContent()}
+            {staticContent(value)}
           </span>
         );
       }
-      return staticContent();
+      return staticContent(info.getValue());
     },
   }));
 }
@@ -385,15 +397,15 @@ export function DataGrid<TRow extends RowData>({
   const [editErrors, setEditErrors] = useState<Map<string, Map<string, string>>>(new Map());
   const hasEditErrors = editErrors.size > 0;
 
-  // Which rows currently show editors — see `EditingCellContext.activeRowIds`'s
+  // Which row currently shows editors — see `EditingCellContext.activeRowId`'s
   // own doc for why this is deliberately its own state, not derived from
-  // `pendingEdits`. `autoFocusTarget` is set alongside it, once, by whichever
-  // click actually activated a row.
-  const [activeRowIds, setActiveRowIds] = useState<ReadonlySet<string>>(new Set());
+  // `pendingEdits`, and why it's a single id rather than a set. `autoFocusTarget`
+  // is set alongside it, once, by whichever click actually activated a row.
+  const [activeRowId, setActiveRowId] = useState<string | null>(null);
   const [autoFocusTarget, setAutoFocusTarget] = useState<{ rowId: string; columnId: string } | null>(null);
 
   function activateRow(rowId: string, columnId: string): void {
-    setActiveRowIds((prev) => (prev.has(rowId) ? prev : new Set(prev).add(rowId)));
+    setActiveRowId(rowId);
     setAutoFocusTarget({ rowId, columnId });
   }
 
@@ -453,21 +465,18 @@ export function DataGrid<TRow extends RowData>({
     const savedRowIds = new Set(edited.map((entry) => entry.rowId));
     setPendingEdits(new Map());
     setEditErrors(new Map());
-    // Deactivates only the rows just saved, not every active row — a row a
-    // caller clicked into but never actually changed (so it was never part
-    // of `edited`) has nothing to save, but also nothing wrong with it;
-    // there's no reason Save should kick the user out of it.
-    setActiveRowIds((prev) => {
-      const next = new Set(prev);
-      for (const rowId of savedRowIds) next.delete(rowId);
-      return next;
-    });
+    // Deactivates the active row only if it was actually part of what got
+    // saved — a row the user clicked into but never changed (so it was
+    // never part of `edited`) has nothing to save, but also nothing wrong
+    // with it; there's no reason Save should kick the user out of it. Since
+    // at most one row is ever active, this either clears it or leaves it.
+    setActiveRowId((prev) => (prev !== null && savedRowIds.has(prev) ? null : prev));
   }
 
   function handleDiscardEdits(): void {
     setPendingEdits(new Map());
     setEditErrors(new Map());
-    setActiveRowIds(new Set());
+    setActiveRowId(null);
     editing?.onDiscard?.();
   }
 
@@ -477,7 +486,7 @@ export function DataGrid<TRow extends RowData>({
   // indirection exists at all instead of just closing over these directly.
   const editingCtxRef = useRef<EditingCellContext<TRow> | undefined>(undefined);
   editingCtxRef.current = editing
-    ? { pendingEdits, editErrors, activeRowIds, autoFocusTarget, getRowId, onEdit: commitEdit, onActivateRow: activateRow }
+    ? { pendingEdits, editErrors, activeRowId, autoFocusTarget, getRowId, onEdit: commitEdit, onActivateRow: activateRow }
     : undefined;
 
   // Single source of truth for "which columns actually render": every other

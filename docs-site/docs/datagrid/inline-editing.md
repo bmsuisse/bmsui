@@ -9,12 +9,14 @@ title: Inline editing
 that goes with it. Cells stay static text until clicked — clicking (or
 pressing Enter/Space on) any editable cell in a row turns **every** editable
 column in that row into editors at once, with focus landing on the cell that
-was actually clicked. Edits accumulate locally — nothing is written back
-onto your `data`, and nothing is sent anywhere — until the user clicks
-**Save** in the bar that appears above the grid once at least one pending
-edit exists. A row stays in edit mode until its edits are saved or
-discarded; clicking into a second row activates it too, without deactivating
-the first — you can edit several rows before saving all of them together.
+was actually clicked. **At most one row is ever in edit mode at a time** —
+clicking into a different row switches to it, editing row by row rather than
+several at once. Edits still accumulate locally across rows — nothing is
+written back onto your `data`, and nothing is sent anywhere — until the user
+clicks **Save** in the bar that appears above the grid once at least one
+pending edit exists; switching away from a row you've already changed keeps
+that change pending (you'll see it reflected in the row's static text), it
+just isn't shown as an editor anymore until you click back into it.
 
 ```tsx
 <DataGrid
@@ -182,9 +184,18 @@ Instead, `<DataGrid>` renders `cell-${rowId}-${columnId}` static content for
 an editable cell until it's activated; clicking it (or its row's any other
 editable cell) swaps every editable column in that row over to its editor at
 once. This is purely a display-mode toggle, independent of whether anything
-has actually changed yet — clicking into a row and then clicking away
-without typing anything leaves that row active (still showing editors) with
-zero pending edits, and it stays that way until Save or Discard.
+has actually changed yet — clicking into a row with nothing to change yet
+still activates it, and it stays active until you either edit it and Save/
+Discard, or click into a *different* row (which deactivates this one — see
+below).
+
+**At most one row active at a time.** Clicking into another row deactivates
+whichever row was active before it; there's no way to have two rows' worth
+of editors open simultaneously. This does **not** discard whatever you were
+mid-typing — a deactivated row keeps showing any pending edit in its static
+text (not the original, stale value), and that edit is still fully part of
+what Save commits. Only Save or Discard actually clears a pending edit;
+switching rows just changes which row's fields you're currently looking at.
 
 ## Keyboard, focus, and accessibility
 

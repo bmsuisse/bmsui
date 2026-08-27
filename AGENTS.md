@@ -834,20 +834,35 @@ renders above the grid once at least one pending edit exists. This is
 accumulate-then-save, not per-cell autosave: there's no partial commit, no
 undo history, only Save (all pending edits) or Discard (all of them).
 
-**Click-to-activate a whole row, not always-on inputs.** An editable
-column's cell stays static text (wrapped in a clickable/keyboard-focusable
-`<span data-testid="cell-${rowId}-${column.id}">`) until activated — clicking
-it, or pressing Enter/Space on it, turns EVERY editable column in that same
-row into its editor at once, with focus landing on the specific cell that
-triggered activation (see `autoFocus` below). Activating one row never
-deactivates another — click into several rows before Save, same
-accumulate-then-save spirit as the edits themselves. `EditingCellContext.
-activeRowIds` (a `Set<string>` of row ids, `<DataGrid>`'s own internal state)
-is deliberately separate from `pendingEdits`: a row can be active (clicked
-into) with zero actual changes yet, and Save only deactivates the rows it
-actually saved — a row a caller clicked into but never edited stays active,
-since there's nothing wrong with it and no reason to kick the user out of a
-row they're still looking at.
+**Click-to-activate a whole row, not always-on inputs — at most ONE row
+active at a time.** An editable column's cell stays static text (wrapped in
+a clickable/keyboard-focusable `<span data-testid="cell-${rowId}-${column.
+id}">`) until activated — clicking it, or pressing Enter/Space on it, turns
+EVERY editable column in that same row into its editor at once, with focus
+landing on the specific cell that triggered activation (see `autoFocus`
+below). Activating a row deactivates whatever row was active before it —
+edits happen row by row, not several rows' worth of open editors at once
+(a deliberate change from an earlier multi-row-active version of this
+feature). `EditingCellContext.activeRowId` (`string | null`,
+`<DataGrid>`'s own internal state) is deliberately separate from
+`pendingEdits`: a row can be active (clicked into) with zero actual changes
+yet, and Save only clears `activeRowId` if the active row was actually part
+of what got saved — a row a caller clicked into but never edited stays
+active, since there's nothing wrong with it.
+
+**Switching rows does NOT discard the row you switch away from — it stays
+pending, just no longer shown as an editor.** `pendingEdits` still spans
+every row the user has touched this session, exactly as before; only the
+*display* of which row currently shows editors is now single-valued. This
+means a deactivated row's own cells must still show whatever's actually
+pending on them, not the row's stale original data — `toTanstackColumns`'s
+`cell` closure resolves `pendingRow?.values.get(column.id) ?? info.getValue()`
+ONCE per editable cell and reuses that resolved value for both the active
+editor AND the static (deactivated) rendering path; using `info.getValue()`
+directly in the static branch (an earlier bug, fixed together with the
+single-row change) would have made a just-edited-then-switched-away-from
+row look reverted even though its edit was still fully pending and would
+still be included in Save.
 
 **Default editors, by `column.type`** — same "every type gets a working
 default for free" pattern the filter widgets use, in
