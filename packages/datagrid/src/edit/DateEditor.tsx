@@ -28,6 +28,7 @@ export function DateEditor<TRow>({
   value,
   onChange,
   error,
+  autoFocus,
 }: EditWidgetProps<DateColumn<TRow>>): ReactElement {
   return (
     <div>
@@ -37,6 +38,7 @@ export function DateEditor<TRow>({
         aria-label={`Edit ${column.header}`}
         aria-invalid={error ? true : undefined}
         data-testid={`edit-${rowId}-${column.id}`}
+        autoFocus={autoFocus}
         value={inputValueOf(value, column.type)}
         onChange={(event) => onChange(event.target.value === "" ? null : parseISO(event.target.value))}
       />

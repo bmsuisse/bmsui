@@ -6,9 +6,15 @@ title: Inline editing
 
 `editable` turns a column's cells into interactive editors; `editing`
 (a prop on `<DataGrid>` itself) turns on the accumulate-then-save workflow
-that goes with it. Edits accumulate locally — nothing is written back onto
-your `data`, and nothing is sent anywhere — until the user clicks **Save** in
-the bar that appears above the grid once at least one pending edit exists.
+that goes with it. Cells stay static text until clicked — clicking (or
+pressing Enter/Space on) any editable cell in a row turns **every** editable
+column in that row into editors at once, with focus landing on the cell that
+was actually clicked. Edits accumulate locally — nothing is written back
+onto your `data`, and nothing is sent anywhere — until the user clicks
+**Save** in the bar that appears above the grid once at least one pending
+edit exists. A row stays in edit mode until its edits are saved or
+discarded; clicking into a second row activates it too, without deactivating
+the first — you can edit several rows before saving all of them together.
 
 ```tsx
 <DataGrid
@@ -147,30 +153,49 @@ downstream work (a refetch, a toast) is done too.
 
 ## Overriding a column's editor
 
-`renderEditCell?: (value, row, onChange, error) => ReactNode` replaces the
-default editor for one column entirely:
+`renderEditCell?: (value, row, onChange, error, autoFocus) => ReactNode`
+replaces the default editor for one column entirely:
 
 ```tsx
 {
   ...ownerColumn,
   editable: true,
-  renderEditCell: (value, row, onChange, error) => (
-    <MyOwnerPicker value={value} onChange={onChange} error={error} />
+  renderEditCell: (value, row, onChange, error, autoFocus) => (
+    <MyOwnerPicker value={value} onChange={onChange} error={error} autoFocus={autoFocus} />
   ),
 }
 ```
 
 `onChange` records a new pending value the same way a built-in editor's
 `onChange` would — it doesn't itself validate or persist anything.
+`autoFocus` is `true` for exactly the one cell whose click activated the
+row — forward it to your control's own native `autoFocus` (or call
+`.focus()` yourself in an effect if it doesn't take one) so the activating
+click also focuses the field the user actually clicked, not some other cell
+in the same row.
+
+## Click-to-activate, not always-on inputs
+
+A cell being `editable` doesn't mean it's always rendered as an input —
+that would mean an editors-everywhere table even for rows nobody's touching.
+Instead, `<DataGrid>` renders `cell-${rowId}-${columnId}` static content for
+an editable cell until it's activated; clicking it (or its row's any other
+editable cell) swaps every editable column in that row over to its editor at
+once. This is purely a display-mode toggle, independent of whether anything
+has actually changed yet — clicking into a row and then clicking away
+without typing anything leaves that row active (still showing editors) with
+zero pending edits, and it stays that way until Save or Discard.
 
 ## Limitations
 
 - No cell-level autosave and no undo history — it's accumulate-then-save,
   all at once, or Discard everything.
 - No keyboard cell-to-cell navigation (Tab/arrow keys) between editors —
-  each editable cell is a normal focusable control, so native Tab order
-  moves through them like any other form, but there's no spreadsheet-style
-  arrow-key grid navigation.
+  each editable cell is a normal focusable control once its row is active,
+  so native Tab order moves through them like any other form, but there's no
+  spreadsheet-style arrow-key grid navigation, and no keyboard shortcut to
+  activate a row without clicking (or Enter/Space-ing) one of its cells
+  first.
 - A pending edit keeps the row snapshot from when it was first made; if that
   row is later refetched with different data (e.g. a background poll) while
   the edit is still pending, `onSave` still hands back the older snapshot.

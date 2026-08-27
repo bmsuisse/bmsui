@@ -38,6 +38,11 @@ const columns: ColumnDef<Row>[] = [
   { id: "joined", type: "date", header: "Joined", accessorKey: "joined", editable: true },
 ];
 
+/** Clicks a not-yet-activated cell's static content, entering that row's edit mode. */
+async function activateCell(rowId: string, columnId: string): Promise<void> {
+  await userEvent.click(screen.getByTestId(`cell-${rowId}-${columnId}`));
+}
+
 /** A stateful harness mirroring real usage: `onSave` actually applies edits back onto `data`. */
 function EditableGrid({
   onSave,
@@ -78,7 +83,7 @@ function EditableGrid({
 }
 
 describe("DataGrid inline editing", () => {
-  it("renders editable columns as inputs and non-editable columns as plain text", () => {
+  it("renders editable columns as static (clickable) text until clicked, non-editable columns as plain text", () => {
     render(
       <DataGrid
         columns={[columns[0]!, { id: "age", type: "number", header: "Age", accessorKey: "age" }]}
@@ -88,19 +93,65 @@ describe("DataGrid inline editing", () => {
       />,
     );
 
-    expect(screen.getByTestId("edit-1-name")).toHaveValue("Charlie");
+    expect(screen.queryByTestId("edit-1-name")).not.toBeInTheDocument();
+    expect(screen.getByTestId("cell-1-name")).toHaveTextContent("Charlie");
     expect(screen.getByRole("cell", { name: "30" })).toBeInTheDocument();
   });
 
   it("falls back to static rendering when no `editing` prop is supplied, even for an editable column", () => {
     render(<DataGrid columns={columns} dataSource={{ mode: "client", data: rows }} getRowId={(row) => row.id} />);
 
-    expect(screen.queryByTestId("edit-1-name")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("cell-1-name")).not.toBeInTheDocument();
     expect(screen.getByRole("cell", { name: "Charlie" })).toBeInTheDocument();
+  });
+
+  it("clicking one editable cell activates every editable column in that row, but no other row", async () => {
+    render(<EditableGrid onSave={vi.fn()} />);
+
+    await activateCell("1", "name");
+
+    expect(screen.getByTestId("edit-1-name")).toBeInTheDocument();
+    expect(screen.getByTestId("edit-1-age")).toBeInTheDocument();
+    expect(screen.getByTestId("edit-1-active")).toBeInTheDocument();
+    expect(screen.getByTestId("edit-1-status")).toBeInTheDocument();
+    expect(screen.getByTestId("edit-1-joined")).toBeInTheDocument();
+
+    // Row 2 stays fully static.
+    expect(screen.queryByTestId("edit-2-name")).not.toBeInTheDocument();
+    expect(screen.getByTestId("cell-2-name")).toHaveTextContent("Alice");
+  });
+
+  it("focuses the specific cell that was clicked, not just some other cell in the activated row", async () => {
+    render(<EditableGrid onSave={vi.fn()} />);
+
+    await activateCell("1", "age");
+
+    expect(screen.getByTestId("edit-1-age")).toHaveFocus();
+    expect(screen.getByTestId("edit-1-name")).not.toHaveFocus();
+  });
+
+  it("activating a second row keeps the first row's editors active too (accumulate, not replace)", async () => {
+    render(<EditableGrid onSave={vi.fn()} />);
+
+    await activateCell("1", "name");
+    await activateCell("2", "name");
+
+    expect(screen.getByTestId("edit-1-name")).toBeInTheDocument();
+    expect(screen.getByTestId("edit-2-name")).toBeInTheDocument();
+  });
+
+  it("Enter/Space on a static cell activates its row too (keyboard-reachable)", async () => {
+    render(<EditableGrid onSave={vi.fn()} />);
+
+    screen.getByTestId("cell-1-name").focus();
+    await userEvent.keyboard("{Enter}");
+
+    expect(screen.getByTestId("edit-1-name")).toBeInTheDocument();
   });
 
   it("shows the Save bar once a value changes, and hides it again once reverted to the original", async () => {
     render(<EditableGrid onSave={vi.fn()} />);
+    await activateCell("1", "name");
 
     expect(screen.queryByTestId("datagrid-edit-bar")).not.toBeInTheDocument();
 
@@ -117,9 +168,10 @@ describe("DataGrid inline editing", () => {
     expect(screen.queryByTestId("datagrid-edit-bar")).not.toBeInTheDocument();
   });
 
-  it("calls onSave with the changed rows/values on Save, then clears pending state", async () => {
+  it("calls onSave with the changed rows/values on Save, then clears pending state and deactivates the saved row", async () => {
     const onSave = vi.fn();
     render(<EditableGrid onSave={onSave} />);
+    await activateCell("1", "name");
 
     const nameInput = screen.getByTestId("edit-1-name");
     await userEvent.clear(nameInput);
@@ -132,12 +184,15 @@ describe("DataGrid inline editing", () => {
     expect(edits).toEqual([{ rowId: "1", row: rows[0], values: { name: "Charles" } }]);
 
     expect(screen.queryByTestId("datagrid-edit-bar")).not.toBeInTheDocument();
-    expect(screen.getByTestId("edit-1-name")).toHaveValue("Charles");
+    // Row 1 deactivates back to static display once its edits are saved.
+    expect(screen.queryByTestId("edit-1-name")).not.toBeInTheDocument();
+    expect(screen.getByTestId("cell-1-name")).toHaveTextContent("Charles");
   });
 
-  it("keeps pending edits and the Save bar when onSave rejects", async () => {
+  it("keeps pending edits, the Save bar, and the row active when onSave rejects", async () => {
     const onSave = vi.fn().mockRejectedValue(new Error("server said no"));
     render(<EditableGrid onSave={onSave} />);
+    await activateCell("1", "name");
 
     const nameInput = screen.getByTestId("edit-1-name");
     await userEvent.clear(nameInput);
@@ -149,9 +204,10 @@ describe("DataGrid inline editing", () => {
     expect(screen.getByTestId("edit-1-name")).toHaveValue("Charles");
   });
 
-  it("Discard clears every pending edit, reverts the display, and calls onDiscard", async () => {
+  it("Discard clears every pending edit, deactivates every row, reverts the display, and calls onDiscard", async () => {
     const onDiscard = vi.fn();
     render(<EditableGrid onSave={vi.fn()} onDiscard={onDiscard} />);
+    await activateCell("1", "name");
 
     const nameInput = screen.getByTestId("edit-1-name");
     await userEvent.clear(nameInput);
@@ -161,11 +217,13 @@ describe("DataGrid inline editing", () => {
 
     expect(onDiscard).toHaveBeenCalledTimes(1);
     expect(screen.queryByTestId("datagrid-edit-bar")).not.toBeInTheDocument();
-    expect(screen.getByTestId("edit-1-name")).toHaveValue("Charlie");
+    expect(screen.queryByTestId("edit-1-name")).not.toBeInTheDocument();
+    expect(screen.getByTestId("cell-1-name")).toHaveTextContent("Charlie");
   });
 
   it("disables Save (but not typing) while a column's validateEdit fails, until fixed", async () => {
     render(<EditableGrid onSave={vi.fn()} validateEdit={(value) => (value === "" ? "Name is required" : undefined)} />);
+    await activateCell("1", "name");
 
     const nameInput = screen.getByTestId("edit-1-name");
     await userEvent.clear(nameInput);
@@ -193,6 +251,7 @@ describe("DataGrid inline editing", () => {
         }}
       />,
     );
+    await activateCell("1", "name");
 
     await userEvent.type(screen.getByTestId("edit-1-name"), "!");
 
@@ -202,6 +261,7 @@ describe("DataGrid inline editing", () => {
 
   it("disables Save/Discard while `saving` is true", async () => {
     render(<EditableGrid onSave={vi.fn()} saving />);
+    await activateCell("1", "name");
 
     await userEvent.type(screen.getByTestId("edit-1-name"), "!");
 
@@ -212,6 +272,7 @@ describe("DataGrid inline editing", () => {
   it("commits a real number, not a string, from the default number editor", async () => {
     const onSave = vi.fn();
     render(<EditableGrid onSave={onSave} />);
+    await activateCell("1", "age");
 
     const ageInput = screen.getByTestId("edit-1-age");
     await userEvent.clear(ageInput);
@@ -225,6 +286,7 @@ describe("DataGrid inline editing", () => {
   it("commits a real boolean from the default boolean editor", async () => {
     const onSave = vi.fn();
     render(<EditableGrid onSave={onSave} />);
+    await activateCell("1", "active");
 
     await userEvent.click(screen.getByTestId("edit-1-active"));
     await userEvent.click(screen.getByTestId("datagrid-save-edits"));
@@ -236,6 +298,7 @@ describe("DataGrid inline editing", () => {
   it("commits the selected option's value from the default enum editor", async () => {
     const onSave = vi.fn();
     render(<EditableGrid onSave={onSave} />);
+    await activateCell("1", "status");
 
     await userEvent.click(screen.getByTestId("edit-1-status"));
     await userEvent.click(await screen.findByRole("option", { name: "Shipped" }));
@@ -248,6 +311,7 @@ describe("DataGrid inline editing", () => {
   it("commits a Date instance from the default date editor", async () => {
     const onSave = vi.fn();
     render(<EditableGrid onSave={onSave} />);
+    await activateCell("1", "joined");
 
     const joinedInput = screen.getByTestId("edit-1-joined");
     await userEvent.clear(joinedInput);
@@ -277,8 +341,8 @@ describe("DataGrid inline editing", () => {
       },
     ];
     render(<EditableGrid onSave={onSave} columnsOverride={customColumns} />);
+    await activateCell("1", "name");
 
-    expect(screen.queryByTestId("edit-1-name")).not.toBeInTheDocument();
     const input = screen.getByTestId("custom-name-editor-1");
     await userEvent.clear(input);
     await userEvent.type(input, "Charles");
@@ -289,12 +353,11 @@ describe("DataGrid inline editing", () => {
   });
 
   it("respects a per-row `editable` predicate", () => {
-    const lockable: ColumnDef<Row>[] = [
-      { ...columns[0]!, editable: (row) => row.id !== "2" },
-    ];
+    const lockable: ColumnDef<Row>[] = [{ ...columns[0]!, editable: (row) => row.id !== "2" }];
     render(<EditableGrid onSave={vi.fn()} columnsOverride={lockable} />);
 
-    expect(screen.getByTestId("edit-1-name")).toBeInTheDocument(); // row 1: editable
-    expect(screen.getByRole("cell", { name: "Alice" })).toBeInTheDocument(); // row 2: locked, static text
+    expect(screen.getByTestId("cell-1-name")).toBeInTheDocument(); // row 1: editable (clickable)
+    expect(screen.queryByTestId("cell-2-name")).not.toBeInTheDocument(); // row 2: locked, plain static text
+    expect(screen.getByRole("cell", { name: "Alice" })).toBeInTheDocument();
   });
 });

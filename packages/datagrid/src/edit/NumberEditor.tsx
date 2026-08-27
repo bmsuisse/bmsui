@@ -15,6 +15,7 @@ export function NumberEditor<TRow>({
   value,
   onChange,
   error,
+  autoFocus,
 }: EditWidgetProps<NumberColumn<TRow>>): ReactElement {
   return (
     <div>
@@ -24,6 +25,7 @@ export function NumberEditor<TRow>({
         aria-label={`Edit ${column.header}`}
         aria-invalid={error ? true : undefined}
         data-testid={`edit-${rowId}-${column.id}`}
+        autoFocus={autoFocus}
         value={value === null || value === undefined ? "" : String(value)}
         onChange={(event) => onChange(event.target.value === "" ? null : Number(event.target.value))}
       />

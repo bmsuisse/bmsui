@@ -18,6 +18,13 @@
  * which renders exactly once per column (in the header), an edit widget
  * renders once per (row, column) pair, so a column-id-only testid would
  * collide across every row the moment a grid has more than one.
+ *
+ * `autoFocus` is true for exactly one cell per row-activation: the specific
+ * column whose static cell the user clicked (or Enter/Space'd) to turn the
+ * whole row into editors — every other cell in that same row gets `false`.
+ * Every built-in widget forwards it straight to its underlying control's own
+ * native `autoFocus` prop, so the browser focuses that one control the
+ * moment it mounts, without an extra click to actually start typing.
  */
 export interface EditWidgetProps<TColumn> {
   column: TColumn;
@@ -25,4 +32,5 @@ export interface EditWidgetProps<TColumn> {
   value: unknown;
   onChange: (next: unknown) => void;
   error?: string;
+  autoFocus?: boolean;
 }

@@ -84,14 +84,14 @@ async function captureDatagridDemo(browser: Browser, url: string): Promise<void>
   await page.waitForTimeout(100);
   await page.screenshot({ path: path.join(OUT_DIR, "datagrid-histogram.png") });
 
-  // Type into the Task cell to put the grid into "1 pending edit" state —
-  // an empty/unedited grid wouldn't show the Save/Discard bar at all, the
-  // whole point of this screenshot.
+  // Click the (still-static) Task cell to activate row 1's editors, then
+  // type into it — an unactivated/unedited grid wouldn't show any editors
+  // or the Save/Discard bar, the whole point of this screenshot.
   const editingGrid = page.getByTestId("editing-grid");
   await editingGrid.scrollIntoViewIfNeeded();
   const editingWrapper = editingGrid.locator('xpath=ancestor::div[@data-testid="datagrid"]');
+  await editingGrid.getByTestId("cell-1-title").click();
   const titleInput = editingGrid.getByTestId("edit-1-title");
-  await titleInput.click();
   await titleInput.fill("Draft Q3 roadmap (revised)");
   await page.waitForTimeout(100);
   await editingWrapper.screenshot({ path: path.join(OUT_DIR, "datagrid-editing.png") });

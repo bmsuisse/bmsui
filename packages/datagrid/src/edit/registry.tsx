@@ -20,19 +20,30 @@ export function renderDefaultEditWidget<TRow>(
   value: unknown,
   onChange: (next: unknown) => void,
   error?: string,
+  autoFocus?: boolean,
 ): ReactElement {
   switch (column.type) {
     case "string":
-      return <StringEditor column={column} rowId={rowId} value={value} onChange={onChange} error={error} />;
+      return (
+        <StringEditor column={column} rowId={rowId} value={value} onChange={onChange} error={error} autoFocus={autoFocus} />
+      );
     case "enum":
-      return <EnumEditor column={column} rowId={rowId} value={value} onChange={onChange} error={error} />;
+      return (
+        <EnumEditor column={column} rowId={rowId} value={value} onChange={onChange} error={error} autoFocus={autoFocus} />
+      );
     case "boolean":
-      return <BooleanEditor column={column} rowId={rowId} value={value} onChange={onChange} error={error} />;
+      return (
+        <BooleanEditor column={column} rowId={rowId} value={value} onChange={onChange} error={error} autoFocus={autoFocus} />
+      );
     case "number":
     case "currency":
-      return <NumberEditor column={column} rowId={rowId} value={value} onChange={onChange} error={error} />;
+      return (
+        <NumberEditor column={column} rowId={rowId} value={value} onChange={onChange} error={error} autoFocus={autoFocus} />
+      );
     case "date":
     case "datetime":
-      return <DateEditor column={column} rowId={rowId} value={value} onChange={onChange} error={error} />;
+      return (
+        <DateEditor column={column} rowId={rowId} value={value} onChange={onChange} error={error} autoFocus={autoFocus} />
+      );
   }
 }

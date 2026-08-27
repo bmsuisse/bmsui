@@ -10,6 +10,7 @@ export function EnumEditor<TRow>({
   value,
   onChange,
   error,
+  autoFocus,
 }: EditWidgetProps<EnumColumn<TRow>>): ReactElement {
   return (
     <div>
@@ -19,6 +20,7 @@ export function EnumEditor<TRow>({
           aria-label={`Edit ${column.header}`}
           aria-invalid={error ? true : undefined}
           data-testid={`edit-${rowId}-${column.id}`}
+          autoFocus={autoFocus}
         >
           <SelectValue />
         </SelectTrigger>

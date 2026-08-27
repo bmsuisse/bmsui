@@ -121,6 +121,16 @@ logic above, which already had its own extraction). Structure:
     pixels) — that's specific to that app and not what the
     contract-management app's `Loader2`-based ad hoc spinners (the thing
     actually being consolidated) look like.
+  - `search-bar/` — `SearchBar` (v0.6.0), a pill-shaped search input:
+    leading icon (swaps to a `LoadingSpinner` while `isLoading`), trailing
+    clear button once `value` is non-empty (`onClear`, defaulting to
+    `onChange("")`; pass `onClear={false}` to hide it outright). Unlike
+    `Combobox`, it renders no dropdown/result list of its own — just the
+    input chrome, same shape OneSales's mobile customer list and product
+    search pages had each hand-rolled independently. `clearLabel` (default
+    `"Clear search"`) follows the same "labels are props with an English
+    default" convention as `ConfirmDialog`'s `confirmLabel`/`cancelLabel`,
+    for callers that localize.
   - `combobox/` — `Combobox`, a searchable single- or multi-select
     ("autocomplete box") discriminated on a `multiple` prop (omitted/`false`
     keeps the original `value: string | null` shape unchanged; `multiple:
@@ -824,6 +834,21 @@ renders above the grid once at least one pending edit exists. This is
 accumulate-then-save, not per-cell autosave: there's no partial commit, no
 undo history, only Save (all pending edits) or Discard (all of them).
 
+**Click-to-activate a whole row, not always-on inputs.** An editable
+column's cell stays static text (wrapped in a clickable/keyboard-focusable
+`<span data-testid="cell-${rowId}-${column.id}">`) until activated — clicking
+it, or pressing Enter/Space on it, turns EVERY editable column in that same
+row into its editor at once, with focus landing on the specific cell that
+triggered activation (see `autoFocus` below). Activating one row never
+deactivates another — click into several rows before Save, same
+accumulate-then-save spirit as the edits themselves. `EditingCellContext.
+activeRowIds` (a `Set<string>` of row ids, `<DataGrid>`'s own internal state)
+is deliberately separate from `pendingEdits`: a row can be active (clicked
+into) with zero actual changes yet, and Save only deactivates the rows it
+actually saved — a row a caller clicked into but never edited stays active,
+since there's nothing wrong with it and no reason to kick the user out of a
+row they're still looking at.
+
 **Default editors, by `column.type`** — same "every type gets a working
 default for free" pattern the filter widgets use, in
 `packages/datagrid/src/edit/registry.tsx`'s `renderDefaultEditWidget`:
@@ -836,12 +861,14 @@ default for free" pattern the filter widgets use, in
 | `enum` | single-value select over `column.options` | the selected option's `value` |
 | `date` / `datetime` | native `<input type="date">`/`"datetime-local"` | a `Date` (via `parseISO`, not the bare `new Date(...)` constructor — same UTC-midnight fix `format.ts`'s `toDate`/`DateRangeFilter`'s `parseBound` already apply), or `null` when emptied |
 
-`column.renderEditCell?: (value, row, onChange, error) => ReactNode`
-overrides the default for one column, the same pattern `renderFilter`
-overrides a filter widget. `column.validateEdit?: (value, row) => string |
-undefined` returns a message that blocks Save (shown under the cell, the
-whole Save button disabled) until fixed or reverted — runs on every change,
-not just on Save.
+`column.renderEditCell?: (value, row, onChange, error, autoFocus) =>
+ReactNode` overrides the default for one column, the same pattern
+`renderFilter` overrides a filter widget — `autoFocus` is `true` for exactly
+the one cell whose click activated the row; every built-in editor forwards
+it straight to its control's native `autoFocus` prop. `column.validateEdit?:
+(value, row) => string | undefined` returns a message that blocks Save
+(shown under the cell, the whole Save button disabled) until fixed or
+reverted — runs on every change, not just on Save.
 
 **`EditedRow<TRow>`** (`packages/datagrid/src/edit/types.ts`) is what
 `editing.onSave` receives: `{ rowId, row, values }`, where `values` is

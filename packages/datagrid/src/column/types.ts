@@ -92,12 +92,18 @@ export interface BaseColumn<TRow> {
   renderHeader?: (column: BaseColumn<TRow>) => ReactNode;
   /**
    * Opt-in: defaults to false — must be explicitly set (or return true) for
-   * `<DataGrid>` to render this column's cells as inline editors instead of
-   * static `cell`/`defaultFormat` output. A function makes it conditional
-   * per row (e.g. a "locked" row that can't be edited). See
-   * `DataGridProps.editing` for the accumulate-then-save workflow this
-   * feeds into — editable cells with no `editing` prop supplied just render
-   * as static text, same as if `editable` were unset.
+   * `<DataGrid>` to render this column's cells as inline editors. A function
+   * makes it conditional per row (e.g. a "locked" row that can't be
+   * edited). See `DataGridProps.editing` for the accumulate-then-save
+   * workflow this feeds into — editable cells with no `editing` prop
+   * supplied just render as static text, same as if `editable` were unset.
+   *
+   * A cell doesn't become an editor just because this is true, though:
+   * clicking (or Enter/Space-ing) any editable cell in a row is what
+   * activates editors for every editable column in THAT row at once — the
+   * rest of the grid's rows stay static until clicked into themselves. A
+   * row stays active until its edits are saved or discarded, and
+   * activating one row never deactivates another.
    */
   editable?: boolean | ((row: TRow) => boolean);
   /**
@@ -105,14 +111,19 @@ export interface BaseColumn<TRow> {
    * for this column's cells. Receives the cell's current value (the row's
    * original value, or a still-pending edit if the user already changed it
    * this session), the row itself, an `onChange` to record a new pending
-   * value, and this cell's current validation error message (from
-   * `validateEdit` below), if any.
+   * value, this cell's current validation error message (from
+   * `validateEdit` below) if any, and whether this specific cell is the one
+   * whose click just activated the row (see `editable`'s own doc) — forward
+   * it to your control's native `autoFocus` so the row-activating click also
+   * focuses the field the user actually clicked, not just some other cell
+   * in the same row.
    */
   renderEditCell?: (
     value: unknown,
     row: TRow,
     onChange: (next: unknown) => void,
     error: string | undefined,
+    autoFocus: boolean,
   ) => ReactNode;
   /**
    * Validates a pending edit before it's allowed into `editing.onSave`'s

@@ -22,6 +22,7 @@ export function BooleanEditor<TRow>({
   value,
   onChange,
   error,
+  autoFocus,
 }: EditWidgetProps<BooleanColumn<TRow>>): ReactElement {
   return (
     <div className="flex flex-col items-center gap-0.5">
@@ -29,6 +30,7 @@ export function BooleanEditor<TRow>({
         aria-label={`Edit ${column.header}`}
         aria-invalid={error ? true : undefined}
         data-testid={`edit-${rowId}-${column.id}`}
+        autoFocus={autoFocus}
         checked={toBoolean(value)}
         onCheckedChange={(next) => onChange(next === true)}
       />
