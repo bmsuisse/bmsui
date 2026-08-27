@@ -2,10 +2,14 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { AlertCircle, ChevronDown, ChevronRight, Loader2 } from "lucide-react";
 import type { ReactElement, ReactNode } from "react";
 import { useEffect, useMemo, useRef } from "react";
-import { alignClassName, defaultFormat } from "../column/format";
+import { alignClassName } from "../column/format";
 import type { ColumnDef } from "../column/types";
 import { getColumnValue } from "../column/types";
 import { Checkbox } from "../components/ui/checkbox";
+import { EditingBar } from "../edit/EditingBar";
+import type { EditingCellContext } from "../edit/editingState";
+import { useEditingState } from "../edit/editingState";
+import { renderEditableCell } from "../edit/renderEditableCell";
 import { SELECTION_COLUMN_WIDTH } from "../lib/structuralColumns";
 import { cn, stopRowClick } from "../lib/utils";
 import { ActionsMenu } from "../menu/ActionsMenu";
@@ -19,9 +23,12 @@ import { useTreeState } from "./useTreeState";
 const EMPTY_SELECTED_IDS: ReadonlySet<string> = new Set();
 const UNCHECKED_STATE: RowSelectionState = { checked: false, indeterminate: false };
 
-function renderCell<TRow>(column: ColumnDef<TRow>, row: TRow): ReactNode {
-  const value = getColumnValue(column, row);
-  return column.cell ? column.cell(value, row) : defaultFormat(column, value);
+function renderCell<TRow>(
+  column: ColumnDef<TRow>,
+  row: TRow,
+  editingCtx: EditingCellContext<TRow> | undefined,
+): ReactNode {
+  return renderEditableCell(column, row, getColumnValue(column, row), editingCtx);
 }
 
 interface TreeCellProps<TRow> {
@@ -32,6 +39,7 @@ interface TreeCellProps<TRow> {
   error: string | undefined;
   onToggle: () => void;
   onRetry: () => void;
+  editingCtx: EditingCellContext<TRow> | undefined;
 }
 
 function TreeCell<TRow>({
@@ -42,6 +50,7 @@ function TreeCell<TRow>({
   error,
   onToggle,
   onRetry,
+  editingCtx,
 }: TreeCellProps<TRow>): ReactElement {
   return (
     <div className="flex items-center gap-1" style={{ paddingLeft: flatRow.depth * indentSize }}>
@@ -68,7 +77,13 @@ function TreeCell<TRow>({
       ) : (
         <span className="h-4 w-4 shrink-0" aria-hidden="true" />
       )}
-      <span className="truncate">{renderCell(column, flatRow.row)}</span>
+      {/* `min-w-0 flex-1` (added alongside editing support) lets this span
+          actually shrink/grow within the flex row instead of relying on its
+          content's natural size — needed for the default editors' own
+          `w-full` inputs to size correctly next to the indentation/chevron;
+          `truncate` still applies to (and only visibly affects) static text
+          content, same as before. */}
+      <span className="min-w-0 flex-1 truncate">{renderCell(column, flatRow.row, editingCtx)}</span>
       {/* Rendered on the parent row itself rather than as a synthetic extra
           row, so the flattened row count (and the virtualizer's count) never
           has to account for error state — see useTreeState's module doc for
@@ -125,11 +140,19 @@ export function TreeDataGrid<TRow>({
   getRowSelectionState,
   isRowSelectionDisabled,
   zebra = true,
+  editing,
 }: TreeDataGridProps<TRow>): ReactElement {
   const accessors: TreeAccessors<TRow> = useMemo(
     () => ({ getRowId, getChildren, hasChildren }),
     [getRowId, getChildren, hasChildren],
   );
+
+  // No `flexRender`-as-component-type layer standing between this component
+  // and every render (unlike `<DataGrid>`, which is why IT needs a ref
+  // indirection — see `useEditingState`'s own doc), so `editingState.ctx`
+  // (the plain, freshly-computed-each-render value) is read directly below,
+  // not through `editingState.ctxRef`.
+  const editingState = useEditingState(editing, getRowId);
 
   const { expanded, childrenMap, loadingIds, errorIds, toggleExpand, retry, expandToLevel } = useTreeState({
     data,
@@ -309,9 +332,10 @@ export function TreeDataGrid<TRow>({
                 error={errorIds.get(flatRow.id)}
                 onToggle={() => toggleExpand(flatRow.row)}
                 onRetry={() => retry(flatRow.row)}
+                editingCtx={editingState.ctx}
               />
             ) : (
-              renderCell(column, flatRow.row)
+              renderCell(column, flatRow.row, editingState.ctx)
             )}
           </td>
         ))}
@@ -335,6 +359,16 @@ export function TreeDataGrid<TRow>({
 
   return (
     <div className="flex flex-col gap-2" data-testid="tree-datagrid">
+      {editing && editingState.pendingEdits.size > 0 && (
+        <EditingBar
+          editing={editing}
+          pendingRowCount={editingState.pendingEdits.size}
+          editErrors={editingState.editErrors}
+          onSave={() => void editingState.handleSaveEdits()}
+          onDiscard={editingState.handleDiscardEdits}
+          testIdPrefix="tree-datagrid"
+        />
+      )}
       <div
         ref={scrollRef}
         className={shouldVirtualize ? "overflow-y-auto" : undefined}

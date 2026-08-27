@@ -60,6 +60,35 @@ async function loadChildren(row: OrgRow) {
 `data`'s identity changes. If you need a full reset — e.g. switching to a
 genuinely different root entity — remount the component with a `key` prop.
 
+## Inline editing
+
+`<TreeDataGrid>` supports the exact same `editable`/`editing` workflow
+[`<DataGrid>` does](/datagrid/inline-editing) — click any editable cell in a
+row to turn every editable column in that row into editors, edit row by row
+(one active at a time), accumulate edits locally, Save/Discard as a batch.
+Same `EditingOptions<TRow>` type, same default editors per `column.type`,
+same `validateEdit`/`renderEditCell`/`autoFocus` contract:
+
+```tsx
+<TreeDataGrid
+  columns={columns}
+  data={roots}
+  getRowId={(row) => row.id}
+  getChildren={(row) => row.children}
+  editing={{
+    onSave: async (edits) => {
+      await api.updateNodes(edits);
+      // ...apply edits back onto your own tree state
+    },
+  }}
+/>
+```
+
+Works on nodes at any depth, not just root rows — expand a node and edit its
+children exactly the same way. The only difference from `<DataGrid>`: the
+Save/Discard bar's `data-testid`s are prefixed `tree-datagrid-` instead of
+`datagrid-` (`tree-datagrid-edit-bar`/`-save-edits`/`-discard-edits`).
+
 ## Other notes
 
 - The **tree column** (indentation + expand/collapse chevron) is whichever
@@ -69,10 +98,15 @@ genuinely different root entity — remount the component with a `key` prop.
   (visible) row count exceeds `virtualizeThreshold` (default 100).
 - **`rowActions`** reuses the same `MenuItem<TRow>` contract `<DataGrid>`'s
   `rowActions` prop uses.
-- Row selection, inline cell editing, and server-driven filtering are
-  intentionally **not** built in — those are application-specific and
-  compose fine via a custom `column.cell` renderer and your own state, the
-  same way they would on top of `<DataGrid>`.
+- **Row selection** (`selectedIds`/`onSelectedIdsChange`) is built in, with
+  the same tri-state (checked/indeterminate) checkbox behavior — but any
+  *cascade* semantics (selecting a parent selects its descendants, etc.)
+  are the caller's job, via `onSelectedIdsChange` or the
+  `getRowSelectionState` override.
+- **Server-driven filtering** is intentionally **not** built in — hierarchy
+  order and any filtering both come from the backend for this component;
+  that's application-specific, same as it would be composing on top of
+  `<DataGrid>`.
 
 See the [live demo](https://bmsuisse.github.io/bmsui/demo/datagrid/) for a complete 3-level lazy org
 chart, including one node whose first load intentionally fails, to exercise

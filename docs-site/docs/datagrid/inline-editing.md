@@ -232,6 +232,7 @@ switching rows just changes which row's fields you're currently looking at.
 - A pending edit keeps the row snapshot from when it was first made; if that
   row is later refetched with different data (e.g. a background poll) while
   the edit is still pending, `onSave` still hands back the older snapshot.
-- Not supported on `<TreeDataGrid>` — build inline editing there via a
-  custom `column.cell` renderer and your own state, the same way you would
-  for any column-level customization `<TreeDataGrid>` doesn't build in.
+- Also available on [`<TreeDataGrid>`](/datagrid/tree-data-grid#inline-editing)
+  — same `EditingOptions<TRow>` contract, works at any depth in the tree, not
+  just root rows. The only difference is the Save/Discard bar's `data-testid`
+  prefix (`tree-datagrid-` instead of `datagrid-`).

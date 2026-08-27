@@ -96,7 +96,11 @@ async function captureDatagridDemo(browser: Browser, url: string): Promise<void>
   await page.waitForTimeout(100);
   await editingWrapper.screenshot({ path: path.join(OUT_DIR, "datagrid-editing.png") });
 
-  const tree = page.getByTestId("tree-datagrid");
+  // `.first()` — the page now has two `data-testid="tree-datagrid"`
+  // elements (the lazy-loading org chart below, and the separate tree
+  // editing demo further down); this is the org chart, always first in DOM
+  // order.
+  const tree = page.getByTestId("tree-datagrid").first();
   await tree.scrollIntoViewIfNeeded();
   // Scoped to `tree`, not `page` — the orders grid's own row-detail chevrons
   // above use the same aria-label="Expand" convention, so an unscoped
@@ -113,6 +117,15 @@ async function captureDatagridDemo(browser: Browser, url: string): Promise<void>
   // (which also just renders the bare text "Alice"), all on the same page.
   await tree.getByText("Alice").waitFor();
   await tree.screenshot({ path: path.join(OUT_DIR, "datagrid-tree.png") });
+
+  // The dedicated <TreeDataGrid> editing demo — click into a child row
+  // (already visible: `initialExpandedLevel: 1`) to show a pending edit.
+  const editingTree = page.getByTestId("tree-datagrid").last();
+  await editingTree.scrollIntoViewIfNeeded();
+  await editingTree.getByTestId("cell-website-design-name").click();
+  await editingTree.getByTestId("edit-website-design-name").fill("Design mockups (v2)");
+  await page.waitForTimeout(100);
+  await editingTree.screenshot({ path: path.join(OUT_DIR, "datagrid-tree-editing.png") });
 
   await page.close();
 }
