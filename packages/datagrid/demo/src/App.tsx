@@ -382,7 +382,22 @@ function TreeGroupingDemo(): ReactElement {
         same <code>&lt;ColumnSelector&gt;</code> component the flat grid above uses, driving{" "}
         <code>&lt;TreeDataGrid&gt;</code>'s own <code>columnVisibility</code> prop.
       </p>
-      <ColumnSelector columns={deptColumns} visibility={visibility} onVisibilityChange={setVisibility} />
+      {/* Explicit `trigger` here (rather than the default icon button, whose
+          accessible name is "Choose columns") so this doesn't collide with
+          e2e/column-selector.spec.ts's `getByRole("button", { name:
+          "Columns" })` locator against the flat orders grid's own trigger
+          above — Playwright's default (non-exact) name match is a substring
+          match, and "Choose columns" contains "Columns". */}
+      <ColumnSelector
+        columns={deptColumns}
+        visibility={visibility}
+        onVisibilityChange={setVisibility}
+        trigger={
+          <button type="button" className="rounded-md border px-3 py-1 text-sm">
+            Toggle fields
+          </button>
+        }
+      />
       <div className="mt-2 h-[280px]">
         <TreeDataGrid
           columns={deptColumns}
