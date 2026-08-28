@@ -2,7 +2,7 @@ import { BarsArrowDownIcon, BarsArrowUpIcon, FunnelIcon } from "@heroicons/react
 import type { CellContext, ColumnDef as TanstackColumnDef, ColumnSizingState, RowData } from "@tanstack/react-table";
 import { columnResizingFeature, columnSizingFeature, flexRender, tableFeatures, useTable } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { ChevronRight, Loader2 } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import type { CSSProperties, ReactElement, ReactNode } from "react";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { alignClassName } from "../column/format";
@@ -10,6 +10,7 @@ import type { ColumnDef } from "../column/types";
 import { getColumnValue, isFilterable, isSortable } from "../column/types";
 import { Button } from "../components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
+import { Spinner } from "../components/ui/spinner";
 import { EditingBar } from "../edit/EditingBar";
 import type { EditingCellContext } from "../edit/editingState";
 import { useEditingState } from "../edit/editingState";
@@ -744,7 +745,7 @@ export function DataGrid<TRow extends RowData>({
             data-testid="datagrid-loading-overlay"
             className="absolute inset-0 z-30 flex items-center justify-center bg-background/60"
           >
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden />
+            <Spinner className="h-6 w-6" />
           </div>
         )}
         <div

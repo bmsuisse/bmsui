@@ -1,9 +1,8 @@
 import { type VariantProps, cva } from "class-variance-authority";
-import { Loader2 } from "lucide-react";
 import type { HTMLAttributes, ReactElement } from "react";
 import { cn } from "../../lib/utils";
 
-export const loadingSpinnerIconVariants = cva("animate-spin text-muted-foreground", {
+export const loadingSpinnerIconVariants = cva("", {
   variants: {
     size: {
       sm: "h-3.5 w-3.5",
@@ -23,7 +22,7 @@ export interface LoadingSpinnerProps
   label?: string;
 }
 
-/** Inline loading indicator: a spinning icon with an optional label, e.g. `<LoadingSpinner label="Saving…" />`. */
+/** Inline loading indicator: the BMS bullseye (a muted ring with a pulsing brand-colored core) with an optional label, e.g. `<LoadingSpinner label="Saving…" />`. */
 export const LoadingSpinner = ({
   size,
   label,
@@ -31,7 +30,15 @@ export const LoadingSpinner = ({
   ...props
 }: LoadingSpinnerProps): ReactElement => (
   <span role="status" className={cn("inline-flex items-center gap-2", className)} {...props}>
-    <Loader2 className={cn(loadingSpinnerIconVariants({ size }))} aria-hidden="true" />
+    <svg
+      className={cn(loadingSpinnerIconVariants({ size }))}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="8.5" strokeWidth="3" className="stroke-muted-foreground" />
+      <circle cx="12" cy="12" r="3.2" className="animate-pulse fill-primary" />
+    </svg>
     {label ? <span>{label}</span> : null}
   </span>
 );

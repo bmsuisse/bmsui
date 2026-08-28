@@ -3,11 +3,12 @@ import { describe, expect, it } from "vitest";
 import { LoadingOverlay, LoadingSpinner } from "../../../src/patterns/loading-spinner/LoadingSpinner";
 
 describe("LoadingSpinner", () => {
-  it("renders the spinner icon", () => {
+  it("renders the bullseye icon: a ring plus a pulsing core", () => {
     const { container } = render(<LoadingSpinner />);
     const icon = container.querySelector("svg");
     expect(icon).toBeInTheDocument();
-    expect(icon).toHaveClass("animate-spin");
+    expect(container.querySelectorAll("circle")).toHaveLength(2);
+    expect(container.querySelector("circle.animate-pulse")).toBeInTheDocument();
   });
 
   it("renders the label text when given", () => {
@@ -49,7 +50,7 @@ describe("LoadingOverlay", () => {
     const wrapper = container.firstElementChild;
     expect(wrapper).toHaveClass("flex", "items-center", "justify-center");
     expect(wrapper?.querySelector("svg")).toBeInTheDocument();
-    expect(wrapper?.querySelector("svg")).toHaveClass("animate-spin");
+    expect(wrapper?.querySelector("circle.animate-pulse")).toBeInTheDocument();
   });
 
   it("forwards label to the inner spinner", () => {

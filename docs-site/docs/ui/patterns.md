@@ -43,8 +43,24 @@ fallback.
 
 ### `LoadingSpinner` / `LoadingOverlay`
 
-`LoadingSpinner` is an inline spinner (`size` + optional `label`);
-`LoadingOverlay` centers a larger one over its container.
+The BMS bullseye: a muted ring with a pulsing brand-colored core (`fill-primary`,
+so it re-colors with whatever `--primary` a consuming app sets). `LoadingSpinner`
+is the inline form (`size: "sm" | "default" | "lg"` + optional `label`);
+`LoadingOverlay` centers a larger one over its container — use it as a route or
+panel loading state.
+
+```tsx
+<LoadingSpinner label="Saving…" />
+<LoadingOverlay label="Loading customers…" />
+```
+
+This is the one loading indicator across `@bmsuisse/ui` and `@bmsuisse/datagrid`
+— `DataGrid`'s and `TreeDataGrid`'s built-in loading states render the same
+bullseye mark (datagrid keeps its own copy of the markup rather than depending
+on `@bmsuisse/ui`, matching how it already vendors its own shadcn primitives).
+Don't reach for a different icon (e.g. a raw `lucide-react` `Loader2`) for a
+new loading state — use `LoadingSpinner`/`LoadingOverlay` so every loading
+state in an app looks the same.
 
 ### `Combobox`
 

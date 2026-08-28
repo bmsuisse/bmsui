@@ -1,11 +1,12 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { AlertCircle, ChevronDown, ChevronRight, Loader2 } from "lucide-react";
+import { AlertCircle, ChevronDown, ChevronRight } from "lucide-react";
 import type { ReactElement, ReactNode } from "react";
 import { Fragment, useEffect, useMemo, useRef } from "react";
 import { alignClassName } from "../column/format";
 import type { ColumnDef } from "../column/types";
 import { getColumnValue } from "../column/types";
 import { Checkbox } from "../components/ui/checkbox";
+import { Spinner } from "../components/ui/spinner";
 import { EditingBar } from "../edit/EditingBar";
 import type { EditingCellContext } from "../edit/editingState";
 import { useEditingState } from "../edit/editingState";
@@ -71,7 +72,7 @@ function TreeCell<TRow>({
           className="flex h-4 w-4 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-50"
         >
           {isLoading ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+            <Spinner className="h-3.5 w-3.5" />
           ) : flatRow.isExpanded ? (
             <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
           ) : (
