@@ -332,6 +332,72 @@ function TreeEditingDemo(): ReactElement {
   );
 }
 
+// --- <TreeDataGrid> groupBy + columnVisibility demo: an eager (no lazy
+// loading — that's already exercised by <OrgTreeDemo> above) department
+// tree, its roots grouped by `division`, driving the same `<ColumnSelector>`
+// used for the flat `<DataGrid>` above — proving `<ColumnSelector>` is
+// grid-agnostic (see AGENTS.md's `<ColumnSelector>` section) and that
+// `<TreeDataGrid>` reads `columnVisibility` the same read-only way
+// `<DataGrid>` does.
+interface DeptRow {
+  id: string;
+  name: string;
+  headcount: number;
+  division?: string;
+  children?: DeptRow[];
+}
+
+const DEPT_TREE: DeptRow[] = [
+  {
+    id: "eng",
+    name: "Engineering",
+    headcount: 30,
+    division: "Product",
+    children: [
+      { id: "eng-fe", name: "Frontend", headcount: 12 },
+      { id: "eng-be", name: "Backend", headcount: 18 },
+    ],
+  },
+  {
+    id: "sales",
+    name: "Sales",
+    headcount: 8,
+    division: "Revenue",
+    children: [{ id: "sales-emea", name: "EMEA", headcount: 8 }],
+  },
+  { id: "marketing", name: "Marketing", headcount: 6, division: "Revenue" },
+];
+
+const deptColumns: ColumnDef<DeptRow>[] = [
+  { id: "name", type: "string", header: "Name", accessorKey: "name", width: 220 },
+  { id: "headcount", type: "number", header: "Headcount", accessorKey: "headcount" },
+];
+
+function TreeGroupingDemo(): ReactElement {
+  const [visibility, setVisibility] = useState<ColumnVisibility>({});
+  return (
+    <div>
+      <p className="mb-2 text-sm text-muted-foreground">
+        Departments grouped by division; toggle Headcount via the column selector below — the
+        same <code>&lt;ColumnSelector&gt;</code> component the flat grid above uses, driving{" "}
+        <code>&lt;TreeDataGrid&gt;</code>'s own <code>columnVisibility</code> prop.
+      </p>
+      <ColumnSelector columns={deptColumns} visibility={visibility} onVisibilityChange={setVisibility} />
+      <div className="mt-2 h-[280px]">
+        <TreeDataGrid
+          columns={deptColumns}
+          columnVisibility={visibility}
+          data={DEPT_TREE}
+          getRowId={(row) => row.id}
+          getChildren={(row) => row.children}
+          groupBy={(row) => row.division ?? "Other"}
+          initialExpandedLevel={1}
+        />
+      </div>
+    </div>
+  );
+}
+
 // --- <NumberHistogramFilter> + facetedNumberValues demo: proves the fix for
 // the exact bug reported against a consuming app's customer list page (the
 // histogram's own domain was derived from data already narrowed by that same filter, so
@@ -902,6 +968,11 @@ export function App(): ReactElement {
         &lt;TreeDataGrid&gt; editable demo — inline editing on a tree
       </h2>
       <TreeEditingDemo />
+
+      <h2 className="mb-2 mt-8 text-lg font-semibold">
+        &lt;TreeDataGrid&gt; groupBy + columnVisibility demo
+      </h2>
+      <TreeGroupingDemo />
     </div>
   );
 }

@@ -90,6 +90,11 @@ export type { ClientProcessingResult } from "./grid/processClientData";
 // --- hooks -----------------------------------------------------------------
 export type { DebouncedCallback } from "./hooks/useDebouncedCallback";
 export { useDebouncedCallback } from "./hooks/useDebouncedCallback";
+export type { GroupExpansionController } from "./hooks/useGroupExpansion";
+export { useGroupExpansion } from "./hooks/useGroupExpansion";
+export type { StickyGroupHeaderTop } from "./hooks/useStickyGroupHeaderTop";
+export { useStickyGroupHeaderTop } from "./hooks/useStickyGroupHeaderTop";
+export { useVisibleColumns } from "./hooks/useVisibleColumns";
 
 // --- tree grid ---------------------------------------------------------------
 export type { TreeAccessors, TreeDataGridProps } from "./tree/types";
