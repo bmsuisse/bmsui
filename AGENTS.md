@@ -647,6 +647,15 @@ Notes for extending it:
   render); it never writes it. `onColumnVisibilityChange` exists on
   `DataGridProps` for API symmetry with `<ColumnSelector>`'s props, but
   `<DataGrid>` itself never calls it — the selector is what drives changes.
+- `<ColumnSelector>` itself is grid-agnostic — it only ever operates on
+  `ColumnDef<TRow>[]` + `ColumnVisibility`, the same types `<TreeDataGrid>`
+  uses for its own `columns`/`columnVisibility` props, so one `<ColumnSelector>`
+  instance works unmodified against either grid. `<TreeDataGrid>` reads
+  `columnVisibility` the same read-only way `<DataGrid>` does — see that
+  component's own section below. Note that hiding the column matching
+  `treeColumnId` (or `columns[0]` when that's omitted) hides the indentation/
+  expand-collapse chevron along with it, since those only ever attach to that
+  one column's cell.
 
 ## `<DataGrid>` — one component, two `DataSource` modes
 
@@ -1196,6 +1205,22 @@ generalizes.
   column's `id` matches `treeColumnId` (defaults to `columns[0]`) — every
   other column renders exactly like it would in `<DataGrid>`, via the same
   `column.cell` / `defaultFormat` dispatch.
+- **`columnVisibility`** — same read-only convention as `<DataGrid>`'s own
+  prop of the same name: `<TreeDataGrid>` filters `columns` down to whatever
+  is visible and never writes the value back itself. Pair it with a single
+  `<ColumnSelector>` instance shared (or duplicated) with a nearby `<DataGrid>`
+  — `<ColumnSelector>` is grid-agnostic (see its own section above).
+- **`groupBy`** — same single-level bucketing convention as `<DataGrid>`'s own
+  `groupBy` (`renderGroupHeader`/`defaultGroupsExpanded`/`expandedGroups`/
+  `onExpandedGroupsChange` all mirror it exactly), except it only ever buckets
+  *root*-level rows in `data` — a node's children are never split across
+  groups from their own parent, since grouping an already-hierarchical tree
+  by anything other than "which root it belongs to" has no sensible
+  rendering. Each bucket's roots are flattened depth-first with the same
+  `flattenTree` ungrouped rendering uses, so expand/collapse and lazy loading
+  behave identically either way. Not supported together with virtualization
+  yet — same limitation, same reason, as `<DataGrid>`'s own `groupBy`; see
+  "Known limitations" below.
 - **Virtualization** via `@tanstack/react-virtual`, using the classic
   "padding-row" technique (two spacer `<tr>`s sized from
   `virtualItem.start`/`getTotalSize()`, real rows in between) since you can't
@@ -1406,3 +1431,8 @@ the retry-connect loop in `main.py`'s lifespan never found it reachable, and
   true support needs a flattened index space for the virtualizer, the same
   technique `<TreeDataGrid>` uses for its own flattened tree, which is out
   of scope for now.
+- **`TreeDataGridProps.groupBy` doesn't combine with its own virtualization
+  either, for the same reason.** Setting both silently forces virtualization
+  off (each group's tree still flattens and renders correctly, just without
+  windowing) rather than interleaving synthetic group-header rows into the
+  virtualizer's flattened index space, which is out of scope for now.

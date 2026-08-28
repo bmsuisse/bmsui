@@ -1,4 +1,6 @@
+import type { ReactNode } from "react";
 import type { ColumnDef } from "../column/types";
+import type { ColumnVisibility } from "../column-selector/types";
 import type { EditingOptions } from "../edit/types";
 import type { MenuItem } from "../menu/types";
 
@@ -35,6 +37,16 @@ export interface TreeDataGridProps<TRow> extends TreeAccessors<TRow> {
    * chevron prepended. Defaults to the first column in `columns`.
    */
   treeColumnId?: string;
+  /**
+   * Controlled column visibility, e.g. driven by a `<ColumnSelector>` next
+   * to the grid — same convention as `<DataGrid>`'s own `columnVisibility`.
+   * `<TreeDataGrid>` never owns this state itself; omit to render every
+   * column in `columns`. Note that hiding `treeColumnId` itself (or the
+   * first column, when `treeColumnId` is omitted) hides the indentation/
+   * expand-collapse chevron along with it, since those are only ever
+   * attached to that one column's cell.
+   */
+  columnVisibility?: ColumnVisibility;
   /**
    * Fetches a node's children on demand. Omit this entirely for a fully
    * eager tree (all children already present via `getChildren`) — a node
@@ -163,6 +175,35 @@ export interface TreeDataGridProps<TRow> extends TreeAccessors<TRow> {
   getRowSelectionState?: (row: TRow) => { checked: boolean; indeterminate?: boolean } | undefined;
   /** Disables just the checkbox for a specific row. Defaults to `() => false`. */
   isRowSelectionDisabled?: (row: TRow) => boolean;
+  /**
+   * Buckets the *root-level* rows in `data` into groups, rendering one
+   * full-width `colSpan`'d group-header row before each bucket's own
+   * (recursively flattened, depth-first) rows — same convention as
+   * `<DataGrid>`'s own `groupBy`. Single level only, and only ever applied
+   * to roots: a node's children are never split across groups from their
+   * parent, since grouping an already-hierarchical tree by anything other
+   * than "which root it belongs to" wouldn't have a sensible rendering.
+   * Groups appear in first-seen bucket order — roots are never re-sorted to
+   * cluster a group together. Omit entirely to disable — no grouping, no
+   * header rows, unchanged default rendering.
+   *
+   * Not supported together with virtualization — when both are set,
+   * virtualization is silently disabled and the tree renders as a plain,
+   * fully-rendered (but still grouped) `<table>` instead, same limitation
+   * `<DataGrid>` has.
+   */
+  groupBy?: (row: TRow) => string;
+  /** Customizes a group-header row's content. Defaults to `` `${key} (${rootCount})` `` — `rootCount` counts only that group's root rows, not their descendants. */
+  renderGroupHeader?: (key: string, roots: TRow[], expanded: boolean) => ReactNode;
+  /** Whether a newly-seen group starts expanded. Defaults to true. */
+  defaultGroupsExpanded?: boolean;
+  /**
+   * Controlled per-group expand/collapse state, keyed by the `groupBy` key.
+   * Both must be supplied together to control it — omit both for
+   * `<TreeDataGrid>` to own this state internally.
+   */
+  expandedGroups?: Record<string, boolean>;
+  onExpandedGroupsChange?: (expanded: Record<string, boolean>) => void;
   /** Alternates body row backgrounds for readability on wide/dense tables. Defaults to true. */
   zebra?: boolean;
   /**
