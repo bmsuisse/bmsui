@@ -1209,16 +1209,27 @@ generalizes.
   prop of the same name: `<TreeDataGrid>` filters `columns` down to whatever
   is visible and never writes the value back itself. Pair it with a single
   `<ColumnSelector>` instance shared (or duplicated) with a nearby `<DataGrid>`
-  — `<ColumnSelector>` is grid-agnostic (see its own section above).
+  — `<ColumnSelector>` is grid-agnostic (see its own section above). The
+  filtering itself is `useVisibleColumns` (`src/hooks/useVisibleColumns.ts`),
+  shared with `<DataGrid>` rather than two copies of the same one-line filter.
 - **`groupBy`** — same single-level bucketing convention as `<DataGrid>`'s own
   `groupBy` (`renderGroupHeader`/`defaultGroupsExpanded`/`expandedGroups`/
-  `onExpandedGroupsChange` all mirror it exactly), except it only ever buckets
-  *root*-level rows in `data` — a node's children are never split across
-  groups from their own parent, since grouping an already-hierarchical tree
-  by anything other than "which root it belongs to" has no sensible
-  rendering. Each bucket's roots are flattened depth-first with the same
-  `flattenTree` ungrouped rendering uses, so expand/collapse and lazy loading
-  behave identically either way. Not supported together with virtualization
+  `onExpandedGroupsChange` all mirror it exactly, and the controlled/
+  uncontrolled expand-state logic itself — `useGroupExpansion` — and the
+  sticky-header-height measurement — `useStickyGroupHeaderTop`, both in
+  `src/hooks/` — are the literal same code both grids call, not two copies),
+  except `<TreeDataGrid>`'s own `groupBy` only ever buckets *root*-level rows
+  in `data` — a node's children are never split across groups from their own
+  parent, since grouping an already-hierarchical tree by anything other than
+  "which root it belongs to" has no sensible rendering. Each bucket's roots
+  are flattened depth-first with the same `flattenTree` ungrouped rendering
+  uses, so expand/collapse and lazy loading behave identically either way.
+  **A collapsed group's rows count as not-currently-visible**, same as a
+  collapsed *tree node*'s descendants already do outside of grouping: they're
+  excluded from "select all visible rows", and every row still rendered gets
+  a single running index across all expanded groups (not reset to 0 per
+  bucket) — both `getRowProps`'s own `index` param and the built-in zebra
+  striping read this same value. Not supported together with virtualization
   yet — same limitation, same reason, as `<DataGrid>`'s own `groupBy`; see
   "Known limitations" below.
 - **Virtualization** via `@tanstack/react-virtual`, using the classic

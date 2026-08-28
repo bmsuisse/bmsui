@@ -1,17 +1,19 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { AlertCircle, ChevronDown, ChevronRight, Loader2 } from "lucide-react";
 import type { ReactElement, ReactNode } from "react";
-import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef } from "react";
 import { alignClassName } from "../column/format";
 import type { ColumnDef } from "../column/types";
 import { getColumnValue } from "../column/types";
-import { isColumnVisible } from "../column-selector/visibility";
 import { Checkbox } from "../components/ui/checkbox";
 import { EditingBar } from "../edit/EditingBar";
 import type { EditingCellContext } from "../edit/editingState";
 import { useEditingState } from "../edit/editingState";
 import { renderEditableCell } from "../edit/renderEditableCell";
 import { groupRows } from "../grid/groupRows";
+import { useGroupExpansion } from "../hooks/useGroupExpansion";
+import { useStickyGroupHeaderTop } from "../hooks/useStickyGroupHeaderTop";
+import { useVisibleColumns } from "../hooks/useVisibleColumns";
 import { SELECTION_COLUMN_WIDTH } from "../lib/structuralColumns";
 import { cn, stopRowClick } from "../lib/utils";
 import { ActionsMenu } from "../menu/ActionsMenu";
@@ -191,10 +193,15 @@ export function TreeDataGrid<TRow>({
   // convention as `<DataGrid>`'s own `visibleColumns` — every other
   // representation below (the header/body column loops, `bodyTdClassByColumn`,
   // `totalColumnCount`) derives from this, not from `columns` directly.
-  const visibleColumns = useMemo(
-    () =>
-      columnVisibility ? columns.filter((column) => isColumnVisible(columnVisibility, column.id)) : columns,
-    [columns, columnVisibility],
+  const visibleColumns = useVisibleColumns(columns, columnVisibility);
+
+  // Needed before `groupedRender` below — which buckets count as "currently
+  // visible" depends on which groups are expanded. Shared with `<DataGrid>`'s
+  // own `groupBy` support via `useGroupExpansion`.
+  const { isGroupExpanded, toggleGroupExpanded } = useGroupExpansion(
+    defaultGroupsExpanded,
+    controlledExpandedGroups,
+    onExpandedGroupsChange,
   );
 
   // Grouping only ever buckets *root*-level rows (see `groupBy`'s own doc) —
@@ -218,10 +225,30 @@ export function TreeDataGrid<TRow>({
         : undefined,
     [groupBy, data, accessors, expanded, childrenMap],
   );
-  // Flattened across every group when grouped — selection/"select all
-  // visible" operate over the whole currently-visible set regardless of
-  // which bucket a row falls in, same as `<DataGrid>`'s own grouped mode.
-  const allFlatRows = groupedBuckets ? groupedBuckets.flatMap((bucket) => bucket.flatRows) : flatRows;
+  // Rows belonging to a *collapsed* group are never rendered, so — unlike
+  // `<DataGrid>`'s page-scoped "select all on this page" (which has no
+  // per-row hide/show mechanic besides pagination) — they must not count as
+  // "currently visible" either: `<TreeDataGrid>`'s own selection already
+  // excludes a collapsed *tree node*'s descendants from `flatRows`, so a
+  // collapsed *group* follows the same rule for consistency. This also gives
+  // each rendered row a global (not per-bucket-reset) index via
+  // `startIndexByBucket` below, matching what `getRowProps`'s own `index`
+  // param documents ("position among the currently visible rows").
+  const groupedRender = useMemo(() => {
+    if (!groupedBuckets) return undefined;
+    const startIndexByBucket = new Map<string, number>();
+    const rows: FlatTreeRow<TRow>[] = [];
+    for (const bucket of groupedBuckets) {
+      if (!isGroupExpanded(bucket.key)) continue;
+      startIndexByBucket.set(bucket.key, rows.length);
+      rows.push(...bucket.flatRows);
+    }
+    return { startIndexByBucket, rows };
+  }, [groupedBuckets, isGroupExpanded]);
+  // Flattened across every *expanded* group when grouped — selection/"select
+  // all visible" operate over the whole currently-rendered set regardless of
+  // which bucket a row falls in.
+  const allFlatRows = groupedRender ? groupedRender.rows : flatRows;
 
   const treeColId = treeColumnId ?? columns[0]?.id;
   const showRowActionsColumn = Boolean(rowActions?.length);
@@ -229,40 +256,10 @@ export function TreeDataGrid<TRow>({
   const totalColumnCount =
     visibleColumns.length + (showRowActionsColumn ? 1 : 0) + (showSelectionColumn ? 1 : 0);
 
-  // Same controlled/uncontrolled pattern as `expanded`/`selectedIds` above.
-  // A key absent from this record (a group never toggled since it was first
-  // seen) falls back to `defaultGroupsExpanded`, not `false` — otherwise
-  // every group would render collapsed on first paint.
-  const [internalExpandedGroups, setInternalExpandedGroups] = useState<Record<string, boolean>>({});
-  const expandedGroupsState = controlledExpandedGroups ?? internalExpandedGroups;
-  function updateExpandedGroups(next: Record<string, boolean>): void {
-    setInternalExpandedGroups(next);
-    onExpandedGroupsChange?.(next);
-  }
-  function isGroupExpanded(key: string): boolean {
-    return expandedGroupsState[key] ?? defaultGroupsExpanded;
-  }
-  function toggleGroupExpanded(key: string): void {
-    updateExpandedGroups({ ...expandedGroupsState, [key]: !isGroupExpanded(key) });
-  }
-
   // A group-header row sticks right below the real `<thead>` while its
-  // members scroll past — `top` has to be the header's actual rendered
-  // height, not a guessed constant. `ResizeObserver` rather than a one-off
-  // measurement since header height can change after mount. Same pattern as
-  // `<DataGrid>`'s own `groupHeaderTop`.
-  const theadRef = useRef<HTMLTableSectionElement>(null);
-  const [groupHeaderTop, setGroupHeaderTop] = useState(0);
-  useLayoutEffect(() => {
-    if (!groupBy) return;
-    const theadEl = theadRef.current;
-    if (!theadEl) return;
-    const updateHeight = (): void => setGroupHeaderTop(theadEl.getBoundingClientRect().height);
-    updateHeight();
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(theadEl);
-    return () => observer.disconnect();
-  }, [groupBy]);
+  // members scroll past. Shared with `<DataGrid>`'s own `groupBy` support
+  // via `useStickyGroupHeaderTop`.
+  const { theadRef, groupHeaderTop } = useStickyGroupHeaderTop(Boolean(groupBy));
 
   // Computed once (not per visible row) over the whole *loaded* tree, not
   // just `flatRows` — see `computeSelectionStates`'s own doc for why a
@@ -514,7 +511,11 @@ export function TreeDataGrid<TRow>({
                         </button>
                       </td>
                     </tr>
-                    {groupExpanded && bucket.flatRows.map((flatRow, index) => renderRow(flatRow, index))}
+                    {groupExpanded &&
+                      (() => {
+                        const startIndex = groupedRender?.startIndexByBucket.get(bucket.key) ?? 0;
+                        return bucket.flatRows.map((flatRow, i) => renderRow(flatRow, startIndex + i));
+                      })()}
                   </Fragment>
                 );
               })

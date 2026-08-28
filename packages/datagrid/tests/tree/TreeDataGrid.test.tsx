@@ -578,6 +578,42 @@ describe("TreeDataGrid (groupBy)", () => {
     expect(screen.getByText("Beta")).toBeInTheDocument();
   });
 
+  it("gives each rendered row a running data-index across groups, not reset per bucket", () => {
+    render(
+      <TreeDataGrid
+        columns={columns}
+        data={groupedTree}
+        getRowId={(row) => row.id}
+        getChildren={(row) => row.children}
+        groupBy={groupByTier}
+      />,
+    );
+    // Senior bucket: Alpha (0), Charlie (1); Junior bucket: Beta (2) --
+    // continuing, not resetting to 0, since Beta is the 3rd currently-visible row overall.
+    const rows = screen.getAllByTestId(/^tree-row-/);
+    expect(rows.map((row) => row.getAttribute("data-index"))).toEqual(["0", "1", "2"]);
+  });
+
+  it("excludes a collapsed group's rows from 'select all visible rows'", async () => {
+    const onSelectedIdsChange = vi.fn();
+    render(
+      <TreeDataGrid
+        columns={columns}
+        data={groupedTree}
+        getRowId={(row) => row.id}
+        getChildren={(row) => row.children}
+        groupBy={groupByTier}
+        expandedGroups={{ Senior: false, Junior: true }}
+        onExpandedGroupsChange={() => {}}
+        selectedIds={new Set()}
+        onSelectedIdsChange={onSelectedIdsChange}
+      />,
+    );
+    // Senior (Alpha, Charlie) is collapsed -- only Beta (Junior) is visible.
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select all visible rows" }));
+    expect(onSelectedIdsChange).toHaveBeenCalledWith(new Set(["b"]));
+  });
+
   it("supports controlled expandedGroups/onExpandedGroupsChange", async () => {
     const onExpandedGroupsChange = vi.fn();
     render(

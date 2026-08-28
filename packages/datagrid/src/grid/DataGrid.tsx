@@ -4,11 +4,10 @@ import { columnResizingFeature, columnSizingFeature, flexRender, tableFeatures, 
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ChevronRight, Loader2 } from "lucide-react";
 import type { CSSProperties, ReactElement, ReactNode } from "react";
-import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { alignClassName } from "../column/format";
 import type { ColumnDef } from "../column/types";
 import { getColumnValue, isFilterable, isSortable } from "../column/types";
-import { isColumnVisible } from "../column-selector/visibility";
 import { Button } from "../components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
 import { EditingBar } from "../edit/EditingBar";
@@ -17,6 +16,9 @@ import { useEditingState } from "../edit/editingState";
 import { renderEditableCell } from "../edit/renderEditableCell";
 import { renderDefaultFilterWidget } from "../filter/registry";
 import type { FilterDescriptor } from "../filter/types";
+import { useGroupExpansion } from "../hooks/useGroupExpansion";
+import { useStickyGroupHeaderTop } from "../hooks/useStickyGroupHeaderTop";
+import { useVisibleColumns } from "../hooks/useVisibleColumns";
 import { cn, stopRowClick } from "../lib/utils";
 import { SELECTION_COLUMN_WIDTH } from "../lib/structuralColumns";
 import { ActionsMenu } from "../menu/ActionsMenu";
@@ -225,21 +227,13 @@ export function DataGrid<TRow extends RowData>({
   }
 
   // Same controlled/uncontrolled pattern as `selectedIds`/`columnSizing`
-  // above. A key absent from this record (a group never toggled since it
-  // was first seen) falls back to `defaultGroupsExpanded`, not `false` —
-  // otherwise every group would render collapsed on first paint.
-  const [internalExpandedGroups, setInternalExpandedGroups] = useState<Record<string, boolean>>({});
-  const expandedGroupsState = controlledExpandedGroups ?? internalExpandedGroups;
-  function updateExpandedGroups(next: Record<string, boolean>): void {
-    setInternalExpandedGroups(next);
-    onExpandedGroupsChange?.(next);
-  }
-  function isGroupExpanded(key: string): boolean {
-    return expandedGroupsState[key] ?? defaultGroupsExpanded;
-  }
-  function toggleGroupExpanded(key: string): void {
-    updateExpandedGroups({ ...expandedGroupsState, [key]: !isGroupExpanded(key) });
-  }
+  // above. Shared with `<TreeDataGrid>`'s own `groupBy` support via
+  // `useGroupExpansion`.
+  const { isGroupExpanded, toggleGroupExpanded } = useGroupExpansion(
+    defaultGroupsExpanded,
+    controlledExpandedGroups,
+    onExpandedGroupsChange,
+  );
 
   const { pendingEdits, editErrors, ctxRef: editingCtxRef, handleSaveEdits, handleDiscardEdits } = useEditingState(
     editing,
@@ -250,12 +244,9 @@ export function DataGrid<TRow extends RowData>({
   // representation below (the TanStack column defs, the header lookup map,
   // the "No results" colSpan) is derived from this, not from `columns`
   // directly — otherwise two derived views of the same visibility could
-  // disagree with each other.
-  const visibleColumns = useMemo(
-    () =>
-      columnVisibility ? columns.filter((column) => isColumnVisible(columnVisibility, column.id)) : columns,
-    [columns, columnVisibility],
-  );
+  // disagree with each other. Shared with `<TreeDataGrid>`'s own
+  // `columnVisibility` support via `useVisibleColumns`.
+  const visibleColumns = useVisibleColumns(columns, columnVisibility);
 
   // Depend on dataSource.mode/.data (and .rowCount, only in server mode)
   // rather than on `dataSource` itself — a caller that inlines
@@ -548,21 +539,9 @@ export function DataGrid<TRow extends RowData>({
   // A group-header row sticks right below the real `<thead>` while its
   // members scroll past -- `top` has to be the header's actual rendered
   // height (it varies with the optional filter/header-group rows and with
-  // column-resize-driven wrapping), not a guessed constant. `ResizeObserver`
-  // rather than a one-off measurement because header height can change after
-  // mount (e.g. a column's header content wrapping to a second line).
-  const theadRef = useRef<HTMLTableSectionElement>(null);
-  const [groupHeaderTop, setGroupHeaderTop] = useState(0);
-  useLayoutEffect(() => {
-    if (!groupBy) return;
-    const theadEl = theadRef.current;
-    if (!theadEl) return;
-    const updateHeight = (): void => setGroupHeaderTop(theadEl.getBoundingClientRect().height);
-    updateHeight();
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(theadEl);
-    return () => observer.disconnect();
-  }, [groupBy]);
+  // column-resize-driven wrapping), not a guessed constant. Shared with
+  // `<TreeDataGrid>`'s own `groupBy` support via `useStickyGroupHeaderTop`.
+  const { theadRef, groupHeaderTop } = useStickyGroupHeaderTop(Boolean(groupBy));
   const scrollRef = useRef<HTMLDivElement>(null);
   const virtualizer = useVirtualizer({
     count: tableRows.length,
