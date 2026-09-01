@@ -1259,6 +1259,49 @@ describe("DataGrid (groupBy)", () => {
     expect(groupHeaderCell).not.toHaveClass("bg-muted");
     expect(groupHeaderCell).toHaveClass("bg-background", "sticky");
   });
+
+  // Performance regression guard: `groupedBuckets`/`flatItems` are memoized
+  // on `tableRows`/`groupBy` (see DataGrid.tsx's own comments on both) --
+  // neither should depend on the virtualizer's own scroll-position state, so
+  // a large grouped+virtualized grid's bucketing must NOT redo its O(rows)
+  // work on every scroll tick. Counting calls to the `groupBy` callback
+  // itself (rather than reasoning about memoization from source alone) is
+  // the concrete, empirical check: it fires exactly once per real
+  // `groupRows` recomputation, so its call count going flat across a scroll
+  // is direct evidence the memo held, not just that the DOM looked right.
+  it("does not recompute groupBy bucketing on every scroll tick of a large virtualized grid", async () => {
+    await withMockedOffsetHeight(300, () => {
+      const manyRows: Row[] = Array.from({ length: 2000 }, (_, i) => ({
+        id: `r${i}`,
+        name: `Row ${i}`,
+        age: i % 2 === 0 ? 40 : 20,
+      }));
+      const groupByCalls = vi.fn(groupByTier);
+      render(
+        <DataGrid
+          testId="perf-grid"
+          columns={columns}
+          dataSource={{ mode: "client", data: manyRows }}
+          getRowId={(row) => row.id}
+          groupBy={groupByCalls}
+          virtualize={{ threshold: 0 }}
+          initialState={{ pageSize: 2000 }}
+        />,
+      );
+      const callsAfterMount = groupByCalls.mock.calls.length;
+      expect(callsAfterMount).toBeGreaterThan(0);
+
+      // Simulate several scroll ticks -- @tanstack/react-virtual observes the
+      // scroll container's native `scroll` event and reads `scrollTop` off it.
+      const scroller = screen.getByTestId("perf-grid");
+      for (const top of [200, 800, 1600, 400]) {
+        fireEvent.scroll(scroller, { target: { scrollTop: top } });
+      }
+      // A pure scroll changes which virtual items are mounted -- it must not
+      // re-run the O(rows) bucketing work again.
+      expect(groupByCalls.mock.calls.length).toBe(callsAfterMount);
+    });
+  });
 });
 
 describe("DataGrid (getRowProps)", () => {
