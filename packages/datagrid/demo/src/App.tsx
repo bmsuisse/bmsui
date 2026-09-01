@@ -746,6 +746,54 @@ function GroupingDemo(): ReactElement {
   );
 }
 
+// --- groupBy + virtualize demo: enough rows per department to push the
+// total row count past `virtualize`'s default threshold (100), so this
+// actually exercises the two composed together -- not just grouping alone
+// (`GroupingDemo` above, well under the threshold) or plain virtualizing
+// alone (`VirtualizedScrollDemo` above, no `groupBy`). Deterministic
+// generated names (no Math.random/Date.now), same reason `STATIC_ORDERS`
+// below is: screenshots need reproducible content.
+interface LargeTeamMember {
+  id: string;
+  name: string;
+  department: string;
+}
+
+const MEMBERS_PER_DEPARTMENT = 30;
+const LARGE_TEAM: LargeTeamMember[] = DEPARTMENTS.flatMap((department) =>
+  Array.from({ length: MEMBERS_PER_DEPARTMENT }, (_, i) => ({
+    id: `${department}-${i}`,
+    name: `${department} member ${i + 1}`,
+    department,
+  })),
+);
+
+const largeTeamColumns: ColumnDef<LargeTeamMember>[] = [
+  { id: "name", type: "string", header: "Name", accessorKey: "name" },
+];
+
+function GroupedVirtualizedDemo(): ReactElement {
+  return (
+    <div>
+      <p className="mb-2 text-sm text-muted-foreground">
+        {LARGE_TEAM.length.toLocaleString()} rows across {DEPARTMENTS.length} departments, grouped
+        AND virtualized together — only the rows (and group headers) near the visible viewport are
+        ever mounted.
+      </p>
+      <DataGrid
+        testId="grouped-virtualized-grid"
+        columns={largeTeamColumns}
+        dataSource={{ mode: "client", data: LARGE_TEAM }}
+        getRowId={(row) => row.id}
+        groupBy={(row) => row.department}
+        showPagination={false}
+        initialState={{ pageSize: LARGE_TEAM.length }}
+        virtualize={{ maxBodyHeight: 480 }}
+      />
+    </div>
+  );
+}
+
 // --- inline editing demo: a small, deterministic task list (no
 // Math.random/Date.now — see STATIC_ORDERS's own comment on why screenshots
 // need reproducible data) with one column of each editable `type`, a
@@ -970,6 +1018,9 @@ export function App(): ReactElement {
 
       <h2 className="mb-2 mt-8 text-lg font-semibold">Virtualized scrolling demo</h2>
       <VirtualizedScrollDemo />
+
+      <h2 className="mb-2 mt-8 text-lg font-semibold">groupBy + virtualize demo — grouped AND windowed together</h2>
+      <GroupedVirtualizedDemo />
 
       <h2 className="mb-2 mt-8 text-lg font-semibold">
         &lt;TreeDataGrid&gt; demo — lazy-loading org chart
