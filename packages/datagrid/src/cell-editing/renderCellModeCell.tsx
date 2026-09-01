@@ -15,9 +15,10 @@ import type { CellEditingCellContext } from "./useCellEditingState";
  * typed — those buffer locally via `onChangeDraft` and commit separately, on
  * blur or Enter/Tab (see `renderCellModeCell`'s own logic below).
  */
-type ColumnTypeLiteral = "string" | "number" | "currency" | "date" | "datetime" | "boolean" | "enum";
+export type ColumnTypeLiteral = "string" | "number" | "currency" | "date" | "datetime" | "boolean" | "enum";
 
-function isAtomicEditorType(type: ColumnTypeLiteral): boolean {
+/** Shared with `renderAlwaysEditCell.tsx` — same commit-immediately-vs-buffer split applies whether a cell's editor opened via a click or is always open. */
+export function isAtomicEditorType(type: ColumnTypeLiteral): boolean {
   return type === "enum" || type === "boolean" || type === "date" || type === "datetime";
 }
 

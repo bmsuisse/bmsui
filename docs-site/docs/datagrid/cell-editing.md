@@ -64,6 +64,7 @@ interface CellChange<TRow> {
 interface CellEditingOptions<TRow> {
   onCellsChange: (changes: CellChange<TRow>[]) => void | Promise<void>;
   disabled?: boolean;
+  alwaysEdit?: boolean; // see `alwaysEdit` below
 }
 ```
 
@@ -86,21 +87,30 @@ gesture's `onCellsChange` is still in flight.
 
 ## Selecting cells
 
-- **Click** a cell to select it as a single-cell range.
-- **Drag**, or **shift+click**, extends the selection to a rectangle between
-  the anchor (where the drag/first click started) and the new cell.
-- **Arrow keys** move the selection by one row/column; **shift+arrow**
-  extends it instead of moving it, keeping the same anchor.
+- **Click** an `editable` cell to open its editor directly — see
+  [Editing a cell](#editing-a-cell) below. Clicking a non-editable cell (or
+  **shift+click**ing any cell) just selects it, as a single-cell range,
+  without opening anything.
+- **Drag** extends the selection to a rectangle between the anchor (where the
+  drag started) and wherever it ends — a real drag never opens an editor,
+  even one that ends back on the cell it started from.
+- **Shift+click**, or **shift+arrow**, also extends the selection to a
+  rectangle between the existing anchor and the new cell — the way to build
+  a multi-cell selection (for copy/paste/fill) from the keyboard, or to
+  select a single cell by mouse without editing it.
+- **Arrow keys** (unshifted) move the selection by one row/column instead of
+  extending it.
 - **Tab** / **shift+Tab** moves right/left; **Enter** moves down — same as
   the equivalent key would in Excel once a cell is no longer being edited.
 
 ## Editing a cell
 
-- **Double-click**, or **F2**, opens the selected cell's editor starting from
-  its current value.
-- **Typing any printable character directly** also opens the editor, but
-  *replaces* the cell's value with what was typed, rather than appending to
-  it — Excel's own "just start typing" gesture.
+- **Click** an editable cell (or **double-click**, or press **F2** on an
+  already-selected one) to open its editor starting from its current value.
+- **Typing any printable character directly** on a selected (not yet editing)
+  cell also opens the editor, but *replaces* the cell's value with what was
+  typed, rather than appending to it — Excel's own "just start typing"
+  gesture.
 - The same per-`type` default editors as `editing` mode (text input, number
   input, checkbox, enum select, date/datetime input) apply here, including
   the same `renderEditCell`/`validateEdit` overrides described in
@@ -113,6 +123,42 @@ gesture's `onCellsChange` is still in flight.
   committing.
 - A failed `validateEdit` blocks an Enter/Tab commit (the cell stays open,
   showing the error) and blocks a blur-commit by reverting instead.
+- Clicking again *inside* the cell you're already editing (to reposition the
+  text cursor, say) is left alone — it doesn't reopen or reset the editor.
+  Clicking a *different* cell commits/closes the current one first (same
+  blur behavior as clicking away normally), then opens the new one.
+
+## `alwaysEdit` — every editable cell, always open
+
+```tsx
+<DataGrid
+  // ...
+  cellEditing={{
+    alwaysEdit: true,
+    onCellsChange: (changes) => {
+      /* ... */
+    },
+  }}
+/>
+```
+
+Renders every editable cell's editor immediately and permanently — no click,
+double-click, F2, or typed character needed to open one first. Each cell
+manages its own independent draft, so typing into one doesn't touch any
+other; a buffered (string/number/currency) editor still only commits on
+blur/Enter/Tab, same as always — `alwaysEdit` only changes *when* the editor
+appears, not how a buffered edit commits. A non-editable column still renders
+as plain static text.
+
+Selection, copy, paste, and the fill-handle all keep working exactly as
+described above — they operate on the selected range, a separate concept
+from which cells have their editors open (all of them, under this flag).
+Since every editable cell already has its own editor, the single-cell
+"click to edit"/"one cell editing at a time" machinery — and the custom
+arrow-key/Tab cell navigation that goes with it — is bypassed entirely:
+arrow keys, Tab, and Home/End behave exactly like they would in any other
+web form, moving the text cursor within an `<input>` or, via the browser's
+native tab order, to the next one.
 
 ## Copy and paste
 
@@ -136,8 +182,12 @@ plain-text value (a badge/icon, say).
   first then by label) — a cell that doesn't coerce (e.g. `"abc"` into a
   number column) is silently skipped rather than committed as `NaN`/invalid.
 - A non-editable or missing target cell is silently skipped.
-- While a cell is actively being edited, copy/paste instead targets that
-  cell's own `<input>` (ordinary browser behavior), not a range operation.
+- While a text-field editor (string/number/currency/date/datetime — not an
+  enum/boolean editor's own button/listbox, which has no free text of its
+  own) actually has focus, copy/paste instead targets that `<input>`
+  (ordinary browser behavior), not a range operation. Under `alwaysEdit` this
+  is decided per gesture by whether a text field happens to be focused at
+  that moment, since there's no single "the" editing cell to check there.
 
 ## Fill handle
 
