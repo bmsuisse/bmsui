@@ -646,8 +646,15 @@ describe("DataGrid cellEditing — alwaysEdit", () => {
 
   it("an atomic (enum) editor still commits immediately on selection", async () => {
     const onCellsChange = vi.fn();
-    render(<CellEditingGrid alwaysEdit onCellsChange={onCellsChange} />);
-    await userEvent.click(screen.getByTestId("edit-1-status"));
+    const { container } = render(<CellEditingGrid alwaysEdit onCellsChange={onCellsChange} />);
+    // A built-in enum widget's own open-on-click is deliberately deferred to
+    // this exact mousedown/mouseup(window) pair under `alwaysEdit` (see
+    // `AtomicGestureContext`'s own doc) — same convention the plain-click/
+    // shift-click tests above already use for the identical reason
+    // (`userEvent.click` alone doesn't reliably let the window `mouseup`
+    // listener attach in time under jsdom).
+    fireEvent.mouseDown(editableCellAt(container, "1", "status"));
+    fireEvent.mouseUp(window);
     await userEvent.click(await screen.findByRole("option", { name: "Shipped" }));
 
     expect(onCellsChange).toHaveBeenCalledTimes(1);
