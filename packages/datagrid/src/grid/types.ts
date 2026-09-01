@@ -210,17 +210,27 @@ export interface DataGridProps<TRow> {
    *
    * Composes with `virtualize` — header rows and member rows are flattened
    * into one virtualizable list together, so a large grouped dataset windows
-   * exactly like an ungrouped one. The one gap: a sticky group header stays
-   * pinned below the real `<thead>` only while its own `<tbody>` (or one of
-   * its member rows') is actually mounted in the virtualized window —
-   * scrolling deep into one bucket whose row count itself exceeds
-   * `virtualize`'s overscan will eventually unmount that bucket's header and
-   * let it scroll away rather than staying pinned, since `position: sticky`
-   * needs the element mounted to stick at all. Harmless for the common case
-   * (buckets no bigger than a couple dozen rows); see AGENTS.md's "Known
-   * limitations" for the full writeup and why a floating, always-mounted
-   * header (rather than each bucket owning its own sticky one) was left out
-   * of this pass.
+   * the same way an ungrouped one does. `virtualize.threshold` still gates
+   * on the real row count (`groupBy`'s synthetic header entries never push a
+   * grid over a threshold its actual data didn't cross), and
+   * `virtualize.onEndReached`'s own "won't fire again for the same data"
+   * dedup is keyed off that same real row count too — a pure expand/collapse
+   * click, with no new data loaded, never re-fires it.
+   *
+   * Two gaps this doesn't close, both pre-existing/out of scope for this
+   * pass rather than introduced by composing with `virtualize`: `zebra`'s
+   * odd/even striping is keyed off a row's position in the flat, ungrouped
+   * row list, not its rendered position within its own bucket, so grouped
+   * rows can stripe unevenly (`groupBy` alone already had this, virtualizing
+   * doesn't fix or worsen it); and a sticky group header stays pinned below
+   * the real `<thead>` only while its own `<tbody>` (or one of its member
+   * rows') is actually mounted in the virtualized window — scrolling deep
+   * into one bucket whose row count itself exceeds `virtualize`'s overscan
+   * will eventually unmount that bucket's header and let it scroll away
+   * rather than staying pinned, since `position: sticky` needs the element
+   * mounted to stick at all. Both are harmless for the common case (buckets
+   * no bigger than a couple dozen rows); see AGENTS.md's "Known limitations"
+   * for the full writeup.
    */
   groupBy?: (row: TRow) => string;
   /** Customizes a group-header row's content. Defaults to `` `${key} (${rows.length})` ``. */

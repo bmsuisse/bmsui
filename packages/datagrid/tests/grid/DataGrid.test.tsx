@@ -1060,6 +1060,54 @@ describe("DataGrid (groupBy)", () => {
     });
   });
 
+  it("gates virtualize.threshold on the real row count, not the flattened list's synthetic header entries", async () => {
+    await withMockedOffsetHeight(400, () => {
+      // 90 real rows split into 30 three-row groups -> the flattened render
+      // list (90 rows + 30 headers = 120) crosses the default threshold of
+      // 100, but the real row count (90) doesn't -- must NOT virtualize.
+      const manyRows: Row[] = Array.from({ length: 90 }, (_, i) => ({ id: `r${i}`, name: `Row ${i}`, age: i }));
+      render(
+        <DataGrid
+          columns={columns}
+          dataSource={{ mode: "client", data: manyRows }}
+          getRowId={(row) => row.id}
+          groupBy={(row) => String(Math.floor(row.age / 3))}
+          virtualize={{}}
+          initialState={{ pageSize: 90 }}
+        />,
+      );
+      expect(screen.getAllByTestId(/^row-/)).toHaveLength(90);
+    });
+  });
+
+  it("does not re-fire onEndReached on a pure expand/collapse toggle -- only real data growth resets the dedup guard", async () => {
+    await withMockedOffsetHeight(400, async () => {
+      const onEndReached = vi.fn();
+      const manyRows: Row[] = Array.from({ length: 40 }, (_, i) => ({
+        id: `r${i}`,
+        name: `Row ${i}`,
+        age: i % 2 === 0 ? 40 : 20,
+      }));
+      render(
+        <DataGrid
+          columns={columns}
+          dataSource={{ mode: "client", data: manyRows }}
+          getRowId={(row) => row.id}
+          groupBy={groupByTier}
+          virtualize={{ threshold: 0, overscan: 50, onEndReached }}
+          initialState={{ pageSize: 40 }}
+        />,
+      );
+      expect(onEndReached).toHaveBeenCalledTimes(1);
+
+      await userEvent.click(screen.getByText("Senior (20)"));
+      // Collapsing shrinks the flattened render list (flatItems.length drops
+      // by 20) with zero real data change -- must not count as "reached the
+      // end of newly-loaded data" and re-fire.
+      expect(onEndReached).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it("spans the group-header row across every column, including selection/detail/row-actions", () => {
     const rowActions: MenuItem<Row>[] = [{ id: "edit", label: "Edit", onSelect: () => {} }];
     render(

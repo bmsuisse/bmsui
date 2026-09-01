@@ -555,8 +555,17 @@ export function DataGrid<TRow extends RowData>({
   // `<TreeDataGrid>`'s own `groupBy` support via `useStickyGroupHeaderTop`.
   const { theadRef, groupHeaderTop } = useStickyGroupHeaderTop(Boolean(groupBy));
 
+  // `threshold` is documented (see `DataGridVirtualizeOptions.threshold`) as
+  // a REAL row count -- keyed off `tableRows.length`, not the flattened
+  // render list below, so a grouped grid's synthetic header entries never
+  // push a caller's actual row count over a threshold they didn't cross.
+  // Identical to `flatItems.length` whenever `groupBy` is unset (no headers
+  // to inflate the count), so this is a no-op change for every non-grouped
+  // grid.
+  const shouldVirtualize = Boolean(virtualize) && tableRows.length > (virtualize?.threshold ?? 100);
+
   // The single flattened, index-addressable render list `shouldVirtualize`
-  // below windows over -- a plain `{kind: "row"}` per table row when
+  // above gates windowing over -- a plain `{kind: "row"}` per table row when
   // `groupBy` is unset, or one `{kind: "header"}` entry per bucket
   // (contributing its OWN member rows right after it, only while that
   // bucket is expanded -- a collapsed bucket contributes just its header)
@@ -566,7 +575,14 @@ export function DataGrid<TRow extends RowData>({
   // and `virtualize` composable at all: `useVirtualizer` needs one
   // contiguous, positionally-addressable list to window over, and a
   // header's height needs measuring/positioning exactly like a data row's.
+  // Only actually built while virtualizing -- neither the plain `tableRows`
+  // path nor `renderGroupedBucket`'s own non-virtualized grouped path below
+  // ever reads it, and building it unconditionally would re-walk every
+  // bucket (recomputing the exact same `bucket.items.map((row) =>
+  // row.original)` `renderGroupedBucket` already does) purely to throw the
+  // result away on every render of a grid that never virtualizes at all.
   const flatItems = useMemo<FlatItem<TRow>[]>(() => {
+    if (!shouldVirtualize) return [];
     if (!groupedBuckets) return tableRows.map((row) => ({ kind: "row", row }));
     const items: FlatItem<TRow>[] = [];
     for (const bucket of groupedBuckets) {
@@ -577,10 +593,9 @@ export function DataGrid<TRow extends RowData>({
       }
     }
     return items;
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- `isGroupExpanded` closes over whichever expandedGroups source is active; both are covered by `groupedBuckets`/`tableRows` already changing when expand state does for the controlled case, and by its own identity changing for the uncontrolled case.
-  }, [groupedBuckets, tableRows, isGroupExpanded]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `isGroupExpanded`'s identity is the only one of these deps that actually changes on an expand/collapse toggle (both the controlled-`expandedGroups`-object and uncontrolled-internal-Set forms get a fresh identity from their own setter); `groupedBuckets`/`tableRows` don't change from expand/collapse alone, they're listed because the memo also needs to re-run when the underlying data/grouping itself changes.
+  }, [shouldVirtualize, groupedBuckets, tableRows, isGroupExpanded]);
 
-  const shouldVirtualize = Boolean(virtualize) && flatItems.length > (virtualize?.threshold ?? 100);
   const scrollRef = useRef<HTMLDivElement>(null);
   const virtualizer = useVirtualizer({
     count: flatItems.length,
@@ -594,21 +609,27 @@ export function DataGrid<TRow extends RowData>({
   const paddingBottom =
     virtualItems.length > 0 ? virtualizer.getTotalSize() - virtualItems[virtualItems.length - 1]!.end : 0;
 
-  // Fires `onEndReached` once per distinct `flatItems.length` — scrolling to
-  // the last currently-loaded row (or, if the last bucket is collapsed, its
-  // header) while more rows might exist. Guarded by a ref (not state) since
-  // it's bookkeeping for an effect, not something that should itself trigger
-  // a render.
+  // Fires `onEndReached` once per distinct `tableRows.length` -- the real
+  // loaded-data count, deliberately NOT `flatItems.length`: the latter also
+  // shifts on a pure expand/collapse toggle (no data changed at all), which
+  // would defeat the "won't fire again for the same data" contract
+  // (`DataGridVirtualizeOptions.onEndReached`'s own doc) the instant a
+  // caller collapses a group while already scrolled to the bottom. WHERE
+  // "the end" currently is, though, is still a `flatItems`/`virtualItems`
+  // question (collapsing the last bucket really does move the bottom of the
+  // rendered content) -- only the dedup fingerprint changes here. Guarded by
+  // a ref (not state) since it's bookkeeping for an effect, not something
+  // that should itself trigger a render.
   const lastVisibleIndex = virtualItems.length > 0 ? virtualItems[virtualItems.length - 1]!.index : -1;
   const notifiedForLengthRef = useRef<number>(-1);
   useEffect(() => {
     if (!virtualize?.onEndReached) return;
     if (lastVisibleIndex < 0 || lastVisibleIndex < flatItems.length - 1) return;
     if (virtualize.hasMore === false) return;
-    if (notifiedForLengthRef.current === flatItems.length) return;
-    notifiedForLengthRef.current = flatItems.length;
+    if (notifiedForLengthRef.current === tableRows.length) return;
+    notifiedForLengthRef.current = tableRows.length;
     virtualize.onEndReached();
-  }, [lastVisibleIndex, flatItems.length, virtualize]);
+  }, [lastVisibleIndex, flatItems.length, tableRows.length, virtualize]);
 
   function renderRow(
     row: (typeof tableRows)[number],

@@ -902,17 +902,35 @@ if that matters for a given grid.
 **Composes with `virtualize`.** `<DataGrid>` flattens group-header rows and
 (only while a bucket is expanded) its member rows into one virtualizable
 list — `flatItems` in `DataGrid.tsx` — the same technique `<TreeDataGrid>`
-uses for its own flattened tree, so a large grouped dataset windows exactly
-like an ungrouped one; a collapsed bucket contributes only its own header
-entry, nothing for its hidden members. `renderRow`/the new
+uses for its own flattened tree, so a large grouped dataset windows the same
+way an ungrouped one does; a collapsed bucket contributes only its own
+header entry, nothing for its hidden members. `renderRow`/the new
 `renderGroupHeaderTbody` both take an explicit `dataIndex` (this item's
 position within `flatItems`, NOT a table row's own `row.index`) for
 `@tanstack/react-virtual`'s `measureElement` to key off via `data-index` —
 get this wrong and the virtualizer silently stops recording real measured
 heights for every row past the first mismatch (see `<TreeDataGrid>`'s own
-`data-index` doc for the exact failure mode). See "Known limitations" below
-for the one gap this doesn't close: a sticky header pinned deep inside a
-very large single bucket.
+`data-index` doc for the exact failure mode).
+
+Two things stay keyed off `tableRows.length` (the real, ungrouped row count)
+rather than `flatItems.length` (which also counts synthetic header entries,
+and shifts on a pure expand/collapse with no data change), specifically so
+`groupBy` doesn't change either one's contract: `shouldVirtualize`'s own
+`virtualize.threshold` check — a grouped grid's headers never push it over a
+threshold its actual row count didn't cross — and `virtualize.onEndReached`'s
+dedup guard, which would otherwise re-fire from a bare collapse click while
+already scrolled to the bottom, with no new data having loaded at all.
+`flatItems` itself is also only actually built while `shouldVirtualize` is
+true — neither the plain ungrouped path nor `renderGroupedBucket`'s own
+non-virtualized grouped path ever reads it, so there's nothing to gain by
+flattening (and re-deriving every bucket's row array, work
+`renderGroupedBucket` already does on its own) on every render of a grid
+that isn't windowing at all.
+
+See "Known limitations" below for the two gaps this doesn't close: `zebra`
+striping grouped rows unevenly (pre-existing, not introduced by composing
+with `virtualize`), and a sticky header pinned deep inside a very large
+single bucket.
 
 ### `editable` / `editing` — inline cell editing, accumulate-then-save
 
@@ -1459,6 +1477,20 @@ the retry-connect loop in `main.py`'s lifespan never found it reachable, and
   use) would close this, but is out of scope for this pass; harmless in
   practice for buckets no bigger than a couple dozen rows, which covers every
   known consumer so far.
+- **`groupBy` + `zebra` stripe grouped rows unevenly — pre-existing, not
+  specific to `virtualize`.** `zebra`'s odd/even shading (`renderRow`'s
+  `isOddRow`) keys off a row's index within the flat, ungrouped `tableRows`
+  model, not its rendered position within its own bucket. `groupRows`
+  buckets rows while preserving their original relative order but never
+  renumbers them, so two rows rendered back-to-back in the same bucket can
+  keep non-consecutive original indices (e.g. 3 and 7) and both land on the
+  same side of `% 2`, breaking the alternating pattern within that bucket.
+  Predates `virtualize` support (the original non-virtualized
+  `renderGroupedBucket` path had the identical defect) — composing with
+  `virtualize` just made the grouped path more heavily exercised, not
+  responsible for the striping itself. Fixing it needs a per-bucket-relative
+  index threaded through `renderRow` instead of `row.index`; out of scope
+  for this pass.
 - **`TreeDataGridProps.groupBy` doesn't combine with its own virtualization
   either, for the same reason.** Setting both silently forces virtualization
   off (each group's tree still flattens and renders correctly, just without
