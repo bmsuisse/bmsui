@@ -49,6 +49,7 @@ export { EditFieldError } from "./edit/EditFieldError";
 export { BooleanEditor } from "./edit/BooleanEditor";
 export { DateEditor } from "./edit/DateEditor";
 export { EnumEditor } from "./edit/EnumEditor";
+export { MultilineStringEditor } from "./edit/MultilineStringEditor";
 export { NumberEditor } from "./edit/NumberEditor";
 export { StringEditor } from "./edit/StringEditor";
 export { renderDefaultEditWidget } from "./edit/registry";
@@ -57,6 +58,20 @@ export { useEditingState } from "./edit/editingState";
 export { renderEditableCell } from "./edit/renderEditableCell";
 export type { EditingBarProps } from "./edit/EditingBar";
 export { EditingBar } from "./edit/EditingBar";
+
+// --- cell (spreadsheet-style) editing ---------------------------------------
+export type { CellAddress, CellChange, CellEditingOptions, CellRange } from "./cell-editing/types";
+export type { NormalizedRange } from "./cell-editing/rangeUtils";
+export { buildIndexMap, cellsInRange, extendRangeForFill, isCellInRange, normalizeRange } from "./cell-editing/rangeUtils";
+export type { CellSelectionController, CellSelectionOptions, NavigationDirection } from "./cell-editing/useCellSelection";
+export { useCellSelection } from "./cell-editing/useCellSelection";
+export type { CellEditingCellContext, CellEditingState } from "./cell-editing/useCellEditingState";
+export { useCellEditingState } from "./cell-editing/useCellEditingState";
+export { renderCellModeCell } from "./cell-editing/renderCellModeCell";
+export { SelectionOverlay } from "./cell-editing/SelectionOverlay";
+export { coerceValueForColumn } from "./cell-editing/coerce";
+export { parseTsv, rangeToTsv } from "./cell-editing/clipboard";
+export { computeFillChanges } from "./cell-editing/fillHandle";
 
 // --- column selector -----------------------------------------------------
 export type { ColumnVisibility } from "./column-selector/types";

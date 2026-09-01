@@ -144,9 +144,23 @@ export interface BaseColumn<TRow> {
    * this cell, including the default editors' own `onChange`.
    */
   validateEdit?: (value: unknown, row: TRow) => string | undefined;
+  /**
+   * Overrides the plain-text form of this column's value used when copying a
+   * `cellEditing`-mode selection to the clipboard. Defaults to the same
+   * `defaultFormat` display text every other rendering path already uses —
+   * only needed for a column with a custom `cell` whose displayed content
+   * isn't a faithful plain-text rendering of the underlying value (e.g. a
+   * badge/icon), the same situation `renderFilter`/`renderEditCell` exist to
+   * override for their own concerns.
+   */
+  formatForClipboard?: (value: unknown, row: TRow) => string;
 }
 
-export type StringColumn<TRow> = BaseColumn<TRow> & { type: "string" };
+export type StringColumn<TRow> = BaseColumn<TRow> & {
+  type: "string";
+  /** Opt-in: defaults to false. Selects `MultilineStringEditor` (an auto-growing `<textarea>`) instead of `StringEditor`'s single-line `<Input>` for this column's default edit widget — same variant-flag idiom as `NumberColumn.currency`, not a separate `type`. Has no effect on static (non-editing) display, which stays whatever `column.cell`/`defaultFormat` already renders. */
+  multiline?: boolean;
+};
 
 export type NumberColumn<TRow> = BaseColumn<TRow> & {
   type: "number" | "currency";

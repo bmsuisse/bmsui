@@ -9,11 +9,28 @@ import type {
 import { columnResizingFeature, columnSizingFeature, flexRender, tableFeatures, useTable } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ChevronRight, Loader2 } from "lucide-react";
-import type { CSSProperties, ReactElement, ReactNode } from "react";
+import type {
+  ClipboardEvent as ReactClipboardEvent,
+  CSSProperties,
+  KeyboardEvent as ReactKeyboardEvent,
+  MouseEvent as ReactMouseEvent,
+  ReactElement,
+  ReactNode,
+} from "react";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { parseTsv, rangeToTsv } from "../cell-editing/clipboard";
+import { coerceValueForColumn } from "../cell-editing/coerce";
+import { computeFillChanges } from "../cell-editing/fillHandle";
+import { buildIndexMap, normalizeRange } from "../cell-editing/rangeUtils";
+import { renderCellModeCell } from "../cell-editing/renderCellModeCell";
+import { SelectionOverlay } from "../cell-editing/SelectionOverlay";
+import type { CellAddress, CellChange } from "../cell-editing/types";
+import type { CellEditingCellContext } from "../cell-editing/useCellEditingState";
+import { useCellEditingState } from "../cell-editing/useCellEditingState";
+import { useCellSelection } from "../cell-editing/useCellSelection";
 import { alignClassName } from "../column/format";
 import type { ColumnDef } from "../column/types";
-import { getColumnValue, isFilterable, isSortable } from "../column/types";
+import { getColumnValue, isEditable, isFilterable, isSortable } from "../column/types";
 import { Button } from "../components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
 import { EditingBar } from "../edit/EditingBar";
@@ -65,6 +82,13 @@ const DEFAULT_COLUMN_SIZE = 150;
 // without the surrounding `p-1` cell padding eating into the button itself.
 const DETAIL_COLUMN_WIDTH = 44;
 const ROW_ACTIONS_COLUMN_WIDTH = 44;
+
+// Stable empty-array identity for `useCellSelection`'s `rowIds`/`columnIds`
+// when `cellEditing` isn't set — a fresh `[]` literal every render would
+// still be a *different* array each time, defeating `buildIndexMap`'s own
+// memoization for no reason (selection is inert either way, but the memo
+// should stay cheap regardless).
+const EMPTY_ID_ARRAY: string[] = [];
 
 // Opaque equivalent of the body row's translucent `bg-foreground/5` zebra
 // tint, for the structural expand/selection/row-actions columns' `sticky`
@@ -153,10 +177,18 @@ type FlatItem<TRow extends RowData> =
  * JSX returned below is processed. `<TreeDataGrid>` has no such memoized
  * column-def layer standing between it and every render, so it reads
  * `useEditingState`'s plain `ctx` value directly instead of needing this.
+ *
+ * `cellEditingCtxRef` follows the identical recipe for `cellEditing` mode's
+ * own per-keystroke state (`CellEditingCellContext`). At most one of
+ * `editingCtxRef.current`/`cellEditingCtxRef.current` is ever set (the two
+ * modes are mutually exclusive — see `DataGridProps.cellEditing`'s own doc),
+ * so which renderer a cell uses is decided fresh on every actual render,
+ * with neither ref itself ever appearing in this function's own deps.
  */
 function toTanstackColumns<TRow extends RowData>(
   columns: ColumnDef<TRow>[],
   editingCtxRef: { current: EditingCellContext<TRow> | undefined },
+  cellEditingCtxRef: { current: CellEditingCellContext<TRow> | undefined },
 ): TanstackColumnDef<GridTableFeatures, TRow, unknown>[] {
   return columns.map((column) => ({
     id: column.id,
@@ -164,7 +196,9 @@ function toTanstackColumns<TRow extends RowData>(
     size: column.width,
     accessorFn: (row: TRow) => getColumnValue(column, row),
     cell: (info: CellContext<GridTableFeatures, TRow, unknown>): ReactNode =>
-      renderEditableCell(column, info.row.original, info.getValue(), editingCtxRef.current),
+      cellEditingCtxRef.current
+        ? renderCellModeCell(column, info.row.original, info.getValue(), cellEditingCtxRef.current)
+        : renderEditableCell(column, info.row.original, info.getValue(), editingCtxRef.current),
   }));
 }
 
@@ -206,7 +240,15 @@ export function DataGrid<TRow extends RowData>({
   onExpandedGroupsChange,
   zebra = true,
   editing,
+  cellEditing,
 }: DataGridProps<TRow>): ReactElement {
+  // Not supported together with `groupBy` yet — `cellEditingRowIds` below is
+  // built from the flat `tableRows` list, but rendering only shows expanded-
+  // group rows via `groupedBuckets`'s own bucketed order, so a keyboard-
+  // navigated selection could land on a row hidden inside a collapsed group.
+  // Same "one silently stands down" precedent as `groupBy`+`virtualize` (see
+  // `virtualize`'s own doc) rather than a hard error.
+  const hasCellEditing = Boolean(cellEditing) && !groupBy;
   const { state, filtersByColumn, setColumnFilter, toggleSort, setPage } = useGridState(
     dataSource,
     initialState,
@@ -254,6 +296,13 @@ export function DataGrid<TRow extends RowData>({
 
   const { pendingEdits, editErrors, ctxRef: editingCtxRef, handleSaveEdits, handleDiscardEdits } = useEditingState(
     editing,
+    getRowId,
+  );
+  // Gated on `hasCellEditing` (not `cellEditing` directly) so the groupBy
+  // stand-down above (see that flag's own doc) also disables the per-cell
+  // renderer/editor state, not just selection.
+  const { ctx: cellEditingCtx, ctxRef: cellEditingCtxRef, applyChanges: applyCellChanges } = useCellEditingState(
+    hasCellEditing ? cellEditing : undefined,
     getRowId,
   );
 
@@ -306,7 +355,10 @@ export function DataGrid<TRow extends RowData>({
   // `cell` closure reads `editingCtxRef.current` fresh on every actual
   // render regardless (see `toTanstackColumns`'s doc for why that
   // indirection is what keeps typing in an editor from remounting the grid).
-  const tanstackColumns = useMemo(() => toTanstackColumns(visibleColumns, editingCtxRef), [visibleColumns]);
+  const tanstackColumns = useMemo(
+    () => toTanstackColumns(visibleColumns, editingCtxRef, cellEditingCtxRef),
+    [visibleColumns],
+  );
 
   // A Map lookup instead of visibleColumns.find(...) inside the header
   // render loop below — the latter would make header rendering O(columns²)
@@ -330,6 +382,18 @@ export function DataGrid<TRow extends RowData>({
       updateColumnSizing(next);
     },
   });
+
+  // `table.getRow(id)` THROWS for an id no longer in the row model (verified
+  // against @tanstack/table-core's coreRowsFeature.utils), unlike the
+  // `?.original`-chained call sites below that were written assuming it
+  // degrades to `undefined` — a real risk here specifically, since a
+  // `cellEditing` selection/edit can reference a row id that's since been
+  // removed from `data` (a consumer's own `onCellsChange` handler, or a
+  // refetch). `getRowModel().rowsById` is a plain object lookup, so a
+  // missing id just reads as `undefined`.
+  function findRowById(rowId: string): TRow | undefined {
+    return table.getRowModel().rowsById[rowId]?.original;
+  }
 
   const pageCount = Math.max(1, Math.ceil(rowCount / state.pageSize));
   const loading = loadingProp || (dataSource.mode === "server" ? Boolean(dataSource.loading) : false);
@@ -631,6 +695,302 @@ export function DataGrid<TRow extends RowData>({
     virtualize.onEndReached();
   }, [lastVisibleIndex, flatItems.length, tableRows.length, virtualize]);
 
+  // Full logical row/column id lists (not just currently-mounted virtual
+  // items) for `useCellSelection`'s range math and keyboard navigation — see
+  // that hook's own doc for why id-keying (rather than DOM/virtualized
+  // index) is what makes a selection survive virtualized mount/unmount.
+  // Depends on `hasCellEditing` (not `cellEditing` itself) for the same
+  // reason `serverRowCount`/`dataSource` above do: a caller inlining
+  // `cellEditing={{ onCellsChange: fn }}` as a fresh object every render
+  // must not defeat this memo just because that wrapper's identity changed.
+  const cellEditingRowIds = useMemo(
+    () => (hasCellEditing ? tableRows.map((row) => row.id) : EMPTY_ID_ARRAY),
+    [hasCellEditing, tableRows],
+  );
+  const cellEditingColumnIds = useMemo(
+    () => (hasCellEditing ? visibleColumns.map((column) => column.id) : EMPTY_ID_ARRAY),
+    [hasCellEditing, visibleColumns],
+  );
+  const cellEditingRowIndex = useMemo(() => buildIndexMap(cellEditingRowIds), [cellEditingRowIds]);
+  const cellSelection = useCellSelection({
+    rowIds: cellEditingRowIds,
+    columnIds: cellEditingColumnIds,
+    onNavigateToRow: (rowId) => {
+      if (!shouldVirtualize) return;
+      const index = cellEditingRowIndex.get(rowId);
+      if (index !== undefined) virtualizer.scrollToIndex(index);
+    },
+  });
+
+  // Mousemove/mouseup are attached to `window` (not the scroll container)
+  // while a drag is in progress — the pointer commonly moves outside the
+  // container's own bounds mid-drag (e.g. past its edge), and a container-
+  // scoped listener alone would silently stop tracking the drag at that
+  // point. Coalesced through one `requestAnimationFrame` per frame — never a
+  // raw `updateDrag` call per native `mousemove` event — which is the fix
+  // for the exact perf bug this whole feature exists to replace (see
+  // `useCellSelection.updateDrag`'s own doc: a hand-rolled excel-grid
+  // implementation elsewhere in this org rebuilt its entire column-def array
+  // on every unthrottled mousemove pixel during a drag-fill).
+  const pendingDragCellRef = useRef<{ rowId: string; columnId: string } | null>(null);
+  const dragRafRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!cellSelection.isDragging) return;
+    function handleMouseMove(event: MouseEvent): void {
+      const cellEl = (event.target as HTMLElement | null)?.closest<HTMLElement>("[data-cell-row]");
+      const rowId = cellEl?.dataset.cellRow;
+      const columnId = cellEl?.dataset.cellCol;
+      if (rowId === undefined || columnId === undefined) return;
+      pendingDragCellRef.current = { rowId, columnId };
+      if (dragRafRef.current !== null) return;
+      dragRafRef.current = requestAnimationFrame(() => {
+        dragRafRef.current = null;
+        if (pendingDragCellRef.current) cellSelection.updateDrag(pendingDragCellRef.current);
+      });
+    }
+    function handleMouseUp(): void {
+      cellSelection.endDrag();
+    }
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+      if (dragRafRef.current !== null) cancelAnimationFrame(dragRafRef.current);
+      dragRafRef.current = null;
+    };
+  }, [cellSelection.isDragging, cellSelection.updateDrag, cellSelection.endDrag]);
+
+  // Same rAF-coalesced window-listener recipe as the range-select drag
+  // above, for the fill-handle's own separate drag mode — mutually
+  // exclusive with it (the handle's own `onMouseDown` in `SelectionOverlay`
+  // stops propagation specifically so this doesn't also start a range-select
+  // drag on the cell underneath it).
+  const pendingFillCellRef = useRef<{ rowId: string; columnId: string } | null>(null);
+  const fillRafRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!cellSelection.isFillDragging) return;
+    function handleMouseMove(event: MouseEvent): void {
+      const cellEl = (event.target as HTMLElement | null)?.closest<HTMLElement>("[data-cell-row]");
+      const rowId = cellEl?.dataset.cellRow;
+      const columnId = cellEl?.dataset.cellCol;
+      if (rowId === undefined || columnId === undefined) return;
+      pendingFillCellRef.current = { rowId, columnId };
+      if (fillRafRef.current !== null) return;
+      fillRafRef.current = requestAnimationFrame(() => {
+        fillRafRef.current = null;
+        if (pendingFillCellRef.current) cellSelection.updateFillDrag(pendingFillCellRef.current);
+      });
+    }
+    function handleMouseUp(): void {
+      const result = cellSelection.endFillDrag();
+      if (!result || !cellEditingCtx) return;
+      const changes = computeFillChanges(
+        result.sourceRange,
+        result.finalRange,
+        cellEditingRowIds,
+        cellEditingColumnIds,
+        visibleColumns,
+        findRowById,
+      );
+      if (changes.length > 0) applyCellChanges(changes);
+    }
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+      if (fillRafRef.current !== null) cancelAnimationFrame(fillRafRef.current);
+      fillRafRef.current = null;
+    };
+    // Deliberately NOT depending on `cellEditingCtx`/`applyCellChanges`/
+    // `findRowById`/etc. — none of those have a stable identity across
+    // renders (they're plain functions, not memoized), so including them
+    // would resubscribe this effect's window listeners on every render
+    // while a drag is in progress, not just when the drag itself starts or
+    // stops. `handleMouseUp` still reads the current values of each via
+    // closure at the moment it actually fires (mouseup), which is fresh
+    // enough for everything except one narrow edge case: toggling
+    // `cellEditing.disabled` mid-drag doesn't abort an already-started
+    // fill-drag's eventual commit. Accepted as a known limitation rather
+    // than reintroducing per-render effect churn to close it.
+  }, [cellSelection.isFillDragging, cellSelection.updateFillDrag, cellSelection.endFillDrag]);
+
+  // A cell's editor is a real DOM node (an `<input>`/`<textarea>`/etc.) that
+  // unmounts the instant `editingCell` clears — commit, cancel, or a blur
+  // that reverted an invalid draft. Removing a FOCUSED node doesn't move
+  // focus anywhere in particular (typically `document.body`), so without
+  // this, every one of those endings would silently strand keyboard focus
+  // outside the grid: F2/arrow-key navigation right after committing a cell
+  // would have nothing to bubble through, since the scroll container
+  // (`handleCellKeyDown`'s listener) is no longer in the event's path at
+  // all. `justEndedEditingRef` tracks the transition (defined -> undefined)
+  // rather than firing on mount, when nothing was ever focused here yet.
+  const wasEditingCellRef = useRef<CellAddress | undefined>(undefined);
+  useEffect(() => {
+    const wasEditing = wasEditingCellRef.current !== undefined;
+    wasEditingCellRef.current = cellEditingCtx?.editingCell;
+    if (!wasEditing || cellEditingCtx?.editingCell) return;
+    // Only when focus landed nowhere in particular (the browser's default
+    // once a focused node is removed) — a blur caused by clicking some OTHER
+    // focusable element on the page (not this cell) already sent focus
+    // there before this effect runs; grabbing it back here would undo that
+    // deliberate navigation away from the grid.
+    if (document.activeElement === document.body) scrollRef.current?.focus();
+  });
+
+  function handleFillHandleMouseDown(): void {
+    cellSelection.startFillDrag();
+  }
+
+  function handleCellMouseDown(event: ReactMouseEvent<HTMLDivElement>): void {
+    if (!hasCellEditing) return;
+    const cellEl = (event.target as HTMLElement).closest<HTMLElement>("[data-cell-row]");
+    const rowId = cellEl?.dataset.cellRow;
+    const columnId = cellEl?.dataset.cellCol;
+    if (rowId === undefined || columnId === undefined) return;
+    cellSelection.startSelection({ rowId, columnId }, { extend: event.shiftKey });
+    // The scroll container itself (not any cell) holds keyboard focus for
+    // arrow/Tab/Enter navigation — cells are plain `<td>`s, not focusable
+    // controls, so a click needs to explicitly move focus here.
+    scrollRef.current?.focus();
+  }
+
+  const CELL_NAV_KEYS: Record<string, "up" | "down" | "left" | "right"> = {
+    ArrowUp: "up",
+    ArrowDown: "down",
+    ArrowLeft: "left",
+    ArrowRight: "right",
+  };
+
+  /** Looks up the actual row/column for a selected cell address, for the begin-edit triggers below — `undefined` if either no longer exists (e.g. the row was removed from `data` since the selection was made). */
+  function resolveSelectedCell(): { column: ColumnDef<TRow>; row: TRow } | undefined {
+    const focus = cellSelection.selection?.focus;
+    if (!focus) return undefined;
+    const column = columnById.get(focus.columnId);
+    const row = findRowById(focus.rowId);
+    if (!column || row === undefined) return undefined;
+    return { column, row };
+  }
+
+  function handleCellKeyDown(event: ReactKeyboardEvent<HTMLDivElement>): void {
+    if (!hasCellEditing || !cellEditingCtx) return;
+    // While a cell is being edited, its own wrapper (`renderCellModeCell`)
+    // owns Escape/Enter/Tab — this handler only ever sees them AFTER that
+    // one has already committed (or reverted) and let the event bubble; see
+    // that function's own doc on how the two compose. `editingCell` alone
+    // can't tell the two "still editing" cases apart here: it's React state,
+    // so a commit that just fired via `closeEditor()` hasn't cleared it yet
+    // in THIS same synchronous dispatch — `consumeJustCommitted()` is the
+    // one signal that's already up to date at this point.
+    if (cellEditingCtx.editingCell && !cellEditingCtx.consumeJustCommitted()) return;
+
+    const direction = CELL_NAV_KEYS[event.key];
+    if (direction) {
+      event.preventDefault();
+      cellSelection.moveSelection(direction, { extend: event.shiftKey });
+      return;
+    }
+    if (event.key === "Tab") {
+      event.preventDefault();
+      cellSelection.moveSelection(event.shiftKey ? "left" : "right");
+      return;
+    }
+    if (event.key === "Enter") {
+      event.preventDefault();
+      cellSelection.moveSelection("down");
+      return;
+    }
+
+    // Begin-edit triggers: F2 (start from the current value), or typing any
+    // single printable character directly — Excel's own "just start typing"
+    // gesture — which REPLACES the cell's current value with what was typed
+    // rather than appending to it.
+    const isPrintableChar = event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey;
+    if (event.key !== "F2" && !isPrintableChar) return;
+    const target = resolveSelectedCell();
+    if (!target || !isEditable(target.column, target.row)) return;
+    event.preventDefault();
+    cellEditingCtx.onBeginEdit(
+      { rowId: cellEditingCtx.getRowId(target.row), columnId: target.column.id },
+      isPrintableChar ? event.key : undefined,
+    );
+  }
+
+  function handleCellDoubleClick(event: ReactMouseEvent<HTMLDivElement>): void {
+    if (!hasCellEditing || !cellEditingCtx) return;
+    const cellEl = (event.target as HTMLElement).closest<HTMLElement>("[data-cell-row]");
+    const rowId = cellEl?.dataset.cellRow;
+    const columnId = cellEl?.dataset.cellCol;
+    if (rowId === undefined || columnId === undefined) return;
+    const column = columnById.get(columnId);
+    const row = findRowById(rowId);
+    if (!column || row === undefined || !isEditable(column, row)) return;
+    cellEditingCtx.onBeginEdit({ rowId, columnId });
+  }
+
+  function handleCopy(event: ReactClipboardEvent<HTMLDivElement>): void {
+    // While a cell is actively being edited, a copy targets whatever text is
+    // selected inside its own `<input>` — ordinary browser behavior, not a
+    // range-copy of the whole selection.
+    if (!hasCellEditing || !cellSelection.selection || cellEditingCtx?.editingCell) return;
+    event.preventDefault();
+    const text = rangeToTsv(cellSelection.selection, rows, cellEditingRowIds, visibleColumns, cellEditingColumnIds, getRowId);
+    event.clipboardData.setData("text/plain", text);
+  }
+
+  /** Builds one `CellChange` for `(row, col)` from `raw` pasted/filled text, or `undefined` to skip that cell — not editable, no longer exists, or `raw` doesn't coerce to that column's type (see `coerceValueForColumn`'s own doc). */
+  function buildCellChange(row: number, col: number, raw: string): CellChange<TRow> | undefined {
+    const rowId = cellEditingRowIds[row];
+    const columnId = cellEditingColumnIds[col];
+    if (rowId === undefined || columnId === undefined) return undefined;
+    const column = columnById.get(columnId);
+    const rowData = findRowById(rowId);
+    if (!column || rowData === undefined || !isEditable(column, rowData)) return undefined;
+    const coerced = coerceValueForColumn(column, raw);
+    if (!coerced) return undefined;
+    return { rowId, row: rowData, columnId, previousValue: getColumnValue(column, rowData), value: coerced.value };
+  }
+
+  function handlePaste(event: ReactClipboardEvent<HTMLDivElement>): void {
+    // While a cell is actively being edited, a paste goes into its own
+    // `<input>` — ordinary browser behavior, not a range-paste.
+    if (!hasCellEditing || !cellSelection.selection || cellEditingCtx?.editingCell) return;
+    // Not gated on `text` being non-empty: the Clipboard API can't
+    // distinguish "nothing on the clipboard" from "an empty string was
+    // copied" (`getData` returns `""` either way) — treating it as the
+    // latter and clearing the selection matches how pasting a copied blank
+    // cell behaves in a real spreadsheet, rather than silently doing nothing.
+    const text = event.clipboardData.getData("text/plain");
+    event.preventDefault();
+    const normalized = normalizeRange(cellSelection.selection, cellEditingRowIndex, buildIndexMap(cellEditingColumnIds));
+    if (!normalized) return;
+    const parsed = parseTsv(text);
+    const changes: CellChange<TRow>[] = [];
+    // A single copied value fills every selected cell (Excel's own
+    // behavior for pasting one value onto a multi-cell selection); a real
+    // multi-cell block instead anchors at the selection's top-left corner
+    // and extends to match the pasted shape, clipped to grid bounds.
+    if (parsed.length === 1 && parsed[0]?.length === 1) {
+      const raw = parsed[0]![0]!;
+      for (let r = normalized.rowStart; r <= normalized.rowEnd; r++) {
+        for (let c = normalized.colStart; c <= normalized.colEnd; c++) {
+          const change = buildCellChange(r, c, raw);
+          if (change) changes.push(change);
+        }
+      }
+    } else {
+      for (let ri = 0; ri < parsed.length; ri++) {
+        const line = parsed[ri]!;
+        for (let ci = 0; ci < line.length; ci++) {
+          const change = buildCellChange(normalized.rowStart + ri, normalized.colStart + ci, line[ci]!);
+          if (change) changes.push(change);
+        }
+      }
+    }
+    if (changes.length > 0) applyCellChanges(changes);
+  }
+
   function renderRow(
     row: (typeof tableRows)[number],
     measureRef?: (el: Element | null) => void,
@@ -719,7 +1079,17 @@ export function DataGrid<TRow extends RowData>({
           {row.getAllCells().map((cell) => {
             const cellProps = bodyCellPropsByColumn.get(cell.column.id);
             return (
-              <td key={cell.id} style={cellProps?.style} className={cellProps?.className ?? BODY_TD_BASE_CLASS}>
+              <td
+                key={cell.id}
+                style={cellProps?.style}
+                className={cellProps?.className ?? BODY_TD_BASE_CLASS}
+                // Only present under `cellEditing` — the anchor `handleCellMouseDown`/
+                // the window drag listener/`SelectionOverlay` all look these up by
+                // attribute selector; see `useCellSelection`'s own doc for why
+                // row-id/column-id (not DOM index) is the addressing scheme.
+                data-cell-row={hasCellEditing ? row.id : undefined}
+                data-cell-col={hasCellEditing ? cell.column.id : undefined}
+              >
                 {flexRender(cell.column.columnDef.cell, cell.getContext())}
               </td>
             );
@@ -853,8 +1223,18 @@ export function DataGrid<TRow extends RowData>({
         <div
           ref={scrollRef}
           data-testid={testId}
-          className="h-full overflow-auto rounded-md border"
+          className={cn("h-full overflow-auto rounded-md border", hasCellEditing && "relative")}
           style={shouldVirtualize ? { maxHeight: virtualize?.maxBodyHeight ?? 480 } : undefined}
+          // `tabIndex`/`onKeyDown` only under `cellEditing` — the scroll
+          // container itself (not any individual cell, which is a plain
+          // `<td>`, not a focusable control) holds keyboard focus for
+          // arrow/Tab/Enter navigation between cells.
+          tabIndex={hasCellEditing ? 0 : undefined}
+          onMouseDown={hasCellEditing ? handleCellMouseDown : undefined}
+          onDoubleClick={hasCellEditing ? handleCellDoubleClick : undefined}
+          onKeyDown={hasCellEditing ? handleCellKeyDown : undefined}
+          onCopy={hasCellEditing ? handleCopy : undefined}
+          onPaste={hasCellEditing ? handlePaste : undefined}
         >
         {/*
           `table-fixed` (only once every column has a concrete pixel width —
@@ -1097,6 +1477,18 @@ export function DataGrid<TRow extends RowData>({
           tableRows.map((row) => renderRow(row))
         )}
         </table>
+        {hasCellEditing && (
+          <SelectionOverlay
+            containerRef={scrollRef}
+            range={cellSelection.effectiveRange}
+            fillPreviewRange={cellSelection.fillPreviewRange}
+            onFillHandleMouseDown={
+              cellSelection.selection && !cellSelection.isDragging && !cellEditingCtx?.editingCell
+                ? handleFillHandleMouseDown
+                : undefined
+            }
+          />
+        )}
         </div>
       </div>
       {showPagination && (

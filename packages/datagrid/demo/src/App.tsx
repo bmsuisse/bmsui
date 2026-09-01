@@ -887,6 +887,82 @@ function InlineEditingDemo(): ReactElement {
   );
 }
 
+// --- cellEditing demo: the same small deterministic task shape as the
+// row-batch editing demo above, but wired through `cellEditing` instead of
+// `editing` — every change applies immediately, no Save/Discard bar. Proves
+// out range-select (drag, or shift+click/shift+arrow), type-to-edit
+// (double-click, F2, or just start typing), clipboard copy/paste, and the
+// fill-handle, against the library's own default editors.
+interface CellEditingTask {
+  id: string;
+  title: string;
+  owner: string;
+  hours: number;
+  done: boolean;
+}
+
+const CELL_EDITING_TASKS: CellEditingTask[] = [
+  { id: "1", title: "Draft Q3 roadmap", owner: "alice", hours: 6, done: false },
+  { id: "2", title: "Fix flaky checkout test", owner: "bob", hours: 2, done: true },
+  { id: "3", title: "Review vendor contract", owner: "carol", hours: 3, done: false },
+  { id: "4", title: "Update onboarding docs", owner: "alice", hours: 4, done: false },
+  { id: "5", title: "Triage support backlog", owner: "bob", hours: 5, done: false },
+];
+
+function CellEditingDemo(): ReactElement {
+  const [tasks, setTasks] = useState(CELL_EDITING_TASKS);
+
+  const cellEditingColumns: ColumnDef<CellEditingTask>[] = [
+    {
+      id: "title",
+      type: "string",
+      header: "Task",
+      accessorKey: "title",
+      editable: true,
+      validateEdit: (value) => (typeof value === "string" && value.trim() === "" ? "Title is required" : undefined),
+    },
+    { id: "owner", type: "enum", header: "Owner", accessorKey: "owner", editable: true, options: TASK_OWNERS },
+    { id: "hours", type: "number", header: "Est. hours", accessorKey: "hours", editable: true },
+    { id: "done", type: "boolean", header: "Done", accessorKey: "done", editable: true },
+  ];
+
+  return (
+    <div>
+      <p className="mb-2 text-sm text-muted-foreground">
+        True spreadsheet editing — click a cell to select it, drag (or shift+click/shift+arrow) to
+        select a range, type directly or press F2/double-click to edit, Ctrl/Cmd+C and +V to
+        copy/paste a range (a single copied value fills the whole selection), and drag the small
+        square at the selection's corner to fill adjacent cells. Every change applies immediately —
+        no Save button.
+      </p>
+      <DataGrid
+        testId="cell-editing-grid"
+        columns={cellEditingColumns}
+        dataSource={{ mode: "client", data: tasks }}
+        getRowId={(row) => row.id}
+        showPagination={false}
+        cellEditing={{
+          onCellsChange: (changes) => {
+            // A paste or fill-drag spanning multiple columns for the same
+            // row produces multiple entries sharing one rowId — merge ALL
+            // of them per row (not just the first, `.find()`'s own result)
+            // or a multi-column gesture would silently drop every column
+            // but one.
+            setTasks((prev) =>
+              prev.map((task) => {
+                const rowChanges = changes.filter((c) => c.rowId === task.id);
+                if (rowChanges.length === 0) return task;
+                const patch = Object.fromEntries(rowChanges.map((c) => [c.columnId, c.value]));
+                return { ...task, ...patch };
+              }),
+            );
+          },
+        }}
+      />
+    </div>
+  );
+}
+
 /**
  * The whole demo: an engine toggle (SQL / Meilisearch, also settable via
  * ?engine=), a dark-mode toggle, and a <ColumnSelector> trigger, all driving
@@ -1015,6 +1091,9 @@ export function App(): ReactElement {
 
       <h2 className="mb-2 mt-8 text-lg font-semibold">editable demo — inline editing + Save/Discard</h2>
       <InlineEditingDemo />
+
+      <h2 className="mb-2 mt-8 text-lg font-semibold">cellEditing demo — true spreadsheet editing</h2>
+      <CellEditingDemo />
 
       <h2 className="mb-2 mt-8 text-lg font-semibold">Virtualized scrolling demo</h2>
       <VirtualizedScrollDemo />

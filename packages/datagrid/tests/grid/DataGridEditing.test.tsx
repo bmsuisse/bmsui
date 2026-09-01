@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
-import type { ColumnDef, EditedRow } from "../../src";
+import type { ColumnDef, EditedRow, StringColumn } from "../../src";
 import { DataGrid } from "../../src/grid/DataGrid";
 
 interface Row {
@@ -390,6 +390,22 @@ describe("DataGrid inline editing", () => {
     expect((value as Date).getFullYear()).toBe(2026);
     expect((value as Date).getMonth()).toBe(2); // 0-indexed: March
     expect((value as Date).getDate()).toBe(1);
+  });
+
+  it("renders a multiline textarea instead of the single-line input for a string column with multiline: true", async () => {
+    const onSave = vi.fn();
+    const multilineColumns = [{ ...(columns[0]! as StringColumn<Row>), multiline: true }, ...columns.slice(1)];
+    render(<EditableGrid onSave={onSave} columnsOverride={multilineColumns} />);
+    await activateCell("1", "name");
+
+    const editor = screen.getByTestId("edit-1-name");
+    expect(editor.tagName).toBe("TEXTAREA");
+    await userEvent.clear(editor);
+    await userEvent.type(editor, "Line one{shift>}{enter}{/shift}Line two");
+    await userEvent.click(screen.getByTestId("datagrid-save-edits"));
+
+    const edits = onSave.mock.calls[0]![0] as EditedRow<Row>[];
+    expect(edits[0]!.values.name).toBe("Line one\nLine two");
   });
 
   it("uses a custom renderEditCell over the default widget when supplied", async () => {
