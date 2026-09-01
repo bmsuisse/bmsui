@@ -1,5 +1,6 @@
 import type { ColumnSizingState } from "@tanstack/react-table";
 import type { ReactNode } from "react";
+import type { CellEditingOptions } from "../cell-editing/types";
 import type { ColumnDef } from "../column/types";
 import type { ColumnVisibility } from "../column-selector/types";
 import type { EditingOptions } from "../edit/types";
@@ -237,4 +238,14 @@ export interface DataGridProps<TRow> {
    * contract — shared with `<TreeDataGrid>`'s own `editing` prop.
    */
   editing?: EditingOptions<TRow>;
+  /**
+   * Enables the "true spreadsheet" cell-editing mode: click/type directly
+   * into any cell, drag or shift+arrow to range-select, paste, drag a
+   * fill-handle — every change applies immediately, with no row-level
+   * Save/Discard gate. This is a different, mutually exclusive state machine
+   * from `editing` above, not a superset of it — set at most one of the two
+   * on a given `<DataGrid>`; `editing` is ignored once `cellEditing` is set.
+   * See `CellEditingOptions` for the full contract.
+   */
+  cellEditing?: CellEditingOptions<TRow>;
 }

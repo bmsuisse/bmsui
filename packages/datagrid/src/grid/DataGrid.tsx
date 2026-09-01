@@ -3,8 +3,17 @@ import type { CellContext, ColumnDef as TanstackColumnDef, ColumnSizingState, Ro
 import { columnResizingFeature, columnSizingFeature, flexRender, tableFeatures, useTable } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ChevronRight, Loader2 } from "lucide-react";
-import type { CSSProperties, ReactElement, ReactNode } from "react";
+import type {
+  CSSProperties,
+  KeyboardEvent as ReactKeyboardEvent,
+  MouseEvent as ReactMouseEvent,
+  ReactElement,
+  ReactNode,
+} from "react";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { SelectionOverlay } from "../cell-editing/SelectionOverlay";
+import { buildIndexMap } from "../cell-editing/rangeUtils";
+import { useCellSelection } from "../cell-editing/useCellSelection";
 import { alignClassName } from "../column/format";
 import type { ColumnDef } from "../column/types";
 import { getColumnValue, isFilterable, isSortable } from "../column/types";
@@ -59,6 +68,13 @@ const DEFAULT_COLUMN_SIZE = 150;
 // without the surrounding `p-1` cell padding eating into the button itself.
 const DETAIL_COLUMN_WIDTH = 44;
 const ROW_ACTIONS_COLUMN_WIDTH = 44;
+
+// Stable empty-array identity for `useCellSelection`'s `rowIds`/`columnIds`
+// when `cellEditing` isn't set — a fresh `[]` literal every render would
+// still be a *different* array each time, defeating `buildIndexMap`'s own
+// memoization for no reason (selection is inert either way, but the memo
+// should stay cheap regardless).
+const EMPTY_ID_ARRAY: string[] = [];
 
 // Opaque equivalent of the body row's translucent `bg-foreground/5` zebra
 // tint, for the structural expand/selection/row-actions columns' `sticky`
@@ -189,7 +205,9 @@ export function DataGrid<TRow extends RowData>({
   onExpandedGroupsChange,
   zebra = true,
   editing,
+  cellEditing,
 }: DataGridProps<TRow>): ReactElement {
+  const hasCellEditing = Boolean(cellEditing);
   const { state, filtersByColumn, setColumnFilter, toggleSort, setPage } = useGridState(
     dataSource,
     initialState,
@@ -570,6 +588,111 @@ export function DataGrid<TRow extends RowData>({
     virtualize.onEndReached();
   }, [lastVisibleIndex, tableRows.length, virtualize]);
 
+  // Full logical row/column id lists (not just currently-mounted virtual
+  // items) for `useCellSelection`'s range math and keyboard navigation — see
+  // that hook's own doc for why id-keying (rather than DOM/virtualized
+  // index) is what makes a selection survive virtualized mount/unmount.
+  // Depends on `hasCellEditing` (not `cellEditing` itself) for the same
+  // reason `serverRowCount`/`dataSource` above do: a caller inlining
+  // `cellEditing={{ onCellsChange: fn }}` as a fresh object every render
+  // must not defeat this memo just because that wrapper's identity changed.
+  const cellEditingRowIds = useMemo(
+    () => (hasCellEditing ? tableRows.map((row) => row.id) : EMPTY_ID_ARRAY),
+    [hasCellEditing, tableRows],
+  );
+  const cellEditingColumnIds = useMemo(
+    () => (hasCellEditing ? visibleColumns.map((column) => column.id) : EMPTY_ID_ARRAY),
+    [hasCellEditing, visibleColumns],
+  );
+  const cellEditingRowIndex = useMemo(() => buildIndexMap(cellEditingRowIds), [cellEditingRowIds]);
+  const cellSelection = useCellSelection({
+    rowIds: cellEditingRowIds,
+    columnIds: cellEditingColumnIds,
+    onNavigateToRow: (rowId) => {
+      if (!shouldVirtualize) return;
+      const index = cellEditingRowIndex.get(rowId);
+      if (index !== undefined) virtualizer.scrollToIndex(index);
+    },
+  });
+
+  // Mousemove/mouseup are attached to `window` (not the scroll container)
+  // while a drag is in progress — the pointer commonly moves outside the
+  // container's own bounds mid-drag (e.g. past its edge), and a container-
+  // scoped listener alone would silently stop tracking the drag at that
+  // point. Coalesced through one `requestAnimationFrame` per frame — never a
+  // raw `updateDrag` call per native `mousemove` event — which is the fix
+  // for the exact perf bug this whole feature exists to replace (see
+  // `useCellSelection.updateDrag`'s own doc: a hand-rolled excel-grid
+  // implementation elsewhere in this org rebuilt its entire column-def array
+  // on every unthrottled mousemove pixel during a drag-fill).
+  const pendingDragCellRef = useRef<{ rowId: string; columnId: string } | null>(null);
+  const dragRafRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!cellSelection.isDragging) return;
+    function handleMouseMove(event: MouseEvent): void {
+      const cellEl = (event.target as HTMLElement | null)?.closest<HTMLElement>("[data-cell-row]");
+      const rowId = cellEl?.dataset.cellRow;
+      const columnId = cellEl?.dataset.cellCol;
+      if (rowId === undefined || columnId === undefined) return;
+      pendingDragCellRef.current = { rowId, columnId };
+      if (dragRafRef.current !== null) return;
+      dragRafRef.current = requestAnimationFrame(() => {
+        dragRafRef.current = null;
+        if (pendingDragCellRef.current) cellSelection.updateDrag(pendingDragCellRef.current);
+      });
+    }
+    function handleMouseUp(): void {
+      cellSelection.endDrag();
+    }
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+      if (dragRafRef.current !== null) cancelAnimationFrame(dragRafRef.current);
+      dragRafRef.current = null;
+    };
+  }, [cellSelection.isDragging, cellSelection.updateDrag, cellSelection.endDrag]);
+
+  function handleCellMouseDown(event: ReactMouseEvent<HTMLDivElement>): void {
+    if (!cellEditing) return;
+    const cellEl = (event.target as HTMLElement).closest<HTMLElement>("[data-cell-row]");
+    const rowId = cellEl?.dataset.cellRow;
+    const columnId = cellEl?.dataset.cellCol;
+    if (rowId === undefined || columnId === undefined) return;
+    cellSelection.startSelection({ rowId, columnId }, { extend: event.shiftKey });
+    // The scroll container itself (not any cell) holds keyboard focus for
+    // arrow/Tab/Enter navigation — cells are plain `<td>`s, not focusable
+    // controls, so a click needs to explicitly move focus here.
+    scrollRef.current?.focus();
+  }
+
+  const CELL_NAV_KEYS: Record<string, "up" | "down" | "left" | "right"> = {
+    ArrowUp: "up",
+    ArrowDown: "down",
+    ArrowLeft: "left",
+    ArrowRight: "right",
+  };
+
+  function handleCellKeyDown(event: ReactKeyboardEvent<HTMLDivElement>): void {
+    if (!cellEditing) return;
+    const direction = CELL_NAV_KEYS[event.key];
+    if (direction) {
+      event.preventDefault();
+      cellSelection.moveSelection(direction, { extend: event.shiftKey });
+      return;
+    }
+    if (event.key === "Tab") {
+      event.preventDefault();
+      cellSelection.moveSelection(event.shiftKey ? "left" : "right");
+      return;
+    }
+    if (event.key === "Enter") {
+      event.preventDefault();
+      cellSelection.moveSelection("down");
+    }
+  }
+
   function renderRow(row: (typeof tableRows)[number], measureRef?: (el: Element | null) => void): ReactNode {
     const isExpanded = expandedIds.has(row.id);
     // Each row gets its own `<tbody>` (a `<table>` can hold more than one)
@@ -644,7 +767,17 @@ export function DataGrid<TRow extends RowData>({
           {row.getAllCells().map((cell) => {
             const cellProps = bodyCellPropsByColumn.get(cell.column.id);
             return (
-              <td key={cell.id} style={cellProps?.style} className={cellProps?.className ?? BODY_TD_BASE_CLASS}>
+              <td
+                key={cell.id}
+                style={cellProps?.style}
+                className={cellProps?.className ?? BODY_TD_BASE_CLASS}
+                // Only present under `cellEditing` — the anchor `handleCellMouseDown`/
+                // the window drag listener/`SelectionOverlay` all look these up by
+                // attribute selector; see `useCellSelection`'s own doc for why
+                // row-id/column-id (not DOM index) is the addressing scheme.
+                data-cell-row={cellEditing ? row.id : undefined}
+                data-cell-col={cellEditing ? cell.column.id : undefined}
+              >
                 {flexRender(cell.column.columnDef.cell, cell.getContext())}
               </td>
             );
@@ -750,8 +883,15 @@ export function DataGrid<TRow extends RowData>({
         <div
           ref={scrollRef}
           data-testid={testId}
-          className="h-full overflow-auto rounded-md border"
+          className={cn("h-full overflow-auto rounded-md border", cellEditing && "relative")}
           style={shouldVirtualize ? { maxHeight: virtualize?.maxBodyHeight ?? 480 } : undefined}
+          // `tabIndex`/`onKeyDown` only under `cellEditing` — the scroll
+          // container itself (not any individual cell, which is a plain
+          // `<td>`, not a focusable control) holds keyboard focus for
+          // arrow/Tab/Enter navigation between cells.
+          tabIndex={cellEditing ? 0 : undefined}
+          onMouseDown={cellEditing ? handleCellMouseDown : undefined}
+          onKeyDown={cellEditing ? handleCellKeyDown : undefined}
         >
         {/*
           `table-fixed` (only once every column has a concrete pixel width —
@@ -992,6 +1132,7 @@ export function DataGrid<TRow extends RowData>({
           tableRows.map((row) => renderRow(row))
         )}
         </table>
+        {cellEditing && <SelectionOverlay containerRef={scrollRef} range={cellSelection.effectiveRange} />}
         </div>
       </div>
       {showPagination && (
