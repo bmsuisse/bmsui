@@ -17,6 +17,19 @@ function matchEnumOption(options: EnumOption[], raw: string): string | undefined
   return options.find((option) => option.label.toLowerCase() === lowered)?.value;
 }
 
+// The literal text Excel/Sheets puts in a cell showing a formula error.
+// Pasting one of these into any non-`string` column skips that cell, same as
+// any other value that doesn't coerce — `toNumber`/`toDate`/`parseBoolean`/
+// `matchEnumOption` already happen to reject all of these today (none of
+// them looks like a number/date/boolean/option), but checking explicitly
+// means that stays true even if one of those helpers' own "not a valid X"
+// fallback changes independently later.
+const EXCEL_ERROR_STRINGS = new Set(["#N/A", "#DIV/0!", "#REF!", "#VALUE!", "#NAME?", "#NULL!", "#NUM!", "#SPILL!", "#CALC!"]);
+
+function isExcelErrorString(raw: string): boolean {
+  return EXCEL_ERROR_STRINGS.has(raw.trim());
+}
+
 /**
  * Coerces one pasted/filled raw TSV cell string into the typed value a
  * column's editor/validator expects — the paste/fill equivalent of
@@ -30,8 +43,11 @@ function matchEnumOption(options: EnumOption[], raw: string): string | undefined
  * `null` for `number`/`currency` (pasting a blank cell over a numeric one
  * clears it, matching `NumberEditor`'s own null-for-cleared convention) —
  * `string` columns instead treat an empty string as itself a valid value.
+ * An Excel/Sheets error string (`#N/A`, `#DIV/0!`, etc.) pasted into any
+ * column but `string` is likewise skipped rather than coerced.
  */
 export function coerceValueForColumn<TRow>(column: ColumnDef<TRow>, raw: string): { value: unknown } | undefined {
+  if (column.type !== "string" && isExcelErrorString(raw)) return undefined;
   switch (column.type) {
     case "string":
       return { value: raw };

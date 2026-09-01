@@ -181,6 +181,13 @@ plain-text value (a badge/icon, say).
   booleans (`true`/`yes`/`1` etc.), dates, and enum values matched by value
   first then by label) — a cell that doesn't coerce (e.g. `"abc"` into a
   number column) is silently skipped rather than committed as `NaN`/invalid.
+  A pasted Excel/Sheets error string (`#N/A`, `#DIV/0!`, etc.) is likewise
+  skipped for any column but `string`, where it's kept verbatim.
+- A number/currency cell also understands Swiss-formatted numbers — an
+  apostrophe thousands separator (`1'234'567.89`) and a leading/trailing
+  `CHF`/`Fr.`/`SFr.` marker (`"CHF 1'234.50"`) — on top of a plain
+  `Number()`-parseable string; no other locale's grouping/decimal
+  convention is recognized.
 - A non-editable or missing target cell is silently skipped.
 - While a text-field editor (string/number/currency/date/datetime — not an
   enum/boolean editor's own button/listbox, which has no free text of its

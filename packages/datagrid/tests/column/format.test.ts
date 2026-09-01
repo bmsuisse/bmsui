@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { alignClassName, defaultAlign, defaultFormat } from "../../src/column/format";
+import { alignClassName, defaultAlign, defaultFormat, toNumber } from "../../src/column/format";
 import type { ColumnDef } from "../../src/column/types";
 
 interface Row {
@@ -149,5 +149,31 @@ describe("defaultFormat", () => {
 
   it("falls back to the raw value for an unknown enum option", () => {
     expect(defaultFormat(enumCol, "unknown")).toBe("unknown");
+  });
+});
+
+describe("toNumber — Swiss-formatted strings", () => {
+  it("parses a plain numeric string unaffected (no Swiss-specific stripping needed)", () => {
+    expect(toNumber("1234.5")).toBe(1234.5);
+    expect(toNumber("-42")).toBe(-42);
+  });
+
+  it("strips a Swiss apostrophe thousands separator, single or repeated", () => {
+    expect(toNumber("1'234")).toBe(1234);
+    expect(toNumber("1'234'567.89")).toBe(1234567.89);
+    // The typographic right single quote some editors/autocorrect substitute.
+    expect(toNumber("1’234")).toBe(1234);
+  });
+
+  it("strips a leading or trailing CHF/Fr./SFr. marker", () => {
+    expect(toNumber("CHF 1'234.50")).toBe(1234.5);
+    expect(toNumber("1'234.50 CHF")).toBe(1234.5);
+    expect(toNumber("SFr. 99.90")).toBe(99.9);
+    expect(toNumber("42 Fr.")).toBe(42);
+  });
+
+  it("still returns null for genuinely non-numeric text", () => {
+    expect(toNumber("abc")).toBeNull();
+    expect(toNumber("CHF")).toBeNull();
   });
 });

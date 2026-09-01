@@ -65,6 +65,27 @@ export function toDate(value: unknown): Date | null {
   return null;
 }
 
+// Swiss-locale numbers group thousands with an apostrophe (straight `'` or
+// the typographic `’` some editors/autocorrect substitute) and still use a
+// plain period for the decimal point — e.g. "1'234'567.89", or "CHF
+// 1'234.50"/"1'234.50 Fr." for a currency cell copied from a Swiss-locale
+// Excel/Sheets. `Number(...)` can't parse either on its own. Deliberately
+// scoped to just this one locale's conventions (this is a Swiss company's
+// own grid) — "1,234.56"-style US/UK grouping or "1.234,56"-style German
+// grouping isn't attempted here.
+const SWISS_CURRENCY_MARKER = /^(?:chf|s?fr\.?)\s+|\s+(?:chf|s?fr\.?)$/gi;
+const SWISS_THOUSANDS_SEPARATOR = /(\d)['’](\d{3})/;
+
+/** Strips a Swiss franc marker and thousands-grouping apostrophes so the result is plain `Number()`-parseable — see `SWISS_CURRENCY_MARKER`'s own doc. Looped (not a global regex) because removing one grouping apostrophe can expose the next one to the left, e.g. "1'234'567" needs two passes. */
+function stripSwissNumberFormatting(raw: string): string {
+  const withoutCurrency = raw.replace(SWISS_CURRENCY_MARKER, "");
+  let stripped = withoutCurrency;
+  while (SWISS_THOUSANDS_SEPARATOR.test(stripped)) {
+    stripped = stripped.replace(SWISS_THOUSANDS_SEPARATOR, "$1$2");
+  }
+  return stripped;
+}
+
 /**
  * Parses an arbitrary raw cell value into a `number`, or `null` if it isn't
  * one. Exported (unlike before) for the same reason `toDate` above is:
@@ -75,8 +96,14 @@ export function toDate(value: unknown): Date | null {
 export function toNumber(value: unknown): number | null {
   if (typeof value === "number") return Number.isNaN(value) ? null : value;
   if (typeof value === "string" && value.trim() !== "") {
-    const parsed = Number(value);
-    return Number.isNaN(parsed) ? null : parsed;
+    const trimmed = value.trim();
+    const parsed = Number(trimmed);
+    if (!Number.isNaN(parsed)) return parsed;
+    // Only reached for a string `Number()` itself can't parse — a plain
+    // "1234.5" (or any other already-valid numeric string) never touches
+    // Swiss-specific stripping at all.
+    const swiss = Number(stripSwissNumberFormatting(trimmed));
+    return Number.isNaN(swiss) ? null : swiss;
   }
   return null;
 }

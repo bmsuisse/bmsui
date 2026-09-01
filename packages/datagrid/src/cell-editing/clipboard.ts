@@ -64,7 +64,10 @@ export function rangeToTsv<TRow>(
  * unescapes to one literal `"`.
  */
 export function parseTsv(text: string): string[][] {
-  const normalized = text.replace(/\r\n/g, "\n");
+  // A leading byte-order mark shows up on some Windows clipboard sources
+  // (and would otherwise become part of the very first cell's own text).
+  const withoutBom = text.startsWith("﻿") ? text.slice(1) : text;
+  const normalized = withoutBom.replace(/\r\n/g, "\n");
   const rows: string[][] = [];
   let row: string[] = [];
   let field = "";
