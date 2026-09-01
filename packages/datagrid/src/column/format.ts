@@ -65,7 +65,14 @@ export function toDate(value: unknown): Date | null {
   return null;
 }
 
-function toNumber(value: unknown): number | null {
+/**
+ * Parses an arbitrary raw cell value into a `number`, or `null` if it isn't
+ * one. Exported (unlike before) for the same reason `toDate` above is:
+ * `cell-editing/coerce.ts` needs the exact same numeric parsing this module
+ * already uses for display, to back paste/fill coercion without a second
+ * copy that could drift from it.
+ */
+export function toNumber(value: unknown): number | null {
   if (typeof value === "number") return Number.isNaN(value) ? null : value;
   if (typeof value === "string" && value.trim() !== "") {
     const parsed = Number(value);

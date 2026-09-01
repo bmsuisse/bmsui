@@ -144,6 +144,16 @@ export interface BaseColumn<TRow> {
    * this cell, including the default editors' own `onChange`.
    */
   validateEdit?: (value: unknown, row: TRow) => string | undefined;
+  /**
+   * Overrides the plain-text form of this column's value used when copying a
+   * `cellEditing`-mode selection to the clipboard. Defaults to the same
+   * `defaultFormat` display text every other rendering path already uses —
+   * only needed for a column with a custom `cell` whose displayed content
+   * isn't a faithful plain-text rendering of the underlying value (e.g. a
+   * badge/icon), the same situation `renderFilter`/`renderEditCell` exist to
+   * override for their own concerns.
+   */
+  formatForClipboard?: (value: unknown, row: TRow) => string;
 }
 
 export type StringColumn<TRow> = BaseColumn<TRow> & { type: "string" };

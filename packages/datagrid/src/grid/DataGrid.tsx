@@ -4,6 +4,7 @@ import { columnResizingFeature, columnSizingFeature, flexRender, tableFeatures, 
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ChevronRight, Loader2 } from "lucide-react";
 import type {
+  ClipboardEvent as ReactClipboardEvent,
   CSSProperties,
   KeyboardEvent as ReactKeyboardEvent,
   MouseEvent as ReactMouseEvent,
@@ -11,9 +12,12 @@ import type {
   ReactNode,
 } from "react";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { buildIndexMap } from "../cell-editing/rangeUtils";
+import { parseTsv, rangeToTsv } from "../cell-editing/clipboard";
+import { coerceValueForColumn } from "../cell-editing/coerce";
+import { buildIndexMap, normalizeRange } from "../cell-editing/rangeUtils";
 import { renderCellModeCell } from "../cell-editing/renderCellModeCell";
 import { SelectionOverlay } from "../cell-editing/SelectionOverlay";
+import type { CellChange } from "../cell-editing/types";
 import type { CellEditingCellContext } from "../cell-editing/useCellEditingState";
 import { useCellEditingState } from "../cell-editing/useCellEditingState";
 import { useCellSelection } from "../cell-editing/useCellSelection";
@@ -270,7 +274,10 @@ export function DataGrid<TRow extends RowData>({
     editing,
     getRowId,
   );
-  const { ctx: cellEditingCtx, ctxRef: cellEditingCtxRef } = useCellEditingState(cellEditing, getRowId);
+  const { ctx: cellEditingCtx, ctxRef: cellEditingCtxRef, applyChanges: applyCellChanges } = useCellEditingState(
+    cellEditing,
+    getRowId,
+  );
 
   // Single source of truth for "which columns actually render": every other
   // representation below (the TanStack column defs, the header lookup map,
@@ -753,6 +760,64 @@ export function DataGrid<TRow extends RowData>({
     cellEditingCtx.onBeginEdit({ rowId, columnId });
   }
 
+  function handleCopy(event: ReactClipboardEvent<HTMLDivElement>): void {
+    // While a cell is actively being edited, a copy targets whatever text is
+    // selected inside its own `<input>` — ordinary browser behavior, not a
+    // range-copy of the whole selection.
+    if (!cellEditing || !cellSelection.selection || cellEditingCtx?.editingCell) return;
+    event.preventDefault();
+    const text = rangeToTsv(cellSelection.selection, rows, cellEditingRowIds, visibleColumns, cellEditingColumnIds, getRowId);
+    event.clipboardData.setData("text/plain", text);
+  }
+
+  /** Builds one `CellChange` for `(row, col)` from `raw` pasted/filled text, or `undefined` to skip that cell — not editable, no longer exists, or `raw` doesn't coerce to that column's type (see `coerceValueForColumn`'s own doc). */
+  function buildCellChange(row: number, col: number, raw: string): CellChange<TRow> | undefined {
+    const rowId = cellEditingRowIds[row];
+    const columnId = cellEditingColumnIds[col];
+    if (rowId === undefined || columnId === undefined) return undefined;
+    const column = columnById.get(columnId);
+    const rowData = table.getRow(rowId)?.original;
+    if (!column || rowData === undefined || !isEditable(column, rowData)) return undefined;
+    const coerced = coerceValueForColumn(column, raw);
+    if (!coerced) return undefined;
+    return { rowId, row: rowData, columnId, previousValue: getColumnValue(column, rowData), value: coerced.value };
+  }
+
+  function handlePaste(event: ReactClipboardEvent<HTMLDivElement>): void {
+    // While a cell is actively being edited, a paste goes into its own
+    // `<input>` — ordinary browser behavior, not a range-paste.
+    if (!cellEditing || !cellSelection.selection || cellEditingCtx?.editingCell) return;
+    const text = event.clipboardData.getData("text/plain");
+    if (!text) return;
+    event.preventDefault();
+    const normalized = normalizeRange(cellSelection.selection, cellEditingRowIndex, buildIndexMap(cellEditingColumnIds));
+    if (!normalized) return;
+    const parsed = parseTsv(text);
+    const changes: CellChange<TRow>[] = [];
+    // A single copied value fills every selected cell (Excel's own
+    // behavior for pasting one value onto a multi-cell selection); a real
+    // multi-cell block instead anchors at the selection's top-left corner
+    // and extends to match the pasted shape, clipped to grid bounds.
+    if (parsed.length === 1 && parsed[0]?.length === 1) {
+      const raw = parsed[0]![0]!;
+      for (let r = normalized.rowStart; r <= normalized.rowEnd; r++) {
+        for (let c = normalized.colStart; c <= normalized.colEnd; c++) {
+          const change = buildCellChange(r, c, raw);
+          if (change) changes.push(change);
+        }
+      }
+    } else {
+      for (let ri = 0; ri < parsed.length; ri++) {
+        const line = parsed[ri]!;
+        for (let ci = 0; ci < line.length; ci++) {
+          const change = buildCellChange(normalized.rowStart + ri, normalized.colStart + ci, line[ci]!);
+          if (change) changes.push(change);
+        }
+      }
+    }
+    if (changes.length > 0) applyCellChanges(changes);
+  }
+
   function renderRow(row: (typeof tableRows)[number], measureRef?: (el: Element | null) => void): ReactNode {
     const isExpanded = expandedIds.has(row.id);
     // Each row gets its own `<tbody>` (a `<table>` can hold more than one)
@@ -953,6 +1018,8 @@ export function DataGrid<TRow extends RowData>({
           onMouseDown={cellEditing ? handleCellMouseDown : undefined}
           onDoubleClick={cellEditing ? handleCellDoubleClick : undefined}
           onKeyDown={cellEditing ? handleCellKeyDown : undefined}
+          onCopy={cellEditing ? handleCopy : undefined}
+          onPaste={cellEditing ? handlePaste : undefined}
         >
         {/*
           `table-fixed` (only once every column has a concrete pixel width —

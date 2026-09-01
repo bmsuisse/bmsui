@@ -324,3 +324,108 @@ describe("DataGrid cellEditing — per-cell editing", () => {
     expect(screen.getByTestId("cell-1-status")).toHaveTextContent("Shipped");
   });
 });
+
+/** A minimal `DataTransfer`-shaped mock — enough for `event.clipboardData.setData`/`getData` to work in jsdom, which doesn't implement a real `DataTransfer`. */
+function mockClipboardData(initialText = ""): { setData: ReturnType<typeof vi.fn>; getData: () => string } {
+  let text = initialText;
+  return {
+    setData: vi.fn((type: string, value: string) => {
+      if (type === "text/plain") text = value;
+    }),
+    getData: () => text,
+  };
+}
+
+describe("DataGrid cellEditing — clipboard", () => {
+  it("copying a range sets Excel-compatible TSV onto the clipboard", async () => {
+    const { container } = render(<CellEditingGrid />);
+    fireEvent.mouseDown(editableCellAt(container, "1", "name"));
+    fireEvent.mouseMove(editableCellAt(container, "2", "status"));
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    fireEvent.mouseUp(window);
+
+    const clipboardData = mockClipboardData();
+    // Copy/paste bubble up from wherever they're dispatched to <DataGrid>'s
+    // scroll-container listener — any cell (a real descendant of it) works;
+    // it doesn't need to be one of the currently-selected ones.
+    fireEvent.copy(editableCellAt(container, "1", "name"), { clipboardData });
+    expect(clipboardData.setData).toHaveBeenCalledWith("text/plain", "Charlie\tPending\nAlice\tShipped");
+  });
+
+  it("pasting a single value fills every cell of a multi-cell selection", async () => {
+    const onCellsChange = vi.fn();
+    const { container } = render(<CellEditingGrid onCellsChange={onCellsChange} />);
+    fireEvent.mouseDown(editableCellAt(container, "1", "name"));
+    fireEvent.mouseMove(editableCellAt(container, "2", "name"));
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    fireEvent.mouseUp(window);
+
+    fireEvent.paste(editableCellAt(container, "1", "name"), { clipboardData: mockClipboardData("Bob") });
+    expect(onCellsChange).toHaveBeenCalledTimes(1);
+    const changes = onCellsChange.mock.calls[0]![0] as CellChange<EditableRow>[];
+    expect(changes).toEqual([
+      { rowId: "1", row: editableRows[0], columnId: "name", previousValue: "Charlie", value: "Bob" },
+      { rowId: "2", row: editableRows[1], columnId: "name", previousValue: "Alice", value: "Bob" },
+    ]);
+    expect(screen.getByTestId("cell-1-name")).toHaveTextContent("Bob");
+    expect(screen.getByTestId("cell-2-name")).toHaveTextContent("Bob");
+  });
+
+  it("pasting a multi-cell block anchors at the selection's top-left and extends to match its shape", () => {
+    const onCellsChange = vi.fn();
+    const { container } = render(<CellEditingGrid onCellsChange={onCellsChange} />);
+    fireEvent.mouseDown(editableCellAt(container, "1", "name"));
+    fireEvent.mouseUp(window);
+
+    fireEvent.paste(editableCellAt(container, "1", "name"), { clipboardData: mockClipboardData("Bob\tShipped\nDana\tPending") });
+    expect(onCellsChange).toHaveBeenCalledTimes(1);
+    const changes = onCellsChange.mock.calls[0]![0] as CellChange<EditableRow>[];
+    expect(changes).toEqual([
+      { rowId: "1", row: editableRows[0], columnId: "name", previousValue: "Charlie", value: "Bob" },
+      { rowId: "1", row: editableRows[0], columnId: "status", previousValue: "pending", value: "shipped" },
+      { rowId: "2", row: editableRows[1], columnId: "name", previousValue: "Alice", value: "Dana" },
+      { rowId: "2", row: editableRows[1], columnId: "status", previousValue: "shipped", value: "pending" },
+    ]);
+  });
+
+  it("skips a cell whose pasted text doesn't coerce to that column's type, committing the rest of the batch", () => {
+    const onCellsChange = vi.fn();
+    const { container } = render(<CellEditingGrid onCellsChange={onCellsChange} />);
+    fireEvent.mouseDown(editableCellAt(container, "1", "name"));
+    fireEvent.mouseUp(window);
+
+    // "not-a-status" doesn't match any enum option's value or label.
+    fireEvent.paste(editableCellAt(container, "1", "name"), { clipboardData: mockClipboardData("Bob\tnot-a-status") });
+    expect(onCellsChange).toHaveBeenCalledTimes(1);
+    const changes = onCellsChange.mock.calls[0]![0] as CellChange<EditableRow>[];
+    expect(changes).toEqual([{ rowId: "1", row: editableRows[0], columnId: "name", previousValue: "Charlie", value: "Bob" }]);
+    expect(screen.getByTestId("cell-1-status")).toHaveTextContent("Pending"); // untouched
+  });
+
+  it("does nothing on paste when no cell is selected", () => {
+    const onCellsChange = vi.fn();
+    const { container } = render(<CellEditingGrid onCellsChange={onCellsChange} />);
+    fireEvent.paste(editableCellAt(container, "1", "name"), { clipboardData: mockClipboardData("Bob") });
+    expect(onCellsChange).not.toHaveBeenCalled();
+  });
+
+  it("copy/paste don't throw when `cellEditing` is omitted (no listeners attached, no data-cell nodes to target)", () => {
+    const { container } = render(
+      <DataGrid columns={columns} dataSource={{ mode: "client", data: rows }} getRowId={(row) => row.id} />,
+    );
+    const grid = screen.getByTestId("datagrid");
+    expect(container.querySelector("[data-cell-row]")).not.toBeInTheDocument();
+    expect(() => fireEvent.copy(grid, { clipboardData: mockClipboardData() })).not.toThrow();
+    expect(() => fireEvent.paste(grid, { clipboardData: mockClipboardData("X") })).not.toThrow();
+  });
+
+  it("a paste while a cell is actively being edited is left to the native input (no range-paste)", () => {
+    const onCellsChange = vi.fn();
+    const { container } = render(<CellEditingGrid onCellsChange={onCellsChange} />);
+    fireEvent.doubleClick(editableCellAt(container, "1", "name"));
+    const input = screen.getByTestId("edit-1-name");
+    fireEvent.paste(input, { clipboardData: mockClipboardData("Bob") });
+    // Not our range-paste logic — no gesture-level onCellsChange call.
+    expect(onCellsChange).not.toHaveBeenCalled();
+  });
+});

@@ -68,6 +68,8 @@ export type { CellEditingCellContext, CellEditingState } from "./cell-editing/us
 export { useCellEditingState } from "./cell-editing/useCellEditingState";
 export { renderCellModeCell } from "./cell-editing/renderCellModeCell";
 export { SelectionOverlay } from "./cell-editing/SelectionOverlay";
+export { coerceValueForColumn } from "./cell-editing/coerce";
+export { parseTsv, rangeToTsv } from "./cell-editing/clipboard";
 
 // --- column selector -----------------------------------------------------
 export type { ColumnVisibility } from "./column-selector/types";
