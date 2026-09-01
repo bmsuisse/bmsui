@@ -1,10 +1,59 @@
-import { useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
+import {
+  useEffect,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from "react";
 import { defaultFormat } from "../column/format";
 import type { ColumnDef } from "../column/types";
 import { isEditable } from "../column/types";
+import { EnumEditor } from "../edit/EnumEditor";
 import { renderDefaultEditWidget } from "../edit/registry";
 import { isAtomicEditorType } from "./renderCellModeCell";
 import type { CellEditingCellContext } from "./useCellEditingState";
+
+/**
+ * Bridges an atomic (enum/boolean/date/datetime) `AlwaysEditCell`'s own
+ * gesture handling back into `<DataGrid>`'s shared cell-selection state —
+ * needed only because these cells' widgets are permanently-mounted, LIVE
+ * controls (a Radix `<Select>` trigger, a checkbox), unlike a non-atomic
+ * editor's plain `<input>`, so a mouse gesture that's supposed to just
+ * select the cell (shift+click, or a drag) can otherwise be swallowed or
+ * misinterpreted by the widget's own native mouse handling before
+ * `<DataGrid>`'s own delegated `onMouseDown` ever sees it. See
+ * `AlwaysEditCell`'s own capture-phase handlers for the mechanics.
+ */
+export interface AtomicGestureContext {
+  /**
+   * True for exactly the one built-in enum (`<Select>`) cell that should
+   * open its dropdown now. Set by `<DataGrid>`'s own mouseup handler the
+   * instant a mousedown/mouseup pair on it resolves to a plain,
+   * non-extended, non-dragged click — the only case its native
+   * open-on-pointerdown/click is supposed to happen at all.
+   *
+   * This exists because `AlwaysEditCell` unconditionally suppresses that
+   * native behavior while a built-in enum widget is closed (see its own
+   * `onPointerDownCapture` doc): unlike the other atomic types, a `<Select>`
+   * also supports a native "press, drag to an option, release to pick it"
+   * gesture — letting it open immediately on ANY mousedown (as Radix does
+   * by default) means a drag that merely passes through its now-open
+   * popover can silently commit the wrong option as this cell's value,
+   * not just steal the range-select gesture. A plain click needs this
+   * signal as its own way back in once that's blocked.
+   */
+  shouldOpenEnum: (rowId: string, columnId: string) => boolean;
+  /**
+   * Registers this gesture's selection directly. Required because
+   * `AlwaysEditCell` suppresses a widget's native pointerdown handling by
+   * calling `preventDefault()` on it — and per the Pointer Events spec,
+   * that ALSO cancels the browser's own compatibility `mousedown` event for
+   * this same gesture, so `<DataGrid>`'s own delegated `onMouseDown`
+   * handler (which is what normally calls this) never runs for it at all.
+   */
+  registerSelection: (rowId: string, columnId: string, extend: boolean) => void;
+}
 
 /**
  * One in-progress, uncommitted edit this component started itself.
@@ -38,8 +87,10 @@ export function AlwaysEditCell<TRow>(props: {
   row: TRow;
   rawValue: unknown;
   ctx: CellEditingCellContext<TRow>;
+  /** Only meaningful for an atomic column type — see `AtomicGestureContext`'s own doc. */
+  atomicGesture?: AtomicGestureContext;
 }): ReactNode {
-  const { column, row, rawValue, ctx } = props;
+  const { column, row, rawValue, ctx, atomicGesture } = props;
   const rowId = ctx.getRowId(row);
   const resolvedValue = ctx.resolveValue(rowId, column.id, rawValue);
   // Called unconditionally, before the `isEditable` early return below —
@@ -48,6 +99,21 @@ export function AlwaysEditCell<TRow>(props: {
   // differ between renders of the very same component instance; a hook
   // can't sit after a conditional return that's conditional on that.
   const [draft, setDraft] = useState<LocalDraft | undefined>(undefined);
+  // The built-in enum widget's own open/closed state, owned here (not by
+  // `<Select>` itself) specifically so a mousedown/click can be
+  // unconditionally suppressed while it's closed — see `AtomicGestureContext`'s
+  // own doc for why. Irrelevant (never read) for every other column type.
+  const [enumOpen, setEnumOpen] = useState(false);
+  const isBuiltinEnum = column.type === "enum" && !column.renderEditCell;
+  const shouldOpenEnumNow = isBuiltinEnum && (atomicGesture?.shouldOpenEnum(rowId, column.id) ?? false);
+  // Opens it exactly once per `<DataGrid>`-confirmed plain click — this
+  // effect only re-runs when `shouldOpenEnumNow` itself flips, not on every
+  // render, so it doesn't fight a subsequent manual close (clicking the
+  // trigger again, picking an option, Escape, clicking away all update
+  // `enumOpen` via `onOpenChange` below, unaffected by this).
+  useEffect(() => {
+    if (shouldOpenEnumNow) setEnumOpen(true);
+  }, [shouldOpenEnumNow]);
 
   if (!isEditable(column, row)) {
     return (
@@ -112,11 +178,106 @@ export function AlwaysEditCell<TRow>(props: {
     else commit(draft!.value);
   }
 
+  // `stopPropagation()` alone does NOT stop Radix's own handlers on the
+  // widget from still firing here — React dispatches capture- and
+  // bubble-phase handlers off separate root-level native listeners, so a
+  // synthetic `stopPropagation()` called from a CAPTURE handler only halts
+  // React's own capture-side traversal, not the independent bubble-side one
+  // that would still reach the widget's own bubble-phase prop. Only
+  // stopping the underlying native event itself reliably prevents that
+  // (verified against a live Radix `<Select>` trigger). Shared by both
+  // capture handlers below. Returns `true` when it actually suppressed
+  // anything, so callers know whether to also call `registerSelection`.
+  function suppressNative(event: ReactPointerEvent | ReactMouseEvent): boolean {
+    event.stopPropagation();
+    event.nativeEvent.stopImmediatePropagation();
+    return true;
+  }
+
+  // Modifier-only interception, for atomic widgets OTHER than the built-in
+  // enum editor (which gets the stronger, always-while-closed interception
+  // below instead): a shift/ctrl/meta-held click meant to just select the
+  // cell would otherwise still reach the widget's own native click handling
+  // (a checkbox's toggle, or focusing a native date input) — Radix/native
+  // controls don't know to treat those modifiers as "don't act, just
+  // select" the way this grid does. These don't cover nearby rows with a
+  // draggable popover the way `<Select>` does, so a PLAIN drag starting on
+  // one of them already resolves correctly with no interception needed at
+  // all — nothing here ever eclipses `event.target` during it.
+  function handleModifierCapture(event: ReactPointerEvent | ReactMouseEvent): boolean {
+    if (!isAtomic || isBuiltinEnum) return false;
+    if (!(event.shiftKey || event.ctrlKey || event.metaKey)) return false;
+    return suppressNative(event);
+  }
+
+  // Unconditional (any gesture, not just modifier-held) interception for a
+  // CLOSED built-in enum editor — see `AtomicGestureContext.shouldOpenEnum`'s
+  // own doc for why a plain click can't just be let through immediately the
+  // way it can for the other atomic types above: a `<Select>` that's
+  // allowed to open on ANY plain mousedown also lets a drag starting on it
+  // silently commit whichever option the drag happens to end up over.
+  // Once open, this stops intercepting entirely — closing it again (click
+  // the trigger, pick an option, click away, Escape) is left to Radix's own
+  // normal behavior, via `onOpenChange={setEnumOpen}` below.
+  function handleEnumOpenCapture(event: ReactPointerEvent | ReactMouseEvent): boolean {
+    if (!isBuiltinEnum || enumOpen) return false;
+    return suppressNative(event);
+  }
+
+  // Pointerdown, not just click: this is also where a suppressed gesture's
+  // selection gets registered (see `AtomicGestureContext.registerSelection`'s
+  // own doc for why `<DataGrid>`'s own mousedown handler can't be trusted to
+  // still run on its own here) — pointerdown, rather than the later click,
+  // since a real drag never produces a `click` at all (mouseup lands on a
+  // different cell than mousedown), but still needs its start cell
+  // registered as the selection's anchor.
+  function handlePointerDownCapture(event: ReactPointerEvent): void {
+    const suppressed = handleModifierCapture(event) || handleEnumOpenCapture(event);
+    if (suppressed) atomicGesture?.registerSelection(rowId, column.id, event.shiftKey);
+  }
+
+  // A SEPARATE interception from the pointerdown one above, and just as
+  // required: Radix's `<Select>` trigger also opens from its own `onClick`
+  // handler, but only when `pointerType !== "mouse"` (its own touch
+  // fallback) — and that internal pointer-type tracking is itself only
+  // ever updated inside the very `onPointerDown` handler this file
+  // suppresses, so once that's blocked, the trigger's `pointerType` gets
+  // stuck at Radix's own initial default ("touch"), and its `onClick`
+  // fallback opens the dropdown anyway on the ensuing native `click`
+  // (mousedown+mouseup on the same target) if this isn't ALSO suppressed.
+  // No `registerSelection` here — `handlePointerDownCapture` above already
+  // covers it, and click fires (if at all) strictly after pointerdown for
+  // the same gesture.
+  function handleClickCapture(event: ReactMouseEvent): void {
+    handleModifierCapture(event);
+    handleEnumOpenCapture(event);
+  }
+
   return (
-    <fieldset disabled={ctx.disabled} onKeyDown={handleKeyDown} onBlur={handleBlur} className="contents">
-      {column.renderEditCell
-        ? column.renderEditCell(currentValue, row, onChange, error, false)
-        : renderDefaultEditWidget(column, rowId, currentValue, onChange, error, false)}
+    <fieldset
+      disabled={ctx.disabled}
+      onKeyDown={handleKeyDown}
+      onBlur={handleBlur}
+      onPointerDownCapture={handlePointerDownCapture}
+      onClickCapture={handleClickCapture}
+      className="contents"
+    >
+      {column.type === "enum" && !column.renderEditCell ? (
+        <EnumEditor
+          column={column}
+          rowId={rowId}
+          value={currentValue}
+          onChange={onChange}
+          error={error}
+          autoFocus={false}
+          open={enumOpen}
+          onOpenChange={setEnumOpen}
+        />
+      ) : column.renderEditCell ? (
+        column.renderEditCell(currentValue, row, onChange, error, false)
+      ) : (
+        renderDefaultEditWidget(column, rowId, currentValue, onChange, error, false)
+      )}
     </fieldset>
   );
 }

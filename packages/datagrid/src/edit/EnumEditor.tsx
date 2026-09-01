@@ -12,11 +12,22 @@ export function EnumEditor<TRow>({
   onChange,
   error,
   autoFocus,
-}: EditWidgetProps<EnumColumn<TRow>>): ReactElement {
+  open,
+  onOpenChange,
+}: EditWidgetProps<EnumColumn<TRow>> & {
+  /** Controls the dropdown's own open state — omit to let `<Select>` manage it itself (the default, used everywhere except `AlwaysEditCell`; see that file's own doc for why it needs control here). */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}): ReactElement {
   const errorId = editErrorId(rowId, column.id);
   return (
     <div>
-      <Select value={value === null || value === undefined ? "" : String(value)} onValueChange={onChange}>
+      <Select
+        value={value === null || value === undefined ? "" : String(value)}
+        onValueChange={onChange}
+        open={open}
+        onOpenChange={onOpenChange}
+      >
         <SelectTrigger
           className="h-8"
           aria-label={`Edit ${column.header}`}

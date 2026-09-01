@@ -54,3 +54,39 @@ describe("useGridState (externalState / gridState push)", () => {
     expect(result.current.state).toEqual(cleared);
   });
 });
+
+describe("useGridState (showPagination default pageSize resolution)", () => {
+  it("defaults pageSize to 20 when showPagination is true (unchanged behavior)", () => {
+    const { result } = renderHook(() =>
+      useGridState({ mode: "client", data: [] }, undefined, undefined, true),
+    );
+    expect(result.current.state.pageSize).toBe(20);
+  });
+
+  it("defaults pageSize to 20 when showPagination is omitted (defaults to true)", () => {
+    const { result } = renderHook(() => useGridState({ mode: "client", data: [] }));
+    expect(result.current.state.pageSize).toBe(20);
+  });
+
+  it("resolves pageSize to an effectively unbounded value when showPagination is false and no explicit pageSize is given", () => {
+    const { result } = renderHook(() =>
+      useGridState({ mode: "client", data: [] }, undefined, undefined, false),
+    );
+    expect(result.current.state.pageSize).toBe(Number.MAX_SAFE_INTEGER);
+  });
+
+  it("still respects an explicit initialState.pageSize when showPagination is false (deliberate fixed-size chunking)", () => {
+    const { result } = renderHook(() =>
+      useGridState({ mode: "client", data: [] }, { pageSize: 5 }, undefined, false),
+    );
+    expect(result.current.state.pageSize).toBe(5);
+  });
+
+  it("does not touch pageSize when externalState (controlled gridState) is provided, regardless of showPagination", () => {
+    const controlled: GridState = { filter: null, sort: [], page: 0, pageSize: 20 };
+    const { result } = renderHook(() =>
+      useGridState({ mode: "client", data: [] }, undefined, controlled, false),
+    );
+    expect(result.current.state).toEqual(controlled);
+  });
+});

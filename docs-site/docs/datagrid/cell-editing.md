@@ -153,7 +153,13 @@ as plain static text.
 Selection, copy, paste, and the fill-handle all keep working exactly as
 described above — they operate on the selected range, a separate concept
 from which cells have their editors open (all of them, under this flag).
-Since every editable cell already has its own editor, the single-cell
+This includes an atomic (enum/boolean/date/datetime) column's widget: a
+shift+click or a drag starting on one of them selects/extends the range
+without opening or changing it (its built-in `<Select>`/checkbox/date-input
+never gets a chance to react to that gesture), exactly like clicking a
+non-atomic cell doesn't disturb its typed contents — only a genuinely plain,
+non-extending, non-dragged click still opens an enum cell's dropdown
+directly, same as before. Since every editable cell already has its own editor, the single-cell
 "click to edit"/"one cell editing at a time" machinery — and the custom
 arrow-key/Tab cell navigation that goes with it — is bypassed entirely:
 arrow keys, Tab, and Home/End behave exactly like they would in any other

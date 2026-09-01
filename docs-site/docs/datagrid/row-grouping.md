@@ -76,8 +76,13 @@ the alternating row stripes.
 
 `groupBy` operates on whatever rows the grid already resolved to — i.e. the
 current page, if paginated — with no special-casing to keep one group's full
-membership together across pages. Pair it with a large `pageSize` or
-`showPagination={false}` if that matters for a given grid.
+membership together across pages. Set `showPagination={false}` if that
+matters for a given grid: in `"client"` mode, with no explicit `pageSize`
+given, that alone now resolves to an effectively unbounded page, so every
+row is visible to `groupBy` without also having to pick a large `pageSize`
+yourself. In `"server"` mode the row count isn't known client-side up
+front, so this still depends on your `dataSource` actually returning every
+row for a given request.
 
 **Not supported together with `virtualize` yet.** Interleaving synthetic
 group-header rows and hiding a collapsed bucket's rows needs a flattened

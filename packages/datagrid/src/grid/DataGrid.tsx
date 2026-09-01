@@ -22,7 +22,7 @@ import { parseTsv, rangeToTsv } from "../cell-editing/clipboard";
 import { coerceValueForColumn } from "../cell-editing/coerce";
 import { computeFillChanges } from "../cell-editing/fillHandle";
 import { buildIndexMap, normalizeRange } from "../cell-editing/rangeUtils";
-import { AlwaysEditCell } from "../cell-editing/renderAlwaysEditCell";
+import { AlwaysEditCell, type AtomicGestureContext } from "../cell-editing/renderAlwaysEditCell";
 import { renderCellModeCell } from "../cell-editing/renderCellModeCell";
 import { SelectionOverlay } from "../cell-editing/SelectionOverlay";
 import type { CellAddress, CellChange } from "../cell-editing/types";
@@ -201,11 +201,15 @@ type FlatItem<TRow extends RowData> =
  * modes are mutually exclusive — see `DataGridProps.cellEditing`'s own doc),
  * so which renderer a cell uses is decided fresh on every actual render,
  * with neither ref itself ever appearing in this function's own deps.
+ *
+ * `atomicGestureRef` is the same recipe again, for `AlwaysEditCell`'s own
+ * atomic-widget gesture handling (`AtomicGestureContext`) — see its own doc.
  */
 function toTanstackColumns<TRow extends RowData>(
   columns: ColumnDef<TRow>[],
   editingCtxRef: { current: EditingCellContext<TRow> | undefined },
   cellEditingCtxRef: { current: CellEditingCellContext<TRow> | undefined },
+  atomicGestureRef: { current: AtomicGestureContext | undefined },
 ): TanstackColumnDef<GridTableFeatures, TRow, unknown>[] {
   return columns.map((column) => ({
     id: column.id,
@@ -216,7 +220,13 @@ function toTanstackColumns<TRow extends RowData>(
       const cellEditingCtx = cellEditingCtxRef.current;
       if (!cellEditingCtx) return renderEditableCell(column, info.row.original, info.getValue(), editingCtxRef.current);
       return cellEditingCtx.alwaysEdit ? (
-        <AlwaysEditCell column={column} row={info.row.original} rawValue={info.getValue()} ctx={cellEditingCtx} />
+        <AlwaysEditCell
+          column={column}
+          row={info.row.original}
+          rawValue={info.getValue()}
+          ctx={cellEditingCtx}
+          atomicGesture={atomicGestureRef.current}
+        />
       ) : (
         renderCellModeCell(column, info.row.original, info.getValue(), cellEditingCtx)
       );
@@ -275,6 +285,7 @@ export function DataGrid<TRow extends RowData>({
     dataSource,
     initialState,
     gridState,
+    showPagination,
   );
   const [internalSelectedIds, setInternalSelectedIds] = useState<ReadonlySet<string>>(new Set());
   const selectedIds = controlledSelectedIds ?? internalSelectedIds;
@@ -327,6 +338,12 @@ export function DataGrid<TRow extends RowData>({
     hasCellEditing ? cellEditing : undefined,
     getRowId,
   );
+  // Same "stable ref identity, reassigned every render" recipe as
+  // `editingCtxRef`/`cellEditingCtxRef` above — assigned further down, once
+  // `cellSelection`/`pendingOpenEnumCell` (which its callbacks close over)
+  // exist, but declared here so `tanstackColumns` below can take it without
+  // depending on either.
+  const atomicGestureRef = useRef<AtomicGestureContext | undefined>(undefined);
 
   // Single source of truth for "which columns actually render": every other
   // representation below (the TanStack column defs, the header lookup map,
@@ -378,7 +395,7 @@ export function DataGrid<TRow extends RowData>({
   // render regardless (see `toTanstackColumns`'s doc for why that
   // indirection is what keeps typing in an editor from remounting the grid).
   const tanstackColumns = useMemo(
-    () => toTanstackColumns(visibleColumns, editingCtxRef, cellEditingCtxRef),
+    () => toTanstackColumns(visibleColumns, editingCtxRef, cellEditingCtxRef, atomicGestureRef),
     [visibleColumns],
   );
 
@@ -630,6 +647,27 @@ export function DataGrid<TRow extends RowData>({
   }, [visibleColumns, enableColumnResizing, leftPinnedOffsets, rightPinnedOffsets, columnSizing]);
 
   const tableRows = table.getRowModel().rows;
+
+  // Dev-only guardrail: `showPagination={false}` with no explicit `pageSize`
+  // now resolves to an effectively unbounded page (see `useGridState`'s own
+  // doc), so this only fires for what that fix can't cover -- a controlled
+  // `gridState` prop whose `pageSize` doesn't (or no longer) cover every
+  // row, or a `dataSource: {mode: "server"}` response smaller than the
+  // `rowCount` it reported. An explicit, uncontrolled `initialState.pageSize`
+  // is the deliberate fixed-size-chunking use case and must never warn.
+  const truncationWarnedRef = useRef(false);
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production") return;
+    if (showPagination) return;
+    if (truncationWarnedRef.current) return;
+    if (!gridState && initialState?.pageSize !== undefined) return;
+    if (tableRows.length >= rowCount) return;
+    truncationWarnedRef.current = true;
+    console.warn(
+      `[DataGrid] showPagination={false} but only ${tableRows.length} of ${rowCount} row(s) are rendered, with no pagination UI to reach the rest. Pass an explicit pageSize (via initialState or gridState) that covers every row you want visible, or a dataSource that returns all of them.`,
+    );
+  }, [showPagination, gridState, initialState?.pageSize, tableRows.length, rowCount]);
+
   const groupedBuckets = useMemo(
     () => (groupBy ? groupRows(tableRows, (row) => groupBy(row.original)) : undefined),
     [tableRows, groupBy],
@@ -763,6 +801,31 @@ export function DataGrid<TRow extends RowData>({
   // handler, never rendered.
   const clickCellRef = useRef<{ rowId: string; columnId: string; extend: boolean; wasEditing: boolean } | null>(null);
   const dragMovedRef = useRef(false);
+  // The one built-in enum (`<Select>`) cell (if any) that should open its
+  // dropdown right now — see `AtomicGestureContext.shouldOpenEnum`'s own
+  // doc for why `AlwaysEditCell` needs this instead of just letting Radix's
+  // native open-on-click happen. Set (once) by `handleMouseUp` below;
+  // deliberately never cleared back to `undefined` afterward — once set,
+  // `AlwaysEditCell` opens itself and takes over its own open/close state
+  // via `onOpenChange` from then on, so leaving this pointed at the same
+  // cell is inert, not a standing "force reopen."
+  const [pendingOpenEnumCell, setPendingOpenEnumCell] = useState<CellAddress | undefined>(undefined);
+
+  atomicGestureRef.current = {
+    shouldOpenEnum: (rowId, columnId) =>
+      pendingOpenEnumCell?.rowId === rowId && pendingOpenEnumCell?.columnId === columnId,
+    // Mirrors exactly what `handleCellMouseDown` below does for every other
+    // cell, minus the click-to-edit-only tail end (irrelevant here — always
+    // invoked under `alwaysEdit`, same as that function's own early return
+    // for it) — see `AtomicGestureContext.registerSelection`'s own doc for
+    // why `AlwaysEditCell` can't just rely on that function running on its
+    // own for a gesture it suppresses.
+    registerSelection: (rowId, columnId, extend) => {
+      cellSelection.startSelection({ rowId, columnId }, { extend });
+      clickCellRef.current = { rowId, columnId, extend, wasEditing: false };
+      dragMovedRef.current = false;
+    },
+  };
 
   /** Opens `cell`'s editor for a plain (non-extending, non-dragged) click — shared by the mouseup-commits-a-click path below and `handleCellDoubleClick`. No-ops if the cell isn't editable, or is (STILL — this check runs after `handleCellMouseDown`'s own blur-on-focus already had its chance to close it) the one being edited: `handleCellDoubleClick` has no `wasEditing` snapshot of its own to rely on, so this is what stops its second click's `dblclick` from clobbering a draft the reopen already produced. */
   function beginEditFromClick(cell: { rowId: string; columnId: string }): void {
@@ -806,7 +869,23 @@ export function DataGrid<TRow extends RowData>({
       cellSelection.endDrag();
       const clickCell = clickCellRef.current;
       clickCellRef.current = null;
-      if (clickCell && !clickCell.extend && !clickCell.wasEditing && !dragMovedRef.current) beginEditFromClick(clickCell);
+      if (!clickCell || clickCell.extend || clickCell.wasEditing || dragMovedRef.current) return;
+      // Under `alwaysEdit`, `beginEditFromClick` has nothing to do (see
+      // `editingCell`'s own doc: meaningless there) — the one thing a plain
+      // click still needs to trigger explicitly is opening a built-in enum
+      // widget's dropdown, since `AlwaysEditCell` unconditionally suppresses
+      // its native open-on-click while closed (see `AtomicGestureContext`'s
+      // own doc for why). Every other atomic type there already reacts to a
+      // plain click as normal (only a modifier-held one is suppressed), so
+      // there's nothing further to do for them here.
+      if (cellEditingCtx?.alwaysEdit) {
+        const column = columnById.get(clickCell.columnId);
+        if (column?.type === "enum" && !column.renderEditCell) {
+          setPendingOpenEnumCell({ rowId: clickCell.rowId, columnId: clickCell.columnId });
+        }
+        return;
+      }
+      beginEditFromClick(clickCell);
     }
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mouseup", handleMouseUp);
@@ -907,18 +986,14 @@ export function DataGrid<TRow extends RowData>({
     const columnId = cellEl?.dataset.cellCol;
     if (rowId === undefined || columnId === undefined) return;
     cellSelection.startSelection({ rowId, columnId }, { extend: event.shiftKey });
-    // Under `alwaysEdit`, every editable cell already has its own always-
-    // mounted editor (`AlwaysEditCell`) — there's no click-to-edit gesture to
-    // track, and stealing focus onto the scroll container below would fight
-    // the click's own natural job of focusing whichever `<input>` it landed
-    // on. Selection (for copy/paste/fill-handle) still works exactly the
-    // same either way, via `startSelection` above.
-    if (cellEditingCtx?.alwaysEdit) return;
     // Recorded for the window `mouseup` handler above: a plain click (this
-    // exact cell, not shift-extended, never dragged elsewhere) opens its
-    // editor — Excel's single-click-to-edit convention. Reset per mousedown,
-    // not per click, so a genuine drag never leaves a stale "moved" flag
-    // around to falsely block the *next* plain click's auto-edit.
+    // exact cell, not shift-extended, never dragged elsewhere) either opens
+    // its editor (click-to-edit mode's Excel convention) or, under
+    // `alwaysEdit`, opens a built-in enum widget's own dropdown (see
+    // `AtomicGestureContext`'s own doc for why that needs a signal from
+    // here rather than just Radix's native click handling). Reset per
+    // mousedown, not per click, so a genuine drag never leaves a stale
+    // "moved" flag around to falsely block the *next* plain click.
     // `wasEditing` must be read NOW, before `scrollRef.current?.focus()`
     // below has a chance to blur (and thus close) this very cell — see
     // `clickCellRef`'s own doc for why that makes this the only correct
@@ -926,6 +1001,15 @@ export function DataGrid<TRow extends RowData>({
     const wasEditing = cellEditingCtx?.editingCell?.rowId === rowId && cellEditingCtx.editingCell.columnId === columnId;
     clickCellRef.current = { rowId, columnId, extend: event.shiftKey, wasEditing };
     dragMovedRef.current = false;
+    // Under `alwaysEdit`, every editable cell already has its own always-
+    // mounted editor (`AlwaysEditCell`) — there's no click-to-edit gesture to
+    // open via `scrollRef.current?.focus()` below, which would only fight
+    // the click's own natural job of focusing whichever control it landed
+    // on. Selection (for copy/paste/fill-handle) still works exactly the
+    // same either way, via `startSelection` above; `clickCellRef` set just
+    // above is still needed here, for `handleMouseUp`'s own atomic-open
+    // decision.
+    if (cellEditingCtx?.alwaysEdit) return;
     // A click landing INSIDE the cell that's already being edited (e.g. to
     // reposition the text cursor, or drag-select some of its own text) must
     // be left alone entirely — moving focus below would blur-and-close it

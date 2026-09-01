@@ -63,15 +63,29 @@ function nextSortDir(
  * across the component's lifetime — start controlled and stay controlled,
  * or start uncontrolled and stay uncontrolled; toggling to `undefined`
  * later does not hand ownership back, it just stops resyncing.
+ *
+ * `showPagination`, when `false` and the caller did NOT explicitly provide
+ * `initialState.pageSize`, seeds `pageSize` as effectively unbounded instead
+ * of `DEFAULT_STATE`'s 20 — "hide the pagination controls" means "no
+ * pagination" by default, matching `<DataGrid>`'s `showPagination` doc. A
+ * caller who explicitly sets `initialState.pageSize` (deliberate fixed-size
+ * chunking with no UI, alongside `showPagination: false`) still gets exactly
+ * that value; this only changes what happens when they didn't ask for a
+ * particular page size at all. Has no effect once `externalState` is in
+ * play — a controlled `GridState` is always fully caller-specified.
  */
 export function useGridState<TRow>(
   dataSource: DataSource<TRow>,
   initialState?: Partial<GridState>,
   externalState?: GridState,
+  showPagination = true,
 ): GridStateController {
-  const [state, setState] = useState<GridState>(
-    () => externalState ?? { ...DEFAULT_STATE, ...initialState },
-  );
+  const [state, setState] = useState<GridState>(() => {
+    if (externalState) return externalState;
+    const pageSize =
+      initialState?.pageSize ?? (showPagination ? DEFAULT_STATE.pageSize : Number.MAX_SAFE_INTEGER);
+    return { ...DEFAULT_STATE, ...initialState, pageSize };
+  });
 
   const notifyRaw = useCallback(
     (next: GridState) => {
