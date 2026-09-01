@@ -681,6 +681,78 @@ describe("DataGrid (column pinning)", () => {
 
     expect(screen.getByRole("columnheader", { name: /Name/ })).toHaveStyle({ left: "88px" });
   });
+
+  // Combo: enableColumnResizing + pinned columns on BOTH edges + a headerGroup
+  // spanning row over the (ungrouped, side-pinned) columns -- dragging a
+  // pinned column's own resize handle must update every LATER pinned
+  // column's offset to track its new live width, not just its own, and the
+  // spanning header row must keep rendering correctly throughout (resize
+  // handles live inside the rowSpan={2} cell for an ungrouped column there).
+  // Combo: hiding a pinned column via columnVisibility must not leave a gap
+  // in a later same-side pinned column's offset -- pinnedOffsets iterates
+  // `visibleColumns` (already filtered), so a hidden column should
+  // contribute nothing to the running cursor, same as if it never existed.
+  it("recomputes a later pinned column's offset after an earlier pinned column is hidden via columnVisibility", () => {
+    const pinned: ColumnDef<Row>[] = [
+      { ...columns[0]!, pinned: "left", width: 120 },
+      { id: "second", type: "string", header: "Second", accessorKey: "name", pinned: "left", width: 80 },
+    ];
+    const { rerender } = render(
+      <DataGrid columns={pinned} dataSource={{ mode: "client", data: rows }} getRowId={(row) => row.id} />,
+    );
+    expect(screen.getByRole("columnheader", { name: /Second/ })).toHaveStyle({ left: "120px" });
+
+    rerender(
+      <DataGrid
+        columns={pinned}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        columnVisibility={{ [columns[0]!.id]: false }}
+      />,
+    );
+    expect(screen.queryByRole("columnheader", { name: columns[0]!.header })).not.toBeInTheDocument();
+    // "Second" is now the ONLY left-pinned column left, so it must stick at 0.
+    expect(screen.getByRole("columnheader", { name: /Second/ })).toHaveStyle({ left: "0px" });
+  });
+
+  it("live-updates a later pinned column's offset after resizing an earlier pinned column, with headerGroup active", () => {
+    const combo: ColumnDef<Row>[] = [
+      { ...columns[0]!, pinned: "left", width: 100 },
+      { id: "second", type: "string", header: "Second", accessorKey: "name", pinned: "left", width: 80 },
+      { ...columns[1]!, headerGroup: "Details" },
+      { id: "extra", type: "string", header: "Extra", accessorKey: "name", headerGroup: "Details" },
+      { id: "status", type: "string", header: "Status", accessorKey: "name", pinned: "right", width: 60 },
+    ];
+    render(
+      <DataGrid
+        columns={combo}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        enableColumnResizing
+      />,
+    );
+
+    // Before resizing: second left-pinned column stacks right after the
+    // first's declared 100px width; the spanning "Details" header still
+    // renders over the two ungrouped-header-row columns.
+    expect(screen.getByRole("columnheader", { name: /Second/ })).toHaveStyle({ left: "100px" });
+    expect(screen.getByTestId("header-group-row")).toBeInTheDocument();
+    expect(screen.getByText("Details")).toBeInTheDocument();
+
+    const handle = screen.getByTestId(`resize-handle-${columns[0]!.id}`);
+    fireEvent.mouseDown(handle, { clientX: 0 });
+    fireEvent.mouseMove(document, { clientX: 40 });
+    fireEvent.mouseUp(document, { clientX: 40 });
+
+    // First column grew 100 -> 140; the second pinned-left column's offset
+    // must track that LIVE width, not the original 100px it was declared with.
+    expect(screen.getByRole("columnheader", { name: columns[0]!.header })).toHaveStyle({ width: "140px" });
+    expect(screen.getByRole("columnheader", { name: /Second/ })).toHaveStyle({ left: "140px" });
+    // The right-pinned column and the headerGroup row are unaffected by a
+    // left-side resize.
+    expect(screen.getByRole("columnheader", { name: /Status/ })).toHaveStyle({ right: "0px" });
+    expect(screen.getByText("Details")).toBeInTheDocument();
+  });
 });
 
 describe("DataGrid (sticky header)", () => {
