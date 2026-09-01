@@ -120,7 +120,14 @@ async function captureDatagridDemo(browser: Browser, url: string): Promise<void>
 
   // The dedicated <TreeDataGrid> editing demo — click into a child row
   // (already visible: `initialExpandedLevel: 1`) to show a pending edit.
-  const editingTree = page.getByTestId("tree-datagrid").last();
+  // Every <TreeDataGrid> renders the same fixed `tree-datagrid` testid (it
+  // has no `testId` prop to disambiguate, unlike <DataGrid>), and the page
+  // now has a THIRD one (the groupBy+columnVisibility demo, added after this
+  // one) — so `.last()` no longer picks this tree. Filter by "Mobile App" (a
+  // row this demo never edits) rather than the row we're about to edit —
+  // filtering by the "Design mockups" cell itself would stop matching the
+  // instant that cell flips from static text to its own editor.
+  const editingTree = page.getByTestId("tree-datagrid").filter({ hasText: "Mobile App" });
   await editingTree.scrollIntoViewIfNeeded();
   await editingTree.getByTestId("cell-website-design-name").click();
   await editingTree.getByTestId("edit-website-design-name").fill("Design mockups (v2)");
