@@ -978,6 +978,72 @@ function CellEditingDemo(): ReactElement {
   );
 }
 
+// --- cellEditing + pinned columns demo: enough columns to force horizontal
+// scroll, one pinned left (editable) and one pinned right, exercising range
+// selection/the fill handle while the grid is scrolled sideways — the
+// `SelectionOverlay` reads live `getBoundingClientRect()`s of the selected
+// cells, and a `pinned` cell's rect is reported in VIEWPORT space (fixed by
+// `position: sticky`) rather than content space like every other cell.
+interface PinnedEditRow {
+  id: string;
+  sku: string;
+  category: string;
+  warehouse: string;
+  supplier: string;
+  region: string;
+  qty: number;
+  status: string;
+}
+
+const PINNED_EDIT_ROWS: PinnedEditRow[] = [
+  { id: "1", sku: "SKU-1001", category: "Fasteners", warehouse: "North DC", supplier: "Acme Corp", region: "EMEA", qty: 120, status: "In stock" },
+  { id: "2", sku: "SKU-1002", category: "Adhesives", warehouse: "South DC", supplier: "Globex", region: "APAC", qty: 0, status: "Low stock" },
+  { id: "3", sku: "SKU-1003", category: "Fasteners", warehouse: "East DC", supplier: "Initech", region: "AMER", qty: 45, status: "In stock" },
+];
+
+const pinnedEditColumns: ColumnDef<PinnedEditRow>[] = [
+  { id: "sku", type: "string", header: "SKU", accessorKey: "sku", width: 120, pinned: "left", editable: true },
+  { id: "category", type: "string", header: "Category", accessorKey: "category", width: 140, editable: true },
+  { id: "warehouse", type: "string", header: "Warehouse", accessorKey: "warehouse", width: 140, editable: true },
+  { id: "supplier", type: "string", header: "Supplier", accessorKey: "supplier", width: 140, editable: true },
+  { id: "region", type: "string", header: "Region", accessorKey: "region", width: 140, editable: true },
+  { id: "qty", type: "number", header: "Qty", accessorKey: "qty", width: 100, editable: true },
+  { id: "status", type: "string", header: "Status", accessorKey: "status", width: 140, pinned: "right", editable: true },
+];
+
+function PinnedCellEditingDemo(): ReactElement {
+  const [rows, setRows] = useState(PINNED_EDIT_ROWS);
+  return (
+    <div className="max-w-lg">
+      <p className="mb-2 text-sm text-muted-foreground">
+        SKU is pinned left, Status is pinned right, both editable — scroll sideways, then select a
+        range spanning a pinned column and a scrolled-away one to check the selection/fill-handle
+        overlay stays aligned with the actual cells.
+      </p>
+      <DataGrid
+        testId="pinned-cell-editing-grid"
+        columns={pinnedEditColumns}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        showPagination={false}
+        enableColumnResizing
+        cellEditing={{
+          onCellsChange: (changes) => {
+            setRows((prev) =>
+              prev.map((row) => {
+                const rowChanges = changes.filter((c) => c.rowId === row.id);
+                if (rowChanges.length === 0) return row;
+                const patch = Object.fromEntries(rowChanges.map((c) => [c.columnId, c.value]));
+                return { ...row, ...patch };
+              }),
+            );
+          },
+        }}
+      />
+    </div>
+  );
+}
+
 /**
  * The whole demo: an engine toggle (SQL / Meilisearch, also settable via
  * ?engine=), a dark-mode toggle, and a <ColumnSelector> trigger, all driving
@@ -1109,6 +1175,9 @@ export function App(): ReactElement {
 
       <h2 className="mb-2 mt-8 text-lg font-semibold">cellEditing demo — true spreadsheet editing</h2>
       <CellEditingDemo />
+
+      <h2 className="mb-2 mt-8 text-lg font-semibold">cellEditing + pinned columns demo</h2>
+      <PinnedCellEditingDemo />
 
       <h2 className="mb-2 mt-8 text-lg font-semibold">Virtualized scrolling demo</h2>
       <VirtualizedScrollDemo />

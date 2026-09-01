@@ -1,5 +1,5 @@
 import type { MouseEvent as ReactMouseEvent, ReactElement } from "react";
-import { useLayoutEffect, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import type { CellRange } from "./types";
 
 interface OverlayRect {
@@ -79,6 +79,18 @@ export function SelectionOverlay({
   const [rect, setRect] = useState<OverlayRect | undefined>(undefined);
   const [previewRect, setPreviewRect] = useState<OverlayRect | undefined>(undefined);
 
+  // Read fresh inside the effect below via a ref, not as a dependency of the
+  // scroll-listener effect — see that effect's own doc for why it must not
+  // resubscribe on every `range`/`fillPreviewRange` change.
+  const recomputeRef = useRef<() => void>(() => {});
+  recomputeRef.current = () => {
+    const container = containerRef.current;
+    const nextRect = range && container ? computeRangeRect(container, range) : undefined;
+    setRect((prev) => (rectsEqual(prev, nextRect) ? prev : nextRect));
+    const nextPreviewRect = fillPreviewRange && container ? computeRangeRect(container, fillPreviewRange) : undefined;
+    setPreviewRect((prev) => (rectsEqual(prev, nextPreviewRect) ? prev : nextPreviewRect));
+  };
+
   // No dependency array: geometry can change for reasons other than `range`/
   // `fillPreviewRange` themselves (a column resize, a virtualized row
   // mounting/unmounting) — this is deliberately cheap enough (at most four
@@ -86,12 +98,35 @@ export function SelectionOverlay({
   // isolated component rather than trying to enumerate every input that
   // could move a cell.
   useLayoutEffect(() => {
-    const container = containerRef.current;
-    const nextRect = range && container ? computeRangeRect(container, range) : undefined;
-    setRect((prev) => (rectsEqual(prev, nextRect) ? prev : nextRect));
-    const nextPreviewRect = fillPreviewRange && container ? computeRangeRect(container, fillPreviewRange) : undefined;
-    setPreviewRect((prev) => (rectsEqual(prev, nextPreviewRect) ? prev : nextPreviewRect));
+    recomputeRef.current();
   });
+
+  // A `pinned` cell's `getBoundingClientRect()` is reported in VIEWPORT
+  // space (fixed by `position: sticky`) rather than scrolling with the
+  // content the way every other cell's does — `computeRangeRect`'s own
+  // "unscrolled content-space" formula (rect minus the container's rect,
+  // plus the container's current scroll offset) only cancels out correctly
+  // for a cell that actually moves with `scrollLeft`/`scrollTop`. A plain
+  // horizontal/vertical scroll of the container is otherwise invisible to
+  // this component — nothing about it changes React state anywhere in
+  // `<DataGrid>`, so the `useLayoutEffect` above (which only reruns when
+  // THIS component re-renders) would leave a selection anchored on a pinned
+  // column silently drifting away from the real cell as the container keeps
+  // scrolling. A plain native `scroll` listener (passive; this only ever
+  // reads geometry, never calls `preventDefault`) is what makes a pinned
+  // corner track correctly; recomputing here is a no-op for the common case
+  // of an all-unpinned selection, since that math already cancels out scroll
+  // on its own.
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    function handleScroll(): void {
+      recomputeRef.current();
+    }
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    return () => container.removeEventListener("scroll", handleScroll);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberately only resubscribes when the container itself changes identity, not on every range/fillPreviewRange change; `recomputeRef.current` is reassigned above on every render and read fresh from inside the listener.
+  }, [containerRef.current]);
 
   if (!rect) return null;
   return (
