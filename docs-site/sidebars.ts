@@ -21,6 +21,7 @@ const sidebars: SidebarsConfig = {
         'datagrid/server-vs-client',
         'datagrid/row-grouping',
         'datagrid/inline-editing',
+        'datagrid/cell-editing',
         'datagrid/tree-data-grid',
         'datagrid/column-selector',
       ],
