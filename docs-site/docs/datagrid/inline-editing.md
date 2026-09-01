@@ -6,7 +6,10 @@ title: Inline editing
 
 `editable` turns a column's cells into interactive editors; `editing`
 (a prop on `<DataGrid>` itself) turns on the accumulate-then-save workflow
-that goes with it. Cells stay static text until clicked — clicking (or
+that goes with it. For the "true spreadsheet" alternative — range-select,
+paste, fill-handle, every change applying immediately — see
+[Cell editing](/datagrid/cell-editing) instead; the two are mutually
+exclusive. Cells stay static text until clicked — clicking (or
 pressing Enter/Space on) any editable cell in a row turns **every** editable
 column in that row into editors at once, with focus landing on the cell that
 was actually clicked. **At most one row is ever in edit mode at a time** —
