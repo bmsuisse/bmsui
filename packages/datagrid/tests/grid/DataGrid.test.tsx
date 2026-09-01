@@ -937,6 +937,43 @@ describe("DataGrid (virtualize)", () => {
       expect(onEndReached).not.toHaveBeenCalled();
     });
   });
+
+  it("re-fires onEndReached after a sort change replaces the loaded window with same-length data", async () => {
+    await withMockedOffsetHeight(400, async () => {
+      const onEndReached = vi.fn();
+      const onStateChange = vi.fn();
+      const manyRows: Row[] = Array.from({ length: 40 }, (_, i) => ({ id: `r${i}`, name: `Row ${i}`, age: i }));
+      const { rerender } = render(
+        <DataGrid
+          columns={columns}
+          dataSource={{ mode: "server", data: manyRows, rowCount: 1000, onStateChange }}
+          getRowId={(row) => row.id}
+          virtualize={{ threshold: 0, overscan: 50, onEndReached }}
+        />,
+      );
+      expect(onEndReached).toHaveBeenCalledTimes(1);
+
+      await userEvent.click(screen.getByRole("button", { name: "Name" }));
+      expect(onStateChange).toHaveBeenCalled();
+
+      // The caller's own onStateChange handler would refetch and replace
+      // `data` with a brand-new sorted first page here -- same length (40)
+      // as what was already loaded, but a genuinely different window, still
+      // scrolled to its own end. The dedup guard must not mistake "same
+      // length" for "same data" and swallow this.
+      const resorted: Row[] = [...manyRows].sort((a, b) => a.name.localeCompare(b.name));
+      rerender(
+        <DataGrid
+          columns={columns}
+          dataSource={{ mode: "server", data: resorted, rowCount: 1000, onStateChange }}
+          getRowId={(row) => row.id}
+          virtualize={{ threshold: 0, overscan: 50, onEndReached }}
+        />,
+      );
+
+      expect(onEndReached).toHaveBeenCalledTimes(2);
+    });
+  });
 });
 
 describe("DataGrid (groupBy)", () => {
