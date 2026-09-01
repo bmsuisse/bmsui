@@ -11,12 +11,15 @@ import type {
   ReactNode,
 } from "react";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { SelectionOverlay } from "../cell-editing/SelectionOverlay";
 import { buildIndexMap } from "../cell-editing/rangeUtils";
+import { renderCellModeCell } from "../cell-editing/renderCellModeCell";
+import { SelectionOverlay } from "../cell-editing/SelectionOverlay";
+import type { CellEditingCellContext } from "../cell-editing/useCellEditingState";
+import { useCellEditingState } from "../cell-editing/useCellEditingState";
 import { useCellSelection } from "../cell-editing/useCellSelection";
 import { alignClassName } from "../column/format";
 import type { ColumnDef } from "../column/types";
-import { getColumnValue, isFilterable, isSortable } from "../column/types";
+import { getColumnValue, isEditable, isFilterable, isSortable } from "../column/types";
 import { Button } from "../components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
 import { EditingBar } from "../edit/EditingBar";
@@ -152,10 +155,18 @@ function computeHeaderRuns<TRow>(columns: ColumnDef<TRow>[]): HeaderRun<TRow>[] 
  * JSX returned below is processed. `<TreeDataGrid>` has no such memoized
  * column-def layer standing between it and every render, so it reads
  * `useEditingState`'s plain `ctx` value directly instead of needing this.
+ *
+ * `cellEditingCtxRef` follows the identical recipe for `cellEditing` mode's
+ * own per-keystroke state (`CellEditingCellContext`). At most one of
+ * `editingCtxRef.current`/`cellEditingCtxRef.current` is ever set (the two
+ * modes are mutually exclusive — see `DataGridProps.cellEditing`'s own doc),
+ * so which renderer a cell uses is decided fresh on every actual render,
+ * with neither ref itself ever appearing in this function's own deps.
  */
 function toTanstackColumns<TRow extends RowData>(
   columns: ColumnDef<TRow>[],
   editingCtxRef: { current: EditingCellContext<TRow> | undefined },
+  cellEditingCtxRef: { current: CellEditingCellContext<TRow> | undefined },
 ): TanstackColumnDef<GridTableFeatures, TRow, unknown>[] {
   return columns.map((column) => ({
     id: column.id,
@@ -163,7 +174,9 @@ function toTanstackColumns<TRow extends RowData>(
     size: column.width,
     accessorFn: (row: TRow) => getColumnValue(column, row),
     cell: (info: CellContext<GridTableFeatures, TRow, unknown>): ReactNode =>
-      renderEditableCell(column, info.row.original, info.getValue(), editingCtxRef.current),
+      cellEditingCtxRef.current
+        ? renderCellModeCell(column, info.row.original, info.getValue(), cellEditingCtxRef.current)
+        : renderEditableCell(column, info.row.original, info.getValue(), editingCtxRef.current),
   }));
 }
 
@@ -257,6 +270,7 @@ export function DataGrid<TRow extends RowData>({
     editing,
     getRowId,
   );
+  const { ctx: cellEditingCtx, ctxRef: cellEditingCtxRef } = useCellEditingState(cellEditing, getRowId);
 
   // Single source of truth for "which columns actually render": every other
   // representation below (the TanStack column defs, the header lookup map,
@@ -307,7 +321,10 @@ export function DataGrid<TRow extends RowData>({
   // `cell` closure reads `editingCtxRef.current` fresh on every actual
   // render regardless (see `toTanstackColumns`'s doc for why that
   // indirection is what keeps typing in an editor from remounting the grid).
-  const tanstackColumns = useMemo(() => toTanstackColumns(visibleColumns, editingCtxRef), [visibleColumns]);
+  const tanstackColumns = useMemo(
+    () => toTanstackColumns(visibleColumns, editingCtxRef, cellEditingCtxRef),
+    [visibleColumns],
+  );
 
   // A Map lookup instead of visibleColumns.find(...) inside the header
   // render loop below — the latter would make header rendering O(columns²)
@@ -674,8 +691,24 @@ export function DataGrid<TRow extends RowData>({
     ArrowRight: "right",
   };
 
+  /** Looks up the actual row/column for a selected cell address, for the begin-edit triggers below — `undefined` if either no longer exists (e.g. the row was removed from `data` since the selection was made). */
+  function resolveSelectedCell(): { column: ColumnDef<TRow>; row: TRow } | undefined {
+    const focus = cellSelection.selection?.focus;
+    if (!focus) return undefined;
+    const column = columnById.get(focus.columnId);
+    const row = table.getRow(focus.rowId)?.original;
+    if (!column || row === undefined) return undefined;
+    return { column, row };
+  }
+
   function handleCellKeyDown(event: ReactKeyboardEvent<HTMLDivElement>): void {
-    if (!cellEditing) return;
+    if (!cellEditing || !cellEditingCtx) return;
+    // While a cell is being edited, its own wrapper (`renderCellModeCell`)
+    // owns Escape/Enter/Tab — this handler only ever sees them AFTER that
+    // one has already committed (or reverted) and let the event bubble; see
+    // that function's own doc on how the two compose.
+    if (cellEditingCtx.editingCell) return;
+
     const direction = CELL_NAV_KEYS[event.key];
     if (direction) {
       event.preventDefault();
@@ -690,7 +723,34 @@ export function DataGrid<TRow extends RowData>({
     if (event.key === "Enter") {
       event.preventDefault();
       cellSelection.moveSelection("down");
+      return;
     }
+
+    // Begin-edit triggers: F2 (start from the current value), or typing any
+    // single printable character directly — Excel's own "just start typing"
+    // gesture — which REPLACES the cell's current value with what was typed
+    // rather than appending to it.
+    const isPrintableChar = event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey;
+    if (event.key !== "F2" && !isPrintableChar) return;
+    const target = resolveSelectedCell();
+    if (!target || !isEditable(target.column, target.row)) return;
+    event.preventDefault();
+    cellEditingCtx.onBeginEdit(
+      { rowId: cellEditingCtx.getRowId(target.row), columnId: target.column.id },
+      isPrintableChar ? event.key : undefined,
+    );
+  }
+
+  function handleCellDoubleClick(event: ReactMouseEvent<HTMLDivElement>): void {
+    if (!cellEditing || !cellEditingCtx) return;
+    const cellEl = (event.target as HTMLElement).closest<HTMLElement>("[data-cell-row]");
+    const rowId = cellEl?.dataset.cellRow;
+    const columnId = cellEl?.dataset.cellCol;
+    if (rowId === undefined || columnId === undefined) return;
+    const column = columnById.get(columnId);
+    const row = table.getRow(rowId)?.original;
+    if (!column || row === undefined || !isEditable(column, row)) return;
+    cellEditingCtx.onBeginEdit({ rowId, columnId });
   }
 
   function renderRow(row: (typeof tableRows)[number], measureRef?: (el: Element | null) => void): ReactNode {
@@ -891,6 +951,7 @@ export function DataGrid<TRow extends RowData>({
           // arrow/Tab/Enter navigation between cells.
           tabIndex={cellEditing ? 0 : undefined}
           onMouseDown={cellEditing ? handleCellMouseDown : undefined}
+          onDoubleClick={cellEditing ? handleCellDoubleClick : undefined}
           onKeyDown={cellEditing ? handleCellKeyDown : undefined}
         >
         {/*

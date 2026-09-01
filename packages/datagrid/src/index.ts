@@ -58,6 +58,17 @@ export { renderEditableCell } from "./edit/renderEditableCell";
 export type { EditingBarProps } from "./edit/EditingBar";
 export { EditingBar } from "./edit/EditingBar";
 
+// --- cell (spreadsheet-style) editing ---------------------------------------
+export type { CellAddress, CellChange, CellEditingOptions, CellRange } from "./cell-editing/types";
+export type { NormalizedRange } from "./cell-editing/rangeUtils";
+export { buildIndexMap, cellsInRange, extendRangeForFill, isCellInRange, normalizeRange } from "./cell-editing/rangeUtils";
+export type { CellSelectionController, CellSelectionOptions, NavigationDirection } from "./cell-editing/useCellSelection";
+export { useCellSelection } from "./cell-editing/useCellSelection";
+export type { CellEditingCellContext, CellEditingState } from "./cell-editing/useCellEditingState";
+export { useCellEditingState } from "./cell-editing/useCellEditingState";
+export { renderCellModeCell } from "./cell-editing/renderCellModeCell";
+export { SelectionOverlay } from "./cell-editing/SelectionOverlay";
+
 // --- column selector -----------------------------------------------------
 export type { ColumnVisibility } from "./column-selector/types";
 export type { ColumnSelectorProps } from "./column-selector/ColumnSelector";
