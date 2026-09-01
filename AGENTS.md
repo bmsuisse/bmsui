@@ -899,12 +899,20 @@ paginated — with no special-casing to keep one group's full membership
 together across pages; pair with a large `pageSize`/`showPagination: false`
 if that matters for a given grid.
 
-**Not supported together with `virtualize` yet.** Interleaving synthetic
-group-header rows and hiding a collapsed bucket's rows needs a flattened
-index space to virtualize correctly (the same technique `<TreeDataGrid>`
-uses for its own flattened tree) — out of scope for this pass. Setting both
-`groupBy` and `virtualize` silently disables virtualization rather than
-mis-rendering; see "Known limitations" below.
+**Composes with `virtualize`.** `<DataGrid>` flattens group-header rows and
+(only while a bucket is expanded) its member rows into one virtualizable
+list — `flatItems` in `DataGrid.tsx` — the same technique `<TreeDataGrid>`
+uses for its own flattened tree, so a large grouped dataset windows exactly
+like an ungrouped one; a collapsed bucket contributes only its own header
+entry, nothing for its hidden members. `renderRow`/the new
+`renderGroupHeaderTbody` both take an explicit `dataIndex` (this item's
+position within `flatItems`, NOT a table row's own `row.index`) for
+`@tanstack/react-virtual`'s `measureElement` to key off via `data-index` —
+get this wrong and the virtualizer silently stops recording real measured
+heights for every row past the first mismatch (see `<TreeDataGrid>`'s own
+`data-index` doc for the exact failure mode). See "Known limitations" below
+for the one gap this doesn't close: a sticky header pinned deep inside a
+very large single bucket.
 
 ### `editable` / `editing` — inline cell editing, accumulate-then-save
 
@@ -1230,8 +1238,9 @@ generalizes.
   a single running index across all expanded groups (not reset to 0 per
   bucket) — both `getRowProps`'s own `index` param and the built-in zebra
   striping read this same value. Not supported together with virtualization
-  yet — same limitation, same reason, as `<DataGrid>`'s own `groupBy`; see
-  "Known limitations" below.
+  yet, for the same "needs a flattened index space" reason `<DataGrid>`'s own
+  `groupBy`+`virtualize` did before it gained that support; see "Known
+  limitations" below.
 - **Virtualization** via `@tanstack/react-virtual`, using the classic
   "padding-row" technique (two spacer `<tr>`s sized from
   `virtualItem.start`/`getTotalSize()`, real rows in between) since you can't
@@ -1436,12 +1445,20 @@ the retry-connect loop in `main.py`'s lifespan never found it reachable, and
   `useEffect`, no TanStack Query) as the recommended way to wire
   `"server"` mode in a real app; see the `tanstack-best-practices` skill
   for that.
-- **`DataGridProps.groupBy` doesn't combine with `virtualize` yet.** Setting
-  both silently forces virtualization off (the grid still groups correctly,
-  just renders every row rather than windowing) rather than mis-rendering —
-  true support needs a flattened index space for the virtualizer, the same
-  technique `<TreeDataGrid>` uses for its own flattened tree, which is out
-  of scope for now.
+- **`DataGridProps.groupBy` combines with `virtualize`, but a sticky group
+  header can scroll away inside a very large single bucket.** Group headers
+  and (expanded) member rows flatten into one virtualizable list (`flatItems`
+  in `DataGrid.tsx`), so windowing works correctly. The header's `position:
+  sticky` pinning, though, only holds while that header's own `<tbody>` is
+  actually mounted in the virtualized window — scroll far enough into one
+  bucket that its header falls outside `virtualize.overscan` and it unmounts
+  like any other off-screen row, so it stops staying pinned below the
+  `<thead>` and simply scrolls off. A floating, always-mounted header
+  (derived from the topmost visible bucket, independent of any one row being
+  mounted — the standard fix other virtualized grouped-list implementations
+  use) would close this, but is out of scope for this pass; harmless in
+  practice for buckets no bigger than a couple dozen rows, which covers every
+  known consumer so far.
 - **`TreeDataGridProps.groupBy` doesn't combine with its own virtualization
   either, for the same reason.** Setting both silently forces virtualization
   off (each group's tree still flattens and renders correctly, just without

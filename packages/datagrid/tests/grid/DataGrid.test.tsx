@@ -995,7 +995,7 @@ describe("DataGrid (groupBy)", () => {
     expect(onExpandedGroupsChange).toHaveBeenCalledWith({ Senior: false, Junior: false });
   });
 
-  it("forces virtualization off when combined with groupBy, even below the row-count threshold check", async () => {
+  it("composes with virtualize: windows a grouped dataset instead of forcing virtualization off", async () => {
     await withMockedOffsetHeight(100, () => {
       const manyRows: Row[] = Array.from({ length: 300 }, (_, i) => ({ id: `r${i}`, name: `Row ${i}`, age: i }));
       render(
@@ -1008,9 +1008,55 @@ describe("DataGrid (groupBy)", () => {
           initialState={{ pageSize: 300 }}
         />,
       );
-      // If virtualization silently won, the small mocked viewport height would
-      // keep far fewer than 300 rows in the DOM at once.
-      expect(screen.getAllByTestId(/^row-/)).toHaveLength(300);
+      // The small mocked viewport height keeps far fewer than 300 rows in the
+      // DOM at once -- windowing is actually happening, not silently disabled.
+      expect(screen.getAllByTestId(/^row-/).length).toBeLessThan(300);
+      // The single "All" bucket's own header still renders as one of the
+      // flattened, virtualized items -- not lost by windowing over rows alone.
+      expect(screen.getByText("All (300)")).toBeInTheDocument();
+    });
+  });
+
+  it("composes with virtualize: a collapsed bucket contributes only its header to the virtualized item count", async () => {
+    await withMockedOffsetHeight(400, async () => {
+      const manyRows: Row[] = Array.from({ length: 300 }, (_, i) => ({ id: `r${i}`, name: `Row ${i}`, age: i }));
+      render(
+        <DataGrid
+          columns={columns}
+          dataSource={{ mode: "client", data: manyRows }}
+          getRowId={(row) => row.id}
+          groupBy={() => "All"}
+          virtualize={{ threshold: 0 }}
+          initialState={{ pageSize: 300 }}
+        />,
+      );
+      await userEvent.click(screen.getByText("All (300)"));
+      // Collapsed: every member row (real or virtualized-in) is gone, the
+      // header is all that's left to flatten/virtualize over.
+      expect(screen.queryAllByTestId(/^row-/)).toHaveLength(0);
+      expect(screen.getByText("All (300)")).toBeInTheDocument();
+    });
+  });
+
+  it("composes with virtualize: multiple bucket headers render correctly as flattened, windowed items", async () => {
+    await withMockedOffsetHeight(400, () => {
+      const manyRows: Row[] = Array.from({ length: 200 }, (_, i) => ({
+        id: `r${i}`,
+        name: `Row ${i}`,
+        age: i % 2 === 0 ? 40 : 20,
+      }));
+      render(
+        <DataGrid
+          columns={columns}
+          dataSource={{ mode: "client", data: manyRows }}
+          getRowId={(row) => row.id}
+          groupBy={groupByTier}
+          virtualize={{ threshold: 0 }}
+          initialState={{ pageSize: 200 }}
+        />,
+      );
+      expect(screen.getAllByTestId(/^row-/).length).toBeLessThan(200);
+      expect(screen.getByText("Senior (100)")).toBeInTheDocument();
     });
   });
 

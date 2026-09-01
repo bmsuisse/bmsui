@@ -208,10 +208,19 @@ export interface DataGridProps<TRow> {
    * split across pages. Omit entirely to disable — no grouping, no header
    * rows, unchanged default rendering.
    *
-   * Not supported together with `virtualize` yet — when both are set,
-   * virtualization is silently disabled and the grid renders as a plain,
-   * fully-rendered (but still grouped) `<table>` instead. See AGENTS.md's
-   * "Known limitations."
+   * Composes with `virtualize` — header rows and member rows are flattened
+   * into one virtualizable list together, so a large grouped dataset windows
+   * exactly like an ungrouped one. The one gap: a sticky group header stays
+   * pinned below the real `<thead>` only while its own `<tbody>` (or one of
+   * its member rows') is actually mounted in the virtualized window —
+   * scrolling deep into one bucket whose row count itself exceeds
+   * `virtualize`'s overscan will eventually unmount that bucket's header and
+   * let it scroll away rather than staying pinned, since `position: sticky`
+   * needs the element mounted to stick at all. Harmless for the common case
+   * (buckets no bigger than a couple dozen rows); see AGENTS.md's "Known
+   * limitations" for the full writeup and why a floating, always-mounted
+   * header (rather than each bucket owning its own sticky one) was left out
+   * of this pass.
    */
   groupBy?: (row: TRow) => string;
   /** Customizes a group-header row's content. Defaults to `` `${key} (${rows.length})` ``. */
