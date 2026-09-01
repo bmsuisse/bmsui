@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from "react";
-import { buildIndexMap } from "./rangeUtils";
+import { buildIndexMap, extendRangeForFillToCellRange } from "./rangeUtils";
 import type { CellAddress, CellRange } from "./types";
 
 export type NavigationDirection = "up" | "down" | "left" | "right";
@@ -31,6 +31,27 @@ export interface CellSelectionController {
   /** Directly replaces the selection, e.g. to leave a specific cell selected after a paste/fill commits. */
   setSelection: (range: CellRange) => void;
   clearSelection: () => void;
+
+  /** True while a fill-handle drag is in progress (between `startFillDrag` and `endFillDrag`). Mutually exclusive with `isDragging` — starting one doesn't check for the other, but a caller should never let both begin at once (the fill handle and the rest of a cell are different mousedown targets). */
+  isFillDragging: boolean;
+  /** The selection extended toward the fill-drag's current target cell, axis-locked (see `extendRangeForFill`'s own doc) — the range a renderer should paint as the live fill preview. `undefined` when not fill-dragging, or before the first `updateFillDrag` call of a given drag. */
+  fillPreviewRange: CellRange | undefined;
+  /** Starts a fill-drag from the current `selection` (mousedown on the fill handle). No-op if there's no selection yet. */
+  startFillDrag: () => void;
+  /** Updates the fill-drag's live target cell (mousemove while fill-dragging). Callers should coalesce rapid calls themselves, same as `updateDrag`. No-op if not currently fill-dragging. */
+  updateFillDrag: (cell: CellAddress) => void;
+  /**
+   * Commits the fill-drag (mouseup): sets the extended range as the new
+   * `selection` and returns both the original source range and the final
+   * extended one, so the caller can compute the actual fill values (which
+   * source cell each newly-covered cell copies from) — that data-dependent
+   * computation doesn't belong in this hook, which only knows row/column
+   * ids, not row data. Returns `undefined` if not fill-dragging, there was
+   * no base selection, or no target cell was ever reported (a drag that
+   * never moved) — in the last case, nothing to commit, current selection
+   * unchanged.
+   */
+  endFillDrag: () => { sourceRange: CellRange; finalRange: CellRange } | undefined;
 }
 
 /**
@@ -121,6 +142,47 @@ export function useCellSelection({ rowIds, columnIds, onNavigateToRow }: CellSel
     return selection;
   }, [selection, isDragging, dragFocus]);
 
+  const [isFillDragging, setIsFillDragging] = useState(false);
+  const [fillTarget, setFillTarget] = useState<CellAddress | undefined>(undefined);
+  // Same synchronous-read rationale as `draggingRef`/`dragFocusRef` above.
+  const fillDraggingRef = useRef(false);
+  const fillTargetRef = useRef<CellAddress | undefined>(undefined);
+  const fillBaseRef = useRef<CellRange | undefined>(undefined);
+
+  const startFillDrag = useCallback(() => {
+    if (!selection) return;
+    fillBaseRef.current = selection;
+    fillDraggingRef.current = true;
+    setIsFillDragging(true);
+  }, [selection]);
+
+  const updateFillDrag = useCallback((cell: CellAddress) => {
+    if (!fillDraggingRef.current) return;
+    fillTargetRef.current = cell;
+    setFillTarget(cell);
+  }, []);
+
+  const endFillDrag = useCallback((): { sourceRange: CellRange; finalRange: CellRange } | undefined => {
+    if (!fillDraggingRef.current) return undefined;
+    fillDraggingRef.current = false;
+    setIsFillDragging(false);
+    const sourceRange = fillBaseRef.current;
+    const target = fillTargetRef.current;
+    fillBaseRef.current = undefined;
+    fillTargetRef.current = undefined;
+    setFillTarget(undefined);
+    if (!sourceRange || !target) return undefined;
+    const finalRange = extendRangeForFillToCellRange(sourceRange, target, rowIds, columnIds, rowIndex, columnIndex);
+    if (!finalRange) return undefined;
+    setSelectionState(finalRange);
+    return { sourceRange, finalRange };
+  }, [rowIds, columnIds, rowIndex, columnIndex]);
+
+  const fillPreviewRange = useMemo<CellRange | undefined>(() => {
+    if (!isFillDragging || !selection || !fillTarget) return undefined;
+    return extendRangeForFillToCellRange(selection, fillTarget, rowIds, columnIds, rowIndex, columnIndex);
+  }, [isFillDragging, selection, fillTarget, rowIds, columnIds, rowIndex, columnIndex]);
+
   return {
     selection,
     isDragging,
@@ -131,5 +193,10 @@ export function useCellSelection({ rowIds, columnIds, onNavigateToRow }: CellSel
     moveSelection,
     setSelection,
     clearSelection,
+    isFillDragging,
+    fillPreviewRange,
+    startFillDrag,
+    updateFillDrag,
+    endFillDrag,
   };
 }

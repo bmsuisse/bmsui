@@ -70,6 +70,7 @@ export { renderCellModeCell } from "./cell-editing/renderCellModeCell";
 export { SelectionOverlay } from "./cell-editing/SelectionOverlay";
 export { coerceValueForColumn } from "./cell-editing/coerce";
 export { parseTsv, rangeToTsv } from "./cell-editing/clipboard";
+export { computeFillChanges } from "./cell-editing/fillHandle";
 
 // --- column selector -----------------------------------------------------
 export type { ColumnVisibility } from "./column-selector/types";

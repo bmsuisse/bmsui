@@ -429,3 +429,58 @@ describe("DataGrid cellEditing — clipboard", () => {
     expect(onCellsChange).not.toHaveBeenCalled();
   });
 });
+
+describe("DataGrid cellEditing — fill handle", () => {
+  it("shows no fill handle before any cell is selected, and one after", () => {
+    const { container } = render(<CellEditingGrid />);
+    expect(screen.queryByTestId("cell-fill-handle")).not.toBeInTheDocument();
+    fireEvent.mouseDown(editableCellAt(container, "1", "name"));
+    fireEvent.mouseUp(window);
+    expect(screen.getByTestId("cell-fill-handle")).toBeInTheDocument();
+  });
+
+  it("dragging the fill handle down copies the source cell's value into the newly-covered cells", async () => {
+    const onCellsChange = vi.fn();
+    const { container } = render(<CellEditingGrid onCellsChange={onCellsChange} />);
+    fireEvent.mouseDown(editableCellAt(container, "1", "name"));
+    fireEvent.mouseUp(window);
+
+    fireEvent.mouseDown(screen.getByTestId("cell-fill-handle"));
+    fireEvent.mouseMove(editableCellAt(container, "2", "name"));
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    fireEvent.mouseUp(window);
+
+    expect(onCellsChange).toHaveBeenCalledTimes(1);
+    const changes = onCellsChange.mock.calls[0]![0] as CellChange<EditableRow>[];
+    expect(changes).toEqual([{ rowId: "2", row: editableRows[1], columnId: "name", previousValue: "Alice", value: "Charlie" }]);
+    expect(screen.getByTestId("cell-2-name")).toHaveTextContent("Charlie");
+    // The source cell itself is untouched.
+    expect(screen.getByTestId("cell-1-name")).toHaveTextContent("Charlie");
+  });
+
+  it("mousedown on the fill handle does not also start (or extend) a normal range-select drag on the cell underneath it", async () => {
+    const onCellsChange = vi.fn();
+    const { container } = render(<CellEditingGrid onCellsChange={onCellsChange} />);
+    fireEvent.mouseDown(editableCellAt(container, "1", "name"));
+    fireEvent.mouseUp(window);
+
+    fireEvent.mouseDown(screen.getByTestId("cell-fill-handle"));
+    fireEvent.mouseMove(editableCellAt(container, "2", "name"));
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    fireEvent.mouseUp(window);
+
+    // A fill-drag calls onCellsChange (proven above); a plain range-select
+    // drag never does on its own — this is the fill path, not the other one.
+    expect(onCellsChange).toHaveBeenCalledTimes(1);
+  });
+
+  it("a fill-drag that never moves (mousedown then immediate mouseup) commits nothing", () => {
+    const onCellsChange = vi.fn();
+    const { container } = render(<CellEditingGrid onCellsChange={onCellsChange} />);
+    fireEvent.mouseDown(editableCellAt(container, "1", "name"));
+    fireEvent.mouseUp(window);
+    fireEvent.mouseDown(screen.getByTestId("cell-fill-handle"));
+    fireEvent.mouseUp(window);
+    expect(onCellsChange).not.toHaveBeenCalled();
+  });
+});

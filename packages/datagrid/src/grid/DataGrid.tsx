@@ -14,6 +14,7 @@ import type {
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { parseTsv, rangeToTsv } from "../cell-editing/clipboard";
 import { coerceValueForColumn } from "../cell-editing/coerce";
+import { computeFillChanges } from "../cell-editing/fillHandle";
 import { buildIndexMap, normalizeRange } from "../cell-editing/rangeUtils";
 import { renderCellModeCell } from "../cell-editing/renderCellModeCell";
 import { SelectionOverlay } from "../cell-editing/SelectionOverlay";
@@ -678,6 +679,54 @@ export function DataGrid<TRow extends RowData>({
     };
   }, [cellSelection.isDragging, cellSelection.updateDrag, cellSelection.endDrag]);
 
+  // Same rAF-coalesced window-listener recipe as the range-select drag
+  // above, for the fill-handle's own separate drag mode — mutually
+  // exclusive with it (the handle's own `onMouseDown` in `SelectionOverlay`
+  // stops propagation specifically so this doesn't also start a range-select
+  // drag on the cell underneath it).
+  const pendingFillCellRef = useRef<{ rowId: string; columnId: string } | null>(null);
+  const fillRafRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!cellSelection.isFillDragging) return;
+    function handleMouseMove(event: MouseEvent): void {
+      const cellEl = (event.target as HTMLElement | null)?.closest<HTMLElement>("[data-cell-row]");
+      const rowId = cellEl?.dataset.cellRow;
+      const columnId = cellEl?.dataset.cellCol;
+      if (rowId === undefined || columnId === undefined) return;
+      pendingFillCellRef.current = { rowId, columnId };
+      if (fillRafRef.current !== null) return;
+      fillRafRef.current = requestAnimationFrame(() => {
+        fillRafRef.current = null;
+        if (pendingFillCellRef.current) cellSelection.updateFillDrag(pendingFillCellRef.current);
+      });
+    }
+    function handleMouseUp(): void {
+      const result = cellSelection.endFillDrag();
+      if (!result || !cellEditingCtx) return;
+      const changes = computeFillChanges(
+        result.sourceRange,
+        result.finalRange,
+        cellEditingRowIds,
+        cellEditingColumnIds,
+        visibleColumns,
+        (rowId) => table.getRow(rowId)?.original,
+      );
+      if (changes.length > 0) applyCellChanges(changes);
+    }
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+      if (fillRafRef.current !== null) cancelAnimationFrame(fillRafRef.current);
+      fillRafRef.current = null;
+    };
+  }, [cellSelection.isFillDragging, cellSelection.updateFillDrag, cellSelection.endFillDrag]);
+
+  function handleFillHandleMouseDown(): void {
+    cellSelection.startFillDrag();
+  }
+
   function handleCellMouseDown(event: ReactMouseEvent<HTMLDivElement>): void {
     if (!cellEditing) return;
     const cellEl = (event.target as HTMLElement).closest<HTMLElement>("[data-cell-row]");
@@ -1260,7 +1309,18 @@ export function DataGrid<TRow extends RowData>({
           tableRows.map((row) => renderRow(row))
         )}
         </table>
-        {cellEditing && <SelectionOverlay containerRef={scrollRef} range={cellSelection.effectiveRange} />}
+        {cellEditing && (
+          <SelectionOverlay
+            containerRef={scrollRef}
+            range={cellSelection.effectiveRange}
+            fillPreviewRange={cellSelection.fillPreviewRange}
+            onFillHandleMouseDown={
+              cellSelection.selection && !cellSelection.isDragging && !cellEditingCtx?.editingCell
+                ? handleFillHandleMouseDown
+                : undefined
+            }
+          />
+        )}
         </div>
       </div>
       {showPagination && (

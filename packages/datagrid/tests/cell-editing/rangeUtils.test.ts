@@ -3,6 +3,7 @@ import {
   buildIndexMap,
   cellsInRange,
   extendRangeForFill,
+  extendRangeForFillToCellRange,
   isCellInRange,
   normalizeRange,
 } from "../../src/cell-editing/rangeUtils";
@@ -113,5 +114,25 @@ describe("extendRangeForFill", () => {
       columnIndex,
     )!;
     expect(extendRangeForFill(midBase, { row: 0, col: 1 })).toEqual({ rowStart: 0, rowEnd: 1, colStart: 1, colEnd: 1 });
+  });
+});
+
+describe("extendRangeForFillToCellRange", () => {
+  it("resolves an extended range back to row-id/column-id addressing", () => {
+    const base: CellRange = { anchor: { rowId: "r1", columnId: "a" }, focus: { rowId: "r1", columnId: "a" } };
+    const result = extendRangeForFillToCellRange(base, { rowId: "r3", columnId: "a" }, rowIds, columnIds, rowIndex, columnIndex);
+    expect(result).toEqual({ anchor: { rowId: "r1", columnId: "a" }, focus: { rowId: "r3", columnId: "a" } });
+  });
+
+  it("returns undefined when the base range can't be resolved", () => {
+    const base: CellRange = { anchor: { rowId: "gone", columnId: "a" }, focus: { rowId: "r1", columnId: "a" } };
+    expect(extendRangeForFillToCellRange(base, { rowId: "r3", columnId: "a" }, rowIds, columnIds, rowIndex, columnIndex)).toBeUndefined();
+  });
+
+  it("returns undefined when the target's row/column no longer exists", () => {
+    const base: CellRange = { anchor: { rowId: "r1", columnId: "a" }, focus: { rowId: "r1", columnId: "a" } };
+    expect(
+      extendRangeForFillToCellRange(base, { rowId: "gone", columnId: "a" }, rowIds, columnIds, rowIndex, columnIndex),
+    ).toBeUndefined();
   });
 });

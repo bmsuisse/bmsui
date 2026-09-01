@@ -107,3 +107,35 @@ export function extendRangeForFill(base: NormalizedRange, target: { row: number;
     colEnd: Math.max(base.colEnd, target.col),
   };
 }
+
+/**
+ * Combines `normalizeRange` + `extendRangeForFill`, converting the result
+ * back to row-id/column-id addressing — the fill-handle drag's per-frame
+ * preview and its final commit both need exactly this, so it's factored out
+ * once rather than duplicated between `useCellSelection`'s live preview memo
+ * and its drag-end commit. Returns `undefined` if `base`, `target`, or any
+ * resolved endpoint's id no longer exists.
+ */
+export function extendRangeForFillToCellRange(
+  base: CellRange,
+  target: CellAddress,
+  rowIds: string[],
+  columnIds: string[],
+  rowIndex: Map<string, number>,
+  columnIndex: Map<string, number>,
+): CellRange | undefined {
+  const normalizedBase = normalizeRange(base, rowIndex, columnIndex);
+  if (!normalizedBase) return undefined;
+  const targetRow = rowIndex.get(target.rowId);
+  const targetCol = columnIndex.get(target.columnId);
+  if (targetRow === undefined || targetCol === undefined) return undefined;
+  const extended = extendRangeForFill(normalizedBase, { row: targetRow, col: targetCol });
+  const startRowId = rowIds[extended.rowStart];
+  const endRowId = rowIds[extended.rowEnd];
+  const startColumnId = columnIds[extended.colStart];
+  const endColumnId = columnIds[extended.colEnd];
+  if (startRowId === undefined || endRowId === undefined || startColumnId === undefined || endColumnId === undefined) {
+    return undefined;
+  }
+  return { anchor: { rowId: startRowId, columnId: startColumnId }, focus: { rowId: endRowId, columnId: endColumnId } };
+}
