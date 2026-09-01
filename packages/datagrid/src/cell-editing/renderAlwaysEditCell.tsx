@@ -7,6 +7,22 @@ import { isAtomicEditorType } from "./renderCellModeCell";
 import type { CellEditingCellContext } from "./useCellEditingState";
 
 /**
+ * One in-progress, uncommitted edit this component started itself.
+ * `baseline` is `resolvedValue` at the moment the draft was last updated —
+ * the same freshness convention `useCellEditingState`'s own `CellOverride`
+ * uses, applied locally: as long as `resolvedValue` still equals `baseline`,
+ * nothing else has touched this cell since, so `value` is still the right
+ * thing to show/commit. The instant `resolvedValue` diverges from
+ * `baseline` (a fill-drag or paste landed on this exact cell while a draft
+ * was in progress), the draft is stale and must lose to that newer value —
+ * committing it anyway would silently revert whatever just landed.
+ */
+interface LocalDraft {
+  value: unknown;
+  baseline: unknown;
+}
+
+/**
  * Renders one cell under `cellEditing.alwaysEdit` mode: every editable cell
  * gets its own permanently-mounted editor, all simultaneously — unlike
  * `renderCellModeCell`'s single shared `editingCell` slot (at most one editor
@@ -26,6 +42,12 @@ export function AlwaysEditCell<TRow>(props: {
   const { column, row, rawValue, ctx } = props;
   const rowId = ctx.getRowId(row);
   const resolvedValue = ctx.resolveValue(rowId, column.id, rawValue);
+  // Called unconditionally, before the `isEditable` early return below —
+  // `column.editable` can be a per-row predicate (see `isEditable` in
+  // `column/types.ts`), so whether this cell renders an editor at all can
+  // differ between renders of the very same component instance; a hook
+  // can't sit after a conditional return that's conditional on that.
+  const [draft, setDraft] = useState<LocalDraft | undefined>(undefined);
 
   if (!isEditable(column, row)) {
     return (
@@ -37,13 +59,14 @@ export function AlwaysEditCell<TRow>(props: {
 
   const isAtomic = isAtomicEditorType(column.type);
   const error = ctx.getError(rowId, column.id);
-  // `undefined` means "no local draft yet — show `resolvedValue`," the same
-  // convention `hasDraft`/`draftValue` use in the shared, single-cell state
-  // this component otherwise replaces. Reset to `undefined` right after a
-  // commit (or an Escape-revert) so the next render re-syncs to whatever
-  // `resolvedValue` becomes (the just-applied change, or a reverted original).
-  const [draft, setDraft] = useState<{ value: unknown } | undefined>(undefined);
-  const currentValue = draft ? draft.value : resolvedValue;
+  // Fresh only while `resolvedValue` still matches what it was when `draft`
+  // was last updated — see `LocalDraft`'s own doc. A stale draft is treated
+  // as if there were none: `currentValue` falls through to `resolvedValue`,
+  // and the commit paths below refuse to commit it. Left in state rather
+  // than cleared outright — recomputing this each render is enough to keep
+  // display/commit correct without an extra render just to null it out.
+  const draftIsFresh = draft !== undefined && resolvedValue === draft.baseline;
+  const currentValue = draftIsFresh ? draft!.value : resolvedValue;
 
   function validate(candidate: unknown): string | undefined {
     return column.validateEdit?.(candidate, row);
@@ -61,7 +84,7 @@ export function AlwaysEditCell<TRow>(props: {
       commit(next);
       return;
     }
-    setDraft({ value: next });
+    setDraft({ value: next, baseline: resolvedValue });
   };
 
   function handleKeyDown(event: ReactKeyboardEvent): void {
@@ -74,26 +97,26 @@ export function AlwaysEditCell<TRow>(props: {
     const isMultilineNewline = column.type === "string" && column.multiline && event.key === "Enter" && event.shiftKey;
     if (isMultilineNewline) return;
     if (isAtomic || (event.key !== "Enter" && event.key !== "Tab")) return;
-    if (!draft) return; // nothing typed — no-op close, matches renderCellModeCell's own onCommitEdit convention
-    const message = validate(draft.value);
+    if (!draftIsFresh) return; // nothing (still) pending — no-op close, matches renderCellModeCell's own onCommitEdit convention
+    const message = validate(draft!.value);
     if (message) {
       event.stopPropagation();
       return;
     }
-    commit(draft.value);
+    commit(draft!.value);
   }
 
   function handleBlur(): void {
-    if (isAtomic || !draft) return;
-    if (validate(draft.value)) setDraft(undefined);
-    else commit(draft.value);
+    if (isAtomic || !draftIsFresh) return;
+    if (validate(draft!.value)) setDraft(undefined);
+    else commit(draft!.value);
   }
 
   return (
-    <div onKeyDown={handleKeyDown} onBlur={handleBlur}>
+    <fieldset disabled={ctx.disabled} onKeyDown={handleKeyDown} onBlur={handleBlur} className="contents">
       {column.renderEditCell
         ? column.renderEditCell(currentValue, row, onChange, error, false)
         : renderDefaultEditWidget(column, rowId, currentValue, onChange, error, false)}
-    </div>
+    </fieldset>
   );
 }

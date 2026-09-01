@@ -174,10 +174,12 @@ function CellEditingGrid({
   onCellsChange,
   columnsOverride,
   alwaysEdit,
+  disabled,
 }: {
   onCellsChange?: (changes: CellChange<EditableRow>[]) => void;
   columnsOverride?: ColumnDef<EditableRow>[];
   alwaysEdit?: boolean;
+  disabled?: boolean;
 }): ReactElement {
   const [data, setData] = useState(editableRows);
   return (
@@ -188,6 +190,7 @@ function CellEditingGrid({
       showPagination={false}
       cellEditing={{
         alwaysEdit,
+        disabled,
         onCellsChange: (changes) => {
           onCellsChange?.(changes);
           setData((prev) =>
@@ -670,5 +673,40 @@ describe("DataGrid cellEditing — alwaysEdit", () => {
     const input = screen.getByTestId("edit-1-name");
     fireEvent.paste(input, { clipboardData: mockClipboardData("Bob") });
     expect(onCellsChange).not.toHaveBeenCalled();
+  });
+
+  it("cellEditing.disabled disables every editable cell's input, not just the eventual commit", async () => {
+    const onCellsChange = vi.fn();
+    render(<CellEditingGrid alwaysEdit disabled onCellsChange={onCellsChange} />);
+    const input = screen.getByTestId("edit-1-name");
+    expect(input).toBeDisabled();
+    // `userEvent.type` itself refuses to type into a disabled control — the
+    // real assertion is that it's disabled at all, this just confirms it
+    // has teeth (a merely-visual disable wouldn't stop this).
+    await userEvent.type(input, "X");
+    expect(input).toHaveValue("Charlie");
+    expect(onCellsChange).not.toHaveBeenCalled();
+  });
+
+  it("a fill-drag landing on a cell with an uncommitted draft shows the new value, not the stale draft", async () => {
+    const onCellsChange = vi.fn();
+    const { container } = render(<CellEditingGrid alwaysEdit onCellsChange={onCellsChange} />);
+    // Start (but don't commit) an edit on row 2's name cell.
+    await userEvent.type(screen.getByTestId("edit-2-name"), "Z");
+    expect(screen.getByTestId("edit-2-name")).toHaveValue("AliceZ");
+
+    // Select row 1's name cell, then fill-drag it down onto row 2.
+    fireEvent.mouseDown(editableCellAt(container, "1", "name"));
+    fireEvent.mouseUp(window);
+    fireEvent.mouseDown(screen.getByTestId("cell-fill-handle"));
+    fireEvent.mouseMove(editableCellAt(container, "2", "name"));
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    fireEvent.mouseUp(window);
+
+    expect(onCellsChange).toHaveBeenCalledTimes(1);
+    // The fill's own committed value must win over the now-stale draft —
+    // not "AliceZ", which would silently discard what the fill just applied
+    // the moment this cell were later blurred/committed.
+    expect(screen.getByTestId("edit-2-name")).toHaveValue("Charlie");
   });
 });
