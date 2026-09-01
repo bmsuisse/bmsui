@@ -3,6 +3,7 @@ import type { ColumnDef } from "../column/types";
 import { BooleanEditor } from "./BooleanEditor";
 import { DateEditor } from "./DateEditor";
 import { EnumEditor } from "./EnumEditor";
+import { MultilineStringEditor } from "./MultilineStringEditor";
 import { NumberEditor } from "./NumberEditor";
 import { StringEditor } from "./StringEditor";
 
@@ -24,7 +25,9 @@ export function renderDefaultEditWidget<TRow>(
 ): ReactElement {
   switch (column.type) {
     case "string":
-      return (
+      return column.multiline ? (
+        <MultilineStringEditor column={column} rowId={rowId} value={value} onChange={onChange} error={error} autoFocus={autoFocus} />
+      ) : (
         <StringEditor column={column} rowId={rowId} value={value} onChange={onChange} error={error} autoFocus={autoFocus} />
       );
     case "enum":

@@ -49,6 +49,7 @@ export { EditFieldError } from "./edit/EditFieldError";
 export { BooleanEditor } from "./edit/BooleanEditor";
 export { DateEditor } from "./edit/DateEditor";
 export { EnumEditor } from "./edit/EnumEditor";
+export { MultilineStringEditor } from "./edit/MultilineStringEditor";
 export { NumberEditor } from "./edit/NumberEditor";
 export { StringEditor } from "./edit/StringEditor";
 export { renderDefaultEditWidget } from "./edit/registry";

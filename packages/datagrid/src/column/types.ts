@@ -156,7 +156,11 @@ export interface BaseColumn<TRow> {
   formatForClipboard?: (value: unknown, row: TRow) => string;
 }
 
-export type StringColumn<TRow> = BaseColumn<TRow> & { type: "string" };
+export type StringColumn<TRow> = BaseColumn<TRow> & {
+  type: "string";
+  /** Opt-in: defaults to false. Selects `MultilineStringEditor` (an auto-growing `<textarea>`) instead of `StringEditor`'s single-line `<Input>` for this column's default edit widget — same variant-flag idiom as `NumberColumn.currency`, not a separate `type`. Has no effect on static (non-editing) display, which stays whatever `column.cell`/`defaultFormat` already renders. */
+  multiline?: boolean;
+};
 
 export type NumberColumn<TRow> = BaseColumn<TRow> & {
   type: "number" | "currency";

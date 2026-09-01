@@ -98,6 +98,12 @@ export function renderCellModeCell<TRow>(
       ctx!.onCancelEdit();
       return;
     }
+    // A multiline column's own Shift+Enter is left alone entirely — the
+    // textarea's native default inserts a literal newline, matching real
+    // spreadsheet multiline-cell editing (plain Enter still commits and
+    // moves down, same as every other buffered editor).
+    const isMultilineNewline = column.type === "string" && column.multiline && event.key === "Enter" && event.shiftKey;
+    if (isMultilineNewline) return;
     if (isAtomic || (event.key !== "Enter" && event.key !== "Tab")) return;
     const message = validate(currentValue);
     if (message) {

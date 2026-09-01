@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
-import type { CellChange, ColumnDef } from "../../src";
+import type { CellChange, ColumnDef, StringColumn } from "../../src";
 import { DataGrid } from "../../src/grid/DataGrid";
 
 interface Row {
@@ -482,5 +482,44 @@ describe("DataGrid cellEditing — fill handle", () => {
     fireEvent.mouseDown(screen.getByTestId("cell-fill-handle"));
     fireEvent.mouseUp(window);
     expect(onCellsChange).not.toHaveBeenCalled();
+  });
+});
+
+describe("DataGrid cellEditing — multiline editor", () => {
+  const multilineColumns: ColumnDef<EditableRow>[] = [
+    { ...(editableColumns[0]! as StringColumn<EditableRow>), multiline: true },
+    ...editableColumns.slice(1),
+  ];
+
+  it("plain Enter commits and moves on, same as a single-line buffered editor", async () => {
+    const onCellsChange = vi.fn();
+    const { container } = render(<CellEditingGrid onCellsChange={onCellsChange} columnsOverride={multilineColumns} />);
+    fireEvent.doubleClick(editableCellAt(container, "1", "name"));
+    const textarea = screen.getByTestId("edit-1-name");
+    expect(textarea.tagName).toBe("TEXTAREA");
+    // A single `fireEvent.change` (not character-by-character `userEvent.type`)
+    // — this exercises the same commit logic without depending on jsdom's
+    // multi-keystroke controlled-textarea simulation, which has its own
+    // real-browser-vs-jsdom fidelity gaps that the e2e suite (real browser,
+    // real focus/selection timing) is the right place to validate instead.
+    fireEvent.change(textarea, { target: { value: "Renamed" } });
+    await userEvent.keyboard("{Enter}");
+
+    expect(onCellsChange).toHaveBeenCalledTimes(1);
+    const changes = onCellsChange.mock.calls[0]![0] as CellChange<EditableRow>[];
+    expect(changes).toEqual([{ rowId: "1", row: editableRows[0], columnId: "name", previousValue: "Charlie", value: "Renamed" }]);
+    expect(screen.queryByTestId("edit-1-name")).not.toBeInTheDocument();
+  });
+
+  it("Shift+Enter inserts a literal newline instead of committing, leaving the editor open", async () => {
+    const onCellsChange = vi.fn();
+    const { container } = render(<CellEditingGrid onCellsChange={onCellsChange} columnsOverride={multilineColumns} />);
+    fireEvent.doubleClick(editableCellAt(container, "1", "name"));
+    const textarea = screen.getByTestId("edit-1-name");
+    fireEvent.change(textarea, { target: { value: "Line one\nLine two" } });
+    await userEvent.keyboard("{Shift>}{Enter}{/Shift}");
+
+    expect(onCellsChange).not.toHaveBeenCalled();
+    expect(screen.getByTestId("edit-1-name")).toBeInTheDocument();
   });
 });
