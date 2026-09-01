@@ -96,10 +96,10 @@ async function captureDatagridDemo(browser: Browser, url: string): Promise<void>
   await page.waitForTimeout(100);
   await editingWrapper.screenshot({ path: path.join(OUT_DIR, "datagrid-editing.png") });
 
-  // `.first()` — the page now has two `data-testid="tree-datagrid"`
-  // elements (the lazy-loading org chart below, and the separate tree
-  // editing demo further down); this is the org chart, always first in DOM
-  // order.
+  // `.first()` — the page now has three `data-testid="tree-datagrid"`
+  // elements (the lazy-loading org chart below, the tree editing demo, and
+  // the groupBy+columnVisibility demo further down); this is the org chart,
+  // always first in DOM order.
   const tree = page.getByTestId("tree-datagrid").first();
   await tree.scrollIntoViewIfNeeded();
   // Scoped to `tree`, not `page` — the orders grid's own row-detail chevrons
