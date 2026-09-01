@@ -716,4 +716,69 @@ describe("DataGrid cellEditing — alwaysEdit", () => {
     // the moment this cell were later blurred/committed.
     expect(screen.getByTestId("edit-2-name")).toHaveValue("Charlie");
   });
+
+  // Regression test: an atomic enum widget's dropdown must stay closed after
+  // a value commit even when the commit routes back through a consumer that
+  // doesn't memoize its `columns` array — a very common real-world pattern
+  // (`CellEditingGrid` above passes a module-level `editableColumns` constant,
+  // which never reproduces this). An unmemoized `columns` array busts
+  // `tanstackColumns`'s own memo on the very re-render `onCellsChange`
+  // triggers, rebuilding every column's `cell` closure and remounting
+  // `AlwaysEditCell` — a fresh mount whose effect has no "previous deps" to
+  // compare against, so a `pendingOpenEnumCell` that was never consumed
+  // reopens the dropdown right back up. See `AtomicGestureContext.
+  // consumeOpenEnum`'s own doc for the full mechanism.
+  it("a fresh enum selection under alwaysEdit closes its dropdown for good, even when the consumer's columns array is a new reference on every render (a remount)", async () => {
+    const onCellsChange = vi.fn();
+    function NonMemoizedColumnsGrid(): ReactElement {
+      const [data, setData] = useState(editableRows);
+      // Deliberately rebuilt on every render, unmemoized — matching the
+      // demo app's own `CellEditingDemo` (and, per this bug's report, a
+      // real consuming app) rather than this file's usual module-level
+      // `editableColumns` constant.
+      const columns: ColumnDef<EditableRow>[] = [
+        { id: "name", type: "string", header: "Name", accessorKey: "name", editable: true },
+        {
+          id: "status",
+          type: "enum",
+          header: "Status",
+          accessorKey: "status",
+          editable: true,
+          options: [
+            { value: "pending", label: "Pending" },
+            { value: "shipped", label: "Shipped" },
+          ],
+        },
+        { id: "age", type: "number", header: "Age", accessorKey: "age" },
+      ];
+      return (
+        <DataGrid
+          columns={columns}
+          dataSource={{ mode: "client", data }}
+          getRowId={(row) => row.id}
+          showPagination={false}
+          cellEditing={{
+            alwaysEdit: true,
+            onCellsChange: (changes) => {
+              onCellsChange(changes);
+              setData((prev) =>
+                prev.map((row) => {
+                  const change = changes.find((c) => c.rowId === row.id);
+                  return change ? { ...row, [change.columnId]: change.value } : row;
+                }),
+              );
+            },
+          }}
+        />
+      );
+    }
+
+    const { container } = render(<NonMemoizedColumnsGrid />);
+    fireEvent.mouseDown(editableCellAt(container, "1", "status"));
+    fireEvent.mouseUp(window);
+    await userEvent.click(await screen.findByRole("option", { name: "Shipped" }));
+
+    expect(onCellsChange).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+  });
 });

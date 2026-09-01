@@ -204,4 +204,34 @@ test.describe("cellEditing — alwaysEdit atomic widget gestures", () => {
     await cell(page, "1", "owner").click();
     await expect(page.getByRole("listbox")).toBeVisible();
   });
+
+  // Regression test for a reopen loop distinct from the gesture-stealing bug
+  // above: picking a genuinely fresh (never-before-edited) option on an
+  // always-open enum cell must leave its dropdown CLOSED afterward, not just
+  // commit the right value — a prior fix in this same mechanism only ever
+  // exercised commit correctness, not post-commit closed state, so it missed
+  // this. A stuck-open listbox here would visually cover (and intercept
+  // clicks on) every row underneath it, so the second assertion also proves
+  // the rest of the grid is interactable again.
+  test("selecting a fresh option on an always-open enum cell closes its dropdown and stays closed", async ({
+    page,
+  }) => {
+    await cell(page, "1", "owner").click();
+    await expect(page.getByRole("listbox")).toBeVisible();
+    await page.getByRole("option", { name: "Bob" }).click();
+
+    await expect(cell(page, "1", "owner")).toContainText("Bob");
+    await expect(page.getByRole("listbox")).toHaveCount(0);
+    // Give any reopen-loop effect a chance to fire before asserting it
+    // stayed closed, not just that it hadn't reopened yet at the instant
+    // right after the click.
+    await page.waitForTimeout(300);
+    await expect(page.getByRole("listbox")).toHaveCount(0);
+
+    // The rest of the grid must still be interactable — a stuck-open
+    // listbox from this cell would otherwise intercept the click below.
+    await cell(page, "3", "owner").click();
+    await expect(page.getByRole("listbox")).toBeVisible();
+    await expect(page.getByRole("option", { name: "Carol" })).toBeVisible();
+  });
 });

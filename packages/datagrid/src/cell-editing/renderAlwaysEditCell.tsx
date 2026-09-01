@@ -45,6 +45,24 @@ export interface AtomicGestureContext {
    */
   shouldOpenEnum: (rowId: string, columnId: string) => boolean;
   /**
+   * Consumes the one-shot "open this cell's dropdown" signal `shouldOpenEnum`
+   * reports as `true` — called by `AlwaysEditCell` the instant it actually
+   * acts on it (opens itself), so the signal doesn't linger and re-trigger a
+   * later, unrelated re-render of this same cell. That "unrelated re-render"
+   * isn't hypothetical: it's a genuine remount, not just an ordinary update —
+   * a value commit elsewhere in the same gesture (see `AlwaysEditCell.commit`)
+   * routes back through the consumer's own state, and a consumer that
+   * doesn't memoize its `columns` array hands `<DataGrid>` a new reference on
+   * that very re-render, busting the `tanstackColumns` memo and rebuilding
+   * every column's `cell` closure — a different component `type` at this
+   * cell's tree position, which React remounts. A fresh mount has no
+   * "previous deps" to compare `shouldOpenEnum`'s value against, so without
+   * this, a still-`true` (never-cleared) signal reopens the dropdown right
+   * back up every time, forever. No-ops if `rowId`/`columnId` no longer match
+   * the pending cell (a newer click already replaced it).
+   */
+  consumeOpenEnum: (rowId: string, columnId: string) => void;
+  /**
    * Registers this gesture's selection directly. Required because
    * `AlwaysEditCell` suppresses a widget's native pointerdown handling by
    * calling `preventDefault()` on it — and per the Pointer Events spec,
@@ -106,13 +124,29 @@ export function AlwaysEditCell<TRow>(props: {
   const [enumOpen, setEnumOpen] = useState(false);
   const isBuiltinEnum = column.type === "enum" && !column.renderEditCell;
   const shouldOpenEnumNow = isBuiltinEnum && (atomicGesture?.shouldOpenEnum(rowId, column.id) ?? false);
-  // Opens it exactly once per `<DataGrid>`-confirmed plain click — this
-  // effect only re-runs when `shouldOpenEnumNow` itself flips, not on every
-  // render, so it doesn't fight a subsequent manual close (clicking the
-  // trigger again, picking an option, Escape, clicking away all update
-  // `enumOpen` via `onOpenChange` below, unaffected by this).
+  // Opens it exactly once per `<DataGrid>`-confirmed plain click. Relying
+  // solely on this effect's own dependency array to make that "exactly
+  // once" is NOT enough: a value commit elsewhere in the same gesture (see
+  // `commit` below) routes back through the consumer's own state (e.g.
+  // `cellEditing.onCellsChange`), and a consumer that doesn't memoize its
+  // `columns` array (the common case — see `toTanstackColumns`'s own doc for
+  // why that matters) hands `<DataGrid>` a brand-new `columns` reference on
+  // that very re-render, which busts the `tanstackColumns` memo and rebuilds
+  // every column's `cell` closure — a genuinely different component `type`
+  // at this cell's tree position, which remounts `AlwaysEditCell` outright.
+  // A fresh mount has no "previous deps" to compare against, so it runs this
+  // effect regardless of whether `shouldOpenEnumNow`'s VALUE actually
+  // changed — and since `pendingOpenEnumCell` (`shouldOpenEnum`'s backing
+  // state) was never cleared, the remounted instance sees it as still `true`
+  // and reopens. `consumeOpenEnum` closes that hole by clearing the signal
+  // the instant it's acted on, so a subsequent remount (or any other re-run
+  // of this effect) sees `shouldOpenEnumNow` as `false` and stays closed —
+  // making this a true one-shot signal instead of merely relying on the
+  // dependency array, which a remount bypasses entirely.
   useEffect(() => {
-    if (shouldOpenEnumNow) setEnumOpen(true);
+    if (!shouldOpenEnumNow) return;
+    setEnumOpen(true);
+    atomicGesture?.consumeOpenEnum(rowId, column.id);
   }, [shouldOpenEnumNow]);
 
   if (!isEditable(column, row)) {

@@ -804,16 +804,19 @@ export function DataGrid<TRow extends RowData>({
   // The one built-in enum (`<Select>`) cell (if any) that should open its
   // dropdown right now — see `AtomicGestureContext.shouldOpenEnum`'s own
   // doc for why `AlwaysEditCell` needs this instead of just letting Radix's
-  // native open-on-click happen. Set (once) by `handleMouseUp` below;
-  // deliberately never cleared back to `undefined` afterward — once set,
-  // `AlwaysEditCell` opens itself and takes over its own open/close state
-  // via `onOpenChange` from then on, so leaving this pointed at the same
-  // cell is inert, not a standing "force reopen."
+  // native open-on-click happen. Set (once) by `handleMouseUp` below, and
+  // cleared back to `undefined` by `consumeOpenEnum` the instant
+  // `AlwaysEditCell` actually acts on it — see `AtomicGestureContext.
+  // consumeOpenEnum`'s own doc for why leaving this set is NOT inert (a
+  // remounted `AlwaysEditCell` reopens itself right back up otherwise).
   const [pendingOpenEnumCell, setPendingOpenEnumCell] = useState<CellAddress | undefined>(undefined);
 
   atomicGestureRef.current = {
     shouldOpenEnum: (rowId, columnId) =>
       pendingOpenEnumCell?.rowId === rowId && pendingOpenEnumCell?.columnId === columnId,
+    consumeOpenEnum: (rowId, columnId) => {
+      setPendingOpenEnumCell((prev) => (prev?.rowId === rowId && prev?.columnId === columnId ? undefined : prev));
+    },
     // Mirrors exactly what `handleCellMouseDown` below does for every other
     // cell, minus the click-to-edit-only tail end (irrelevant here — always
     // invoked under `alwaysEdit`, same as that function's own early return
