@@ -173,9 +173,13 @@ const editableColumns: ColumnDef<EditableRow>[] = [
 function CellEditingGrid({
   onCellsChange,
   columnsOverride,
+  alwaysEdit,
+  disabled,
 }: {
   onCellsChange?: (changes: CellChange<EditableRow>[]) => void;
   columnsOverride?: ColumnDef<EditableRow>[];
+  alwaysEdit?: boolean;
+  disabled?: boolean;
 }): ReactElement {
   const [data, setData] = useState(editableRows);
   return (
@@ -185,6 +189,8 @@ function CellEditingGrid({
       getRowId={(row) => row.id}
       showPagination={false}
       cellEditing={{
+        alwaysEdit,
+        disabled,
         onCellsChange: (changes) => {
           onCellsChange?.(changes);
           setData((prev) =>
@@ -206,7 +212,7 @@ function editableCellAt(container: HTMLElement, rowId: string, columnId: string)
 }
 
 describe("DataGrid cellEditing — per-cell editing", () => {
-  it("renders editable columns as static clickable text until double-clicked or selected+F2'd", () => {
+  it("renders editable columns as static text until clicked/double-clicked/selected+F2'd", () => {
     render(<CellEditingGrid />);
     expect(screen.queryByTestId("edit-1-name")).not.toBeInTheDocument();
     expect(screen.getByTestId("cell-1-name")).toHaveTextContent("Charlie");
@@ -374,7 +380,10 @@ describe("DataGrid cellEditing — clipboard", () => {
   it("pasting a multi-cell block anchors at the selection's top-left and extends to match its shape", () => {
     const onCellsChange = vi.fn();
     const { container } = render(<CellEditingGrid onCellsChange={onCellsChange} />);
-    fireEvent.mouseDown(editableCellAt(container, "1", "name"));
+    // `shiftKey: true` selects without opening the cell's editor (a plain
+    // click would, since a single-cell click now opens it) — see the
+    // "shows no fill handle..." test below for the same convention.
+    fireEvent.mouseDown(editableCellAt(container, "1", "name"), { shiftKey: true });
     fireEvent.mouseUp(window);
 
     fireEvent.paste(editableCellAt(container, "1", "name"), { clipboardData: mockClipboardData("Bob\tShipped\nDana\tPending") });
@@ -391,7 +400,7 @@ describe("DataGrid cellEditing — clipboard", () => {
   it("skips a cell whose pasted text doesn't coerce to that column's type, committing the rest of the batch", () => {
     const onCellsChange = vi.fn();
     const { container } = render(<CellEditingGrid onCellsChange={onCellsChange} />);
-    fireEvent.mouseDown(editableCellAt(container, "1", "name"));
+    fireEvent.mouseDown(editableCellAt(container, "1", "name"), { shiftKey: true });
     fireEvent.mouseUp(window);
 
     // "not-a-status" doesn't match any enum option's value or label.
@@ -434,7 +443,10 @@ describe("DataGrid cellEditing — fill handle", () => {
   it("shows no fill handle before any cell is selected, and one after", () => {
     const { container } = render(<CellEditingGrid />);
     expect(screen.queryByTestId("cell-fill-handle")).not.toBeInTheDocument();
-    fireEvent.mouseDown(editableCellAt(container, "1", "name"));
+    // `shiftKey: true` selects without opening the cell's editor (a plain
+    // click would, since a single-cell click now opens it directly) — the
+    // fill handle only shows for a selected-but-not-editing cell.
+    fireEvent.mouseDown(editableCellAt(container, "1", "name"), { shiftKey: true });
     fireEvent.mouseUp(window);
     expect(screen.getByTestId("cell-fill-handle")).toBeInTheDocument();
   });
@@ -442,7 +454,7 @@ describe("DataGrid cellEditing — fill handle", () => {
   it("dragging the fill handle down copies the source cell's value into the newly-covered cells", async () => {
     const onCellsChange = vi.fn();
     const { container } = render(<CellEditingGrid onCellsChange={onCellsChange} />);
-    fireEvent.mouseDown(editableCellAt(container, "1", "name"));
+    fireEvent.mouseDown(editableCellAt(container, "1", "name"), { shiftKey: true });
     fireEvent.mouseUp(window);
 
     fireEvent.mouseDown(screen.getByTestId("cell-fill-handle"));
@@ -461,7 +473,7 @@ describe("DataGrid cellEditing — fill handle", () => {
   it("mousedown on the fill handle does not also start (or extend) a normal range-select drag on the cell underneath it", async () => {
     const onCellsChange = vi.fn();
     const { container } = render(<CellEditingGrid onCellsChange={onCellsChange} />);
-    fireEvent.mouseDown(editableCellAt(container, "1", "name"));
+    fireEvent.mouseDown(editableCellAt(container, "1", "name"), { shiftKey: true });
     fireEvent.mouseUp(window);
 
     fireEvent.mouseDown(screen.getByTestId("cell-fill-handle"));
@@ -477,7 +489,7 @@ describe("DataGrid cellEditing — fill handle", () => {
   it("a fill-drag that never moves (mousedown then immediate mouseup) commits nothing", () => {
     const onCellsChange = vi.fn();
     const { container } = render(<CellEditingGrid onCellsChange={onCellsChange} />);
-    fireEvent.mouseDown(editableCellAt(container, "1", "name"));
+    fireEvent.mouseDown(editableCellAt(container, "1", "name"), { shiftKey: true });
     fireEvent.mouseUp(window);
     fireEvent.mouseDown(screen.getByTestId("cell-fill-handle"));
     fireEvent.mouseUp(window);
@@ -521,5 +533,180 @@ describe("DataGrid cellEditing — multiline editor", () => {
 
     expect(onCellsChange).not.toHaveBeenCalled();
     expect(screen.getByTestId("edit-1-name")).toBeInTheDocument();
+  });
+});
+
+describe("DataGrid cellEditing — click-to-edit", () => {
+  it("a plain click on an editable cell opens its editor directly — no double-click needed", () => {
+    const { container } = render(<CellEditingGrid />);
+    expect(screen.queryByTestId("edit-1-name")).not.toBeInTheDocument();
+    fireEvent.mouseDown(editableCellAt(container, "1", "name"));
+    fireEvent.mouseUp(window);
+    expect(screen.getByTestId("edit-1-name")).toHaveValue("Charlie");
+  });
+
+  it("a plain click on a non-editable cell just selects it — no editor opens", () => {
+    const { container } = render(<CellEditingGrid />);
+    fireEvent.mouseDown(editableCellAt(container, "1", "age"));
+    fireEvent.mouseUp(window);
+    expect(screen.queryByTestId("edit-1-age")).not.toBeInTheDocument();
+    expect(screen.getByTestId("cell-selection-overlay")).toBeInTheDocument();
+  });
+
+  it("shift+click selects without opening the editor", () => {
+    const { container } = render(<CellEditingGrid />);
+    fireEvent.mouseDown(editableCellAt(container, "1", "name"), { shiftKey: true });
+    fireEvent.mouseUp(window);
+    expect(screen.queryByTestId("edit-1-name")).not.toBeInTheDocument();
+    expect(screen.getByTestId("cell-selection-overlay")).toBeInTheDocument();
+  });
+
+  it("a real drag — even one that ends back on the anchor cell — does not open an editor", async () => {
+    const { container } = render(<CellEditingGrid />);
+    fireEvent.mouseDown(editableCellAt(container, "1", "name"));
+    fireEvent.mouseMove(editableCellAt(container, "2", "name"));
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    fireEvent.mouseMove(editableCellAt(container, "1", "name"));
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    fireEvent.mouseUp(window);
+    expect(screen.queryByTestId("edit-1-name")).not.toBeInTheDocument();
+  });
+
+  it("clicking again inside an already-open editor's input does not reset its in-progress draft", async () => {
+    const { container } = render(<CellEditingGrid />);
+    fireEvent.mouseDown(editableCellAt(container, "1", "name"));
+    fireEvent.mouseUp(window);
+    const input = screen.getByTestId("edit-1-name");
+    await userEvent.type(input, "X");
+    expect(input).toHaveValue("CharlieX");
+
+    // Reposition the cursor within the same, still-open editor — this must
+    // not be treated as "a plain click opened this cell," which would reset
+    // the draft back to the pre-edit value.
+    fireEvent.mouseDown(input);
+    fireEvent.mouseUp(window);
+    expect(screen.getByTestId("edit-1-name")).toHaveValue("CharlieX");
+  });
+
+  it("clicking a different editable cell while one is being edited commits/closes the old one and opens the new one directly", async () => {
+    const onCellsChange = vi.fn();
+    const { container } = render(<CellEditingGrid onCellsChange={onCellsChange} />);
+    fireEvent.mouseDown(editableCellAt(container, "1", "name"));
+    fireEvent.mouseUp(window);
+    await userEvent.clear(screen.getByTestId("edit-1-name"));
+    await userEvent.type(screen.getByTestId("edit-1-name"), "Renamed");
+
+    fireEvent.mouseDown(editableCellAt(container, "2", "name"));
+    fireEvent.mouseUp(window);
+
+    expect(onCellsChange).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId("edit-1-name")).not.toBeInTheDocument();
+    expect(screen.getByTestId("cell-1-name")).toHaveTextContent("Renamed");
+    expect(screen.getByTestId("edit-2-name")).toHaveValue("Alice");
+  });
+});
+
+describe("DataGrid cellEditing — alwaysEdit", () => {
+  it("renders every editable cell's editor immediately, with no click at all", () => {
+    render(<CellEditingGrid alwaysEdit />);
+    expect(screen.getByTestId("edit-1-name")).toHaveValue("Charlie");
+    expect(screen.getByTestId("edit-2-name")).toHaveValue("Alice");
+    expect(screen.getByTestId("edit-1-status")).toBeInTheDocument();
+  });
+
+  it("a non-editable column still renders as static text", () => {
+    render(<CellEditingGrid alwaysEdit />);
+    expect(screen.queryByTestId("edit-1-age")).not.toBeInTheDocument();
+    expect(screen.getByTestId("cell-1-age")).toHaveTextContent("30");
+  });
+
+  it("a buffered editor still only commits on blur/Enter, not per keystroke", async () => {
+    const onCellsChange = vi.fn();
+    render(<CellEditingGrid alwaysEdit onCellsChange={onCellsChange} />);
+    const input = screen.getByTestId("edit-1-name");
+    await userEvent.clear(input);
+    await userEvent.type(input, "Renamed");
+    expect(onCellsChange).not.toHaveBeenCalled();
+
+    await userEvent.keyboard("{Enter}");
+    expect(onCellsChange).toHaveBeenCalledTimes(1);
+    const changes = onCellsChange.mock.calls[0]![0] as CellChange<EditableRow>[];
+    expect(changes).toEqual([{ rowId: "1", row: editableRows[0], columnId: "name", previousValue: "Charlie", value: "Renamed" }]);
+    // Still open afterward — every editable cell always has its editor.
+    expect(screen.getByTestId("edit-1-name")).toHaveValue("Renamed");
+  });
+
+  it("each editable cell keeps its own independent, uncommitted draft", async () => {
+    render(<CellEditingGrid alwaysEdit />);
+    await userEvent.type(screen.getByTestId("edit-1-name"), "X");
+    await userEvent.type(screen.getByTestId("edit-2-name"), "Y");
+    expect(screen.getByTestId("edit-1-name")).toHaveValue("CharlieX");
+    expect(screen.getByTestId("edit-2-name")).toHaveValue("AliceY");
+  });
+
+  it("an atomic (enum) editor still commits immediately on selection", async () => {
+    const onCellsChange = vi.fn();
+    render(<CellEditingGrid alwaysEdit onCellsChange={onCellsChange} />);
+    await userEvent.click(screen.getByTestId("edit-1-status"));
+    await userEvent.click(await screen.findByRole("option", { name: "Shipped" }));
+
+    expect(onCellsChange).toHaveBeenCalledTimes(1);
+    const changes = onCellsChange.mock.calls[0]![0] as CellChange<EditableRow>[];
+    expect(changes).toEqual([{ rowId: "1", row: editableRows[0], columnId: "status", previousValue: "pending", value: "shipped" }]);
+  });
+
+  it("a range copy still works when the selection was made by mouse, not by focusing an input", async () => {
+    const { container } = render(<CellEditingGrid alwaysEdit />);
+    fireEvent.mouseDown(editableCellAt(container, "1", "name"));
+    fireEvent.mouseMove(editableCellAt(container, "2", "status"));
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    fireEvent.mouseUp(window);
+
+    const clipboardData = mockClipboardData();
+    fireEvent.copy(editableCellAt(container, "1", "name"), { clipboardData });
+    expect(clipboardData.setData).toHaveBeenCalledWith("text/plain", "Charlie\tPending\nAlice\tShipped");
+  });
+
+  it("a paste targeting a focused text input is left to the browser, not treated as a range-paste", () => {
+    const onCellsChange = vi.fn();
+    render(<CellEditingGrid alwaysEdit onCellsChange={onCellsChange} />);
+    const input = screen.getByTestId("edit-1-name");
+    fireEvent.paste(input, { clipboardData: mockClipboardData("Bob") });
+    expect(onCellsChange).not.toHaveBeenCalled();
+  });
+
+  it("cellEditing.disabled disables every editable cell's input, not just the eventual commit", async () => {
+    const onCellsChange = vi.fn();
+    render(<CellEditingGrid alwaysEdit disabled onCellsChange={onCellsChange} />);
+    const input = screen.getByTestId("edit-1-name");
+    expect(input).toBeDisabled();
+    // `userEvent.type` itself refuses to type into a disabled control — the
+    // real assertion is that it's disabled at all, this just confirms it
+    // has teeth (a merely-visual disable wouldn't stop this).
+    await userEvent.type(input, "X");
+    expect(input).toHaveValue("Charlie");
+    expect(onCellsChange).not.toHaveBeenCalled();
+  });
+
+  it("a fill-drag landing on a cell with an uncommitted draft shows the new value, not the stale draft", async () => {
+    const onCellsChange = vi.fn();
+    const { container } = render(<CellEditingGrid alwaysEdit onCellsChange={onCellsChange} />);
+    // Start (but don't commit) an edit on row 2's name cell.
+    await userEvent.type(screen.getByTestId("edit-2-name"), "Z");
+    expect(screen.getByTestId("edit-2-name")).toHaveValue("AliceZ");
+
+    // Select row 1's name cell, then fill-drag it down onto row 2.
+    fireEvent.mouseDown(editableCellAt(container, "1", "name"));
+    fireEvent.mouseUp(window);
+    fireEvent.mouseDown(screen.getByTestId("cell-fill-handle"));
+    fireEvent.mouseMove(editableCellAt(container, "2", "name"));
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    fireEvent.mouseUp(window);
+
+    expect(onCellsChange).toHaveBeenCalledTimes(1);
+    // The fill's own committed value must win over the now-stale draft —
+    // not "AliceZ", which would silently discard what the fill just applied
+    // the moment this cell were later blurred/committed.
+    expect(screen.getByTestId("edit-2-name")).toHaveValue("Charlie");
   });
 });

@@ -58,4 +58,16 @@ export interface CellEditingOptions<TRow> {
   onCellsChange: (changes: CellChange<TRow>[]) => void | Promise<void>;
   /** Disables all cell-editing interaction — e.g. while a previous gesture's `onCellsChange` is still in flight. Defaults to false. */
   disabled?: boolean;
+  /**
+   * Renders every editable cell's editor directly, all the time — no click,
+   * double-click, F2, or typed character needed to open one first. Selection
+   * (drag/shift+click/shift+arrow), copy, paste, and the fill-handle all
+   * still work exactly as they do without this flag; only the single-cell
+   * "one cell editing at a time" gate is gone, since with this on every
+   * editable cell already IS its own editor. A buffered (string/number/
+   * currency) editor still only commits on blur/Enter/Tab, same as always —
+   * this flag just means it's already open, not that it types straight
+   * through to `onCellsChange` on every keystroke. Defaults to false.
+   */
+  alwaysEdit?: boolean;
 }

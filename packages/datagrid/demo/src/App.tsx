@@ -890,9 +890,11 @@ function InlineEditingDemo(): ReactElement {
 // --- cellEditing demo: the same small deterministic task shape as the
 // row-batch editing demo above, but wired through `cellEditing` instead of
 // `editing` — every change applies immediately, no Save/Discard bar. Proves
-// out range-select (drag, or shift+click/shift+arrow), type-to-edit
-// (double-click, F2, or just start typing), clipboard copy/paste, and the
-// fill-handle, against the library's own default editors.
+// out range-select (drag, or shift+click/shift+arrow), click-to-edit (a
+// plain click opens a cell's editor directly — F2/double-click still work
+// too), clipboard copy/paste, the fill-handle, a non-editable column mixed
+// in among editable ones, and the `alwaysEdit` toggle, against the
+// library's own default editors.
 interface CellEditingTask {
   id: string;
   title: string;
@@ -911,8 +913,14 @@ const CELL_EDITING_TASKS: CellEditingTask[] = [
 
 function CellEditingDemo(): ReactElement {
   const [tasks, setTasks] = useState(CELL_EDITING_TASKS);
+  const [alwaysEdit, setAlwaysEdit] = useState(false);
 
   const cellEditingColumns: ColumnDef<CellEditingTask>[] = [
+    // Not `editable` — selectable/copyable like any other cell, but never
+    // opens an editor (click, double-click, or `alwaysEdit` alike), proving
+    // the two coexist in one grid rather than `cellEditing` requiring every
+    // column to be editable.
+    { id: "id", type: "string", header: "ID", accessorKey: "id" },
     {
       id: "title",
       type: "string",
@@ -929,12 +937,18 @@ function CellEditingDemo(): ReactElement {
   return (
     <div>
       <p className="mb-2 text-sm text-muted-foreground">
-        True spreadsheet editing — click a cell to select it, drag (or shift+click/shift+arrow) to
-        select a range, type directly or press F2/double-click to edit, Ctrl/Cmd+C and +V to
-        copy/paste a range (a single copied value fills the whole selection), and drag the small
-        square at the selection's corner to fill adjacent cells. Every change applies immediately —
-        no Save button.
+        True spreadsheet editing — click a cell to open its editor directly (F2 or double-click
+        also work, on the selected cell), drag (or shift+click/shift+arrow) to select a range
+        without editing, Ctrl/Cmd+C and +V to copy/paste a range (a single copied value fills the
+        whole selection), and drag the small square at the selection's corner to fill adjacent
+        cells. The ID column isn't `editable` — it's still selectable and copyable, just never
+        opens an editor. Every change applies immediately — no Save button.
       </p>
+      <label className="mb-2 flex items-center gap-2 text-sm">
+        <input type="checkbox" checked={alwaysEdit} onChange={(e) => setAlwaysEdit(e.target.checked)} />
+        <code>cellEditing.alwaysEdit</code> — every editable cell shows its editor all the time,
+        no click needed
+      </label>
       <DataGrid
         testId="cell-editing-grid"
         columns={cellEditingColumns}
@@ -942,6 +956,7 @@ function CellEditingDemo(): ReactElement {
         getRowId={(row) => row.id}
         showPagination={false}
         cellEditing={{
+          alwaysEdit,
           onCellsChange: (changes) => {
             // A paste or fill-drag spanning multiple columns for the same
             // row produces multiple entries sharing one rowId — merge ALL

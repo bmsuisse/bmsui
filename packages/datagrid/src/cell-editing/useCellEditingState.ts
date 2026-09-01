@@ -25,7 +25,11 @@ interface CellOverride {
  * table body.
  */
 export interface CellEditingCellContext<TRow> {
-  /** The one cell currently showing its editor, or `undefined` — at most one at a time, the same convention `EditingCellContext.activeRowId` uses at row granularity. */
+  /** Mirrors `CellEditingOptions.alwaysEdit` — every editable cell renders `AlwaysEditCell` instead of going through `editingCell`/`onBeginEdit` at all when this is set. */
+  alwaysEdit: boolean;
+  /** Mirrors `CellEditingOptions.disabled`. Click-to-edit mode blocks interaction by simply never opening an editor while this is set (see `onBeginEdit`'s own gate) — `AlwaysEditCell`'s editors are always open regardless, so it reads this directly to disable its rendered form control instead. */
+  disabled: boolean;
+  /** The one cell currently showing its editor, or `undefined` — at most one at a time, the same convention `EditingCellContext.activeRowId` uses at row granularity. Meaningless (always `undefined`) under `alwaysEdit`, where every editable cell already has its own editor. */
   editingCell: CellAddress | undefined;
   /** Replaces (doesn't append to) the editor's starting value when editing began by typing a printable character directly (Excel's "just start typing" gesture) rather than double-click/Enter/F2, which start from the cell's current value. `undefined` means "start from the current value." */
   initialText: string | undefined;
@@ -68,6 +72,8 @@ export interface CellEditingCellContext<TRow> {
    */
   onCommitValue: (row: TRow, previousValue: unknown, value: unknown) => void;
   onSetError: (rowId: string, columnId: string, message: string | undefined) => void;
+  /** Commits one independently-managed cell's change directly — for `AlwaysEditCell`, which owns its own draft state locally rather than through `editingCell`/`onChangeDraft`/`onCommitEdit`'s single shared slot (every editable cell needs its own simultaneous editor under `alwaysEdit`, not just one at a time). */
+  applyChange: (change: CellChange<TRow>) => void;
   /**
    * Reads (and clears) whether `onCommitEdit`/`onCommitValue` committed
    * synchronously during the current call stack. `<DataGrid>`'s own keydown
@@ -208,6 +214,8 @@ export function useCellEditingState<TRow>(
 
   const ctx: CellEditingCellContext<TRow> | undefined = cellEditing
     ? {
+        alwaysEdit: cellEditing.alwaysEdit ?? false,
+        disabled: cellEditing.disabled ?? false,
         editingCell,
         initialText,
         hasDraft,
@@ -221,6 +229,7 @@ export function useCellEditingState<TRow>(
         onCommitEdit,
         onCommitValue,
         onSetError,
+        applyChange: (change) => applyChanges([change]),
         consumeJustCommitted,
       }
     : undefined;

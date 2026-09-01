@@ -97,4 +97,8 @@ describe("parseTsv", () => {
     const serialized = rangeToTsv(range, rows, rowIds, columns, columnIds, getRowId);
     expect(parseTsv(serialized)).toEqual([["Multi\nLine"]]);
   });
+
+  it("strips a leading byte-order mark instead of folding it into the first cell", () => {
+    expect(parseTsv("﻿Charlie\tPending")).toEqual([["Charlie", "Pending"]]);
+  });
 });

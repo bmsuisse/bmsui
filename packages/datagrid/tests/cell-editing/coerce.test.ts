@@ -89,3 +89,29 @@ describe("coerceValueForColumn — enum", () => {
     expect(coerceValueForColumn(enumCol, "delivered")).toBeUndefined();
   });
 });
+
+describe("coerceValueForColumn — Excel error strings", () => {
+  it("skips (returns undefined) a formula-error string pasted into a non-string column", () => {
+    expect(coerceValueForColumn(numberCol, "#N/A")).toBeUndefined();
+    expect(coerceValueForColumn(currencyCol, "#DIV/0!")).toBeUndefined();
+    expect(coerceValueForColumn(dateCol, "#REF!")).toBeUndefined();
+    expect(coerceValueForColumn(booleanCol, "#VALUE!")).toBeUndefined();
+    expect(coerceValueForColumn(enumCol, "#NAME?")).toBeUndefined();
+  });
+
+  it("still accepts a formula-error string verbatim into a string column", () => {
+    expect(coerceValueForColumn(stringCol, "#N/A")).toEqual({ value: "#N/A" });
+  });
+});
+
+describe("coerceValueForColumn — Swiss-formatted numbers", () => {
+  it("parses a Swiss-grouped number with an apostrophe thousands separator", () => {
+    expect(coerceValueForColumn(numberCol, "1'234")).toEqual({ value: 1234 });
+    expect(coerceValueForColumn(numberCol, "1'234'567.89")).toEqual({ value: 1234567.89 });
+  });
+
+  it("parses a Swiss franc currency cell with a CHF/Fr. marker", () => {
+    expect(coerceValueForColumn(currencyCol, "CHF 1'234.50")).toEqual({ value: 1234.5 });
+    expect(coerceValueForColumn(currencyCol, "1'234.50 Fr.")).toEqual({ value: 1234.5 });
+  });
+});

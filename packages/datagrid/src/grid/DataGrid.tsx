@@ -22,6 +22,7 @@ import { parseTsv, rangeToTsv } from "../cell-editing/clipboard";
 import { coerceValueForColumn } from "../cell-editing/coerce";
 import { computeFillChanges } from "../cell-editing/fillHandle";
 import { buildIndexMap, normalizeRange } from "../cell-editing/rangeUtils";
+import { AlwaysEditCell } from "../cell-editing/renderAlwaysEditCell";
 import { renderCellModeCell } from "../cell-editing/renderCellModeCell";
 import { SelectionOverlay } from "../cell-editing/SelectionOverlay";
 import type { CellAddress, CellChange } from "../cell-editing/types";
@@ -89,6 +90,22 @@ const ROW_ACTIONS_COLUMN_WIDTH = 44;
 // memoization for no reason (selection is inert either way, but the memo
 // should stay cheap regardless).
 const EMPTY_ID_ARRAY: string[] = [];
+
+/**
+ * Whether a clipboard event's target is a genuine native text field — an
+ * `<input>` (covers `StringEditor`/`NumberEditor`/`DateEditor`, the last via
+ * `<input type="date">`) or a `<textarea>` (`MultilineStringEditor`) —
+ * deliberately NOT true for `EnumEditor`/`BooleanEditor`'s Radix-based
+ * button/listbox widgets, which have no free text of their own to copy/paste
+ * natively. Used by `handleCopy`/`handlePaste` to defer to the browser under
+ * `cellEditing.alwaysEdit`, where every editable cell's own editor is always
+ * mounted, so there's no single `editingCell` left to check the way
+ * click-to-edit mode does.
+ */
+function isNativeTextFieldTarget(event: { target: EventTarget | null }): boolean {
+  const tag = (event.target as HTMLElement | null)?.tagName;
+  return tag === "INPUT" || tag === "TEXTAREA";
+}
 
 // Opaque equivalent of the body row's translucent `bg-foreground/5` zebra
 // tint, for the structural expand/selection/row-actions columns' `sticky`
@@ -195,10 +212,15 @@ function toTanstackColumns<TRow extends RowData>(
     header: column.header,
     size: column.width,
     accessorFn: (row: TRow) => getColumnValue(column, row),
-    cell: (info: CellContext<GridTableFeatures, TRow, unknown>): ReactNode =>
-      cellEditingCtxRef.current
-        ? renderCellModeCell(column, info.row.original, info.getValue(), cellEditingCtxRef.current)
-        : renderEditableCell(column, info.row.original, info.getValue(), editingCtxRef.current),
+    cell: (info: CellContext<GridTableFeatures, TRow, unknown>): ReactNode => {
+      const cellEditingCtx = cellEditingCtxRef.current;
+      if (!cellEditingCtx) return renderEditableCell(column, info.row.original, info.getValue(), editingCtxRef.current);
+      return cellEditingCtx.alwaysEdit ? (
+        <AlwaysEditCell column={column} row={info.row.original} rawValue={info.getValue()} ctx={cellEditingCtx} />
+      ) : (
+        renderCellModeCell(column, info.row.original, info.getValue(), cellEditingCtx)
+      );
+    },
   }));
 }
 
@@ -722,6 +744,36 @@ export function DataGrid<TRow extends RowData>({
     },
   });
 
+  // Tracks the cell a mousedown started on — whether it was a shift-extend,
+  // whether the pointer ever moved to a *different* cell before mouseup, and
+  // whether this cell was ALREADY the one being edited at mousedown time —
+  // the three things `handleMouseUp` below needs to tell a plain click (open
+  // that cell's editor, Excel's single-click-to-edit convention) apart from
+  // a real drag-select, and from a click that landed inside an
+  // already-open editor (e.g. to reposition its text cursor). That last
+  // check can't be redone at mouseup time by just reading
+  // `cellEditingCtx.editingCell` then: `handleCellMouseDown`'s own
+  // `scrollRef.current?.focus()` call blurs (closes/commits) whatever was
+  // being edited as an ordinary side effect of moving focus, including this
+  // very cell if the click landed inside it — by mouseup, `editingCell` is
+  // already `undefined` either way, so only capturing the answer up front
+  // (before that focus call) can tell "was already editing this cell, don't
+  // reopen it" apart from "was editing elsewhere, now free to open this one".
+  // Refs, not state: read-then-cleared synchronously inside a native event
+  // handler, never rendered.
+  const clickCellRef = useRef<{ rowId: string; columnId: string; extend: boolean; wasEditing: boolean } | null>(null);
+  const dragMovedRef = useRef(false);
+
+  /** Opens `cell`'s editor for a plain (non-extending, non-dragged) click — shared by the mouseup-commits-a-click path below and `handleCellDoubleClick`. No-ops if the cell isn't editable, or is (STILL — this check runs after `handleCellMouseDown`'s own blur-on-focus already had its chance to close it) the one being edited: `handleCellDoubleClick` has no `wasEditing` snapshot of its own to rely on, so this is what stops its second click's `dblclick` from clobbering a draft the reopen already produced. */
+  function beginEditFromClick(cell: { rowId: string; columnId: string }): void {
+    if (!cellEditingCtx) return;
+    if (cellEditingCtx.editingCell?.rowId === cell.rowId && cellEditingCtx.editingCell.columnId === cell.columnId) return;
+    const column = columnById.get(cell.columnId);
+    const row = findRowById(cell.rowId);
+    if (!column || row === undefined || !isEditable(column, row)) return;
+    cellEditingCtx.onBeginEdit(cell);
+  }
+
   // Mousemove/mouseup are attached to `window` (not the scroll container)
   // while a drag is in progress — the pointer commonly moves outside the
   // container's own bounds mid-drag (e.g. past its edge), and a container-
@@ -741,6 +793,8 @@ export function DataGrid<TRow extends RowData>({
       const rowId = cellEl?.dataset.cellRow;
       const columnId = cellEl?.dataset.cellCol;
       if (rowId === undefined || columnId === undefined) return;
+      const anchor = clickCellRef.current;
+      if (anchor && (rowId !== anchor.rowId || columnId !== anchor.columnId)) dragMovedRef.current = true;
       pendingDragCellRef.current = { rowId, columnId };
       if (dragRafRef.current !== null) return;
       dragRafRef.current = requestAnimationFrame(() => {
@@ -750,6 +804,9 @@ export function DataGrid<TRow extends RowData>({
     }
     function handleMouseUp(): void {
       cellSelection.endDrag();
+      const clickCell = clickCellRef.current;
+      clickCellRef.current = null;
+      if (clickCell && !clickCell.extend && !clickCell.wasEditing && !dragMovedRef.current) beginEditFromClick(clickCell);
     }
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mouseup", handleMouseUp);
@@ -850,9 +907,39 @@ export function DataGrid<TRow extends RowData>({
     const columnId = cellEl?.dataset.cellCol;
     if (rowId === undefined || columnId === undefined) return;
     cellSelection.startSelection({ rowId, columnId }, { extend: event.shiftKey });
+    // Under `alwaysEdit`, every editable cell already has its own always-
+    // mounted editor (`AlwaysEditCell`) — there's no click-to-edit gesture to
+    // track, and stealing focus onto the scroll container below would fight
+    // the click's own natural job of focusing whichever `<input>` it landed
+    // on. Selection (for copy/paste/fill-handle) still works exactly the
+    // same either way, via `startSelection` above.
+    if (cellEditingCtx?.alwaysEdit) return;
+    // Recorded for the window `mouseup` handler above: a plain click (this
+    // exact cell, not shift-extended, never dragged elsewhere) opens its
+    // editor — Excel's single-click-to-edit convention. Reset per mousedown,
+    // not per click, so a genuine drag never leaves a stale "moved" flag
+    // around to falsely block the *next* plain click's auto-edit.
+    // `wasEditing` must be read NOW, before `scrollRef.current?.focus()`
+    // below has a chance to blur (and thus close) this very cell — see
+    // `clickCellRef`'s own doc for why that makes this the only correct
+    // moment to snapshot it.
+    const wasEditing = cellEditingCtx?.editingCell?.rowId === rowId && cellEditingCtx.editingCell.columnId === columnId;
+    clickCellRef.current = { rowId, columnId, extend: event.shiftKey, wasEditing };
+    dragMovedRef.current = false;
+    // A click landing INSIDE the cell that's already being edited (e.g. to
+    // reposition the text cursor, or drag-select some of its own text) must
+    // be left alone entirely — moving focus below would blur-and-close it
+    // via `renderCellModeCell`'s own `onBlur`, which is exactly the "commit
+    // this and move on" gesture a genuinely different cell's click means,
+    // not what a click *within* the same still-open editor means.
+    if (wasEditing) return;
     // The scroll container itself (not any cell) holds keyboard focus for
     // arrow/Tab/Enter navigation — cells are plain `<td>`s, not focusable
-    // controls, so a click needs to explicitly move focus here.
+    // controls, so a click needs to explicitly move focus here. Also what
+    // closes/commits a currently-open editor elsewhere on the grid: moving
+    // focus here blurs that editor's `<input>`, synchronously (before this
+    // handler returns) triggering `renderCellModeCell`'s own `onBlur`
+    // commit/cancel.
     scrollRef.current?.focus();
   }
 
@@ -875,6 +962,13 @@ export function DataGrid<TRow extends RowData>({
 
   function handleCellKeyDown(event: ReactKeyboardEvent<HTMLDivElement>): void {
     if (!hasCellEditing || !cellEditingCtx) return;
+    // Under `alwaysEdit`, focus normally lives inside one of the always-
+    // mounted per-cell `<input>`s, not the scroll container — this whole
+    // custom arrow/Tab/Enter-moves-the-selection model would fight native
+    // text-cursor movement and native Tab order between real form controls.
+    // `AlwaysEditCell` owns its own Escape-to-revert locally; there's nothing
+    // left here for it to do.
+    if (cellEditingCtx.alwaysEdit) return;
     // While a cell is being edited, its own wrapper (`renderCellModeCell`)
     // owns Escape/Enter/Tab — this handler only ever sees them AFTER that
     // one has already committed (or reverted) and let the event bubble; see
@@ -917,23 +1011,30 @@ export function DataGrid<TRow extends RowData>({
     );
   }
 
+  // Mostly a backstop now that a single plain click already opens a cell's
+  // editor (see `handleCellMouseDown`'s own doc): still needed for the case
+  // where the first click of the pair landed as a drag/extend (so its own
+  // mouseup didn't open anything) but the second one didn't move — reuses
+  // `beginEditFromClick`'s own "already editing this exact cell" guard so it
+  // can't clobber a draft the first click already opened.
   function handleCellDoubleClick(event: ReactMouseEvent<HTMLDivElement>): void {
-    if (!hasCellEditing || !cellEditingCtx) return;
+    if (!hasCellEditing || !cellEditingCtx || cellEditingCtx.alwaysEdit) return;
     const cellEl = (event.target as HTMLElement).closest<HTMLElement>("[data-cell-row]");
     const rowId = cellEl?.dataset.cellRow;
     const columnId = cellEl?.dataset.cellCol;
     if (rowId === undefined || columnId === undefined) return;
-    const column = columnById.get(columnId);
-    const row = findRowById(rowId);
-    if (!column || row === undefined || !isEditable(column, row)) return;
-    cellEditingCtx.onBeginEdit({ rowId, columnId });
+    beginEditFromClick({ rowId, columnId });
   }
 
   function handleCopy(event: ReactClipboardEvent<HTMLDivElement>): void {
     // While a cell is actively being edited, a copy targets whatever text is
     // selected inside its own `<input>` — ordinary browser behavior, not a
-    // range-copy of the whole selection.
-    if (!hasCellEditing || !cellSelection.selection || cellEditingCtx?.editingCell) return;
+    // range-copy of the whole selection. `isNativeTextFieldTarget` covers the
+    // same case under `alwaysEdit`, where every editable cell's `<input>` is
+    // always mounted (so there's no single `editingCell` to check) — an
+    // atomic editor (enum/boolean/date) is a button/listbox, not a real text
+    // field, so it's untouched by that check and still gets the range-copy.
+    if (!hasCellEditing || !cellSelection.selection || cellEditingCtx?.editingCell || isNativeTextFieldTarget(event)) return;
     event.preventDefault();
     const text = rangeToTsv(cellSelection.selection, rows, cellEditingRowIds, visibleColumns, cellEditingColumnIds, getRowId);
     event.clipboardData.setData("text/plain", text);
@@ -954,8 +1055,9 @@ export function DataGrid<TRow extends RowData>({
 
   function handlePaste(event: ReactClipboardEvent<HTMLDivElement>): void {
     // While a cell is actively being edited, a paste goes into its own
-    // `<input>` — ordinary browser behavior, not a range-paste.
-    if (!hasCellEditing || !cellSelection.selection || cellEditingCtx?.editingCell) return;
+    // `<input>` — ordinary browser behavior, not a range-paste. Same
+    // `alwaysEdit` nuance as `handleCopy` above.
+    if (!hasCellEditing || !cellSelection.selection || cellEditingCtx?.editingCell || isNativeTextFieldTarget(event)) return;
     // Not gated on `text` being non-empty: the Clipboard API can't
     // distinguish "nothing on the clipboard" from "an empty string was
     // copied" (`getData` returns `""` either way) — treating it as the
