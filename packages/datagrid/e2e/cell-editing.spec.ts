@@ -71,7 +71,11 @@ test.describe("cellEditing — true spreadsheet editing", () => {
     const grid = page.getByTestId("cell-editing-grid");
     await expect(grid.getByTestId("datagrid-save-edits")).toHaveCount(0);
 
-    await cell(page, "2", "owner").dblclick();
+    // A single click already opens an editable cell's editor now — no need
+    // for a double-click (which, on this select-based enum editor, would
+    // land its second click on the now-open trigger button and toggle its
+    // dropdown open, confusing the very next line's own click on it).
+    await cell(page, "2", "owner").click();
     await page.getByTestId("edit-2-owner").click();
     await page.getByRole("option", { name: "Carol" }).click();
 
@@ -84,7 +88,10 @@ test.describe("cellEditing — true spreadsheet editing", () => {
   }) => {
     test.skip(browserName !== "chromium", "Clipboard permissions are only granted for chromium in this config.");
 
-    await cell(page, "1", "title").click();
+    // Shift+click selects without opening the cell's editor (a plain click
+    // does open it now) — Ctrl+C while actually editing targets the input's
+    // own text selection instead of doing a range-copy.
+    await cell(page, "1", "title").click({ modifiers: ["Shift"] });
     await page.keyboard.press("Control+c");
     const copied = await page.evaluate(() => navigator.clipboard.readText());
     expect(copied).toBe("Draft Q3 roadmap");
@@ -111,7 +118,9 @@ test.describe("cellEditing — true spreadsheet editing", () => {
 
   test("dragging the fill handle down copies a cell's value into the rows below it", async ({ page }) => {
     const source = cell(page, "1", "owner");
-    await source.click();
+    // Shift+click selects without opening the editor — the fill handle only
+    // shows for a selected-but-not-editing cell.
+    await source.click({ modifiers: ["Shift"] });
     const handle = page.getByTestId("cell-fill-handle");
     await expect(handle).toBeVisible();
 
