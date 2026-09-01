@@ -995,7 +995,7 @@ describe("DataGrid (groupBy)", () => {
     expect(onExpandedGroupsChange).toHaveBeenCalledWith({ Senior: false, Junior: false });
   });
 
-  it("forces virtualization off when combined with groupBy, even below the row-count threshold check", async () => {
+  it("composes with virtualize: windows a grouped dataset instead of forcing virtualization off", async () => {
     await withMockedOffsetHeight(100, () => {
       const manyRows: Row[] = Array.from({ length: 300 }, (_, i) => ({ id: `r${i}`, name: `Row ${i}`, age: i }));
       render(
@@ -1008,9 +1008,103 @@ describe("DataGrid (groupBy)", () => {
           initialState={{ pageSize: 300 }}
         />,
       );
-      // If virtualization silently won, the small mocked viewport height would
-      // keep far fewer than 300 rows in the DOM at once.
-      expect(screen.getAllByTestId(/^row-/)).toHaveLength(300);
+      // The small mocked viewport height keeps far fewer than 300 rows in the
+      // DOM at once -- windowing is actually happening, not silently disabled.
+      expect(screen.getAllByTestId(/^row-/).length).toBeLessThan(300);
+      // The single "All" bucket's own header still renders as one of the
+      // flattened, virtualized items -- not lost by windowing over rows alone.
+      expect(screen.getByText("All (300)")).toBeInTheDocument();
+    });
+  });
+
+  it("composes with virtualize: a collapsed bucket contributes only its header to the virtualized item count", async () => {
+    await withMockedOffsetHeight(400, async () => {
+      const manyRows: Row[] = Array.from({ length: 300 }, (_, i) => ({ id: `r${i}`, name: `Row ${i}`, age: i }));
+      render(
+        <DataGrid
+          columns={columns}
+          dataSource={{ mode: "client", data: manyRows }}
+          getRowId={(row) => row.id}
+          groupBy={() => "All"}
+          virtualize={{ threshold: 0 }}
+          initialState={{ pageSize: 300 }}
+        />,
+      );
+      await userEvent.click(screen.getByText("All (300)"));
+      // Collapsed: every member row (real or virtualized-in) is gone, the
+      // header is all that's left to flatten/virtualize over.
+      expect(screen.queryAllByTestId(/^row-/)).toHaveLength(0);
+      expect(screen.getByText("All (300)")).toBeInTheDocument();
+    });
+  });
+
+  it("composes with virtualize: multiple bucket headers render correctly as flattened, windowed items", async () => {
+    await withMockedOffsetHeight(400, () => {
+      const manyRows: Row[] = Array.from({ length: 200 }, (_, i) => ({
+        id: `r${i}`,
+        name: `Row ${i}`,
+        age: i % 2 === 0 ? 40 : 20,
+      }));
+      render(
+        <DataGrid
+          columns={columns}
+          dataSource={{ mode: "client", data: manyRows }}
+          getRowId={(row) => row.id}
+          groupBy={groupByTier}
+          virtualize={{ threshold: 0 }}
+          initialState={{ pageSize: 200 }}
+        />,
+      );
+      expect(screen.getAllByTestId(/^row-/).length).toBeLessThan(200);
+      expect(screen.getByText("Senior (100)")).toBeInTheDocument();
+    });
+  });
+
+  it("gates virtualize.threshold on the real row count, not the flattened list's synthetic header entries", async () => {
+    await withMockedOffsetHeight(400, () => {
+      // 90 real rows split into 30 three-row groups -> the flattened render
+      // list (90 rows + 30 headers = 120) crosses the default threshold of
+      // 100, but the real row count (90) doesn't -- must NOT virtualize.
+      const manyRows: Row[] = Array.from({ length: 90 }, (_, i) => ({ id: `r${i}`, name: `Row ${i}`, age: i }));
+      render(
+        <DataGrid
+          columns={columns}
+          dataSource={{ mode: "client", data: manyRows }}
+          getRowId={(row) => row.id}
+          groupBy={(row) => String(Math.floor(row.age / 3))}
+          virtualize={{}}
+          initialState={{ pageSize: 90 }}
+        />,
+      );
+      expect(screen.getAllByTestId(/^row-/)).toHaveLength(90);
+    });
+  });
+
+  it("does not re-fire onEndReached on a pure expand/collapse toggle -- only real data growth resets the dedup guard", async () => {
+    await withMockedOffsetHeight(400, async () => {
+      const onEndReached = vi.fn();
+      const manyRows: Row[] = Array.from({ length: 40 }, (_, i) => ({
+        id: `r${i}`,
+        name: `Row ${i}`,
+        age: i % 2 === 0 ? 40 : 20,
+      }));
+      render(
+        <DataGrid
+          columns={columns}
+          dataSource={{ mode: "client", data: manyRows }}
+          getRowId={(row) => row.id}
+          groupBy={groupByTier}
+          virtualize={{ threshold: 0, overscan: 50, onEndReached }}
+          initialState={{ pageSize: 40 }}
+        />,
+      );
+      expect(onEndReached).toHaveBeenCalledTimes(1);
+
+      await userEvent.click(screen.getByText("Senior (20)"));
+      // Collapsing shrinks the flattened render list (flatItems.length drops
+      // by 20) with zero real data change -- must not count as "reached the
+      // end of newly-loaded data" and re-fire.
+      expect(onEndReached).toHaveBeenCalledTimes(1);
     });
   });
 

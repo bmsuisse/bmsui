@@ -56,6 +56,15 @@ test.describe("cellEditing — true spreadsheet editing", () => {
 
     await expect(editor).not.toBeVisible();
     await expect(cell(page, "1", "title")).toHaveText("Draft Q4 roadmap");
+
+    // The selection cursor must actually have moved to row 2's same column —
+    // not just that row 1's editor closed. F2 (no click) opening row 2's
+    // editor directly proves the grid's own keyboard handler picked this
+    // commit back up and advanced the cursor, rather than the stale-state
+    // read that used to make it silently no-op after every commit.
+    await page.keyboard.press("F2");
+    await expect(page.getByTestId("edit-2-title")).toBeVisible();
+    await page.keyboard.press("Escape");
   });
 
   test("selecting an enum option commits immediately, with no Save button anywhere on this grid", async ({ page }) => {

@@ -68,6 +68,19 @@ export interface CellEditingCellContext<TRow> {
    */
   onCommitValue: (row: TRow, previousValue: unknown, value: unknown) => void;
   onSetError: (rowId: string, columnId: string, message: string | undefined) => void;
+  /**
+   * Reads (and clears) whether `onCommitEdit`/`onCommitValue` committed
+   * synchronously during the current call stack. `<DataGrid>`'s own keydown
+   * handler needs this: `renderCellModeCell`'s Enter/Tab commit deliberately
+   * doesn't stop the event from bubbling, so that handler can advance the
+   * selection afterward — but `editingCell` itself is React state, which
+   * doesn't reflect `closeEditor()`'s update until the next render, so
+   * reading it directly during that same bubbled dispatch always still
+   * shows the row that JUST closed. This ref-backed flag is the one piece of
+   * "did a commit just happen in this exact gesture" state that's readable
+   * synchronously, in the same event, immediately after the commit.
+   */
+  consumeJustCommitted: () => boolean;
 }
 
 export interface CellEditingState<TRow> {
@@ -98,6 +111,7 @@ export function useCellEditingState<TRow>(
   const [draftValue, setDraftValue] = useState<unknown>(undefined);
   const [overrides, setOverrides] = useState<Map<string, CellOverride>>(new Map());
   const [errors, setErrors] = useState<Map<string, string>>(new Map());
+  const justCommittedRef = useRef(false);
 
   function closeEditor(): void {
     setEditingCell(undefined);
@@ -125,6 +139,12 @@ export function useCellEditingState<TRow>(
   }
 
   function onBeginEdit(cell: CellAddress, text?: string): void {
+    // Matches `applyChanges`'s own `disabled` gate — a consumer setting
+    // `cellEditing.disabled` (e.g. while a previous gesture's `onCellsChange`
+    // is still in flight) expects ALL interaction blocked, not just the
+    // eventual commit silently discarded while the editor still visibly
+    // opens and appears to accept input.
+    if (!cellEditing || cellEditing.disabled) return;
     setEditingCell(cell);
     setInitialText(text);
     setHasDraft(text !== undefined);
@@ -142,6 +162,7 @@ export function useCellEditingState<TRow>(
     const value = draftValue;
     closeEditor();
     if (!cell || !shouldCommit) return;
+    justCommittedRef.current = true;
     applyChanges([{ rowId: cell.rowId, row, columnId: cell.columnId, previousValue, value }]);
   }
 
@@ -149,7 +170,14 @@ export function useCellEditingState<TRow>(
     const cell = editingCell;
     closeEditor();
     if (!cell) return;
+    justCommittedRef.current = true;
     applyChanges([{ rowId: cell.rowId, row, columnId: cell.columnId, previousValue, value }]);
+  }
+
+  function consumeJustCommitted(): boolean {
+    const value = justCommittedRef.current;
+    justCommittedRef.current = false;
+    return value;
   }
 
   function onSetError(rowId: string, columnId: string, message: string | undefined): void {
@@ -193,6 +221,7 @@ export function useCellEditingState<TRow>(
         onCommitEdit,
         onCommitValue,
         onSetError,
+        consumeJustCommitted,
       }
     : undefined;
 

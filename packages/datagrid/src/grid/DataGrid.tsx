@@ -1,5 +1,11 @@
 import { BarsArrowDownIcon, BarsArrowUpIcon, FunnelIcon } from "@heroicons/react/24/outline";
-import type { CellContext, ColumnDef as TanstackColumnDef, ColumnSizingState, RowData } from "@tanstack/react-table";
+import type {
+  CellContext,
+  ColumnDef as TanstackColumnDef,
+  ColumnSizingState,
+  Row as TanstackRow,
+  RowData,
+} from "@tanstack/react-table";
 import { columnResizingFeature, columnSizingFeature, flexRender, tableFeatures, useTable } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ChevronRight, Loader2 } from "lucide-react";
@@ -18,7 +24,7 @@ import { computeFillChanges } from "../cell-editing/fillHandle";
 import { buildIndexMap, normalizeRange } from "../cell-editing/rangeUtils";
 import { renderCellModeCell } from "../cell-editing/renderCellModeCell";
 import { SelectionOverlay } from "../cell-editing/SelectionOverlay";
-import type { CellChange } from "../cell-editing/types";
+import type { CellAddress, CellChange } from "../cell-editing/types";
 import type { CellEditingCellContext } from "../cell-editing/useCellEditingState";
 import { useCellEditingState } from "../cell-editing/useCellEditingState";
 import { useCellSelection } from "../cell-editing/useCellSelection";
@@ -142,6 +148,17 @@ function computeHeaderRuns<TRow>(columns: ColumnDef<TRow>[]): HeaderRun<TRow>[] 
 }
 
 /**
+ * One entry in the flattened, virtualizable render list `<DataGrid>` windows
+ * over below (see `flatItems`'s own doc) — a synthetic group-header, or one
+ * real table row. Kept as its own module-scope generic (rather than inlined
+ * where `flatItems` is computed) so `renderFlatItem`/`renderGroupHeaderTbody`
+ * can share the exact same shape without either side re-deriving it.
+ */
+type FlatItem<TRow extends RowData> =
+  | { kind: "header"; key: string; rows: TRow[] }
+  | { kind: "row"; row: TanstackRow<GridTableFeatures, TRow> };
+
+/**
  * `toTanstackColumns` takes the editing-context REF (a stable object
  * identity for the whole component's lifetime), not the context value
  * directly — `flexRender` renders `columnDef.cell` as a component (its own
@@ -225,7 +242,13 @@ export function DataGrid<TRow extends RowData>({
   editing,
   cellEditing,
 }: DataGridProps<TRow>): ReactElement {
-  const hasCellEditing = Boolean(cellEditing);
+  // Not supported together with `groupBy` yet — `cellEditingRowIds` below is
+  // built from the flat `tableRows` list, but rendering only shows expanded-
+  // group rows via `groupedBuckets`'s own bucketed order, so a keyboard-
+  // navigated selection could land on a row hidden inside a collapsed group.
+  // Same "one silently stands down" precedent as `groupBy`+`virtualize` (see
+  // `virtualize`'s own doc) rather than a hard error.
+  const hasCellEditing = Boolean(cellEditing) && !groupBy;
   const { state, filtersByColumn, setColumnFilter, toggleSort, setPage } = useGridState(
     dataSource,
     initialState,
@@ -275,8 +298,11 @@ export function DataGrid<TRow extends RowData>({
     editing,
     getRowId,
   );
+  // Gated on `hasCellEditing` (not `cellEditing` directly) so the groupBy
+  // stand-down above (see that flag's own doc) also disables the per-cell
+  // renderer/editor state, not just selection.
   const { ctx: cellEditingCtx, ctxRef: cellEditingCtxRef, applyChanges: applyCellChanges } = useCellEditingState(
-    cellEditing,
+    hasCellEditing ? cellEditing : undefined,
     getRowId,
   );
 
@@ -356,6 +382,18 @@ export function DataGrid<TRow extends RowData>({
       updateColumnSizing(next);
     },
   });
+
+  // `table.getRow(id)` THROWS for an id no longer in the row model (verified
+  // against @tanstack/table-core's coreRowsFeature.utils), unlike the
+  // `?.original`-chained call sites below that were written assuming it
+  // degrades to `undefined` — a real risk here specifically, since a
+  // `cellEditing` selection/edit can reference a row id that's since been
+  // removed from `data` (a consumer's own `onCellsChange` handler, or a
+  // refetch). `getRowModel().rowsById` is a plain object lookup, so a
+  // missing id just reads as `undefined`.
+  function findRowById(rowId: string): TRow | undefined {
+    return table.getRowModel().rowsById[rowId]?.original;
+  }
 
   const pageCount = Math.max(1, Math.ceil(rowCount / state.pageSize));
   const loading = loadingProp || (dataSource.mode === "server" ? Boolean(dataSource.loading) : false);
@@ -570,11 +608,6 @@ export function DataGrid<TRow extends RowData>({
   }, [visibleColumns, enableColumnResizing, leftPinnedOffsets, rightPinnedOffsets, columnSizing]);
 
   const tableRows = table.getRowModel().rows;
-  // Interleaving synthetic group-header rows (and hiding a collapsed
-  // bucket's rows) needs a flattened index space to virtualize correctly —
-  // out of scope for this pass, so `groupBy` forces virtualization off
-  // rather than silently mis-rendering; see `groupBy`'s own doc.
-  const shouldVirtualize = Boolean(virtualize) && !groupBy && tableRows.length > (virtualize?.threshold ?? 100);
   const groupedBuckets = useMemo(
     () => (groupBy ? groupRows(tableRows, (row) => groupBy(row.original)) : undefined),
     [tableRows, groupBy],
@@ -585,9 +618,51 @@ export function DataGrid<TRow extends RowData>({
   // column-resize-driven wrapping), not a guessed constant. Shared with
   // `<TreeDataGrid>`'s own `groupBy` support via `useStickyGroupHeaderTop`.
   const { theadRef, groupHeaderTop } = useStickyGroupHeaderTop(Boolean(groupBy));
+
+  // `threshold` is documented (see `DataGridVirtualizeOptions.threshold`) as
+  // a REAL row count -- keyed off `tableRows.length`, not the flattened
+  // render list below, so a grouped grid's synthetic header entries never
+  // push a caller's actual row count over a threshold they didn't cross.
+  // Identical to `flatItems.length` whenever `groupBy` is unset (no headers
+  // to inflate the count), so this is a no-op change for every non-grouped
+  // grid.
+  const shouldVirtualize = Boolean(virtualize) && tableRows.length > (virtualize?.threshold ?? 100);
+
+  // The single flattened, index-addressable render list `shouldVirtualize`
+  // above gates windowing over -- a plain `{kind: "row"}` per table row when
+  // `groupBy` is unset, or one `{kind: "header"}` entry per bucket
+  // (contributing its OWN member rows right after it, only while that
+  // bucket is expanded -- a collapsed bucket contributes just its header)
+  // when it is. Flattening headers and rows into one array, instead of
+  // virtualizing `tableRows` directly and rendering group headers as a
+  // separate non-virtualized wrapper around them, is what makes `groupBy`
+  // and `virtualize` composable at all: `useVirtualizer` needs one
+  // contiguous, positionally-addressable list to window over, and a
+  // header's height needs measuring/positioning exactly like a data row's.
+  // Only actually built while virtualizing -- neither the plain `tableRows`
+  // path nor `renderGroupedBucket`'s own non-virtualized grouped path below
+  // ever reads it, and building it unconditionally would re-walk every
+  // bucket (recomputing the exact same `bucket.items.map((row) =>
+  // row.original)` `renderGroupedBucket` already does) purely to throw the
+  // result away on every render of a grid that never virtualizes at all.
+  const flatItems = useMemo<FlatItem<TRow>[]>(() => {
+    if (!shouldVirtualize) return [];
+    if (!groupedBuckets) return tableRows.map((row) => ({ kind: "row", row }));
+    const items: FlatItem<TRow>[] = [];
+    for (const bucket of groupedBuckets) {
+      const originalRows = bucket.items.map((row) => row.original);
+      items.push({ kind: "header", key: bucket.key, rows: originalRows });
+      if (isGroupExpanded(bucket.key)) {
+        for (const row of bucket.items) items.push({ kind: "row", row });
+      }
+    }
+    return items;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `isGroupExpanded`'s identity is the only one of these deps that actually changes on an expand/collapse toggle (both the controlled-`expandedGroups`-object and uncontrolled-internal-Set forms get a fresh identity from their own setter); `groupedBuckets`/`tableRows` don't change from expand/collapse alone, they're listed because the memo also needs to re-run when the underlying data/grouping itself changes.
+  }, [shouldVirtualize, groupedBuckets, tableRows, isGroupExpanded]);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const virtualizer = useVirtualizer({
-    count: tableRows.length,
+    count: flatItems.length,
     getScrollElement: () => scrollRef.current,
     estimateSize: () => virtualize?.estimatedRowHeight ?? 40,
     overscan: virtualize?.overscan ?? 10,
@@ -598,20 +673,27 @@ export function DataGrid<TRow extends RowData>({
   const paddingBottom =
     virtualItems.length > 0 ? virtualizer.getTotalSize() - virtualItems[virtualItems.length - 1]!.end : 0;
 
-  // Fires `onEndReached` once per distinct `tableRows.length` — scrolling to
-  // the last currently-loaded row while more rows might exist. Guarded by a
-  // ref (not state) since it's bookkeeping for an effect, not something that
-  // should itself trigger a render.
+  // Fires `onEndReached` once per distinct `tableRows.length` -- the real
+  // loaded-data count, deliberately NOT `flatItems.length`: the latter also
+  // shifts on a pure expand/collapse toggle (no data changed at all), which
+  // would defeat the "won't fire again for the same data" contract
+  // (`DataGridVirtualizeOptions.onEndReached`'s own doc) the instant a
+  // caller collapses a group while already scrolled to the bottom. WHERE
+  // "the end" currently is, though, is still a `flatItems`/`virtualItems`
+  // question (collapsing the last bucket really does move the bottom of the
+  // rendered content) -- only the dedup fingerprint changes here. Guarded by
+  // a ref (not state) since it's bookkeeping for an effect, not something
+  // that should itself trigger a render.
   const lastVisibleIndex = virtualItems.length > 0 ? virtualItems[virtualItems.length - 1]!.index : -1;
   const notifiedForLengthRef = useRef<number>(-1);
   useEffect(() => {
     if (!virtualize?.onEndReached) return;
-    if (lastVisibleIndex < 0 || lastVisibleIndex < tableRows.length - 1) return;
+    if (lastVisibleIndex < 0 || lastVisibleIndex < flatItems.length - 1) return;
     if (virtualize.hasMore === false) return;
     if (notifiedForLengthRef.current === tableRows.length) return;
     notifiedForLengthRef.current = tableRows.length;
     virtualize.onEndReached();
-  }, [lastVisibleIndex, tableRows.length, virtualize]);
+  }, [lastVisibleIndex, flatItems.length, tableRows.length, virtualize]);
 
   // Full logical row/column id lists (not just currently-mounted virtual
   // items) for `useCellSelection`'s range math and keyboard navigation — see
@@ -709,7 +791,7 @@ export function DataGrid<TRow extends RowData>({
         cellEditingRowIds,
         cellEditingColumnIds,
         visibleColumns,
-        (rowId) => table.getRow(rowId)?.original,
+        findRowById,
       );
       if (changes.length > 0) applyCellChanges(changes);
     }
@@ -721,14 +803,48 @@ export function DataGrid<TRow extends RowData>({
       if (fillRafRef.current !== null) cancelAnimationFrame(fillRafRef.current);
       fillRafRef.current = null;
     };
+    // Deliberately NOT depending on `cellEditingCtx`/`applyCellChanges`/
+    // `findRowById`/etc. — none of those have a stable identity across
+    // renders (they're plain functions, not memoized), so including them
+    // would resubscribe this effect's window listeners on every render
+    // while a drag is in progress, not just when the drag itself starts or
+    // stops. `handleMouseUp` still reads the current values of each via
+    // closure at the moment it actually fires (mouseup), which is fresh
+    // enough for everything except one narrow edge case: toggling
+    // `cellEditing.disabled` mid-drag doesn't abort an already-started
+    // fill-drag's eventual commit. Accepted as a known limitation rather
+    // than reintroducing per-render effect churn to close it.
   }, [cellSelection.isFillDragging, cellSelection.updateFillDrag, cellSelection.endFillDrag]);
+
+  // A cell's editor is a real DOM node (an `<input>`/`<textarea>`/etc.) that
+  // unmounts the instant `editingCell` clears — commit, cancel, or a blur
+  // that reverted an invalid draft. Removing a FOCUSED node doesn't move
+  // focus anywhere in particular (typically `document.body`), so without
+  // this, every one of those endings would silently strand keyboard focus
+  // outside the grid: F2/arrow-key navigation right after committing a cell
+  // would have nothing to bubble through, since the scroll container
+  // (`handleCellKeyDown`'s listener) is no longer in the event's path at
+  // all. `justEndedEditingRef` tracks the transition (defined -> undefined)
+  // rather than firing on mount, when nothing was ever focused here yet.
+  const wasEditingCellRef = useRef<CellAddress | undefined>(undefined);
+  useEffect(() => {
+    const wasEditing = wasEditingCellRef.current !== undefined;
+    wasEditingCellRef.current = cellEditingCtx?.editingCell;
+    if (!wasEditing || cellEditingCtx?.editingCell) return;
+    // Only when focus landed nowhere in particular (the browser's default
+    // once a focused node is removed) — a blur caused by clicking some OTHER
+    // focusable element on the page (not this cell) already sent focus
+    // there before this effect runs; grabbing it back here would undo that
+    // deliberate navigation away from the grid.
+    if (document.activeElement === document.body) scrollRef.current?.focus();
+  });
 
   function handleFillHandleMouseDown(): void {
     cellSelection.startFillDrag();
   }
 
   function handleCellMouseDown(event: ReactMouseEvent<HTMLDivElement>): void {
-    if (!cellEditing) return;
+    if (!hasCellEditing) return;
     const cellEl = (event.target as HTMLElement).closest<HTMLElement>("[data-cell-row]");
     const rowId = cellEl?.dataset.cellRow;
     const columnId = cellEl?.dataset.cellCol;
@@ -752,18 +868,22 @@ export function DataGrid<TRow extends RowData>({
     const focus = cellSelection.selection?.focus;
     if (!focus) return undefined;
     const column = columnById.get(focus.columnId);
-    const row = table.getRow(focus.rowId)?.original;
+    const row = findRowById(focus.rowId);
     if (!column || row === undefined) return undefined;
     return { column, row };
   }
 
   function handleCellKeyDown(event: ReactKeyboardEvent<HTMLDivElement>): void {
-    if (!cellEditing || !cellEditingCtx) return;
+    if (!hasCellEditing || !cellEditingCtx) return;
     // While a cell is being edited, its own wrapper (`renderCellModeCell`)
     // owns Escape/Enter/Tab — this handler only ever sees them AFTER that
     // one has already committed (or reverted) and let the event bubble; see
-    // that function's own doc on how the two compose.
-    if (cellEditingCtx.editingCell) return;
+    // that function's own doc on how the two compose. `editingCell` alone
+    // can't tell the two "still editing" cases apart here: it's React state,
+    // so a commit that just fired via `closeEditor()` hasn't cleared it yet
+    // in THIS same synchronous dispatch — `consumeJustCommitted()` is the
+    // one signal that's already up to date at this point.
+    if (cellEditingCtx.editingCell && !cellEditingCtx.consumeJustCommitted()) return;
 
     const direction = CELL_NAV_KEYS[event.key];
     if (direction) {
@@ -798,13 +918,13 @@ export function DataGrid<TRow extends RowData>({
   }
 
   function handleCellDoubleClick(event: ReactMouseEvent<HTMLDivElement>): void {
-    if (!cellEditing || !cellEditingCtx) return;
+    if (!hasCellEditing || !cellEditingCtx) return;
     const cellEl = (event.target as HTMLElement).closest<HTMLElement>("[data-cell-row]");
     const rowId = cellEl?.dataset.cellRow;
     const columnId = cellEl?.dataset.cellCol;
     if (rowId === undefined || columnId === undefined) return;
     const column = columnById.get(columnId);
-    const row = table.getRow(rowId)?.original;
+    const row = findRowById(rowId);
     if (!column || row === undefined || !isEditable(column, row)) return;
     cellEditingCtx.onBeginEdit({ rowId, columnId });
   }
@@ -813,7 +933,7 @@ export function DataGrid<TRow extends RowData>({
     // While a cell is actively being edited, a copy targets whatever text is
     // selected inside its own `<input>` — ordinary browser behavior, not a
     // range-copy of the whole selection.
-    if (!cellEditing || !cellSelection.selection || cellEditingCtx?.editingCell) return;
+    if (!hasCellEditing || !cellSelection.selection || cellEditingCtx?.editingCell) return;
     event.preventDefault();
     const text = rangeToTsv(cellSelection.selection, rows, cellEditingRowIds, visibleColumns, cellEditingColumnIds, getRowId);
     event.clipboardData.setData("text/plain", text);
@@ -825,7 +945,7 @@ export function DataGrid<TRow extends RowData>({
     const columnId = cellEditingColumnIds[col];
     if (rowId === undefined || columnId === undefined) return undefined;
     const column = columnById.get(columnId);
-    const rowData = table.getRow(rowId)?.original;
+    const rowData = findRowById(rowId);
     if (!column || rowData === undefined || !isEditable(column, rowData)) return undefined;
     const coerced = coerceValueForColumn(column, raw);
     if (!coerced) return undefined;
@@ -835,9 +955,13 @@ export function DataGrid<TRow extends RowData>({
   function handlePaste(event: ReactClipboardEvent<HTMLDivElement>): void {
     // While a cell is actively being edited, a paste goes into its own
     // `<input>` — ordinary browser behavior, not a range-paste.
-    if (!cellEditing || !cellSelection.selection || cellEditingCtx?.editingCell) return;
+    if (!hasCellEditing || !cellSelection.selection || cellEditingCtx?.editingCell) return;
+    // Not gated on `text` being non-empty: the Clipboard API can't
+    // distinguish "nothing on the clipboard" from "an empty string was
+    // copied" (`getData` returns `""` either way) — treating it as the
+    // latter and clearing the selection matches how pasting a copied blank
+    // cell behaves in a real spreadsheet, rather than silently doing nothing.
     const text = event.clipboardData.getData("text/plain");
-    if (!text) return;
     event.preventDefault();
     const normalized = normalizeRange(cellSelection.selection, cellEditingRowIndex, buildIndexMap(cellEditingColumnIds));
     if (!normalized) return;
@@ -867,7 +991,21 @@ export function DataGrid<TRow extends RowData>({
     if (changes.length > 0) applyCellChanges(changes);
   }
 
-  function renderRow(row: (typeof tableRows)[number], measureRef?: (el: Element | null) => void): ReactNode {
+  function renderRow(
+    row: (typeof tableRows)[number],
+    measureRef?: (el: Element | null) => void,
+    // Position within the flattened, virtualized render list (`flatItems`) —
+    // distinct from `row.index` (this row's position within `tableRows`
+    // alone) once `groupBy` interleaves header entries: `@tanstack/react-
+    // virtual`'s `measureElement` reads the rendered node's `data-index`
+    // attribute back to know which measurement slot it just measured (see
+    // `<TreeDataGrid>`'s identical `data-index` doc for the same
+    // requirement), so this MUST match the row's actual `flatItems` index
+    // whenever virtualized. Defaults to `row.index`, which is already
+    // correct for every non-grouped call site (virtualized or not) and for
+    // every non-virtualized call site (the attribute is simply inert then).
+    dataIndex: number = row.index,
+  ): ReactNode {
     const isExpanded = expandedIds.has(row.id);
     // Each row gets its own `<tbody>` (a `<table>` can hold more than one)
     // instead of every row sharing one big one — a virtualizer's
@@ -880,7 +1018,7 @@ export function DataGrid<TRow extends RowData>({
     const rowTestId = getRowTestId?.(row.original) ?? `row-${row.id}`;
     const isOddRow = zebra && row.index % 2 === 1;
     return (
-      <tbody key={row.id} ref={measureRef} data-index={row.index}>
+      <tbody key={row.id} ref={measureRef} data-index={dataIndex}>
         <tr
           {...rowProps}
           data-testid={rowTestId}
@@ -949,8 +1087,8 @@ export function DataGrid<TRow extends RowData>({
                 // the window drag listener/`SelectionOverlay` all look these up by
                 // attribute selector; see `useCellSelection`'s own doc for why
                 // row-id/column-id (not DOM index) is the addressing scheme.
-                data-cell-row={cellEditing ? row.id : undefined}
-                data-cell-col={cellEditing ? cell.column.id : undefined}
+                data-cell-row={hasCellEditing ? row.id : undefined}
+                data-cell-col={hasCellEditing ? cell.column.id : undefined}
               >
                 {flexRender(cell.column.columnDef.cell, cell.getContext())}
               </td>
@@ -976,44 +1114,72 @@ export function DataGrid<TRow extends RowData>({
     );
   }
 
-  // One `<tbody>` for the group-header row, then each member row as its own
-  // sibling `<tbody>` (via `renderRow`) — a `<tbody>` can't nest inside
-  // another, and a `<table>` happily holds any number of them.
+  // Its own `<tbody>` (not nested inside anything else, matching every
+  // per-row `<tbody>` from `renderRow`) so `measureRef`/`data-index` work the
+  // exact same way a data row's does once virtualized -- shared by the
+  // non-virtualized grouped path (`renderGroupedBucket`) and the virtualized
+  // one (`renderFlatItem`), so a header's rendered markup can't drift
+  // between the two.
+  function renderGroupHeaderTbody(
+    key: string,
+    rows: TRow[],
+    measureRef?: (el: Element | null) => void,
+    dataIndex?: number,
+  ): ReactNode {
+    const expanded = isGroupExpanded(key);
+    return (
+      <tbody key={`group-${key}`} ref={measureRef} data-index={dataIndex}>
+        <tr data-testid={`group-header-${key}`}>
+          <td
+            colSpan={totalColumnCount}
+            className={cn("sticky z-20 border-b p-2 font-medium", zebra ? "bg-muted" : "bg-background")}
+            style={{ top: groupHeaderTop }}
+          >
+            <button
+              type="button"
+              className="flex w-full items-center gap-1 text-left"
+              onClick={() => toggleGroupExpanded(key)}
+              aria-expanded={expanded}
+            >
+              <ChevronRight
+                className={`h-4 w-4 shrink-0 transition-transform${expanded ? " rotate-90" : ""}`}
+                aria-hidden
+              />
+              {renderGroupHeader ? renderGroupHeader(key, rows, expanded) : `${key} (${rows.length})`}
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    );
+  }
+
+  // One `<tbody>` for the group-header row (via `renderGroupHeaderTbody`),
+  // then each member row as its own sibling `<tbody>` (via `renderRow`) — a
+  // `<tbody>` can't nest inside another, and a `<table>` happily holds any
+  // number of them. Used only in the non-virtualized grouped path;
+  // `renderFlatItem` below covers the same two shapes one flattened item at
+  // a time once virtualized.
   function renderGroupedBucket(bucket: NonNullable<typeof groupedBuckets>[number]): ReactNode {
     const expanded = isGroupExpanded(bucket.key);
     const originalRows = bucket.items.map((row) => row.original);
     return (
       <Fragment key={`group-${bucket.key}`}>
-        <tbody>
-          <tr data-testid={`group-header-${bucket.key}`}>
-            <td
-              colSpan={totalColumnCount}
-              className={cn(
-                "sticky z-20 border-b p-2 font-medium",
-                zebra ? "bg-muted" : "bg-background",
-              )}
-              style={{ top: groupHeaderTop }}
-            >
-              <button
-                type="button"
-                className="flex w-full items-center gap-1 text-left"
-                onClick={() => toggleGroupExpanded(bucket.key)}
-                aria-expanded={expanded}
-              >
-                <ChevronRight
-                  className={`h-4 w-4 shrink-0 transition-transform${expanded ? " rotate-90" : ""}`}
-                  aria-hidden
-                />
-                {renderGroupHeader
-                  ? renderGroupHeader(bucket.key, originalRows, expanded)
-                  : `${bucket.key} (${originalRows.length})`}
-              </button>
-            </td>
-          </tr>
-        </tbody>
+        {renderGroupHeaderTbody(bucket.key, originalRows)}
         {expanded && bucket.items.map((row) => renderRow(row))}
       </Fragment>
     );
+  }
+
+  // Dispatches one `flatItems` entry to whichever of `renderGroupHeaderTbody`
+  // / `renderRow` its `kind` needs — the virtualized render loop's per-item
+  // callback, so it can stay a plain one-line `.map()` below.
+  function renderFlatItem(
+    item: FlatItem<TRow>,
+    index: number,
+    measureRef?: (el: Element | null) => void,
+  ): ReactNode {
+    if (item.kind === "header") return renderGroupHeaderTbody(item.key, item.rows, measureRef, index);
+    return renderRow(item.row, measureRef, index);
   }
 
   return (
@@ -1057,18 +1223,18 @@ export function DataGrid<TRow extends RowData>({
         <div
           ref={scrollRef}
           data-testid={testId}
-          className={cn("h-full overflow-auto rounded-md border", cellEditing && "relative")}
+          className={cn("h-full overflow-auto rounded-md border", hasCellEditing && "relative")}
           style={shouldVirtualize ? { maxHeight: virtualize?.maxBodyHeight ?? 480 } : undefined}
           // `tabIndex`/`onKeyDown` only under `cellEditing` — the scroll
           // container itself (not any individual cell, which is a plain
           // `<td>`, not a focusable control) holds keyboard focus for
           // arrow/Tab/Enter navigation between cells.
-          tabIndex={cellEditing ? 0 : undefined}
-          onMouseDown={cellEditing ? handleCellMouseDown : undefined}
-          onDoubleClick={cellEditing ? handleCellDoubleClick : undefined}
-          onKeyDown={cellEditing ? handleCellKeyDown : undefined}
-          onCopy={cellEditing ? handleCopy : undefined}
-          onPaste={cellEditing ? handlePaste : undefined}
+          tabIndex={hasCellEditing ? 0 : undefined}
+          onMouseDown={hasCellEditing ? handleCellMouseDown : undefined}
+          onDoubleClick={hasCellEditing ? handleCellDoubleClick : undefined}
+          onKeyDown={hasCellEditing ? handleCellKeyDown : undefined}
+          onCopy={hasCellEditing ? handleCopy : undefined}
+          onPaste={hasCellEditing ? handlePaste : undefined}
         >
         {/*
           `table-fixed` (only once every column has a concrete pixel width —
@@ -1293,7 +1459,9 @@ export function DataGrid<TRow extends RowData>({
               </tbody>
             )}
             {virtualItems.map((virtualItem) =>
-              renderRow(tableRows[virtualItem.index]!, (el) => virtualizer.measureElement(el)),
+              renderFlatItem(flatItems[virtualItem.index]!, virtualItem.index, (el) =>
+                virtualizer.measureElement(el),
+              ),
             )}
             {paddingBottom > 0 && (
               <tbody>
@@ -1309,7 +1477,7 @@ export function DataGrid<TRow extends RowData>({
           tableRows.map((row) => renderRow(row))
         )}
         </table>
-        {cellEditing && (
+        {hasCellEditing && (
           <SelectionOverlay
             containerRef={scrollRef}
             range={cellSelection.effectiveRange}

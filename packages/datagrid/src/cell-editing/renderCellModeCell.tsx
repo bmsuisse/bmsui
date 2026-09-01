@@ -72,7 +72,11 @@ export function renderCellModeCell<TRow>(
     // current handler returns. `onCommitValue` takes the new value directly,
     // sidestepping that entirely.
     if (isAtomic && !message) {
-      ctx!.onCommitValue(row, rawValue, next);
+      // `value` (resolveValue's result), not `rawValue` — a still-fresh
+      // override from an immediately-prior edit this session must be the
+      // reported `previousValue`, not the underlying row data it's
+      // temporarily masking (see `resolveValue`'s own doc).
+      ctx!.onCommitValue(row, value, next);
       return;
     }
     // Buffered types always land here; an atomic type only does when its
@@ -110,7 +114,7 @@ export function renderCellModeCell<TRow>(
       event.stopPropagation();
       return;
     }
-    ctx!.onCommitEdit(row, rawValue);
+    ctx!.onCommitEdit(row, value);
     // Deliberately NOT stopped: <DataGrid>'s own keydown handler on the
     // scroll container sees this same Enter/Tab afterward and moves the
     // selection cursor to the next cell — this cell is no longer "editing"
@@ -125,7 +129,7 @@ export function renderCellModeCell<TRow>(
   function handleBlur(): void {
     if (isAtomic) return;
     if (validate(currentValue)) ctx!.onCancelEdit();
-    else ctx!.onCommitEdit(row, rawValue);
+    else ctx!.onCommitEdit(row, value);
   }
 
   return (

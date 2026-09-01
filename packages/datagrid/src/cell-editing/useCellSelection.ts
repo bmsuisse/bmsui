@@ -103,26 +103,30 @@ export function useCellSelection({ rowIds, columnIds, onNavigateToRow }: CellSel
 
   const moveSelection = useCallback(
     (direction: NavigationDirection, options?: { extend?: boolean }) => {
-      setSelectionState((prev) => {
-        const from = prev?.focus ?? { rowId: rowIds[0] ?? "", columnId: columnIds[0] ?? "" };
-        const rowIdx = rowIndex.get(from.rowId);
-        const colIdx = columnIndex.get(from.columnId);
-        if (rowIdx === undefined || colIdx === undefined || rowIds.length === 0 || columnIds.length === 0) return prev;
-        let nextRowIdx = rowIdx;
-        let nextColIdx = colIdx;
-        if (direction === "up") nextRowIdx = Math.max(0, rowIdx - 1);
-        else if (direction === "down") nextRowIdx = Math.min(rowIds.length - 1, rowIdx + 1);
-        else if (direction === "left") nextColIdx = Math.max(0, colIdx - 1);
-        else nextColIdx = Math.min(columnIds.length - 1, colIdx + 1);
-        const nextRowId = rowIds[nextRowIdx]!;
-        const nextColumnId = columnIds[nextColIdx]!;
-        if (nextRowId !== from.rowId) onNavigateToRow?.(nextRowId);
-        const nextCell: CellAddress = { rowId: nextRowId, columnId: nextColumnId };
-        const anchor = options?.extend ? (prev?.anchor ?? nextCell) : nextCell;
-        return { anchor, focus: nextCell };
-      });
+      // Reads `selection` directly (a dependency below) rather than via
+      // `setSelectionState`'s own updater-callback form — that updater runs
+      // as part of React's commit bookkeeping and can run more than once for
+      // the same update (e.g. Strict Mode's intentional double-invocation),
+      // which `onNavigateToRow`'s side effect (`virtualizer.scrollToIndex`)
+      // must not do.
+      const from = selection?.focus ?? { rowId: rowIds[0] ?? "", columnId: columnIds[0] ?? "" };
+      const rowIdx = rowIndex.get(from.rowId);
+      const colIdx = columnIndex.get(from.columnId);
+      if (rowIdx === undefined || colIdx === undefined || rowIds.length === 0 || columnIds.length === 0) return;
+      let nextRowIdx = rowIdx;
+      let nextColIdx = colIdx;
+      if (direction === "up") nextRowIdx = Math.max(0, rowIdx - 1);
+      else if (direction === "down") nextRowIdx = Math.min(rowIds.length - 1, rowIdx + 1);
+      else if (direction === "left") nextColIdx = Math.max(0, colIdx - 1);
+      else nextColIdx = Math.min(columnIds.length - 1, colIdx + 1);
+      const nextRowId = rowIds[nextRowIdx]!;
+      const nextColumnId = columnIds[nextColIdx]!;
+      if (nextRowId !== from.rowId) onNavigateToRow?.(nextRowId);
+      const nextCell: CellAddress = { rowId: nextRowId, columnId: nextColumnId };
+      const anchor = options?.extend ? (selection?.anchor ?? nextCell) : nextCell;
+      setSelectionState({ anchor, focus: nextCell });
     },
-    [rowIds, columnIds, rowIndex, columnIndex, onNavigateToRow],
+    [selection, rowIds, columnIds, rowIndex, columnIndex, onNavigateToRow],
   );
 
   const setSelection = useCallback((range: CellRange) => {
