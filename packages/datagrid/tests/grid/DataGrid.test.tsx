@@ -1343,6 +1343,93 @@ describe("DataGrid (showPagination)", () => {
     expect(screen.queryByRole("button", { name: "Previous" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Next" })).not.toBeInTheDocument();
   });
+
+  it("exposes every row (no silent truncation to the default pageSize of 20) when showPagination is false and no explicit pageSize is given", () => {
+    const manyRows: Row[] = Array.from({ length: 43 }, (_, i) => ({ id: `r${i}`, name: `Row ${i}`, age: i }));
+    render(
+      <DataGrid
+        columns={columns}
+        dataSource={{ mode: "client", data: manyRows }}
+        getRowId={(row) => row.id}
+        showPagination={false}
+      />,
+    );
+    expect(screen.getAllByTestId(/^row-/)).toHaveLength(43);
+  });
+
+  it("lets virtualize see the true row count when showPagination is false and no explicit pageSize is given", async () => {
+    await withMockedOffsetHeight(400, () => {
+      const manyRows: Row[] = Array.from({ length: 300 }, (_, i) => ({ id: `r${i}`, name: `Row ${i}`, age: i }));
+      render(
+        <DataGrid
+          columns={columns}
+          dataSource={{ mode: "client", data: manyRows }}
+          getRowId={(row) => row.id}
+          showPagination={false}
+          virtualize={{ threshold: 50 }}
+        />,
+      );
+      // Genuine virtualization (not the default pageSize slice) is the only
+      // way fewer than 300 of the 300 real rows can be in the DOM here.
+      expect(screen.getAllByTestId(/^row-/).length).toBeLessThan(300);
+    });
+  });
+
+  it("still respects an explicit pageSize when showPagination is false (deliberate fixed-size chunking with no UI)", () => {
+    const manyRows: Row[] = Array.from({ length: 43 }, (_, i) => ({ id: `r${i}`, name: `Row ${i}`, age: i }));
+    render(
+      <DataGrid
+        columns={columns}
+        dataSource={{ mode: "client", data: manyRows }}
+        getRowId={(row) => row.id}
+        showPagination={false}
+        initialState={{ pageSize: 10 }}
+      />,
+    );
+    expect(screen.getAllByTestId(/^row-/)).toHaveLength(10);
+  });
+
+  it("still defaults to a pageSize of 20 when showPagination is true (default), unaffected by the showPagination=false resolution", () => {
+    const manyRows: Row[] = Array.from({ length: 43 }, (_, i) => ({ id: `r${i}`, name: `Row ${i}`, age: i }));
+    render(
+      <DataGrid columns={columns} dataSource={{ mode: "client", data: manyRows }} getRowId={(row) => row.id} />,
+    );
+    expect(screen.getAllByTestId(/^row-/)).toHaveLength(20);
+  });
+
+  it("warns once in dev when showPagination is false and a controlled gridState's pageSize truncates the rows, with no UI to reach the rest", () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const manyRows: Row[] = Array.from({ length: 43 }, (_, i) => ({ id: `r${i}`, name: `Row ${i}`, age: i }));
+    const controlledState: GridState = { filter: null, sort: [], page: 0, pageSize: 20 };
+    render(
+      <DataGrid
+        columns={columns}
+        dataSource={{ mode: "client", data: manyRows }}
+        getRowId={(row) => row.id}
+        showPagination={false}
+        gridState={controlledState}
+      />,
+    );
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    expect(warnSpy.mock.calls[0]?.[0]).toContain("showPagination={false}");
+    warnSpy.mockRestore();
+  });
+
+  it("does not warn when showPagination is false and an explicit, uncontrolled initialState.pageSize is the deliberate chunking case", () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const manyRows: Row[] = Array.from({ length: 43 }, (_, i) => ({ id: `r${i}`, name: `Row ${i}`, age: i }));
+    render(
+      <DataGrid
+        columns={columns}
+        dataSource={{ mode: "client", data: manyRows }}
+        getRowId={(row) => row.id}
+        showPagination={false}
+        initialState={{ pageSize: 10 }}
+      />,
+    );
+    expect(warnSpy).not.toHaveBeenCalled();
+    warnSpy.mockRestore();
+  });
 });
 
 describe("DataGrid (testId)", () => {

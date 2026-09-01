@@ -135,9 +135,18 @@ export interface DataGridProps<TRow> {
   /**
    * Renders the built-in Previous/Next pagination footer. Defaults to true.
    * Set to false when a caller renders its own pagination UI instead (e.g.
-   * one with specific `data-testid`s an existing test suite depends on) —
-   * `<DataGrid>` itself never conditions any other behavior on this, it just
-   * stops rendering that one footer.
+   * one with specific `data-testid`s an existing test suite depends on), or
+   * to disable pagination altogether and render every row.
+   *
+   * When `false` and no explicit `pageSize` is given (via `initialState` or
+   * `gridState`), the effective page size becomes unbounded instead of
+   * defaulting to 20 — hiding the pagination UI with no page size in mind
+   * means "show every row," not "silently truncate to the first page." A
+   * caller who explicitly sets `pageSize` alongside `showPagination: false`
+   * still gets exactly that page size (deliberate fixed-size chunking with
+   * no UI). This only affects `"client"` mode's own row slicing; in
+   * `"server"` mode, whether every row actually comes back is up to your
+   * `dataSource`.
    */
   showPagination?: boolean;
   /**

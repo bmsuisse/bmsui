@@ -275,6 +275,7 @@ export function DataGrid<TRow extends RowData>({
     dataSource,
     initialState,
     gridState,
+    showPagination,
   );
   const [internalSelectedIds, setInternalSelectedIds] = useState<ReadonlySet<string>>(new Set());
   const selectedIds = controlledSelectedIds ?? internalSelectedIds;
@@ -630,6 +631,27 @@ export function DataGrid<TRow extends RowData>({
   }, [visibleColumns, enableColumnResizing, leftPinnedOffsets, rightPinnedOffsets, columnSizing]);
 
   const tableRows = table.getRowModel().rows;
+
+  // Dev-only guardrail: `showPagination={false}` with no explicit `pageSize`
+  // now resolves to an effectively unbounded page (see `useGridState`'s own
+  // doc), so this only fires for what that fix can't cover -- a controlled
+  // `gridState` prop whose `pageSize` doesn't (or no longer) cover every
+  // row, or a `dataSource: {mode: "server"}` response smaller than the
+  // `rowCount` it reported. An explicit, uncontrolled `initialState.pageSize`
+  // is the deliberate fixed-size-chunking use case and must never warn.
+  const truncationWarnedRef = useRef(false);
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production") return;
+    if (showPagination) return;
+    if (truncationWarnedRef.current) return;
+    if (!gridState && initialState?.pageSize !== undefined) return;
+    if (tableRows.length >= rowCount) return;
+    truncationWarnedRef.current = true;
+    console.warn(
+      `[DataGrid] showPagination={false} but only ${tableRows.length} of ${rowCount} row(s) are rendered, with no pagination UI to reach the rest. Pass an explicit pageSize (via initialState or gridState) that covers every row you want visible, or a dataSource that returns all of them.`,
+    );
+  }, [showPagination, gridState, initialState?.pageSize, tableRows.length, rowCount]);
+
   const groupedBuckets = useMemo(
     () => (groupBy ? groupRows(tableRows, (row) => groupBy(row.original)) : undefined),
     [tableRows, groupBy],
