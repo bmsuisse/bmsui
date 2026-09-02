@@ -69,6 +69,24 @@ type GridTableFeatures = typeof gridTableFeatures;
 // before a `table` instance exists to ask `getSize()` directly.
 const DEFAULT_COLUMN_SIZE = 150;
 
+// Floor for keyboard-driven resize (ArrowLeft on the resize handle) — mouse
+// drag has no equivalent floor today, but a keyboard user has no visual
+// feedback while resizing, so this keeps a column from being shrunk to
+// (or past) zero-width by holding the key down.
+const MIN_COLUMN_SIZE = 40;
+
+// `aria-sort` belongs on the `<th>` itself, not the toggle `<button>` inside
+// it (WAI-ARIA "sort" property — see the table sort pattern in APG): screen
+// readers announce a header's sort state from the cell, not from focusing a
+// child control. `"none"` (rather than omitting the attribute) tells
+// assistive tech this header *is* sortable but not the current sort key,
+// distinct from a non-sortable column, which gets no `aria-sort` at all.
+function sortDirToAriaSort(dir: "asc" | "desc" | undefined): "ascending" | "descending" | "none" {
+  if (dir === "asc") return "ascending";
+  if (dir === "desc") return "descending";
+  return "none";
+}
+
 // Fixed pixel width of each "structural" column DataGrid renders itself
 // (row-expand chevron, selection checkbox, per-row actions menu) rather than
 // deriving from `columns` — matched by the `width` style applied to their
@@ -1470,11 +1488,24 @@ export function DataGrid<TRow extends RowData>({
               const cellProps = leafHeaderCellPropsByColumn.get(column.id);
               const headerContent = column.renderHeader ? column.renderHeader(column) : column.header;
               return (
-                <th key={header.id} rowSpan={rowSpan} style={cellProps?.style} className={cellProps?.className}>
+                <th
+                  key={header.id}
+                  rowSpan={rowSpan}
+                  style={cellProps?.style}
+                  className={cellProps?.className}
+                  aria-sort={sortable ? sortDirToAriaSort(sortEntry?.dir) : undefined}
+                  // Explicit name, not name-from-content: without it, the sort
+                  // button's own icon/testid and the resize handle's
+                  // `aria-label` (added for keyboard support below) would
+                  // otherwise get concatenated into this header cell's
+                  // computed accessible name too.
+                  aria-label={column.header}
+                >
                   <div className="flex items-center gap-1">
                     {sortable ? (
                       <button
                         type="button"
+                        data-testid={`sort-button-${column.id}`}
                         className="flex items-center gap-1 rounded-sm px-1 hover:bg-accent hover:text-accent-foreground"
                         onClick={(event) =>
                           toggleSort(column.id, enableMultiSort && event.shiftKey, column.sortDescFirst === true)
@@ -1495,7 +1526,12 @@ export function DataGrid<TRow extends RowData>({
                     {filterable && (
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="ghost" size="icon" aria-label={`Filter ${column.header}`}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            data-testid={`filter-trigger-${column.id}`}
+                            aria-label={`Filter ${column.header}`}
+                          >
                             <FunnelIcon
                               className={cn(
                                 "h-3 w-3",
@@ -1514,9 +1550,20 @@ export function DataGrid<TRow extends RowData>({
                   {enableColumnResizing && (
                     <div
                       data-testid={`resize-handle-${column.id}`}
+                      role="separator"
+                      aria-orientation="vertical"
+                      aria-label={`Resize ${column.header} column`}
+                      tabIndex={0}
                       onMouseDown={header.getResizeHandler()}
                       onTouchStart={header.getResizeHandler()}
-                      className="absolute right-0 top-0 h-full w-1 cursor-col-resize touch-none select-none hover:bg-accent"
+                      onKeyDown={(event) => {
+                        if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+                        event.preventDefault();
+                        const delta = event.key === "ArrowRight" ? 10 : -10;
+                        const nextSize = Math.max(MIN_COLUMN_SIZE, columnSize(column.id) + delta);
+                        updateColumnSizing({ ...columnSizing, [column.id]: nextSize });
+                      }}
+                      className="absolute right-0 top-0 h-full w-1 cursor-col-resize touch-none select-none hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
                     />
                   )}
                 </th>

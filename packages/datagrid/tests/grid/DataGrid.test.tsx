@@ -111,6 +111,43 @@ describe("DataGrid (client mode)", () => {
     expect(nameCellsInOrder()).toEqual(["Charlie", "Alice", "Bob"]);
   });
 
+  it("reflects sort state via aria-sort on the header cell, and gives a sortable-but-unsorted column aria-sort='none'", async () => {
+    render(
+      <DataGrid columns={columns} dataSource={{ mode: "client", data: rows }} getRowId={(row) => row.id} />,
+    );
+
+    const nameHeader = screen.getByRole("columnheader", { name: "Name" });
+    const ageHeader = screen.getByRole("columnheader", { name: "Age" });
+    expect(nameHeader).toHaveAttribute("aria-sort", "none");
+    expect(ageHeader).toHaveAttribute("aria-sort", "none");
+
+    await userEvent.click(screen.getByRole("button", { name: "Name" }));
+    expect(nameHeader).toHaveAttribute("aria-sort", "ascending");
+    expect(ageHeader).toHaveAttribute("aria-sort", "none");
+
+    await userEvent.click(screen.getByRole("button", { name: "Name" }));
+    expect(nameHeader).toHaveAttribute("aria-sort", "descending");
+
+    await userEvent.click(screen.getByRole("button", { name: "Name" }));
+    expect(nameHeader).toHaveAttribute("aria-sort", "none");
+  });
+
+  it("omits aria-sort entirely on a non-sortable column", () => {
+    const withUnsortable: ColumnDef<Row>[] = [{ ...columns[0]!, sortable: false }, columns[1]!];
+    render(
+      <DataGrid columns={withUnsortable} dataSource={{ mode: "client", data: rows }} getRowId={(row) => row.id} />,
+    );
+    expect(screen.getByRole("columnheader", { name: "Name" })).not.toHaveAttribute("aria-sort");
+  });
+
+  it("exposes a per-column data-testid on the sort toggle and the filter trigger", () => {
+    render(
+      <DataGrid columns={columns} dataSource={{ mode: "client", data: rows }} getRowId={(row) => row.id} />,
+    );
+    expect(screen.getByTestId("sort-button-name")).toBeInTheDocument();
+    expect(screen.getByTestId("filter-trigger-name")).toBeInTheDocument();
+  });
+
   it("sorts descending first, then ascending, when sortDescFirst is set", async () => {
     const descFirstColumns: ColumnDef<Row>[] = [columns[0]!, { ...columns[1]!, sortDescFirst: true }];
     render(
@@ -920,6 +957,85 @@ describe("DataGrid (column resizing)", () => {
     fireEvent.mouseUp(document, { clientX: 50 });
     // 150px is TanStack's own default for a column with no explicit `width` (see above).
     expect(screen.getByRole("columnheader", { name: /Name/ })).toHaveStyle({ width: "200px" });
+  });
+
+  it("is keyboard-focusable and exposes an accessible label, since dragging is mouse/touch-only", () => {
+    render(
+      <DataGrid
+        columns={columns}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        enableColumnResizing
+      />,
+    );
+    const handle = screen.getByTestId("resize-handle-name");
+    expect(handle).toHaveAttribute("tabIndex", "0");
+    expect(handle).toHaveAttribute("role", "separator");
+    expect(handle).toHaveAccessibleName("Resize Name column");
+  });
+
+  it("grows an uncontrolled column by 10px per ArrowRight, shrinks by 10px per ArrowLeft, on its resize handle", () => {
+    render(
+      <DataGrid
+        columns={columns}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        enableColumnResizing
+      />,
+    );
+    const handle = screen.getByTestId("resize-handle-name");
+    // 150px is TanStack's own default for a column with no explicit `width` (see above).
+    fireEvent.keyDown(handle, { key: "ArrowRight" });
+    expect(screen.getByRole("columnheader", { name: /Name/ })).toHaveStyle({ width: "160px" });
+    fireEvent.keyDown(handle, { key: "ArrowRight" });
+    expect(screen.getByRole("columnheader", { name: /Name/ })).toHaveStyle({ width: "170px" });
+    fireEvent.keyDown(handle, { key: "ArrowLeft" });
+    expect(screen.getByRole("columnheader", { name: /Name/ })).toHaveStyle({ width: "160px" });
+  });
+
+  it("reports the resized width via onColumnSizingChange when controlled, and never shrinks a column past the 40px floor", () => {
+    const onColumnSizingChange = vi.fn();
+    const { rerender } = render(
+      <DataGrid
+        columns={columns}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        enableColumnResizing
+        columnSizing={{ name: 45 }}
+        onColumnSizingChange={onColumnSizingChange}
+      />,
+    );
+    const handle = screen.getByTestId("resize-handle-name");
+    fireEvent.keyDown(handle, { key: "ArrowLeft" });
+    expect(onColumnSizingChange).toHaveBeenCalledWith({ name: 40 });
+
+    rerender(
+      <DataGrid
+        columns={columns}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        enableColumnResizing
+        columnSizing={{ name: 40 }}
+        onColumnSizingChange={onColumnSizingChange}
+      />,
+    );
+    onColumnSizingChange.mockClear();
+    fireEvent.keyDown(handle, { key: "ArrowLeft" });
+    expect(onColumnSizingChange).toHaveBeenCalledWith({ name: 40 });
+  });
+
+  it("ignores keys other than ArrowLeft/ArrowRight on the resize handle", () => {
+    render(
+      <DataGrid
+        columns={columns}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        enableColumnResizing
+      />,
+    );
+    const handle = screen.getByTestId("resize-handle-name");
+    fireEvent.keyDown(handle, { key: "Enter" });
+    expect(screen.getByRole("columnheader", { name: /Name/ })).toHaveStyle({ width: "150px" });
   });
 
   // Regression test: real browsers' default `table-layout: auto` treats a
