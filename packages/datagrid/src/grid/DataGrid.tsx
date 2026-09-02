@@ -746,6 +746,20 @@ export function DataGrid<TRow extends RowData>({
   // that should itself trigger a render.
   const lastVisibleIndex = virtualItems.length > 0 ? virtualItems[virtualItems.length - 1]!.index : -1;
   const notifiedForLengthRef = useRef<number>(-1);
+  // A sort/filter change means the caller's `onStateChange` handler is about
+  // to replace `dataSource.data` with an entirely new loaded window (a fresh
+  // first page for the new sort/filter), not grow the existing one — reset
+  // the dedup guard so a same-length replacement (e.g. the new window also
+  // happens to be exactly one page long, the common case) doesn't get
+  // silently mistaken for "already notified for this length" and swallowed.
+  // Keyed off `state.filter`/`state.sort` identity, not `state.page`: this
+  // mode doesn't own pagination (see `virtualize.onEndReached`'s own doc),
+  // so a `page` change here would only come from some other caller-driven
+  // reset, which already goes through a fresh `dataSource.data` (and thus a
+  // real `tableRows.length` change) on its own.
+  useEffect(() => {
+    notifiedForLengthRef.current = -1;
+  }, [state.filter, state.sort]);
   useEffect(() => {
     if (!virtualize?.onEndReached) return;
     if (lastVisibleIndex < 0 || lastVisibleIndex < flatItems.length - 1) return;

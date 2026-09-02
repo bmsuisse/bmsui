@@ -681,6 +681,78 @@ describe("DataGrid (column pinning)", () => {
 
     expect(screen.getByRole("columnheader", { name: /Name/ })).toHaveStyle({ left: "88px" });
   });
+
+  // Combo: enableColumnResizing + pinned columns on BOTH edges + a headerGroup
+  // spanning row over the (ungrouped, side-pinned) columns -- dragging a
+  // pinned column's own resize handle must update every LATER pinned
+  // column's offset to track its new live width, not just its own, and the
+  // spanning header row must keep rendering correctly throughout (resize
+  // handles live inside the rowSpan={2} cell for an ungrouped column there).
+  // Combo: hiding a pinned column via columnVisibility must not leave a gap
+  // in a later same-side pinned column's offset -- pinnedOffsets iterates
+  // `visibleColumns` (already filtered), so a hidden column should
+  // contribute nothing to the running cursor, same as if it never existed.
+  it("recomputes a later pinned column's offset after an earlier pinned column is hidden via columnVisibility", () => {
+    const pinned: ColumnDef<Row>[] = [
+      { ...columns[0]!, pinned: "left", width: 120 },
+      { id: "second", type: "string", header: "Second", accessorKey: "name", pinned: "left", width: 80 },
+    ];
+    const { rerender } = render(
+      <DataGrid columns={pinned} dataSource={{ mode: "client", data: rows }} getRowId={(row) => row.id} />,
+    );
+    expect(screen.getByRole("columnheader", { name: /Second/ })).toHaveStyle({ left: "120px" });
+
+    rerender(
+      <DataGrid
+        columns={pinned}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        columnVisibility={{ [columns[0]!.id]: false }}
+      />,
+    );
+    expect(screen.queryByRole("columnheader", { name: columns[0]!.header })).not.toBeInTheDocument();
+    // "Second" is now the ONLY left-pinned column left, so it must stick at 0.
+    expect(screen.getByRole("columnheader", { name: /Second/ })).toHaveStyle({ left: "0px" });
+  });
+
+  it("live-updates a later pinned column's offset after resizing an earlier pinned column, with headerGroup active", () => {
+    const combo: ColumnDef<Row>[] = [
+      { ...columns[0]!, pinned: "left", width: 100 },
+      { id: "second", type: "string", header: "Second", accessorKey: "name", pinned: "left", width: 80 },
+      { ...columns[1]!, headerGroup: "Details" },
+      { id: "extra", type: "string", header: "Extra", accessorKey: "name", headerGroup: "Details" },
+      { id: "status", type: "string", header: "Status", accessorKey: "name", pinned: "right", width: 60 },
+    ];
+    render(
+      <DataGrid
+        columns={combo}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        enableColumnResizing
+      />,
+    );
+
+    // Before resizing: second left-pinned column stacks right after the
+    // first's declared 100px width; the spanning "Details" header still
+    // renders over the two ungrouped-header-row columns.
+    expect(screen.getByRole("columnheader", { name: /Second/ })).toHaveStyle({ left: "100px" });
+    expect(screen.getByTestId("header-group-row")).toBeInTheDocument();
+    expect(screen.getByText("Details")).toBeInTheDocument();
+
+    const handle = screen.getByTestId(`resize-handle-${columns[0]!.id}`);
+    fireEvent.mouseDown(handle, { clientX: 0 });
+    fireEvent.mouseMove(document, { clientX: 40 });
+    fireEvent.mouseUp(document, { clientX: 40 });
+
+    // First column grew 100 -> 140; the second pinned-left column's offset
+    // must track that LIVE width, not the original 100px it was declared with.
+    expect(screen.getByRole("columnheader", { name: columns[0]!.header })).toHaveStyle({ width: "140px" });
+    expect(screen.getByRole("columnheader", { name: /Second/ })).toHaveStyle({ left: "140px" });
+    // The right-pinned column and the headerGroup row are unaffected by a
+    // left-side resize.
+    expect(screen.getByRole("columnheader", { name: /Status/ })).toHaveStyle({ right: "0px" });
+    expect(screen.getByText("Details")).toBeInTheDocument();
+  });
 });
 
 describe("DataGrid (sticky header)", () => {
@@ -937,6 +1009,43 @@ describe("DataGrid (virtualize)", () => {
       expect(onEndReached).not.toHaveBeenCalled();
     });
   });
+
+  it("re-fires onEndReached after a sort change replaces the loaded window with same-length data", async () => {
+    await withMockedOffsetHeight(400, async () => {
+      const onEndReached = vi.fn();
+      const onStateChange = vi.fn();
+      const manyRows: Row[] = Array.from({ length: 40 }, (_, i) => ({ id: `r${i}`, name: `Row ${i}`, age: i }));
+      const { rerender } = render(
+        <DataGrid
+          columns={columns}
+          dataSource={{ mode: "server", data: manyRows, rowCount: 1000, onStateChange }}
+          getRowId={(row) => row.id}
+          virtualize={{ threshold: 0, overscan: 50, onEndReached }}
+        />,
+      );
+      expect(onEndReached).toHaveBeenCalledTimes(1);
+
+      await userEvent.click(screen.getByRole("button", { name: "Name" }));
+      expect(onStateChange).toHaveBeenCalled();
+
+      // The caller's own onStateChange handler would refetch and replace
+      // `data` with a brand-new sorted first page here -- same length (40)
+      // as what was already loaded, but a genuinely different window, still
+      // scrolled to its own end. The dedup guard must not mistake "same
+      // length" for "same data" and swallow this.
+      const resorted: Row[] = [...manyRows].sort((a, b) => a.name.localeCompare(b.name));
+      rerender(
+        <DataGrid
+          columns={columns}
+          dataSource={{ mode: "server", data: resorted, rowCount: 1000, onStateChange }}
+          getRowId={(row) => row.id}
+          virtualize={{ threshold: 0, overscan: 50, onEndReached }}
+        />,
+      );
+
+      expect(onEndReached).toHaveBeenCalledTimes(2);
+    });
+  });
 });
 
 describe("DataGrid (groupBy)", () => {
@@ -1149,6 +1258,49 @@ describe("DataGrid (groupBy)", () => {
     const groupHeaderCell = screen.getByText("Senior (2)").closest("td")!;
     expect(groupHeaderCell).not.toHaveClass("bg-muted");
     expect(groupHeaderCell).toHaveClass("bg-background", "sticky");
+  });
+
+  // Performance regression guard: `groupedBuckets`/`flatItems` are memoized
+  // on `tableRows`/`groupBy` (see DataGrid.tsx's own comments on both) --
+  // neither should depend on the virtualizer's own scroll-position state, so
+  // a large grouped+virtualized grid's bucketing must NOT redo its O(rows)
+  // work on every scroll tick. Counting calls to the `groupBy` callback
+  // itself (rather than reasoning about memoization from source alone) is
+  // the concrete, empirical check: it fires exactly once per real
+  // `groupRows` recomputation, so its call count going flat across a scroll
+  // is direct evidence the memo held, not just that the DOM looked right.
+  it("does not recompute groupBy bucketing on every scroll tick of a large virtualized grid", async () => {
+    await withMockedOffsetHeight(300, () => {
+      const manyRows: Row[] = Array.from({ length: 2000 }, (_, i) => ({
+        id: `r${i}`,
+        name: `Row ${i}`,
+        age: i % 2 === 0 ? 40 : 20,
+      }));
+      const groupByCalls = vi.fn(groupByTier);
+      render(
+        <DataGrid
+          testId="perf-grid"
+          columns={columns}
+          dataSource={{ mode: "client", data: manyRows }}
+          getRowId={(row) => row.id}
+          groupBy={groupByCalls}
+          virtualize={{ threshold: 0 }}
+          initialState={{ pageSize: 2000 }}
+        />,
+      );
+      const callsAfterMount = groupByCalls.mock.calls.length;
+      expect(callsAfterMount).toBeGreaterThan(0);
+
+      // Simulate several scroll ticks -- @tanstack/react-virtual observes the
+      // scroll container's native `scroll` event and reads `scrollTop` off it.
+      const scroller = screen.getByTestId("perf-grid");
+      for (const top of [200, 800, 1600, 400]) {
+        fireEvent.scroll(scroller, { target: { scrollTop: top } });
+      }
+      // A pure scroll changes which virtual items are mounted -- it must not
+      // re-run the O(rows) bucketing work again.
+      expect(groupByCalls.mock.calls.length).toBe(callsAfterMount);
+    });
   });
 });
 
