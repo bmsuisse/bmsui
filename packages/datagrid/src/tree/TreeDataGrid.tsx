@@ -140,6 +140,7 @@ export function TreeDataGrid<TRow>({
   virtualizeThreshold = 100,
   estimatedRowHeight = 40,
   maxBodyHeight = 480,
+  testId,
   selectedIds: controlledSelectedIds,
   onSelectedIdsChange,
   getRowSelectionState,
@@ -447,6 +448,7 @@ export function TreeDataGrid<TRow>({
       )}
       <div
         ref={scrollRef}
+        data-testid={testId}
         className={shouldVirtualize ? "overflow-y-auto" : undefined}
         style={shouldVirtualize ? { maxHeight: maxBodyHeight } : undefined}
       >
@@ -454,7 +456,10 @@ export function TreeDataGrid<TRow>({
           <thead ref={theadRef}>
             <tr className="divide-x divide-border">
               {showSelectionColumn && (
-                <th className="border-b border-border p-1" style={{ width: SELECTION_COLUMN_WIDTH }}>
+                <th
+                  className="sticky top-0 z-20 border-b border-border bg-muted p-1"
+                  style={{ width: SELECTION_COLUMN_WIDTH }}
+                >
                   <Checkbox
                     aria-label="Select all visible rows"
                     checked={allVisibleSelected}
@@ -466,12 +471,17 @@ export function TreeDataGrid<TRow>({
                 <th
                   key={column.id}
                   style={column.width ? { width: column.width } : undefined}
-                  className={`border-b border-border p-2 font-medium ${alignClassName(column)}`}
+                  className={cn(
+                    "sticky top-0 z-20 border-b border-border bg-muted p-2 font-medium",
+                    alignClassName(column),
+                  )}
                 >
                   {column.header}
                 </th>
               ))}
-              {showRowActionsColumn && <th className="border-b border-border p-2" aria-label="Row actions" />}
+              {showRowActionsColumn && (
+                <th className="sticky top-0 z-20 border-b border-border bg-muted p-2" aria-label="Row actions" />
+              )}
             </tr>
           </thead>
           <tbody>

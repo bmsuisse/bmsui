@@ -137,6 +137,16 @@ export interface TreeDataGridProps<TRow> extends TreeAccessors<TRow> {
   /** Max height of the scrollable table body in pixels. Required for virtualization to have a viewport to scroll within. Defaults to 480. */
   maxBodyHeight?: number;
   /**
+   * `data-testid` for the tree's own scrollable container — the element
+   * `maxBodyHeight` actually applies to once virtualized. Omit for no
+   * attribute at all. Useful for an e2e test that needs to scroll this
+   * specific tree or assert on its scroll position; the outer
+   * `data-testid="tree-datagrid"` wrapper isn't it, and isn't unique per
+   * tree on a page with more than one — same convention as `<DataGrid>`'s
+   * own `testId`.
+   */
+  testId?: string;
+  /**
    * Controlled row selection — same convention as `<DataGrid>`'s own
    * `selectedIds`/`onSelectedIdsChange`. Both must be supplied together to
    * render a checkbox column at all; there is no internal/uncontrolled
