@@ -1,6 +1,6 @@
 {
   "name": "@bmsuisse/datagrid",
-  "version": "0.33.0",
+  "version": "0.33.1",
   "description": "Headless-core React datagrid (TanStack Table v9) with a shared filter/sort contract, built on shadcn/ui primitives.",
   "type": "module",
   "license": "MIT",
