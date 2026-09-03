@@ -279,6 +279,7 @@ export function DataGrid<TRow extends RowData>({
   getRowProps,
   getRowTestId,
   gridState,
+  onGridStateChange,
   selectedIds: controlledSelectedIds,
   onSelectedIdsChange,
   testId,
@@ -304,6 +305,7 @@ export function DataGrid<TRow extends RowData>({
     initialState,
     gridState,
     showPagination,
+    onGridStateChange,
   );
   const [internalSelectedIds, setInternalSelectedIds] = useState<ReadonlySet<string>>(new Set());
   const selectedIds = controlledSelectedIds ?? internalSelectedIds;

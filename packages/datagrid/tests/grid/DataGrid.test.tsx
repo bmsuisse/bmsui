@@ -1767,3 +1767,58 @@ describe("DataGrid (server mode)", () => {
     );
   });
 });
+
+describe("DataGrid onGridStateChange", () => {
+  it("fires in client mode too, unlike dataSource.onStateChange which only exists for server mode", async () => {
+    const onGridStateChange = vi.fn<(state: GridState) => void>();
+    render(
+      <DataGrid
+        columns={columns}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        onGridStateChange={onGridStateChange}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Name" }));
+
+    expect(onGridStateChange).toHaveBeenCalledWith(
+      expect.objectContaining({ sort: [{ field: "name", dir: "asc" }] }),
+    );
+  });
+
+  it("fires alongside dataSource.onStateChange in server mode, with the same state", async () => {
+    const onStateChange = vi.fn<(state: GridState) => void>();
+    const onGridStateChange = vi.fn<(state: GridState) => void>();
+    render(
+      <DataGrid
+        columns={columns}
+        dataSource={{ mode: "server", data: [rows[0]!], rowCount: 3, onStateChange }}
+        getRowId={(row) => row.id}
+        onGridStateChange={onGridStateChange}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Name" }));
+
+    expect(onStateChange).toHaveBeenCalledWith(onGridStateChange.mock.calls[0]?.[0]);
+  });
+
+  it("does not require gridState to also be passed -- an observer-only caller doesn't control anything", async () => {
+    const onGridStateChange = vi.fn<(state: GridState) => void>();
+    render(
+      <DataGrid
+        columns={columns}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        onGridStateChange={onGridStateChange}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Name" }));
+    // The grid still owns and applies its own state (uncontrolled) -- it just
+    // also reports it outward.
+    expect(nameCellsInOrder()).toEqual(["Alice", "Bob", "Charlie"]);
+    expect(onGridStateChange).toHaveBeenCalled();
+  });
+});
