@@ -280,6 +280,34 @@ describe("TreeDataGrid", () => {
     expect(screen.getByText("No results.")).toBeInTheDocument();
   });
 
+  it("shows a 'Loading...' row instead of 'No results.' while loading with no data yet", () => {
+    render(
+      <TreeDataGrid
+        columns={columns}
+        data={[]}
+        loading
+        getRowId={(row) => row.id}
+        getChildren={(row) => row.children}
+      />,
+    );
+    expect(screen.getByText("Loading...")).toBeInTheDocument();
+    expect(screen.queryByText("No results.")).not.toBeInTheDocument();
+  });
+
+  it("ignores `loading` once real rows are present", () => {
+    render(
+      <TreeDataGrid
+        columns={columns}
+        data={eagerTree}
+        loading
+        getRowId={(row) => row.id}
+        getChildren={(row) => row.children}
+      />,
+    );
+    expect(screen.queryByText("Loading...")).not.toBeInTheDocument();
+    expect(screen.getByText("Alpha")).toBeInTheDocument();
+  });
+
   it("virtualizes large trees: not every root row is in the DOM at once", () => {
     const originalRect = Element.prototype.getBoundingClientRect;
     Element.prototype.getBoundingClientRect = function (this: Element) {

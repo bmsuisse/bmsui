@@ -33,6 +33,17 @@ export interface TreeDataGridProps<TRow> extends TreeAccessors<TRow> {
   /** Root-level rows. */
   data: TRow[];
   /**
+   * Whether the root `data` set is still being fetched. Purely cosmetic —
+   * unlike `<DataGrid>`'s `loading` (a full-overlay spinner over the whole
+   * body), `<TreeDataGrid>` has no existing rows to obscure while `data` is
+   * empty, so this only swaps the empty-state row from "No results." to a
+   * spinner + "Loading..." for as long as `data.length === 0`. Once real
+   * rows arrive, this stops mattering — a background refetch never re-shows
+   * the empty state, so there's nothing for a full overlay to add here.
+   * Defaults to `false`.
+   */
+  loading?: boolean;
+  /**
    * The column whose cell gets the depth indentation + expand/collapse
    * chevron prepended. Defaults to the first column in `columns`.
    */

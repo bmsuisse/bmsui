@@ -122,6 +122,7 @@ function TreeCell<TRow>({
 export function TreeDataGrid<TRow>({
   columns,
   data,
+  loading = false,
   treeColumnId,
   columnVisibility,
   getRowId,
@@ -488,7 +489,14 @@ export function TreeDataGrid<TRow>({
             {data.length === 0 ? (
               <tr>
                 <td colSpan={totalColumnCount} className="p-4 text-center text-muted-foreground">
-                  No results.
+                  {loading ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                      Loading...
+                    </span>
+                  ) : (
+                    "No results."
+                  )}
                 </td>
               </tr>
             ) : groupedBuckets ? (
