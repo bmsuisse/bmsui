@@ -247,6 +247,43 @@ function OrgTreeDemo(): ReactElement {
   );
 }
 
+// --- <TreeDataGrid> virtualized scroll demo: enough top-level rows to push
+// past `virtualizeThreshold` (default 100), giving the tree its own bounded
+// scroll container (`overflow-y-auto` + `maxBodyHeight`) so the sticky
+// header can be exercised by a real scroll — same idea as
+// `VirtualizedScrollDemo` above, but for `<TreeDataGrid>`'s own `<thead>`.
+interface BigTreeRow {
+  id: string;
+  name: string;
+}
+
+const BIG_TREE_ROWS: BigTreeRow[] = Array.from({ length: 200 }, (_, i) => ({
+  id: `row-${i}`,
+  name: `Row ${i + 1}`,
+}));
+
+const bigTreeColumns: ColumnDef<BigTreeRow>[] = [
+  { id: "name", type: "string", header: "Name", accessorKey: "name" },
+];
+
+function TreeVirtualizedDemo(): ReactElement {
+  return (
+    <div>
+      <p className="mb-2 text-sm text-muted-foreground">
+        {BIG_TREE_ROWS.length.toLocaleString()} rows, virtualized — scroll to confirm the header
+        stays pinned to the top of the grid.
+      </p>
+      <TreeDataGrid
+        testId="tree-virtualized-grid"
+        columns={bigTreeColumns}
+        data={BIG_TREE_ROWS}
+        getRowId={(row) => row.id}
+        getChildren={() => undefined}
+      />
+    </div>
+  );
+}
+
 // --- <TreeDataGrid> inline editing demo: a small eager 2-level project/task
 // tree — mirrors the flat <DataGrid> editing demo's column shape (name/
 // owner/hours/done) so the two demos read as the same feature at two
@@ -1192,6 +1229,11 @@ export function App(): ReactElement {
         Expand "Sales" to see the inline error+retry UX (its first load always fails).
       </p>
       <OrgTreeDemo />
+
+      <h2 className="mb-2 mt-8 text-lg font-semibold">
+        &lt;TreeDataGrid&gt; virtualized scroll demo — sticky header
+      </h2>
+      <TreeVirtualizedDemo />
 
       <h2 className="mb-2 mt-8 text-lg font-semibold">
         &lt;TreeDataGrid&gt; editable demo — inline editing on a tree
