@@ -932,6 +932,67 @@ striping grouped rows unevenly (pre-existing, not introduced by composing
 with `virtualize`), and a sticky header pinned deep inside a very large
 single bucket.
 
+### `ColumnDef.summary` / `showTotals` — per-column, per-group + grand-total aggregation
+
+`ColumnDef.summary?: (rows: TRow[]) => ReactNode` is the one extension point
+for "the caller wants an aggregate value under a specific column" — a sum, a
+count, an average, a literal label, whatever `rows.reduce`/`.length`/a plain
+string computes. The same function feeds two independent, opt-in rows:
+
+- **A per-group summary row**, computed off just that bucket's own rows, once
+  at least one visible column sets `summary` AND `groupBy` is also set. It
+  renders directly under a group's label row — non-sticky (it scrolls away
+  with that group's own members, unlike the label row above it) and shown
+  regardless of whether the group is expanded or collapsed, since a
+  collapsed group's subtotal is often the entire reason to collapse it.
+- **A grand-total `<tfoot>`** (`DataGridProps.showTotals?: boolean` /
+  `TreeDataGridProps.showTotals?: boolean`), computed off every
+  currently-rendered row, once `showTotals` is true AND at least one visible
+  column sets `summary`. Sticky to the BOTTOM of the scroll container
+  (`bottom-0`), mirroring the header's own `top-0` stickiness, so it stays
+  visible while scrolling a tall grid instead of requiring a scroll all the
+  way down.
+
+Neither feature does any calculation itself, by design (same "no built-in
+aggregate calculation" stance `groupBy` alone always had) — a column with no
+`summary` renders a blank cell in both rows, and a grid with `showTotals`
+true but no column opting in renders no `<tfoot>` at all.
+
+```tsx
+<DataGrid
+  columns={[
+    { id: "customer", type: "string", header: "Customer", accessorKey: "customer" },
+    {
+      id: "amount",
+      type: "currency",
+      header: "Amount",
+      accessorKey: "amount",
+      summary: (rows) => rows.reduce((sum, row) => sum + row.amount, 0),
+    },
+  ]}
+  dataSource={{ mode: "client", data: orders }}
+  getRowId={(row) => row.id}
+  groupBy={(row) => row.customer}
+  showTotals
+/>
+```
+
+`<TreeDataGrid>`'s own version of both rows summarizes `data` (the root-level
+rows) — for the per-group row, a bucket's own root rows (`bucket.roots`), NOT
+the flattened tree — since a parent's own value usually already reflects its
+children's (summing every flattened row would typically double-count). Same
+`summary` function, same "single level, roots only" scope `groupBy` itself
+already has for `<TreeDataGrid>`.
+
+Both rows reuse each grid's existing per-column cell machinery
+(`bodyCellPropsByColumn` in `DataGrid.tsx` for pinning/resizing;
+`bodyTdClassByColumn` in `TreeDataGrid.tsx`) rather than recomputing column
+styling — the leading detail/selection and trailing row-actions columns get
+one blank filler cell each instead, since there's no per-row
+checkbox/expand affordance to show in a summary row (see "Known limitations"
+below for the one gap this leaves: those fillers aren't independently
+sticky-left/right pinned themselves).
+
 ### `editable` / `editing` — inline cell editing, accumulate-then-save
 
 `BaseColumn.editable?: boolean | ((row: TRow) => boolean)` turns a column's
@@ -1259,6 +1320,10 @@ generalizes.
   yet, for the same "needs a flattened index space" reason `<DataGrid>`'s own
   `groupBy`+`virtualize` did before it gained that support; see "Known
   limitations" below.
+- **`ColumnDef.summary` / `showTotals`** — same convention and same shared
+  `summary` function as `<DataGrid>`'s own (see that section above), except
+  both rows here always summarize root-level rows (`data`, or a bucket's own
+  `roots`), never the flattened tree — see that section for why.
 - **Virtualization** via `@tanstack/react-virtual`, using the classic
   "padding-row" technique (two spacer `<tr>`s sized from
   `virtualItem.start`/`getTotalSize()`, real rows in between) since you can't
@@ -1496,3 +1561,16 @@ the retry-connect loop in `main.py`'s lifespan never found it reachable, and
   off (each group's tree still flattens and renders correctly, just without
   windowing) rather than interleaving synthetic group-header rows into the
   virtualizer's flattened index space, which is out of scope for now.
+- **A `summary` row's leading (detail/selection) and trailing (row-actions)
+  filler cells aren't independently sticky-left/right pinned.** A real body
+  row's own structural cells pin to the edge via `pinnedCellProps`/
+  `structuralCellProps` so they stay put during horizontal scroll; the
+  per-group summary row and `showTotals`'s `<tfoot>` instead give those
+  columns one plain, unpinned filler `<td>` each (there's no per-row
+  checkbox/expand affordance to show in a summary row anyway). Harmless while
+  blank — nothing to visually misalign — but a grid combining
+  `enableColumnResizing`-style side pinning, a `summary` column, AND
+  horizontal scroll could see a filler cell scroll out ahead of a still-
+  pinned data column. Each `summary` *data* column itself IS still correctly
+  pinned/sticky in both rows (reuses the same `bodyCellPropsByColumn` map
+  real body cells use); only the structural fillers have this gap.

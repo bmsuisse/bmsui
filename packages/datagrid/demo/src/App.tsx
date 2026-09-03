@@ -407,7 +407,17 @@ const DEPT_TREE: DeptRow[] = [
 
 const deptColumns: ColumnDef<DeptRow>[] = [
   { id: "name", type: "string", header: "Name", accessorKey: "name", width: 220 },
-  { id: "headcount", type: "number", header: "Headcount", accessorKey: "headcount" },
+  {
+    id: "headcount",
+    type: "number",
+    header: "Headcount",
+    accessorKey: "headcount",
+    // Root rows only (`roots`, never the flattened tree) — a division's own
+    // headcount already includes its teams', so summing every flattened row
+    // too would double-count. Feeds both the per-division subtotal
+    // (`groupBy` below) and the grid-wide `showTotals` row.
+    summary: (roots: DeptRow[]) => roots.reduce((sum, root) => sum + root.headcount, 0),
+  },
 ];
 
 function TreeGroupingDemo(): ReactElement {
@@ -417,7 +427,9 @@ function TreeGroupingDemo(): ReactElement {
       <p className="mb-2 text-sm text-muted-foreground">
         Departments grouped by division; toggle Headcount via the column selector below — the
         same <code>&lt;ColumnSelector&gt;</code> component the flat grid above uses, driving{" "}
-        <code>&lt;TreeDataGrid&gt;</code>'s own <code>columnVisibility</code> prop.
+        <code>&lt;TreeDataGrid&gt;</code>'s own <code>columnVisibility</code> prop. Each division
+        shows a headcount subtotal (root rows only — a division's own headcount already includes
+        its teams'), plus a grand-total row at the bottom via <code>showTotals</code>.
       </p>
       {/* Explicit `trigger` here (rather than the default icon button, whose
           accessible name is "Choose columns") so this doesn't collide with
@@ -444,6 +456,7 @@ function TreeGroupingDemo(): ReactElement {
           getChildren={(row) => row.children}
           groupBy={(row) => row.division ?? "Other"}
           initialExpandedLevel={1}
+          showTotals
         />
       </div>
     </div>
@@ -722,6 +735,7 @@ interface TeamMember {
   name: string;
   department: string;
   role: string;
+  salary: number;
 }
 
 const DEPARTMENTS = ["Engineering", "Sales", "Marketing", "Support", "Finance"];
@@ -742,31 +756,71 @@ const TEAM_MEMBERS: TeamMember[] = DEPARTMENTS.flatMap((department, dIndex) =>
     name: `${name} ${department[0]}.`,
     department,
     role: ROLES[(dIndex + nIndex) % ROLES.length]!,
+    // Deterministic (no Math.random) so screenshots/sums are reproducible.
+    salary: 60_000 + dIndex * 5_000 + nIndex * 2_500,
   })),
 );
 
+const usdFormatter = new Intl.NumberFormat(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+
+// The `summary` on `salary` (a plain sum) feeds BOTH the per-department
+// subtotal row (`groupBy` below, called once per department with that
+// department's own members) and the grand-total row (`showTotals`, called
+// once with every currently-rendered member) — see `ColumnDef.summary`'s own
+// doc for why one function covers both. `role`'s summary is a headcount
+// instead, just to show a column's aggregation doesn't have to be numeric
+// addition — "the exact calculation is up to the caller" applies per column.
 const teamMemberColumns: ColumnDef<TeamMember>[] = [
   { id: "name", type: "string", header: "Name", accessorKey: "name" },
-  { id: "role", type: "string", header: "Role", accessorKey: "role" },
+  {
+    id: "role",
+    type: "string",
+    header: "Role",
+    accessorKey: "role",
+    summary: (members) => `${members.length} people`,
+  },
+  {
+    id: "salary",
+    type: "currency",
+    header: "Salary",
+    accessorKey: "salary",
+    currency: "USD",
+    summary: (members) => usdFormatter.format(members.reduce((sum, member) => sum + member.salary, 0)),
+  },
 ];
 
 function GroupingDemo(): ReactElement {
   const [zebra, setZebra] = useState(true);
+  const [showTotals, setShowTotals] = useState(true);
   return (
     <div>
       <p className="mb-2 text-sm text-muted-foreground">
         Grouped by department — scroll within the grid to see each department's header stick
-        below the column header as its members pass underneath.
+        below the column header as its members pass underneath. Each department also shows a
+        headcount + total-salary subtotal row (from the Role/Salary columns' own{" "}
+        <code>summary</code>), and the grid-wide <code>showTotals</code> row at the bottom sticks
+        to the bottom of the scroll area the same way the header sticks to the top.
       </p>
-      <button
-        type="button"
-        data-testid="grouping-zebra-toggle"
-        aria-pressed={zebra}
-        className="mb-2 rounded-md border px-3 py-1 text-sm"
-        onClick={() => setZebra((prev) => !prev)}
-      >
-        Zebra: {zebra ? "On" : "Off"}
-      </button>
+      <div className="mb-2 flex gap-2">
+        <button
+          type="button"
+          data-testid="grouping-zebra-toggle"
+          aria-pressed={zebra}
+          className="rounded-md border px-3 py-1 text-sm"
+          onClick={() => setZebra((prev) => !prev)}
+        >
+          Zebra: {zebra ? "On" : "Off"}
+        </button>
+        <button
+          type="button"
+          data-testid="grouping-totals-toggle"
+          aria-pressed={showTotals}
+          className="rounded-md border px-3 py-1 text-sm"
+          onClick={() => setShowTotals((prev) => !prev)}
+        >
+          Totals row: {showTotals ? "On" : "Off"}
+        </button>
+      </div>
       <div className="h-[380px]">
         <DataGrid
           testId="grouping-grid"
@@ -777,6 +831,7 @@ function GroupingDemo(): ReactElement {
           showPagination={false}
           initialState={{ pageSize: TEAM_MEMBERS.length }}
           zebra={zebra}
+          showTotals={showTotals}
         />
       </div>
     </div>
@@ -1204,7 +1259,9 @@ export function App(): ReactElement {
       <h2 className="mb-2 mt-8 text-lg font-semibold">headerGroup demo — spanning header cells</h2>
       <HeaderGroupDemo />
 
-      <h2 className="mb-2 mt-8 text-lg font-semibold">groupBy demo — sticky group headers</h2>
+      <h2 className="mb-2 mt-8 text-lg font-semibold">
+        groupBy demo — sticky group headers, per-column subtotals + showTotals
+      </h2>
       <GroupingDemo />
 
       <h2 className="mb-2 mt-8 text-lg font-semibold">editable demo — inline editing + Save/Discard</h2>

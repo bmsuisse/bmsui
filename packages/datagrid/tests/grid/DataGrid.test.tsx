@@ -1418,6 +1418,95 @@ describe("DataGrid (groupBy)", () => {
       expect(groupByCalls.mock.calls.length).toBe(callsAfterMount);
     });
   });
+
+  it("renders a per-group summary row from a column's summary(rows), once at least one visible column defines it", () => {
+    const columnsWithSummary: ColumnDef<Row>[] = [
+      columns[0]!,
+      { ...columns[1]!, summary: (groupRows: Row[]) => groupRows.reduce((sum, r) => sum + r.age, 0) },
+    ];
+    render(
+      <DataGrid
+        columns={columnsWithSummary}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        groupBy={groupByTier}
+      />,
+    );
+    // Senior (Charlie + Bob) is the first-seen bucket, so its summary row is
+    // first; Junior (Alice alone) is second.
+    const [seniorSummary, juniorSummary] = screen.getAllByTestId("group-summary-row");
+    expect(within(seniorSummary!).getByText("70")).toBeInTheDocument();
+    expect(within(juniorSummary!).getByText("25")).toBeInTheDocument();
+  });
+
+  it("shows the summary row even for a collapsed group", async () => {
+    const columnsWithSummary: ColumnDef<Row>[] = [
+      columns[0]!,
+      { ...columns[1]!, summary: (groupRows: Row[]) => groupRows.length },
+    ];
+    render(
+      <DataGrid
+        columns={columnsWithSummary}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        groupBy={groupByTier}
+      />,
+    );
+    await userEvent.click(screen.getByText("Senior (2)"));
+    expect(screen.queryByText("Charlie")).not.toBeInTheDocument();
+    expect(screen.getAllByTestId("group-summary-row")).toHaveLength(2);
+  });
+
+  it("renders no summary row at all when no visible column defines summary", () => {
+    render(
+      <DataGrid columns={columns} dataSource={{ mode: "client", data: rows }} getRowId={(row) => row.id} groupBy={groupByTier} />,
+    );
+    expect(screen.queryByTestId("group-summary-row")).not.toBeInTheDocument();
+  });
+});
+
+describe("DataGrid (showTotals)", () => {
+  const columnsWithSummary: ColumnDef<Row>[] = [
+    { ...columns[0]!, summary: () => "Total" },
+    { ...columns[1]!, summary: (allRows: Row[]) => allRows.reduce((sum, r) => sum + r.age, 0) },
+  ];
+
+  it("renders a totals row computed from every column's summary(rows) over the currently-rendered rows", () => {
+    render(
+      <DataGrid columns={columnsWithSummary} dataSource={{ mode: "client", data: rows }} getRowId={(row) => row.id} showTotals />,
+    );
+    const totalsRow = screen.getByTestId("totals-row");
+    expect(within(totalsRow).getByText("Total")).toBeInTheDocument();
+    // 30 + 25 + 40
+    expect(within(totalsRow).getByText("95")).toBeInTheDocument();
+  });
+
+  it("renders no totals row when showTotals is unset, even with summary columns", () => {
+    render(<DataGrid columns={columnsWithSummary} dataSource={{ mode: "client", data: rows }} getRowId={(row) => row.id} />);
+    expect(screen.queryByTestId("totals-row")).not.toBeInTheDocument();
+  });
+
+  it("renders no totals row when showTotals is set but no column defines summary", () => {
+    render(
+      <DataGrid columns={columns} dataSource={{ mode: "client", data: rows }} getRowId={(row) => row.id} showTotals />,
+    );
+    expect(screen.queryByTestId("totals-row")).not.toBeInTheDocument();
+  });
+
+  it("composes with groupBy: a per-group summary row under each bucket, plus one grand-total row", () => {
+    const groupByTier = (row: Row): string => (row.age >= 30 ? "Senior" : "Junior");
+    render(
+      <DataGrid
+        columns={columnsWithSummary}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        groupBy={groupByTier}
+        showTotals
+      />,
+    );
+    expect(screen.getAllByTestId("group-summary-row")).toHaveLength(2);
+    expect(screen.getByTestId("totals-row")).toBeInTheDocument();
+  });
 });
 
 describe("DataGrid (getRowProps)", () => {

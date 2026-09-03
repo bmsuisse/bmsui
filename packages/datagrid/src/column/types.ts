@@ -154,6 +154,18 @@ export interface BaseColumn<TRow> {
    * override for their own concerns.
    */
   formatForClipboard?: (value: unknown, row: TRow) => string;
+  /**
+   * Computes this column's aggregate cell content from a set of rows — the
+   * same function feeds both `DataGridProps`/`TreeDataGridProps`
+   * `groupBy`'s optional per-group summary row (called once per bucket, with
+   * that bucket's own rows) and `showTotals`'s grand-total row (called once,
+   * with every currently-rendered row). No calculation happens by default:
+   * omit this to leave the column's cell blank in both rows. There's
+   * deliberately no separate "group subtotal" vs. "grand total" variant —
+   * both are just "reduce this set of rows to a value for this column", so
+   * one function covers both.
+   */
+  summary?: (rows: TRow[]) => ReactNode;
 }
 
 export type StringColumn<TRow> = BaseColumn<TRow> & {
