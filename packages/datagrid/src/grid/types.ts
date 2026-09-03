@@ -87,6 +87,22 @@ export interface DataGridProps<TRow> {
    */
   gridState?: GridState;
   /**
+   * Fires on every sort/filter/page/pageSize change, in **both** `"client"`
+   * and `"server"` `dataSource.mode` — unlike `dataSource.onStateChange`
+   * (server-mode only, and required there), this is purely an observer and
+   * works whether or not `<DataGrid>` owns its own state. The one way to
+   * know a `"client"`-mode grid's *current* filter/sort/page from outside
+   * (e.g. to compute a footer total over only the currently-filtered rows
+   * with the exported `evaluateFilter`, or to build a custom paginated
+   * footer in another locale) — `"client"` mode has no equivalent of
+   * `dataSource.onStateChange` otherwise. Debounced ~300ms for filter
+   * changes (typing), immediate for sort/page/pageSize, matching
+   * `dataSource.onStateChange`'s own timing. Does not imply control: pass
+   * `gridState` too if you also want to push state back in (e.g. resetting
+   * filters programmatically); omit `gridState` to just observe.
+   */
+  onGridStateChange?: (state: GridState) => void;
+  /**
    * Controlled column visibility, e.g. driven by a `<ColumnSelector>` next
    * to the grid. Both must be supplied together to actually hide columns —
    * <DataGrid> never owns this state itself, matching how it never owns
