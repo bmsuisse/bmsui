@@ -371,6 +371,48 @@ describe("TreeDataGrid", () => {
     );
     expect(dataRows()).toHaveLength(30);
   });
+
+  it("keeps the scroll box scrollable even below the virtualize threshold", () => {
+    // Regression test: the scroll wrapper's overflow-y-auto/maxHeight
+    // styling used to be gated on `shouldVirtualize` (row count >
+    // `virtualizeThreshold`), so a tree that never crosses that threshold
+    // rendered with no scroll constraint at all -- content past
+    // `maxBodyHeight` was silently clipped by a consuming app's own
+    // overflow-hidden container with no way to reach it, anywhere on the
+    // page. Scrollability must not depend on whether windowing is active.
+    const smallTree: Node[] = Array.from({ length: 5 }, (_, i) => ({ id: `n${i}`, name: `Node ${i}` }));
+    render(
+      <TreeDataGrid
+        columns={columns}
+        data={smallTree}
+        getRowId={(row) => row.id}
+        getChildren={(row) => row.children}
+        virtualizeThreshold={100}
+        maxBodyHeight={123}
+        testId="scroll-box"
+      />,
+    );
+    const scrollBox = screen.getByTestId("scroll-box");
+    expect(scrollBox.className).toContain("overflow-y-auto");
+    expect(scrollBox.style.maxHeight).toBe("123px");
+  });
+
+  it("keeps the scroll box scrollable when groupBy forces virtualization off", () => {
+    render(
+      <TreeDataGrid
+        columns={columns}
+        data={eagerTree}
+        getRowId={(row) => row.id}
+        getChildren={(row) => row.children}
+        groupBy={() => "All"}
+        maxBodyHeight={200}
+        testId="scroll-box"
+      />,
+    );
+    const scrollBox = screen.getByTestId("scroll-box");
+    expect(scrollBox.className).toContain("overflow-y-auto");
+    expect(scrollBox.style.maxHeight).toBe("200px");
+  });
 });
 
 describe("TreeDataGrid (selection)", () => {

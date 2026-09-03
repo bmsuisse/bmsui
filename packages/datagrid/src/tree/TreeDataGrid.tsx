@@ -470,8 +470,18 @@ export function TreeDataGrid<TRow>({
       <div
         ref={scrollRef}
         data-testid={testId}
-        className={shouldVirtualize ? "overflow-y-auto" : undefined}
-        style={shouldVirtualize ? { maxHeight: maxBodyHeight } : undefined}
+        // Scrollability must not depend on whether the virtualizer is
+        // active: `shouldVirtualize` only decides whether rows are windowed
+        // (an unrelated performance optimization gated on `virtualizeThreshold`,
+        // and always off for `groupBy`, see its own comment above) -- a tree
+        // whose row count stays under that threshold, or that groups its
+        // rows, can still overflow `maxBodyHeight` and needs the exact same
+        // scroll box to reach the rest of it. Previously this div only got
+        // its overflow-y-auto/maxHeight styling once virtualization kicked
+        // in, so a non-virtualized (or grouped) tree that outgrew its box
+        // just rendered past it with no way to scroll to what was clipped.
+        className="overflow-y-auto"
+        style={{ maxHeight: maxBodyHeight }}
       >
         <table className="w-full border-collapse text-sm">
           <thead ref={theadRef}>
