@@ -492,6 +492,43 @@ describe("DataGrid (filter display)", () => {
     expect(screen.getByRole("button", { name: /Rich Age/ }).querySelector("svg")).toBeInTheDocument();
   });
 
+  it("names the header cell itself from the full renderHeader content, not just the plain-text column.header", async () => {
+    // Regression: the header <th> is given an explicit name (aria-labelledby, see
+    // its own comment in DataGrid.tsx) so the filter-trigger/resize-handle controls
+    // living alongside the header text don't bleed into its accessible name -- but an
+    // earlier version of that fix used a blunt `aria-label={column.header}` override,
+    // which discarded any *richer* content a column's own renderHeader adds beyond the
+    // plain column.header string (e.g. a combined two-line label for two related
+    // fields sharing one column, a real pattern this test mirrors). The <th>'s own
+    // accessible name must reflect what's actually rendered, the same way the
+    // preceding test already expects of the sort button nested inside it.
+    const customColumns: ColumnDef<Row>[] = [
+      columns[0]!,
+      {
+        ...columns[1]!,
+        header: "Age", // shorter than the combined renderHeader content below
+        sortable: true,
+        filterable: true,
+        renderHeader: () => (
+          <span className="flex flex-col">
+            <span>Age</span>
+            <span>Group</span>
+          </span>
+        ),
+      },
+    ];
+    render(
+      <DataGrid
+        columns={customColumns}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        enableColumnResizing
+      />,
+    );
+
+    expect(screen.getByRole("columnheader", { name: "Age Group" })).toBeInTheDocument();
+  });
+
   it("doesn't wrap a non-sortable column's renderHeader in a button, so nested interactive content stays clickable", async () => {
     // Regression test: the leaf header cell always wrapped `renderHeader` output
     // in a `<button disabled={!sortable}>` for the sort toggle. A *disabled*

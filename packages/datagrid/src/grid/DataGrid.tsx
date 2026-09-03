@@ -1596,6 +1596,7 @@ export function DataGrid<TRow extends RowData>({
               const filterable = isFilterable(column) && column.filterDisplay !== "row";
               const cellProps = leafHeaderCellPropsByColumn.get(column.id);
               const headerContent = column.renderHeader ? column.renderHeader(column) : column.header;
+              const headerLabelId = `${header.id}-label`;
               return (
                 <th
                   key={header.id}
@@ -1603,17 +1604,26 @@ export function DataGrid<TRow extends RowData>({
                   style={cellProps?.style}
                   className={cellProps?.className}
                   aria-sort={sortable ? sortDirToAriaSort(sortEntry?.dir) : undefined}
-                  // Explicit name, not name-from-content: without it, the sort
-                  // button's own icon/testid and the resize handle's
-                  // `aria-label` (added for keyboard support below) would
-                  // otherwise get concatenated into this header cell's
-                  // computed accessible name too.
-                  aria-label={column.header}
+                  // Named via aria-labelledby pointing at the headerLabelId element below,
+                  // not name-from-content on the <th> itself: without it, the filter
+                  // trigger's own aria-label and the resize handle's `aria-label` (added
+                  // for keyboard support below) would otherwise get concatenated into this
+                  // header cell's computed accessible name too. Deliberately NOT a plain
+                  // `aria-label={column.header}` override, though — `column.header` is a
+                  // plain string required for things like width-estimation heuristics, but
+                  // a column can render genuinely richer content via `renderHeader` (e.g. a
+                  // two-line combined label for two related fields sharing one column) whose
+                  // full text belongs in the accessible name too, not just `column.header`.
+                  // aria-labelledby lets the labelled element's own name-from-content do
+                  // that correctly while still excluding the filter/resize controls, which
+                  // live outside it as siblings.
+                  aria-labelledby={headerLabelId}
                 >
                   <div className="flex items-center gap-1">
                     {sortable ? (
                       <button
                         type="button"
+                        id={headerLabelId}
                         data-testid={`sort-button-${column.id}`}
                         className="flex items-center gap-1 rounded-sm px-1 hover:bg-accent hover:text-accent-foreground"
                         onClick={(event) =>
@@ -1630,7 +1640,9 @@ export function DataGrid<TRow extends RowData>({
                       // silently breaking any interactive content a column's own `renderHeader`
                       // embeds directly (bare filter inputs, "select/reject all" buttons) —
                       // clicks never reach them at all, even though nothing looks wrong visually.
-                      <div className="flex items-center gap-1 px-1">{headerContent}</div>
+                      <div id={headerLabelId} className="flex items-center gap-1 px-1">
+                        {headerContent}
+                      </div>
                     )}
                     {filterable && (
                       <Popover>
