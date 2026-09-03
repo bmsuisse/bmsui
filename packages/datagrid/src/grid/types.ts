@@ -209,10 +209,14 @@ export interface DataGridProps<TRow> {
    * rendering one full-width `colSpan`'d group-header row before each
    * bucket's own rows, in first-seen bucket order (rows are never re-sorted
    * to cluster a group together — the caller's own sort already determines
-   * which key appears first). Single level only — no nested grouping, no
-   * aggregate/summary calculation; a caller wanting a subtotal computes it
-   * themselves in `renderGroupHeader` off that bucket's own row array.
-   * Operates on whatever `rows` already resolved to — i.e. the current page,
+   * which key appears first). Single level only — no nested grouping. A
+   * caller wanting a combined label (e.g. `"Acme (5 pending)"`) still
+   * computes that themselves in `renderGroupHeader` off that bucket's own
+   * row array; a caller wanting a value aligned under one or more specific
+   * *columns* instead sets `ColumnDef.summary` on those columns — see its
+   * own doc — which renders a second row of per-column cells right below
+   * the label, once at least one visible column defines it. Operates on
+   * whatever `rows` already resolved to — i.e. the current page,
    * if paginated — with no special-casing; pair with a large `pageSize`/
    * `showPagination: false` if a group's full membership should never be
    * split across pages. Omit entirely to disable — no grouping, no header
@@ -256,6 +260,17 @@ export interface DataGridProps<TRow> {
   onExpandedGroupsChange?: (expanded: Record<string, boolean>) => void;
   /** Alternates body row backgrounds for readability on wide/dense tables. Defaults to true. */
   zebra?: boolean;
+  /**
+   * Renders a `<tfoot>` totals row below the grid's body, with one cell per
+   * visible column computed via that column's own `ColumnDef.summary(rows)`
+   * — `rows` being every row `<DataGrid>` currently has (the current page,
+   * if paginated; same scope `groupBy` itself operates on). A column with no
+   * `summary` renders a blank cell in this row. Independent of `groupBy` —
+   * the two compose (a per-group summary row under each bucket, plus one
+   * grand-total row at the very bottom) but neither requires the other.
+   * Defaults to false: no totals row, unchanged rendering.
+   */
+  showTotals?: boolean;
   /**
    * Enables the built-in inline-editing workflow: any column with
    * `editable` set renders as an interactive editor, edits accumulate

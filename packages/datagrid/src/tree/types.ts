@@ -206,7 +206,12 @@ export interface TreeDataGridProps<TRow> extends TreeAccessors<TRow> {
    * than "which root it belongs to" wouldn't have a sensible rendering.
    * Groups appear in first-seen bucket order — roots are never re-sorted to
    * cluster a group together. Omit entirely to disable — no grouping, no
-   * header rows, unchanged default rendering.
+   * header rows, unchanged default rendering. A caller wanting a value
+   * aligned under one or more specific columns (rather than folded into
+   * `renderGroupHeader`'s single label) sets `ColumnDef.summary` on those
+   * columns — see its own doc — which renders a second row of per-column
+   * cells, computed from that bucket's own *root* rows, right below the
+   * label once at least one visible column defines it.
    *
    * Not supported together with virtualization — when both are set,
    * virtualization is silently disabled and the tree renders as a plain,
@@ -227,6 +232,17 @@ export interface TreeDataGridProps<TRow> extends TreeAccessors<TRow> {
   onExpandedGroupsChange?: (expanded: Record<string, boolean>) => void;
   /** Alternates body row backgrounds for readability on wide/dense tables. Defaults to true. */
   zebra?: boolean;
+  /**
+   * Renders a `<tfoot>` totals row below the tree, with one cell per visible
+   * column computed via that column's own `ColumnDef.summary(data)` — the
+   * root-level rows in `data`, NOT the flattened tree (a child's value is
+   * usually already reflected in its parent's, so summing every flattened
+   * row would typically double-count). A column with no `summary` renders a
+   * blank cell. Independent of `groupBy` — the two compose (a per-group
+   * summary row under each bucket, plus one grand-total row at the very
+   * bottom) but neither requires the other. Defaults to false.
+   */
+  showTotals?: boolean;
   /**
    * Enables the same built-in inline-editing workflow `<DataGrid>` has:
    * any column with `editable` set renders as an interactive editor
