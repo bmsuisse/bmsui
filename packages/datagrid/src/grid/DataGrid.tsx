@@ -1385,7 +1385,7 @@ export function DataGrid<TRow extends RowData>({
     const bgClassName = zebra ? "bg-muted" : "bg-background";
     const fillerClass = cn("border-b border-border p-2", bgClassName);
     return (
-      <tr data-testid="group-summary-row">
+      <tr data-testid="group-summary-row" className="divide-x divide-border">
         {leadingSpan > 0 && <td colSpan={leadingSpan} className={fillerClass} />}
         {renderGroupSummaryCells(rows, bgClassName)}
         {showRowActionsColumn && <td className={fillerClass} aria-hidden />}

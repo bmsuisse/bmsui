@@ -956,7 +956,11 @@ string computes. The same function feeds two independent, opt-in rows:
 Neither feature does any calculation itself, by design (same "no built-in
 aggregate calculation" stance `groupBy` alone always had) — a column with no
 `summary` renders a blank cell in both rows, and a grid with `showTotals`
-true but no column opting in renders no `<tfoot>` at all.
+true but no column opting in renders no `<tfoot>` at all. `showTotals`'s row
+calls `summary` with EVERY currently-rendered row, which can be empty (e.g. a
+filter narrows the page to zero rows) — seed a `.reduce()` (`, 0`) rather than
+assuming at least one row; a per-group summary row never has this problem
+(a bucket only exists because a row produced its key).
 
 ```tsx
 <DataGrid

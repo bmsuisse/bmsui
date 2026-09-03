@@ -754,6 +754,8 @@ describe("TreeDataGrid (groupBy)", () => {
     const [seniorSummary, juniorSummary] = screen.getAllByTestId(/^group-summary-/);
     expect(within(seniorSummary!).getByText("2")).toBeInTheDocument();
     expect(within(juniorSummary!).getByText("1")).toBeInTheDocument();
+    // Same border/divider styling every ordinary tree row already has.
+    expect(seniorSummary).toHaveClass("border-b", "border-border", "divide-x", "divide-border");
   });
 
   it("shows the summary row even for a collapsed group", async () => {

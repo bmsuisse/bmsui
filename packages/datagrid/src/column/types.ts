@@ -164,6 +164,14 @@ export interface BaseColumn<TRow> {
    * deliberately no separate "group subtotal" vs. "grand total" variant —
    * both are just "reduce this set of rows to a value for this column", so
    * one function covers both.
+   *
+   * `showTotals`'s grand-total row calls this with EVERY currently-rendered
+   * row, which can be an empty array (e.g. a filter narrows the current page
+   * to zero rows) — a bare `rows.reduce((a, b) => ...)` with no seed throws
+   * on an empty array, so seed your reducer (`rows.reduce((a, b) => ..., 0)`)
+   * rather than assuming at least one row. A per-group summary row never
+   * has this problem: a bucket only exists because at least one row produced
+   * its key.
    */
   summary?: (rows: TRow[]) => ReactNode;
 }

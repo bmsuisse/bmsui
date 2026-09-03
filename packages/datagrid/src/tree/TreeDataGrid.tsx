@@ -555,7 +555,10 @@ export function TreeDataGrid<TRow>({
                         summary row: a collapsed group's subtotal is often
                         the whole reason to collapse it. */}
                     {hasColumnSummary && (
-                      <tr data-testid={`group-summary-${bucket.key}`}>
+                      <tr
+                        data-testid={`group-summary-${bucket.key}`}
+                        className="border-b border-border divide-x divide-border"
+                      >
                         {showSelectionColumn && (
                           <td
                             className={cn("p-2", zebra ? "bg-muted" : "bg-background")}

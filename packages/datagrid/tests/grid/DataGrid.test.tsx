@@ -1437,6 +1437,9 @@ describe("DataGrid (groupBy)", () => {
     const [seniorSummary, juniorSummary] = screen.getAllByTestId("group-summary-row");
     expect(within(seniorSummary!).getByText("70")).toBeInTheDocument();
     expect(within(juniorSummary!).getByText("25")).toBeInTheDocument();
+    // Same vertical divider between cells every other row (header, filter,
+    // data, totals) already has.
+    expect(seniorSummary).toHaveClass("divide-x", "divide-border");
   });
 
   it("shows the summary row even for a collapsed group", async () => {
@@ -1506,6 +1509,29 @@ describe("DataGrid (showTotals)", () => {
     );
     expect(screen.getAllByTestId("group-summary-row")).toHaveLength(2);
     expect(screen.getByTestId("totals-row")).toBeInTheDocument();
+  });
+
+  it("calls summary with an empty array (not skipped) once a filter narrows the page to zero rows", () => {
+    const summary = vi.fn((allRows: Row[]) => allRows.length);
+    const columnsWithCountSummary: ColumnDef<Row>[] = [columns[0]!, { ...columns[1]!, summary }];
+    render(
+      <DataGrid
+        columns={columnsWithCountSummary}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        showTotals
+        initialState={{ filter: { logic: "and", filters: [{ field: "name", operator: "eq", value: "nobody" }] } }}
+      />,
+    );
+    expect(summary).toHaveBeenCalledWith([]);
+    expect(within(screen.getByTestId("totals-row")).getByText("0")).toBeInTheDocument();
+  });
+
+  it("gives the group-summary and totals rows the same border/divider styling as an ordinary row", () => {
+    render(
+      <DataGrid columns={columnsWithSummary} dataSource={{ mode: "client", data: rows }} getRowId={(row) => row.id} showTotals />,
+    );
+    expect(screen.getByTestId("totals-row")).toHaveClass("divide-x", "divide-border");
   });
 });
 
