@@ -656,6 +656,32 @@ Notes for extending it:
   `treeColumnId` (or `columns[0]` when that's omitted) hides the indentation/
   expand-collapse chevron along with it, since those only ever attach to that
   one column's cell.
+- **Drag-to-reorder** (v0.35.0, `columnOrder`/`onColumnOrderChange`, both
+  optional and opt-in) — a consuming app (OneSales' Customers table) had its
+  own bespoke drag-and-drop reorder UI bolted onto a hand-rolled column
+  picker; migrating that app onto `<ColumnSelector>` needed the same
+  capability here rather than dropping it. Give both props and every row
+  grows a grip handle; give neither (the default) and rows render exactly as
+  before, no drag affordance at all. A row's `group` is fixed `ColumnDef`
+  metadata, not something a drag can reassign, so dragging only ever moves a
+  column within its own group's (or the ungrouped section's) rows — achieved
+  by sorting `columns` via `columnOrder` (see `ordering.ts`'s
+  `applyColumnOrder`) *before* handing them to the existing `groupColumns`,
+  rather than teaching `groupColumns` itself anything about order.
+  `onColumnOrderChange` fires exactly once per drop, with the complete new
+  order already computed (`ordering.ts`'s `moveColumnBefore`, also exported)
+  — a caller persists it however it likes, the same "controlled, we just
+  emit the event" contract `onVisibilityChange` already has. `persistKey`,
+  when set, additionally restores/writes column order to localStorage the
+  same way it already does for visibility, but under a **separate** key
+  (`orderStorageKeyFor`, `<storageKeyFor's key>:order`) — so a persistKey
+  already in production use for visibility-only picks up order persistence
+  automatically without any migration of its existing stored data. Built on
+  plain native HTML5 drag events (`draggable`/`onDragStart`/`onDragOver`/
+  `onDrop`), not a new dependency — this is a small, mouse-only reorder list
+  inside a dialog, not a use case that justifies pulling in a DnD library;
+  no touch fallback yet (a real gap for tablet/phone use, follow up if it's
+  ever asked for).
 
 ## `<DataGrid>` — one component, two `DataSource` modes
 

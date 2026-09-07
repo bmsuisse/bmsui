@@ -85,7 +85,8 @@ export {
   groupColumns,
   isColumnVisible,
 } from "./column-selector/visibility";
-export { storageKeyFor } from "./column-selector/persistence";
+export { storageKeyFor, orderStorageKeyFor } from "./column-selector/persistence";
+export { applyColumnOrder, moveColumnBefore } from "./column-selector/ordering";
 
 // --- menus -------------------------------------------------------------------
 export type { MenuItem, MenuItemContext } from "./menu/types";
