@@ -30,13 +30,17 @@ export function writePersistedVisibility(persistKey: string, visibility: ColumnV
   window.localStorage.setItem(storageKeyFor(persistKey), JSON.stringify(visibility));
 }
 
-// A separate key (not a nested field under storageKeyFor's own key) so an
-// app already persisting visibility under `persistKey` before this existed
-// keeps reading that same flat `ColumnVisibility` shape unchanged -- adding
-// order under a distinct suffix needs no migration and can't corrupt/shadow
-// existing stored visibility data.
+// A different top-level namespace segment ("column-order", not "columns")
+// -- not just a ":order" suffix appended to storageKeyFor's own key -- so the
+// two key families can never collide for ANY persistKey value. A suffix-only
+// scheme is only "usually" distinct: storageKeyFor("foo:order") and
+// orderStorageKeyFor("foo") would both resolve to
+// "bmsui-datagrid:columns:foo:order", silently clobbering each other's data
+// the moment two ColumnSelector instances in the same app pick persistKeys
+// that differ by exactly that literal suffix. Diverging at the namespace
+// segment itself rules that out structurally, not by convention.
 export function orderStorageKeyFor(persistKey: string): string {
-  return `bmsui-datagrid:columns:${persistKey}:order`;
+  return `bmsui-datagrid:column-order:${persistKey}`;
 }
 
 /**

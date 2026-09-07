@@ -231,8 +231,11 @@ describe("ColumnSelector: drag-to-reorder", () => {
     );
     await openDialog();
 
+    // Both "email" and "name" are in the "Contact" group -- a cross-group
+    // drag is rejected outright (see the dedicated test for that below), so
+    // this exercises the ordinary same-group case.
     const emailRow = screen.getByLabelText("Email").closest("label")!;
-    const idRow = screen.getByLabelText("ID").closest("label")!;
+    const nameRow = screen.getByLabelText("Name").closest("label")!;
 
     // `fireEvent` (not raw `dispatchEvent`) -- it wraps each dispatch in
     // `act()`, flushing the `draggedId` state update from dragstart before
@@ -240,10 +243,10 @@ describe("ColumnSelector: drag-to-reorder", () => {
     // (real drag-and-drop needs a live DataTransfer jsdom doesn't
     // implement), so this fires the same event sequence the browser would.
     fireEvent.dragStart(emailRow);
-    fireEvent.dragOver(idRow);
-    fireEvent.drop(idRow);
+    fireEvent.dragOver(nameRow);
+    fireEvent.drop(nameRow);
 
-    expect(onColumnOrderChange).toHaveBeenCalledWith(["email", "id", "name", "phone"]);
+    expect(onColumnOrderChange).toHaveBeenCalledWith(["id", "email", "name", "phone"]);
   });
 
   it("does not call onColumnOrderChange when dropping a column onto itself", async () => {
@@ -265,6 +268,59 @@ describe("ColumnSelector: drag-to-reorder", () => {
     fireEvent.drop(emailRow);
 
     expect(onColumnOrderChange).not.toHaveBeenCalled();
+  });
+
+  it("does not call onColumnOrderChange when dragged onto a column in a different group", async () => {
+    // "email" is in the "Contact" group, "phone" is ungrouped -- a cross-group
+    // drop must be rejected outright (not just visually "stay put"), or the
+    // affected group *section itself* would silently reorder in the dialog
+    // (groupColumns derives each section's position from first-seen order in
+    // the newly-reordered flat array).
+    const onColumnOrderChange = vi.fn();
+    render(
+      <ColumnSelector
+        columns={columns}
+        visibility={{}}
+        onVisibilityChange={vi.fn()}
+        columnOrder={["id", "name", "email", "phone"]}
+        onColumnOrderChange={onColumnOrderChange}
+      />,
+    );
+    await openDialog();
+
+    const emailRow = screen.getByLabelText("Email").closest("label")!;
+    const phoneRow = screen.getByLabelText("Phone").closest("label")!;
+    fireEvent.dragStart(emailRow);
+    fireEvent.dragOver(phoneRow);
+    fireEvent.drop(phoneRow);
+
+    expect(onColumnOrderChange).not.toHaveBeenCalled();
+  });
+
+  it("allows a drop between two ungrouped columns", async () => {
+    // Regression guard alongside the cross-group rejection above -- two
+    // columns that are BOTH ungrouped (group === undefined for both) must
+    // still compare equal and reorder normally, not be treated as "different
+    // groups" just because neither has one.
+    const onColumnOrderChange = vi.fn();
+    render(
+      <ColumnSelector
+        columns={columns}
+        visibility={{}}
+        onVisibilityChange={vi.fn()}
+        columnOrder={["id", "name", "email", "phone"]}
+        onColumnOrderChange={onColumnOrderChange}
+      />,
+    );
+    await openDialog();
+
+    const idRow = screen.getByLabelText("ID").closest("label")!;
+    const phoneRow = screen.getByLabelText("Phone").closest("label")!;
+    fireEvent.dragStart(phoneRow);
+    fireEvent.dragOver(idRow);
+    fireEvent.drop(idRow);
+
+    expect(onColumnOrderChange).toHaveBeenCalledWith(["phone", "id", "name", "email"]);
   });
 });
 
@@ -316,15 +372,16 @@ describe("ColumnSelector: column-order localStorage persistence", () => {
     );
     await openDialog();
 
+    // Both in the "Contact" group -- see the same-group note above.
     const emailRow = screen.getByLabelText("Email").closest("label")!;
-    const idRow = screen.getByLabelText("ID").closest("label")!;
+    const nameRow = screen.getByLabelText("Name").closest("label")!;
     fireEvent.dragStart(emailRow);
-    fireEvent.dragOver(idRow);
-    fireEvent.drop(idRow);
+    fireEvent.dragOver(nameRow);
+    fireEvent.drop(nameRow);
 
     expect(JSON.parse(window.localStorage.getItem(orderStorageKeyFor("orders")) ?? "[]")).toEqual([
-      "email",
       "id",
+      "email",
       "name",
       "phone",
     ]);
@@ -343,10 +400,10 @@ describe("ColumnSelector: column-order localStorage persistence", () => {
     await openDialog();
 
     const emailRow = screen.getByLabelText("Email").closest("label")!;
-    const idRow = screen.getByLabelText("ID").closest("label")!;
+    const nameRow = screen.getByLabelText("Name").closest("label")!;
     fireEvent.dragStart(emailRow);
-    fireEvent.dragOver(idRow);
-    fireEvent.drop(idRow);
+    fireEvent.dragOver(nameRow);
+    fireEvent.drop(nameRow);
 
     expect(window.localStorage.getItem(orderStorageKeyFor("orders"))).toBeNull();
   });

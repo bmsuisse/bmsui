@@ -663,25 +663,34 @@ Notes for extending it:
   capability here rather than dropping it. Give both props and every row
   grows a grip handle; give neither (the default) and rows render exactly as
   before, no drag affordance at all. A row's `group` is fixed `ColumnDef`
-  metadata, not something a drag can reassign, so dragging only ever moves a
-  column within its own group's (or the ungrouped section's) rows — achieved
-  by sorting `columns` via `columnOrder` (see `ordering.ts`'s
+  metadata, not something a drag can reassign, so `handleDrop` rejects a drop
+  onto a column in a different group outright (a no-op — `onColumnOrderChange`
+  never fires) rather than merely trying to keep it visually contained: a
+  cross-group move that touched the flat order would also change which
+  column is first-seen within each group, which is what `groupColumns`
+  itself uses to decide each *group section's* own display position — so an
+  unguarded cross-group drop reshuffled entire group sections in the dialog,
+  not just the one row (v0.35.1 fix; caught by code review, not shipped
+  correctly in the original v0.35.0). Within-group sorting is achieved by
+  sorting `columns` via `columnOrder` (see `ordering.ts`'s
   `applyColumnOrder`) *before* handing them to the existing `groupColumns`,
   rather than teaching `groupColumns` itself anything about order.
-  `onColumnOrderChange` fires exactly once per drop, with the complete new
-  order already computed (`ordering.ts`'s `moveColumnBefore`, also exported)
-  — a caller persists it however it likes, the same "controlled, we just
-  emit the event" contract `onVisibilityChange` already has. `persistKey`,
-  when set, additionally restores/writes column order to localStorage the
-  same way it already does for visibility, but under a **separate** key
-  (`orderStorageKeyFor`, `<storageKeyFor's key>:order`) — so a persistKey
-  already in production use for visibility-only picks up order persistence
-  automatically without any migration of its existing stored data. Built on
-  plain native HTML5 drag events (`draggable`/`onDragStart`/`onDragOver`/
-  `onDrop`), not a new dependency — this is a small, mouse-only reorder list
-  inside a dialog, not a use case that justifies pulling in a DnD library;
-  no touch fallback yet (a real gap for tablet/phone use, follow up if it's
-  ever asked for).
+  `onColumnOrderChange` fires exactly once per (accepted) drop, with the
+  complete new order already computed (`ordering.ts`'s `moveColumnBefore`,
+  also exported) — a caller persists it however it likes, the same
+  "controlled, we just emit the event" contract `onVisibilityChange` already
+  has. `persistKey`, when set, additionally restores/writes column order to
+  localStorage the same way it already does for visibility, but under a
+  **separate top-level namespace** (`orderStorageKeyFor`,
+  `bmsui-datagrid:column-order:<persistKey>` vs. visibility's
+  `bmsui-datagrid:columns:<persistKey>`) — not just a `:order` suffix on the
+  same namespace, which would let `persistKey="foo:order"` (visibility) and
+  `persistKey="foo"` (order) collide on the identical key (v0.35.1 fix, also
+  code review). Built on plain native HTML5 drag events
+  (`draggable`/`onDragStart`/`onDragOver`/`onDrop`), not a new dependency —
+  this is a small, mouse-only reorder list inside a dialog, not a use case
+  that justifies pulling in a DnD library; no touch fallback yet (a real gap
+  for tablet/phone use, follow up if it's ever asked for).
 
 ## `<DataGrid>` — one component, two `DataSource` modes
 

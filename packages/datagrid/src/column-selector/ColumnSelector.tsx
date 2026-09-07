@@ -128,6 +128,7 @@ export function ColumnSelector<TRow>({
   const effectiveOrder = columnOrder ?? columns.map((column) => column.id);
   const orderedColumns = columnOrder ? applyColumnOrder(columns, columnOrder) : columns;
   const groups = groupColumns(orderedColumns);
+  const groupById = new Map(columns.map((column) => [column.id, column.group] as const));
 
   // Which row is mid-drag, and which row it's currently hovering over --
   // local UI state only, never escapes this component. The committed result
@@ -137,6 +138,15 @@ export function ColumnSelector<TRow>({
 
   function handleDrop(targetId: string): void {
     if (!draggedId || draggedId === targetId) return;
+    // A cross-group drop would still only reorder `effectiveOrder`'s flat
+    // array correctly, but `groups` re-derives each *group section's own*
+    // display order from that array's first-seen order too (see
+    // `groupColumns`) -- so moving a column across a group boundary would
+    // silently reshuffle which group's section renders first, not just
+    // reorder within a group as documented above. Reject it outright rather
+    // than let the column's own group visibly "win" a section-order fight
+    // its drag was never meant to affect.
+    if (groupById.get(draggedId) !== groupById.get(targetId)) return;
     const next = moveColumnBefore(effectiveOrder, draggedId, targetId);
     onColumnOrderChange?.(next);
     if (persistKey) writePersistedColumnOrder(persistKey, next);

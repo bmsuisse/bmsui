@@ -54,11 +54,19 @@ describe("readPersistedVisibility", () => {
 });
 
 describe("orderStorageKeyFor", () => {
-  it("namespaces the key under bmsui-datagrid:columns: with a distinct :order suffix", () => {
-    expect(orderStorageKeyFor("orders")).toBe("bmsui-datagrid:columns:orders:order");
+  it("namespaces the key under a distinct bmsui-datagrid:column-order: root", () => {
+    expect(orderStorageKeyFor("orders")).toBe("bmsui-datagrid:column-order:orders");
     // Distinct from storageKeyFor's own key -- writing order can never shadow
     // or migrate previously stored visibility data under the same persistKey.
     expect(orderStorageKeyFor("orders")).not.toBe(storageKeyFor("orders"));
+  });
+
+  it("can never collide with storageKeyFor for any persistKey, even an adversarial one", () => {
+    // A ":order"-suffix scheme would let storageKeyFor("orders:order") collide
+    // with orderStorageKeyFor("orders") -- the different namespace segment
+    // ("column-order" vs "columns") rules that out structurally.
+    expect(orderStorageKeyFor("orders")).not.toBe(storageKeyFor("orders:order"));
+    expect(orderStorageKeyFor("columns:orders")).not.toBe(storageKeyFor("orders"));
   });
 });
 
