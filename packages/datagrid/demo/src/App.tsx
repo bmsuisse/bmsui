@@ -9,6 +9,7 @@ import {
 } from "@bmsuisse/datagrid";
 import type { ReactElement } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { PinnedAutoLayoutDemo } from "./PinnedAutoLayoutDemo";
 
 interface Order {
   id: string;
@@ -1255,6 +1256,7 @@ export function App(): ReactElement {
 
       <h2 className="mb-2 mt-8 text-lg font-semibold">Column pinning + resize demo</h2>
       <PinnedColumnsDemo />
+      <PinnedAutoLayoutDemo />
 
       <h2 className="mb-2 mt-8 text-lg font-semibold">headerGroup demo — spanning header cells</h2>
       <HeaderGroupDemo />

@@ -550,11 +550,12 @@ export function DataGrid<TRow extends RowData>({
     // called from the memoized per-column maps below, so it already runs
     // once per column per relevant state change, not once per cell.
     const bg = area === "header" ? "bg-muted" : "bg-background";
+    // Auto-layout must not shrink columns below the space reserved by sticky offsets.
     if (column.pinned === "left") {
-      return { className: `sticky z-10 ${bg}`, style: { left: leftPinnedOffsets.get(column.id), width: columnSize(column.id) } };
+      return { className: `sticky z-10 ${bg}`, style: { left: leftPinnedOffsets.get(column.id), width: columnSize(column.id), minWidth: columnSize(column.id) } };
     }
     if (column.pinned === "right") {
-      return { className: `sticky z-10 ${bg}`, style: { right: rightPinnedOffsets.get(column.id), width: columnSize(column.id) } };
+      return { className: `sticky z-10 ${bg}`, style: { right: rightPinnedOffsets.get(column.id), width: columnSize(column.id), minWidth: columnSize(column.id) } };
     }
     if (enableColumnResizing) return { style: { width: columnSize(column.id) } };
     return { style: column.width ? { width: column.width } : undefined };
@@ -584,7 +585,7 @@ export function DataGrid<TRow extends RowData>({
     return {
       className: `${base} ${bg}`,
       classNameOdd: `${base} ${bgOdd}`,
-      style: { [side]: offset, width },
+      style: { [side]: offset, width, minWidth: width },
     };
   }
 
