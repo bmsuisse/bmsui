@@ -152,6 +152,7 @@ export function TreeDataGrid<TRow>({
   expandedGroups: controlledExpandedGroups,
   onExpandedGroupsChange,
   zebra = true,
+  showTotals = false,
   editing,
 }: TreeDataGridProps<TRow>): ReactElement {
   const accessors: TreeAccessors<TRow> = useMemo(
@@ -325,6 +326,25 @@ export function TreeDataGrid<TRow>({
     return map;
   }, [visibleColumns]);
 
+  // Same "entirely opt-in" convention `<DataGrid>`'s own `hasColumnSummary`
+  // has — the per-group summary row below and the `showTotals` `<tfoot>`
+  // both only render once at least one visible column sets `summary` (see
+  // `BaseColumn.summary`'s own doc).
+  const hasColumnSummary = visibleColumns.some((column) => column.summary);
+
+  // One `<td>` per visible column for the per-group summary row, each
+  // running that column's own `summary(rows)` — `rows` here is always a
+  // bucket's own *root* rows (`bucket.roots`), never the flattened tree (see
+  // `groupBy`'s own doc for why: a child's value is usually already
+  // reflected in its parent's).
+  function renderGroupSummaryCells(rows: TRow[]): ReactNode {
+    return visibleColumns.map((column) => (
+      <td key={column.id} className={cn(bodyTdClassByColumn.get(column.id), "font-medium")}>
+        {column.summary?.(rows)}
+      </td>
+    ));
+  }
+
   const scrollRef = useRef<HTMLDivElement>(null);
   // Interleaving synthetic group-header rows needs a flattened index space
   // to virtualize correctly — out of scope for this pass, so `groupBy`
@@ -450,8 +470,18 @@ export function TreeDataGrid<TRow>({
       <div
         ref={scrollRef}
         data-testid={testId}
-        className={shouldVirtualize ? "overflow-y-auto" : undefined}
-        style={shouldVirtualize ? { maxHeight: maxBodyHeight } : undefined}
+        // Scrollability must not depend on whether the virtualizer is
+        // active: `shouldVirtualize` only decides whether rows are windowed
+        // (an unrelated performance optimization gated on `virtualizeThreshold`,
+        // and always off for `groupBy`, see its own comment above) -- a tree
+        // whose row count stays under that threshold, or that groups its
+        // rows, can still overflow `maxBodyHeight` and needs the exact same
+        // scroll box to reach the rest of it. Previously this div only got
+        // its overflow-y-auto/maxHeight styling once virtualization kicked
+        // in, so a non-virtualized (or grouped) tree that outgrew its box
+        // just rendered past it with no way to scroll to what was clipped.
+        className="overflow-y-auto"
+        style={{ maxHeight: maxBodyHeight }}
       >
         <table className="w-full border-collapse text-sm">
           <thead ref={theadRef}>
@@ -529,6 +559,28 @@ export function TreeDataGrid<TRow>({
                         </button>
                       </td>
                     </tr>
+                    {/* Not sticky, unlike the label row above — scrolls away
+                        with this group's own rows. Rendered regardless of
+                        `groupExpanded`, same as `<DataGrid>`'s own group
+                        summary row: a collapsed group's subtotal is often
+                        the whole reason to collapse it. */}
+                    {hasColumnSummary && (
+                      <tr
+                        data-testid={`group-summary-${bucket.key}`}
+                        className="border-b border-border divide-x divide-border"
+                      >
+                        {showSelectionColumn && (
+                          <td
+                            className={cn("p-2", zebra ? "bg-muted" : "bg-background")}
+                            style={{ width: SELECTION_COLUMN_WIDTH }}
+                          />
+                        )}
+                        {renderGroupSummaryCells(bucket.roots)}
+                        {showRowActionsColumn && (
+                          <td className={cn("p-2", zebra ? "bg-muted" : "bg-background")} aria-hidden />
+                        )}
+                      </tr>
+                    )}
                     {groupExpanded &&
                       (() => {
                         const startIndex = groupedRender?.startIndexByBucket.get(bucket.key) ?? 0;
@@ -560,6 +612,40 @@ export function TreeDataGrid<TRow>({
               flatRows.map((flatRow, index) => renderRow(flatRow, index))
             )}
           </tbody>
+          {showTotals && hasColumnSummary && (
+            // Sticky to the BOTTOM of the scroll container, mirroring the
+            // `<thead>`'s own `top-0` stickiness — see `<DataGrid>`'s own
+            // `renderTotalsFooter` for the full reasoning. Summarizes `data`
+            // (the root-level rows), not `flatRows`/`allFlatRows` — same
+            // "roots only" scope `groupBy` itself uses, and for the same
+            // reason (a child's value is usually already folded into its
+            // parent's).
+            <tfoot>
+              <tr data-testid="totals-row" className="divide-x divide-border">
+                {showSelectionColumn && (
+                  <td
+                    className="sticky bottom-0 z-20 border-t border-border bg-muted p-2"
+                    style={{ width: SELECTION_COLUMN_WIDTH }}
+                  />
+                )}
+                {visibleColumns.map((column) => (
+                  <td
+                    key={column.id}
+                    style={column.width ? { width: column.width } : undefined}
+                    className={cn(
+                      "sticky bottom-0 z-20 border-t border-border bg-muted p-2 font-medium",
+                      alignClassName(column),
+                    )}
+                  >
+                    {column.summary?.(data)}
+                  </td>
+                ))}
+                {showRowActionsColumn && (
+                  <td className="sticky bottom-0 z-20 border-t border-border bg-muted p-2" aria-hidden />
+                )}
+              </tr>
+            </tfoot>
+          )}
         </table>
       </div>
     </div>

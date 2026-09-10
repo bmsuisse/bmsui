@@ -85,6 +85,54 @@ describe("StringFilter", () => {
     });
   });
 
+  it("keeps a non-default operator picked before any text is typed, instead of silently reverting to Contains", async () => {
+    // Regression: emit() intentionally clears the filter entirely
+    // (onChange(undefined)) whenever the text is empty, since an operator with
+    // no value isn't a filter yet -- but naively deriving the *displayed*
+    // operator from `value?.operator` meant that clearing left nothing for the
+    // just-picked operator to persist in, so the very next keystroke silently
+    // fell back to the "contains" default. A user picking "Is" before typing
+    // anything (a natural "choose how to search, then type" flow) must not
+    // lose that choice.
+    const onChangeSpy = vi.fn();
+    render(<ControlledFilter<StringColumn<Row>> Widget={StringFilter} column={column} onChangeSpy={onChangeSpy} />);
+
+    await userEvent.click(screen.getByRole("button", { name: "Filter Name" }));
+    await userEvent.click(screen.getByRole("combobox", { name: "Name filter operator" }));
+    await userEvent.click(await screen.findByRole("option", { name: "Is" }));
+
+    // No filter exists yet (empty text), so onChange(undefined) is expected here --
+    // the bug isn't in this call, it's in what the *next* keystroke does with it.
+    expect(onChangeSpy).toHaveBeenLastCalledWith(undefined);
+
+    const input = screen.getByPlaceholderText("Filter name...");
+    await userEvent.type(input, "acme");
+
+    expect(onChangeSpy).toHaveBeenLastCalledWith({
+      field: "name",
+      operator: "eq",
+      value: "acme",
+    });
+  });
+
+  it("resyncs the displayed operator when the filter is cleared from outside this widget", async () => {
+    const onChange = vi.fn();
+    const { rerender } = render(
+      <StringFilter
+        column={column}
+        value={{ field: "name", operator: "eq", value: "acme" }}
+        onChange={onChange}
+      />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Filter Name" }));
+    expect(screen.getByRole("combobox", { name: "Name filter operator" })).toHaveTextContent("Is");
+
+    // Simulates a "reset filters" action clearing this column's value externally,
+    // with the widget never unmounting.
+    rerender(<StringFilter column={column} value={undefined} onChange={onChange} />);
+    expect(screen.getByRole("combobox", { name: "Name filter operator" })).toHaveTextContent("Contains");
+  });
+
   describe("bare (no own Popover/trigger — for a caller-provided popover)", () => {
     it("renders the operator select and input directly, with no trigger button to open", () => {
       render(<StringFilter column={column} value={undefined} onChange={vi.fn()} bare />);

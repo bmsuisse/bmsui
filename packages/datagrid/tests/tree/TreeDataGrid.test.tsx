@@ -371,6 +371,48 @@ describe("TreeDataGrid", () => {
     );
     expect(dataRows()).toHaveLength(30);
   });
+
+  it("keeps the scroll box scrollable even below the virtualize threshold", () => {
+    // Regression test: the scroll wrapper's overflow-y-auto/maxHeight
+    // styling used to be gated on `shouldVirtualize` (row count >
+    // `virtualizeThreshold`), so a tree that never crosses that threshold
+    // rendered with no scroll constraint at all -- content past
+    // `maxBodyHeight` was silently clipped by a consuming app's own
+    // overflow-hidden container with no way to reach it, anywhere on the
+    // page. Scrollability must not depend on whether windowing is active.
+    const smallTree: Node[] = Array.from({ length: 5 }, (_, i) => ({ id: `n${i}`, name: `Node ${i}` }));
+    render(
+      <TreeDataGrid
+        columns={columns}
+        data={smallTree}
+        getRowId={(row) => row.id}
+        getChildren={(row) => row.children}
+        virtualizeThreshold={100}
+        maxBodyHeight={123}
+        testId="scroll-box"
+      />,
+    );
+    const scrollBox = screen.getByTestId("scroll-box");
+    expect(scrollBox.className).toContain("overflow-y-auto");
+    expect(scrollBox.style.maxHeight).toBe("123px");
+  });
+
+  it("keeps the scroll box scrollable when groupBy forces virtualization off", () => {
+    render(
+      <TreeDataGrid
+        columns={columns}
+        data={eagerTree}
+        getRowId={(row) => row.id}
+        getChildren={(row) => row.children}
+        groupBy={() => "All"}
+        maxBodyHeight={200}
+        testId="scroll-box"
+      />,
+    );
+    const scrollBox = screen.getByTestId("scroll-box");
+    expect(scrollBox.className).toContain("overflow-y-auto");
+    expect(scrollBox.style.maxHeight).toBe("200px");
+  });
 });
 
 describe("TreeDataGrid (selection)", () => {
@@ -734,5 +776,101 @@ describe("TreeDataGrid (groupBy)", () => {
     const groupHeaderCell = screen.getByText("Senior (2)").closest("td")!;
     expect(groupHeaderCell).not.toHaveClass("bg-muted");
     expect(groupHeaderCell).toHaveClass("bg-background", "sticky");
+  });
+
+  it("renders a per-group summary row from a column's summary(roots), computed off root rows only", () => {
+    const columnsWithSummary: ColumnDef<Node>[] = [
+      columns[0]!,
+      { id: "count", type: "number", header: "Roots", summary: (roots: Node[]) => roots.length },
+    ];
+    render(
+      <TreeDataGrid
+        columns={columnsWithSummary}
+        data={groupedTree}
+        getRowId={(row) => row.id}
+        getChildren={(row) => row.children}
+        groupBy={groupByTier}
+      />,
+    );
+    // Senior (Alpha, Charlie) is the first-seen bucket, then Junior (Beta).
+    const [seniorSummary, juniorSummary] = screen.getAllByTestId(/^group-summary-/);
+    expect(within(seniorSummary!).getByText("2")).toBeInTheDocument();
+    expect(within(juniorSummary!).getByText("1")).toBeInTheDocument();
+    // Same border/divider styling every ordinary tree row already has.
+    expect(seniorSummary).toHaveClass("border-b", "border-border", "divide-x", "divide-border");
+  });
+
+  it("shows the summary row even for a collapsed group", async () => {
+    const columnsWithSummary: ColumnDef<Node>[] = [
+      columns[0]!,
+      { id: "count", type: "number", header: "Roots", summary: (roots: Node[]) => roots.length },
+    ];
+    render(
+      <TreeDataGrid
+        columns={columnsWithSummary}
+        data={groupedTree}
+        getRowId={(row) => row.id}
+        getChildren={(row) => row.children}
+        groupBy={groupByTier}
+      />,
+    );
+    await userEvent.click(screen.getByText("Senior (2)"));
+    expect(screen.queryByText("Alpha")).not.toBeInTheDocument();
+    expect(screen.getAllByTestId(/^group-summary-/)).toHaveLength(2);
+  });
+
+  it("renders no summary row when no visible column defines summary", () => {
+    render(
+      <TreeDataGrid
+        columns={columns}
+        data={groupedTree}
+        getRowId={(row) => row.id}
+        getChildren={(row) => row.children}
+        groupBy={groupByTier}
+      />,
+    );
+    expect(screen.queryByTestId(/^group-summary-/)).not.toBeInTheDocument();
+  });
+});
+
+describe("TreeDataGrid (showTotals)", () => {
+  const tree: Node[] = [
+    { id: "a", name: "Alpha", children: [{ id: "a1", name: "Alpha One" }] },
+    { id: "b", name: "Beta" },
+    { id: "c", name: "Charlie" },
+  ];
+  const columnsWithSummary: ColumnDef<Node>[] = [
+    { ...columns[0]!, summary: () => "Total" },
+    { id: "count", type: "number", header: "Roots", summary: (roots: Node[]) => roots.length },
+  ];
+
+  it("renders a totals row computed from every column's summary(data) — root rows, not the flattened tree", () => {
+    render(
+      <TreeDataGrid
+        columns={columnsWithSummary}
+        data={tree}
+        getRowId={(row) => row.id}
+        getChildren={(row) => row.children}
+        showTotals
+      />,
+    );
+    const totalsRow = screen.getByTestId("totals-row");
+    expect(within(totalsRow).getByText("Total")).toBeInTheDocument();
+    // 3 roots (Alpha, Beta, Charlie) -- Alpha One (a child) doesn't count.
+    expect(within(totalsRow).getByText("3")).toBeInTheDocument();
+  });
+
+  it("renders no totals row when showTotals is unset, even with summary columns", () => {
+    render(
+      <TreeDataGrid columns={columnsWithSummary} data={tree} getRowId={(row) => row.id} getChildren={(row) => row.children} />,
+    );
+    expect(screen.queryByTestId("totals-row")).not.toBeInTheDocument();
+  });
+
+  it("renders no totals row when showTotals is set but no column defines summary", () => {
+    render(
+      <TreeDataGrid columns={columns} data={tree} getRowId={(row) => row.id} getChildren={(row) => row.children} showTotals />,
+    );
+    expect(screen.queryByTestId("totals-row")).not.toBeInTheDocument();
   });
 });

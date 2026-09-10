@@ -1,9 +1,14 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ColumnDef } from "../../src/column/types";
 import { ColumnSelector } from "../../src/column-selector/ColumnSelector";
-import { storageKeyFor, writePersistedVisibility } from "../../src/column-selector/persistence";
+import {
+  orderStorageKeyFor,
+  storageKeyFor,
+  writePersistedColumnOrder,
+  writePersistedVisibility,
+} from "../../src/column-selector/persistence";
 import type { ColumnVisibility } from "../../src/column-selector/types";
 
 interface Row {
@@ -164,5 +169,242 @@ describe("ColumnSelector: localStorage persistence", () => {
     await userEvent.click(screen.getByLabelText("Email"));
 
     expect(window.localStorage.length).toBe(0);
+  });
+});
+
+describe("ColumnSelector: drag-to-reorder", () => {
+  it("renders no drag handles when columnOrder/onColumnOrderChange are omitted", async () => {
+    render(<ColumnSelector columns={columns} visibility={{}} onVisibilityChange={vi.fn()} />);
+    await openDialog();
+
+    for (const row of screen.getAllByRole("checkbox")) {
+      expect(row.closest("label")).toHaveAttribute("draggable", "false");
+    }
+  });
+
+  it("renders drag handles once both columnOrder and onColumnOrderChange are given", async () => {
+    render(
+      <ColumnSelector
+        columns={columns}
+        visibility={{}}
+        onVisibilityChange={vi.fn()}
+        columnOrder={["id", "name", "email", "phone"]}
+        onColumnOrderChange={vi.fn()}
+      />,
+    );
+    await openDialog();
+
+    const idRow = screen.getByLabelText("ID").closest("label");
+    expect(idRow).toHaveAttribute("draggable", "true");
+  });
+
+  it("renders groups in columnOrder's order, not columns' own array order", async () => {
+    render(
+      <ColumnSelector
+        columns={columns}
+        visibility={{}}
+        onVisibilityChange={vi.fn()}
+        // Reverses Contact's two members (name/email) relative to `columns`' own order.
+        columnOrder={["id", "phone", "email", "name"]}
+        onColumnOrderChange={vi.fn()}
+      />,
+    );
+    await openDialog();
+
+    const contactLabels = screen
+      .getAllByRole("checkbox")
+      .map((checkbox) => checkbox.closest("label")?.textContent)
+      .filter((text): text is string => text === "Email" || text === "Name");
+    expect(contactLabels).toEqual(["Email", "Name"]);
+  });
+
+  it("commits a moved column via onColumnOrderChange on drop", async () => {
+    const onColumnOrderChange = vi.fn();
+    render(
+      <ColumnSelector
+        columns={columns}
+        visibility={{}}
+        onVisibilityChange={vi.fn()}
+        columnOrder={["id", "name", "email", "phone"]}
+        onColumnOrderChange={onColumnOrderChange}
+      />,
+    );
+    await openDialog();
+
+    // Both "email" and "name" are in the "Contact" group -- a cross-group
+    // drag is rejected outright (see the dedicated test for that below), so
+    // this exercises the ordinary same-group case.
+    const emailRow = screen.getByLabelText("Email").closest("label")!;
+    const nameRow = screen.getByLabelText("Name").closest("label")!;
+
+    // `fireEvent` (not raw `dispatchEvent`) -- it wraps each dispatch in
+    // `act()`, flushing the `draggedId` state update from dragstart before
+    // the drop handler reads it. userEvent has no built-in drag simulation
+    // (real drag-and-drop needs a live DataTransfer jsdom doesn't
+    // implement), so this fires the same event sequence the browser would.
+    fireEvent.dragStart(emailRow);
+    fireEvent.dragOver(nameRow);
+    fireEvent.drop(nameRow);
+
+    expect(onColumnOrderChange).toHaveBeenCalledWith(["id", "email", "name", "phone"]);
+  });
+
+  it("does not call onColumnOrderChange when dropping a column onto itself", async () => {
+    const onColumnOrderChange = vi.fn();
+    render(
+      <ColumnSelector
+        columns={columns}
+        visibility={{}}
+        onVisibilityChange={vi.fn()}
+        columnOrder={["id", "name", "email", "phone"]}
+        onColumnOrderChange={onColumnOrderChange}
+      />,
+    );
+    await openDialog();
+
+    const emailRow = screen.getByLabelText("Email").closest("label")!;
+    fireEvent.dragStart(emailRow);
+    fireEvent.dragOver(emailRow);
+    fireEvent.drop(emailRow);
+
+    expect(onColumnOrderChange).not.toHaveBeenCalled();
+  });
+
+  it("does not call onColumnOrderChange when dragged onto a column in a different group", async () => {
+    // "email" is in the "Contact" group, "phone" is ungrouped -- a cross-group
+    // drop must be rejected outright (not just visually "stay put"), or the
+    // affected group *section itself* would silently reorder in the dialog
+    // (groupColumns derives each section's position from first-seen order in
+    // the newly-reordered flat array).
+    const onColumnOrderChange = vi.fn();
+    render(
+      <ColumnSelector
+        columns={columns}
+        visibility={{}}
+        onVisibilityChange={vi.fn()}
+        columnOrder={["id", "name", "email", "phone"]}
+        onColumnOrderChange={onColumnOrderChange}
+      />,
+    );
+    await openDialog();
+
+    const emailRow = screen.getByLabelText("Email").closest("label")!;
+    const phoneRow = screen.getByLabelText("Phone").closest("label")!;
+    fireEvent.dragStart(emailRow);
+    fireEvent.dragOver(phoneRow);
+    fireEvent.drop(phoneRow);
+
+    expect(onColumnOrderChange).not.toHaveBeenCalled();
+  });
+
+  it("allows a drop between two ungrouped columns", async () => {
+    // Regression guard alongside the cross-group rejection above -- two
+    // columns that are BOTH ungrouped (group === undefined for both) must
+    // still compare equal and reorder normally, not be treated as "different
+    // groups" just because neither has one.
+    const onColumnOrderChange = vi.fn();
+    render(
+      <ColumnSelector
+        columns={columns}
+        visibility={{}}
+        onVisibilityChange={vi.fn()}
+        columnOrder={["id", "name", "email", "phone"]}
+        onColumnOrderChange={onColumnOrderChange}
+      />,
+    );
+    await openDialog();
+
+    const idRow = screen.getByLabelText("ID").closest("label")!;
+    const phoneRow = screen.getByLabelText("Phone").closest("label")!;
+    fireEvent.dragStart(phoneRow);
+    fireEvent.dragOver(idRow);
+    fireEvent.drop(idRow);
+
+    expect(onColumnOrderChange).toHaveBeenCalledWith(["phone", "id", "name", "email"]);
+  });
+});
+
+describe("ColumnSelector: column-order localStorage persistence", () => {
+  it("restores a persisted order on mount, calling onColumnOrderChange once", () => {
+    writePersistedColumnOrder("orders", ["email", "id", "name", "phone"]);
+    const onColumnOrderChange = vi.fn();
+    render(
+      <ColumnSelector
+        columns={columns}
+        visibility={{}}
+        onVisibilityChange={vi.fn()}
+        columnOrder={["id", "name", "email", "phone"]}
+        onColumnOrderChange={onColumnOrderChange}
+        persistKey="orders"
+      />,
+    );
+
+    expect(onColumnOrderChange).toHaveBeenCalledTimes(1);
+    expect(onColumnOrderChange).toHaveBeenCalledWith(["email", "id", "name", "phone"]);
+  });
+
+  it("does not restore order when onColumnOrderChange is omitted, even with a persistKey set", () => {
+    writePersistedColumnOrder("orders", ["email", "id", "name", "phone"]);
+    const onVisibilityChange = vi.fn();
+    render(
+      <ColumnSelector
+        columns={columns}
+        visibility={{}}
+        onVisibilityChange={onVisibilityChange}
+        persistKey="orders"
+      />,
+    );
+    // Only the visibility restore effect could have fired here -- nothing
+    // was ever persisted under the plain (non-order) storage key.
+    expect(onVisibilityChange).not.toHaveBeenCalled();
+  });
+
+  it("writes the new order to localStorage on drop", async () => {
+    render(
+      <ColumnSelector
+        columns={columns}
+        visibility={{}}
+        onVisibilityChange={vi.fn()}
+        columnOrder={["id", "name", "email", "phone"]}
+        onColumnOrderChange={vi.fn()}
+        persistKey="orders"
+      />,
+    );
+    await openDialog();
+
+    // Both in the "Contact" group -- see the same-group note above.
+    const emailRow = screen.getByLabelText("Email").closest("label")!;
+    const nameRow = screen.getByLabelText("Name").closest("label")!;
+    fireEvent.dragStart(emailRow);
+    fireEvent.dragOver(nameRow);
+    fireEvent.drop(nameRow);
+
+    expect(JSON.parse(window.localStorage.getItem(orderStorageKeyFor("orders")) ?? "[]")).toEqual([
+      "id",
+      "email",
+      "name",
+      "phone",
+    ]);
+  });
+
+  it("does not touch localStorage's order key when persistKey is omitted", async () => {
+    render(
+      <ColumnSelector
+        columns={columns}
+        visibility={{}}
+        onVisibilityChange={vi.fn()}
+        columnOrder={["id", "name", "email", "phone"]}
+        onColumnOrderChange={vi.fn()}
+      />,
+    );
+    await openDialog();
+
+    const emailRow = screen.getByLabelText("Email").closest("label")!;
+    const nameRow = screen.getByLabelText("Name").closest("label")!;
+    fireEvent.dragStart(emailRow);
+    fireEvent.dragOver(nameRow);
+    fireEvent.drop(nameRow);
+
+    expect(window.localStorage.getItem(orderStorageKeyFor("orders"))).toBeNull();
   });
 });

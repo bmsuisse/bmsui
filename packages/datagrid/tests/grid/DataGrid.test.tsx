@@ -492,6 +492,43 @@ describe("DataGrid (filter display)", () => {
     expect(screen.getByRole("button", { name: /Rich Age/ }).querySelector("svg")).toBeInTheDocument();
   });
 
+  it("names the header cell itself from the full renderHeader content, not just the plain-text column.header", async () => {
+    // Regression: the header <th> is given an explicit name (aria-labelledby, see
+    // its own comment in DataGrid.tsx) so the filter-trigger/resize-handle controls
+    // living alongside the header text don't bleed into its accessible name -- but an
+    // earlier version of that fix used a blunt `aria-label={column.header}` override,
+    // which discarded any *richer* content a column's own renderHeader adds beyond the
+    // plain column.header string (e.g. a combined two-line label for two related
+    // fields sharing one column, a real pattern this test mirrors). The <th>'s own
+    // accessible name must reflect what's actually rendered, the same way the
+    // preceding test already expects of the sort button nested inside it.
+    const customColumns: ColumnDef<Row>[] = [
+      columns[0]!,
+      {
+        ...columns[1]!,
+        header: "Age", // shorter than the combined renderHeader content below
+        sortable: true,
+        filterable: true,
+        renderHeader: () => (
+          <span className="flex flex-col">
+            <span>Age</span>
+            <span>Group</span>
+          </span>
+        ),
+      },
+    ];
+    render(
+      <DataGrid
+        columns={customColumns}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        enableColumnResizing
+      />,
+    );
+
+    expect(screen.getByRole("columnheader", { name: "Age Group" })).toBeInTheDocument();
+  });
+
   it("doesn't wrap a non-sortable column's renderHeader in a button, so nested interactive content stays clickable", async () => {
     // Regression test: the leaf header cell always wrapped `renderHeader` output
     // in a `<button disabled={!sortable}>` for the sort toggle. A *disabled*
@@ -1436,6 +1473,121 @@ describe("DataGrid (groupBy)", () => {
       expect(groupByCalls.mock.calls.length).toBe(callsAfterMount);
     });
   });
+
+  it("renders a per-group summary row from a column's summary(rows), once at least one visible column defines it", () => {
+    const columnsWithSummary: ColumnDef<Row>[] = [
+      columns[0]!,
+      { ...columns[1]!, summary: (groupRows: Row[]) => groupRows.reduce((sum, r) => sum + r.age, 0) },
+    ];
+    render(
+      <DataGrid
+        columns={columnsWithSummary}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        groupBy={groupByTier}
+      />,
+    );
+    // Senior (Charlie + Bob) is the first-seen bucket, so its summary row is
+    // first; Junior (Alice alone) is second.
+    const [seniorSummary, juniorSummary] = screen.getAllByTestId("group-summary-row");
+    expect(within(seniorSummary!).getByText("70")).toBeInTheDocument();
+    expect(within(juniorSummary!).getByText("25")).toBeInTheDocument();
+    // Same vertical divider between cells every other row (header, filter,
+    // data, totals) already has.
+    expect(seniorSummary).toHaveClass("divide-x", "divide-border");
+  });
+
+  it("shows the summary row even for a collapsed group", async () => {
+    const columnsWithSummary: ColumnDef<Row>[] = [
+      columns[0]!,
+      { ...columns[1]!, summary: (groupRows: Row[]) => groupRows.length },
+    ];
+    render(
+      <DataGrid
+        columns={columnsWithSummary}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        groupBy={groupByTier}
+      />,
+    );
+    await userEvent.click(screen.getByText("Senior (2)"));
+    expect(screen.queryByText("Charlie")).not.toBeInTheDocument();
+    expect(screen.getAllByTestId("group-summary-row")).toHaveLength(2);
+  });
+
+  it("renders no summary row at all when no visible column defines summary", () => {
+    render(
+      <DataGrid columns={columns} dataSource={{ mode: "client", data: rows }} getRowId={(row) => row.id} groupBy={groupByTier} />,
+    );
+    expect(screen.queryByTestId("group-summary-row")).not.toBeInTheDocument();
+  });
+});
+
+describe("DataGrid (showTotals)", () => {
+  const columnsWithSummary: ColumnDef<Row>[] = [
+    { ...columns[0]!, summary: () => "Total" },
+    { ...columns[1]!, summary: (allRows: Row[]) => allRows.reduce((sum, r) => sum + r.age, 0) },
+  ];
+
+  it("renders a totals row computed from every column's summary(rows) over the currently-rendered rows", () => {
+    render(
+      <DataGrid columns={columnsWithSummary} dataSource={{ mode: "client", data: rows }} getRowId={(row) => row.id} showTotals />,
+    );
+    const totalsRow = screen.getByTestId("totals-row");
+    expect(within(totalsRow).getByText("Total")).toBeInTheDocument();
+    // 30 + 25 + 40
+    expect(within(totalsRow).getByText("95")).toBeInTheDocument();
+  });
+
+  it("renders no totals row when showTotals is unset, even with summary columns", () => {
+    render(<DataGrid columns={columnsWithSummary} dataSource={{ mode: "client", data: rows }} getRowId={(row) => row.id} />);
+    expect(screen.queryByTestId("totals-row")).not.toBeInTheDocument();
+  });
+
+  it("renders no totals row when showTotals is set but no column defines summary", () => {
+    render(
+      <DataGrid columns={columns} dataSource={{ mode: "client", data: rows }} getRowId={(row) => row.id} showTotals />,
+    );
+    expect(screen.queryByTestId("totals-row")).not.toBeInTheDocument();
+  });
+
+  it("composes with groupBy: a per-group summary row under each bucket, plus one grand-total row", () => {
+    const groupByTier = (row: Row): string => (row.age >= 30 ? "Senior" : "Junior");
+    render(
+      <DataGrid
+        columns={columnsWithSummary}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        groupBy={groupByTier}
+        showTotals
+      />,
+    );
+    expect(screen.getAllByTestId("group-summary-row")).toHaveLength(2);
+    expect(screen.getByTestId("totals-row")).toBeInTheDocument();
+  });
+
+  it("calls summary with an empty array (not skipped) once a filter narrows the page to zero rows", () => {
+    const summary = vi.fn((allRows: Row[]) => allRows.length);
+    const columnsWithCountSummary: ColumnDef<Row>[] = [columns[0]!, { ...columns[1]!, summary }];
+    render(
+      <DataGrid
+        columns={columnsWithCountSummary}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        showTotals
+        initialState={{ filter: { logic: "and", filters: [{ field: "name", operator: "eq", value: "nobody" }] } }}
+      />,
+    );
+    expect(summary).toHaveBeenCalledWith([]);
+    expect(within(screen.getByTestId("totals-row")).getByText("0")).toBeInTheDocument();
+  });
+
+  it("gives the group-summary and totals rows the same border/divider styling as an ordinary row", () => {
+    render(
+      <DataGrid columns={columnsWithSummary} dataSource={{ mode: "client", data: rows }} getRowId={(row) => row.id} showTotals />,
+    );
+    expect(screen.getByTestId("totals-row")).toHaveClass("divide-x", "divide-border");
+  });
 });
 
 describe("DataGrid (getRowProps)", () => {
@@ -1783,5 +1935,60 @@ describe("DataGrid (server mode)", () => {
     expect(onStateChange).toHaveBeenLastCalledWith(
       expect.objectContaining({ sort: [{ field: "name", dir: "asc" }] }),
     );
+  });
+});
+
+describe("DataGrid onGridStateChange", () => {
+  it("fires in client mode too, unlike dataSource.onStateChange which only exists for server mode", async () => {
+    const onGridStateChange = vi.fn<(state: GridState) => void>();
+    render(
+      <DataGrid
+        columns={columns}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        onGridStateChange={onGridStateChange}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Name" }));
+
+    expect(onGridStateChange).toHaveBeenCalledWith(
+      expect.objectContaining({ sort: [{ field: "name", dir: "asc" }] }),
+    );
+  });
+
+  it("fires alongside dataSource.onStateChange in server mode, with the same state", async () => {
+    const onStateChange = vi.fn<(state: GridState) => void>();
+    const onGridStateChange = vi.fn<(state: GridState) => void>();
+    render(
+      <DataGrid
+        columns={columns}
+        dataSource={{ mode: "server", data: [rows[0]!], rowCount: 3, onStateChange }}
+        getRowId={(row) => row.id}
+        onGridStateChange={onGridStateChange}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Name" }));
+
+    expect(onStateChange).toHaveBeenCalledWith(onGridStateChange.mock.calls[0]?.[0]);
+  });
+
+  it("does not require gridState to also be passed -- an observer-only caller doesn't control anything", async () => {
+    const onGridStateChange = vi.fn<(state: GridState) => void>();
+    render(
+      <DataGrid
+        columns={columns}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        onGridStateChange={onGridStateChange}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Name" }));
+    // The grid still owns and applies its own state (uncontrolled) -- it just
+    // also reports it outward.
+    expect(nameCellsInOrder()).toEqual(["Alice", "Bob", "Charlie"]);
+    expect(onGridStateChange).toHaveBeenCalled();
   });
 });

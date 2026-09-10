@@ -1,6 +1,6 @@
 import { FunnelIcon } from "@heroicons/react/24/outline";
 import type { ReactElement } from "react";
-import { useId } from "react";
+import { useEffect, useId, useState } from "react";
 import type { StringColumn } from "../column/types";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -45,10 +45,23 @@ export function StringFilter<TRow>({
   onChange,
   bare = false,
 }: FilterWidgetProps<StringColumn<TRow>> & { bare?: boolean }): ReactElement {
-  const operator = value?.operator ?? DEFAULT_OPERATOR;
+  // Tracked as local state, not derived from `value?.operator` on every render: `emit`
+  // below intentionally clears the filter entirely (`onChange(undefined)`) whenever
+  // `nextText` is empty, since an operator with no value isn't a filter yet -- but that
+  // means picking an operator *before* typing anything (a natural "choose how to
+  // search, then type" flow) would otherwise have nowhere to persist the choice: the
+  // very next keystroke would derive `operator` from `value?.operator`, which is still
+  // `undefined`, silently reverting to "Contains". Local state survives across that gap;
+  // the effect below only resyncs it when the filter changes from *outside* this widget
+  // (cleared via "reset filters", restored from a saved filter, column filters reset).
+  const [operator, setOperator] = useState<FilterOperator>(value?.operator ?? DEFAULT_OPERATOR);
   const text = typeof value?.value === "string" ? value.value : "";
   const inputId = useId();
   const isFiltered = text !== "";
+
+  useEffect(() => {
+    setOperator(value?.operator ?? DEFAULT_OPERATOR);
+  }, [value?.operator]);
 
   function emit(nextOperator: FilterOperator, nextText: string): void {
     if (nextText === "") {
@@ -67,7 +80,9 @@ export function StringFilter<TRow>({
           // value can only ever be one of the `value` props on the SelectItems below,
           // which are drawn from STRING_OPERATORS.
           const nextOperator = STRING_OPERATORS.find((option) => option.value === next)?.value;
-          if (nextOperator) emit(nextOperator, text);
+          if (!nextOperator) return;
+          setOperator(nextOperator);
+          emit(nextOperator, text);
         }}
       >
         <SelectTrigger aria-label={`${column.header} filter operator`}>

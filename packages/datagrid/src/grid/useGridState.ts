@@ -38,8 +38,12 @@ function nextSortDir(
  * Owns `GridState` (filter/sort/page/pageSize) for `<DataGrid>` and, in
  * `"server"` mode, calls `dataSource.onStateChange` on every change —
  * debounced ~300ms for filter changes (typing), immediately for sort/page
- * changes. In `"client"` mode `onStateChange` doesn't exist and is never
- * called; the grid re-filters/re-sorts the in-memory array itself instead.
+ * changes. In `"client"` mode `dataSource.onStateChange` doesn't exist and
+ * is never called; the grid re-filters/re-sorts the in-memory array itself
+ * instead. `onGridStateChange` (see its own doc on `DataGridProps`) gets the
+ * same notifications regardless of mode, for callers that just want to
+ * observe — e.g. a `"client"`-mode grid with no other way to know its
+ * current filter/sort/page from outside.
  *
  * Deliberately takes no `columns` and enforces no `sortable`/`filterable`
  * policy itself — `toggleSort`/`setColumnFilter` will happily act on any
@@ -79,6 +83,7 @@ export function useGridState<TRow>(
   initialState?: Partial<GridState>,
   externalState?: GridState,
   showPagination = true,
+  onGridStateChange?: (state: GridState) => void,
 ): GridStateController {
   const [state, setState] = useState<GridState>(() => {
     if (externalState) return externalState;
@@ -90,8 +95,9 @@ export function useGridState<TRow>(
   const notifyRaw = useCallback(
     (next: GridState) => {
       if (dataSource.mode === "server") dataSource.onStateChange(next);
+      onGridStateChange?.(next);
     },
-    [dataSource],
+    [dataSource, onGridStateChange],
   );
   const { run: notifyDebounced, cancel: cancelDebouncedNotify } = useDebouncedCallback(
     notifyRaw,

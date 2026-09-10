@@ -279,6 +279,7 @@ export function DataGrid<TRow extends RowData>({
   getRowProps,
   getRowTestId,
   gridState,
+  onGridStateChange,
   selectedIds: controlledSelectedIds,
   onSelectedIdsChange,
   testId,
@@ -289,6 +290,7 @@ export function DataGrid<TRow extends RowData>({
   expandedGroups: controlledExpandedGroups,
   onExpandedGroupsChange,
   zebra = true,
+  showTotals = false,
   editing,
   cellEditing,
 }: DataGridProps<TRow>): ReactElement {
@@ -304,6 +306,7 @@ export function DataGrid<TRow extends RowData>({
     initialState,
     gridState,
     showPagination,
+    onGridStateChange,
   );
   const [internalSelectedIds, setInternalSelectedIds] = useState<ReadonlySet<string>>(new Set());
   const selectedIds = controlledSelectedIds ?? internalSelectedIds;
@@ -480,6 +483,14 @@ export function DataGrid<TRow extends RowData>({
   const headerRuns = useMemo(() => computeHeaderRuns(visibleColumns), [visibleColumns]);
   const hasHeaderGroups = visibleColumns.some((column) => column.headerGroup);
 
+  // Same "entirely opt-in" convention as `hasFilterRow`/`hasHeaderGroups`
+  // above — the per-group summary row inside `renderGroupHeaderTbody` and
+  // the `showTotals` `<tfoot>` both only render once at least one visible
+  // column sets `summary` (see `BaseColumn.summary`'s own doc); a `groupBy`
+  // or `showTotals` grid with no column opting in renders exactly as it did
+  // before either feature existed.
+  const hasColumnSummary = visibleColumns.some((column) => column.summary);
+
   function renderFilterWidget(column: ColumnDef<TRow>): ReactNode {
     const value = filtersByColumn.get(column.id);
     const onChange = (next: FilterDescriptor | undefined): void => setColumnFilter(column.id, next);
@@ -539,11 +550,12 @@ export function DataGrid<TRow extends RowData>({
     // called from the memoized per-column maps below, so it already runs
     // once per column per relevant state change, not once per cell.
     const bg = area === "header" ? "bg-muted" : "bg-background";
+    // Auto-layout must not shrink columns below the space reserved by sticky offsets.
     if (column.pinned === "left") {
-      return { className: `sticky z-10 ${bg}`, style: { left: leftPinnedOffsets.get(column.id), width: columnSize(column.id) } };
+      return { className: `sticky z-10 ${bg}`, style: { left: leftPinnedOffsets.get(column.id), width: columnSize(column.id), minWidth: columnSize(column.id) } };
     }
     if (column.pinned === "right") {
-      return { className: `sticky z-10 ${bg}`, style: { right: rightPinnedOffsets.get(column.id), width: columnSize(column.id) } };
+      return { className: `sticky z-10 ${bg}`, style: { right: rightPinnedOffsets.get(column.id), width: columnSize(column.id), minWidth: columnSize(column.id) } };
     }
     if (enableColumnResizing) return { style: { width: columnSize(column.id) } };
     return { style: column.width ? { width: column.width } : undefined };
@@ -578,7 +590,7 @@ export function DataGrid<TRow extends RowData>({
     return {
       className: `${base} ${bg}`,
       classNameOdd: `${base} ${bgOdd}`,
-      style: { [side]: offset, width },
+      style: { [side]: offset, width, minWidth: width },
     };
   }
 
@@ -1344,6 +1356,97 @@ export function DataGrid<TRow extends RowData>({
     );
   }
 
+  // One `<td>` per visible column for the (non-sticky) per-group summary
+  // row, each running that column's own `summary(rows)` (blank for a column
+  // with none). `bgClassName` matches the label row above it
+  // (`zebra ? "bg-muted" : "bg-background"`) so the two rows read as one
+  // block. `showTotals`'s own `<tfoot>` needs different per-cell treatment
+  // (sticky-to-bottom, always `bg-muted`) and builds its cells directly in
+  // `renderTotalsFooter` instead of through this helper. Reuses
+  // `bodyCellPropsByColumn` (pinning/resizing) rather than recomputing it,
+  // same as every actual data-row cell.
+  function renderGroupSummaryCells(rows: TRow[], bgClassName: string): ReactNode {
+    return visibleColumns.map((column) => {
+      const cellProps = bodyCellPropsByColumn.get(column.id);
+      return (
+        <td
+          key={column.id}
+          className={cn(cellProps?.className, bgClassName, "font-medium", alignClassName(column))}
+          style={cellProps?.style}
+        >
+          {column.summary?.(rows)}
+        </td>
+      );
+    });
+  }
+
+  // The leading detail/selection and trailing row-actions columns get one
+  // blank filler cell each (matching `totalColumnCount`) rather than their
+  // own pinned/interactive treatment -- there's no per-row checkbox/expand
+  // affordance to show in a summary row. Unlike a real body row's own
+  // pinned structural cells, these fillers aren't independently sticky-left/
+  // right themselves; harmless while blank (nothing to misalign), but a
+  // grid combining `enableColumnResizing`-style side pinning with a
+  // `summary` column AND horizontal scroll could see this filler scroll out
+  // ahead of a still-pinned data column. Documented as a known gap rather
+  // than solved here, same tolerance the module's `groupBy`/`zebra` striping
+  // gap already has (see AGENTS.md's "Known limitations").
+  function summaryLeadingCellSpan(): number {
+    return (showDetailColumn ? 1 : 0) + (showSelectionColumn ? 1 : 0);
+  }
+
+  function renderGroupSummaryRow(rows: TRow[]): ReactNode {
+    const leadingSpan = summaryLeadingCellSpan();
+    const bgClassName = zebra ? "bg-muted" : "bg-background";
+    const fillerClass = cn("border-b border-border p-2", bgClassName);
+    return (
+      <tr data-testid="group-summary-row" className="divide-x divide-border">
+        {leadingSpan > 0 && <td colSpan={leadingSpan} className={fillerClass} />}
+        {renderGroupSummaryCells(rows, bgClassName)}
+        {showRowActionsColumn && <td className={fillerClass} aria-hidden />}
+      </tr>
+    );
+  }
+
+  // `showTotals`'s grand-total row -- sticky to the BOTTOM of the scroll
+  // container (`bottom-0`, mirroring the header's own `top-0` stickiness),
+  // so it stays visible while scrolling a tall grid instead of requiring a
+  // scroll all the way down to see it, exactly the UX a "totals row"
+  // exists for. `<tfoot>` renders after every `<tbody>` in source order
+  // here, but HTML/CSS table layout always places a `<tfoot>` visually at
+  // the bottom of the table regardless of where it appears in markup.
+  function renderTotalsFooter(): ReactNode {
+    if (!showTotals || !hasColumnSummary) return null;
+    const summaryRows = tableRows.map((row) => row.original);
+    const leadingSpan = summaryLeadingCellSpan();
+    const fillerClass = "sticky bottom-0 z-20 border-t border-border bg-muted p-2";
+    return (
+      <tfoot>
+        <tr data-testid="totals-row" className="divide-x divide-border">
+          {leadingSpan > 0 && <td colSpan={leadingSpan} className={fillerClass} />}
+          {visibleColumns.map((column) => {
+            const pinnedProps = pinnedCellProps(column, "header");
+            return (
+              <td
+                key={column.id}
+                className={cn(
+                  "border-t border-border p-2 font-medium",
+                  alignClassName(column),
+                  pinnedProps.className,
+                  "sticky bottom-0 z-20 bg-muted",
+                )}
+                style={pinnedProps.style}
+              >
+                {column.summary?.(summaryRows)}
+              </td>
+            );
+          })}
+          {showRowActionsColumn && <td className={fillerClass} aria-hidden />}
+        </tr>
+      </tfoot>
+    );
+  }
+
   // Its own `<tbody>` (not nested inside anything else, matching every
   // per-row `<tbody>` from `renderRow`) so `measureRef`/`data-index` work the
   // exact same way a data row's does once virtualized -- shared by the
@@ -1379,6 +1482,13 @@ export function DataGrid<TRow extends RowData>({
             </button>
           </td>
         </tr>
+        {/* Not sticky, unlike the label row above -- it scrolls away with
+            this group's own member rows once its `<tbody>` scrolls past the
+            real `<thead>`, same as any other non-pinned content underneath a
+            sticky element. Rendered regardless of `expanded`, which is the
+            entire point: a collapsed group's per-column subtotal is often
+            the only reason to collapse it in the first place. */}
+        {hasColumnSummary && renderGroupSummaryRow(rows)}
       </tbody>
     );
   }
@@ -1499,6 +1609,7 @@ export function DataGrid<TRow extends RowData>({
               const filterable = isFilterable(column) && column.filterDisplay !== "row";
               const cellProps = leafHeaderCellPropsByColumn.get(column.id);
               const headerContent = column.renderHeader ? column.renderHeader(column) : column.header;
+              const headerLabelId = `${header.id}-label`;
               return (
                 <th
                   key={header.id}
@@ -1506,17 +1617,26 @@ export function DataGrid<TRow extends RowData>({
                   style={cellProps?.style}
                   className={cellProps?.className}
                   aria-sort={sortable ? sortDirToAriaSort(sortEntry?.dir) : undefined}
-                  // Explicit name, not name-from-content: without it, the sort
-                  // button's own icon/testid and the resize handle's
-                  // `aria-label` (added for keyboard support below) would
-                  // otherwise get concatenated into this header cell's
-                  // computed accessible name too.
-                  aria-label={column.header}
+                  // Named via aria-labelledby pointing at the headerLabelId element below,
+                  // not name-from-content on the <th> itself: without it, the filter
+                  // trigger's own aria-label and the resize handle's `aria-label` (added
+                  // for keyboard support below) would otherwise get concatenated into this
+                  // header cell's computed accessible name too. Deliberately NOT a plain
+                  // `aria-label={column.header}` override, though — `column.header` is a
+                  // plain string required for things like width-estimation heuristics, but
+                  // a column can render genuinely richer content via `renderHeader` (e.g. a
+                  // two-line combined label for two related fields sharing one column) whose
+                  // full text belongs in the accessible name too, not just `column.header`.
+                  // aria-labelledby lets the labelled element's own name-from-content do
+                  // that correctly while still excluding the filter/resize controls, which
+                  // live outside it as siblings.
+                  aria-labelledby={headerLabelId}
                 >
                   <div className="flex items-center gap-1">
                     {sortable ? (
                       <button
                         type="button"
+                        id={headerLabelId}
                         data-testid={`sort-button-${column.id}`}
                         className="flex items-center gap-1 rounded-sm px-1 hover:bg-accent hover:text-accent-foreground"
                         onClick={(event) =>
@@ -1533,7 +1653,9 @@ export function DataGrid<TRow extends RowData>({
                       // silently breaking any interactive content a column's own `renderHeader`
                       // embeds directly (bare filter inputs, "select/reject all" buttons) —
                       // clicks never reach them at all, even though nothing looks wrong visually.
-                      <div className="flex items-center gap-1 px-1">{headerContent}</div>
+                      <div id={headerLabelId} className="flex items-center gap-1 px-1">
+                        {headerContent}
+                      </div>
                     )}
                     {filterable && (
                       <Popover>
@@ -1735,6 +1857,7 @@ export function DataGrid<TRow extends RowData>({
         ) : (
           tableRows.map((row) => renderRow(row))
         )}
+        {renderTotalsFooter()}
         </table>
         {hasCellEditing && (
           <SelectionOverlay
