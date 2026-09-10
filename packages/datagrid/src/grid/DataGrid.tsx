@@ -577,9 +577,14 @@ export function DataGrid<TRow extends RowData>({
     area: "header" | "body" = "body",
   ): { className: string; classNameOdd: string; style: CSSProperties } {
     // A header structural cell (select-all checkbox, expand-all chevron) also
-    // sticks to the top of the scroll container -- z-20 so it stays above a
-    // body row's own z-10 side-pinned cells once both are visible at once.
-    const base = area === "header" ? "border-b border-border p-1 sticky top-0 z-20" : "border-b border-border p-1 sticky z-10";
+    // sticks to the top of the scroll container -- z-30, not just z-20, so it
+    // stays above BOTH a body row's own z-10 side-pinned cells AND a plain
+    // (unpinned) data column's z-20 sticky-top header once horizontal scroll
+    // brings that header physically over this always-side-pinned structural
+    // one (same DOM-order tie `headerCellClassAndStyle` fixes for pinned data
+    // columns -- these structural columns are side-pinned by construction,
+    // with no `pinned` prop of their own to opt out of it).
+    const base = area === "header" ? "border-b border-border p-1 sticky top-0 z-30" : "border-b border-border p-1 sticky z-10";
     const bg = area === "header" ? "bg-muted" : "bg-background";
     const bgOdd = area === "header" ? "bg-muted" : STRUCTURAL_ZEBRA_BG_CLASS;
     return {
@@ -646,13 +651,20 @@ export function DataGrid<TRow extends RowData>({
     // `pinnedProps.className` (when set) comes first so `cn()`'s twMerge
     // resolves overlapping utilities (z-10/bg-muted from side-pinning) in
     // favor of whatever comes after -- the sticky-to-top treatment needs to
-    // win: z-20 (not the side-pin's z-10) so a pinned column's header cell
-    // still renders above a *body* row's own side-pinned cell once scrolled.
+    // win: at least z-20 (not the side-pin's z-10) so a pinned column's
+    // header cell still renders above a *body* row's own side-pinned cell
+    // once scrolled. A side-pinned column additionally needs a HIGHER
+    // z-index than a plain (not side-pinned) header cell here -- both are
+    // `position: sticky`, so once horizontal scroll brings a later, unpinned
+    // column's header physically over an earlier pinned one, they'd tie at
+    // z-20 and CSS falls back to DOM order, letting the later (unpinned) one
+    // paint on top and visually hide the pinned column's label. z-30 breaks
+    // that tie in the pinned column's favor.
     const className = cn(
       base,
       align,
       pinnedProps.className,
-      options.sticky && "sticky top-0 z-20 bg-muted",
+      options.sticky && (column.pinned ? "sticky top-0 z-30 bg-muted" : "sticky top-0 z-20 bg-muted"),
     );
     return { className, style: pinnedProps.style };
   }

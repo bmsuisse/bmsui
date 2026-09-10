@@ -847,15 +847,33 @@ describe("DataGrid (sticky header)", () => {
       />,
     );
     const selectAllHeader = screen.getByRole("checkbox", { name: "Select all rows on this page" }).closest("th");
-    expect(selectAllHeader).toHaveClass("sticky", "top-0", "z-20");
+    // z-30, same as a pinned data column's header -- this structural column is
+    // side-pinned by construction and must outrank a plain header the same way.
+    expect(selectAllHeader).toHaveClass("sticky", "top-0", "z-30");
   });
 
   it("keeps a pinned column's header cell both top-sticky and side-pinned at once", () => {
     const pinned: ColumnDef<Row>[] = [{ ...columns[0]!, pinned: "left", width: 120 }, columns[1]!];
     render(<DataGrid columns={pinned} dataSource={{ mode: "client", data: rows }} getRowId={(row) => row.id} />);
     const header = screen.getByRole("columnheader", { name: /Name/ });
-    expect(header).toHaveClass("sticky", "top-0", "z-20");
+    // z-30, not the plain sticky-top header's z-20 -- see the next test for why.
+    expect(header).toHaveClass("sticky", "top-0", "z-30");
     expect(header).toHaveStyle({ left: "0px" });
+  });
+
+  it("gives a pinned header cell a higher z-index than a plain (unpinned) header cell", () => {
+    // Both a pinned and an unpinned header cell are `position: sticky`, so once
+    // horizontal scroll brings the unpinned column's header physically over the
+    // pinned one, a tied z-index would fall back to DOM order and let the
+    // later, unpinned column's header paint on top -- visually hiding the
+    // pinned column's label even though it's still "stuck" underneath.
+    const pinned: ColumnDef<Row>[] = [{ ...columns[0]!, pinned: "left", width: 120 }, columns[1]!];
+    render(<DataGrid columns={pinned} dataSource={{ mode: "client", data: rows }} getRowId={(row) => row.id} />);
+    const pinnedHeader = screen.getByRole("columnheader", { name: /Name/ });
+    const plainHeader = screen.getByRole("columnheader", { name: /Age/ });
+    expect(pinnedHeader).toHaveClass("z-30");
+    expect(plainHeader).toHaveClass("z-20");
+    expect(plainHeader).not.toHaveClass("z-30");
   });
 
   it("does not sticky the filter row (only the leaf label row)", () => {
