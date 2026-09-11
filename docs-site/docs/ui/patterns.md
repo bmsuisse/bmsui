@@ -16,6 +16,51 @@ the failure) if the confirm action rejects; `FormModal` wraps a `<form>` and
 deliberately does **not** auto-close after submit — that decision is left to
 the caller, unlike `ConfirmDialog`.
 
+### `ResponsivePanel`
+
+Like `Modal`, but sized wider on desktop and rendered as a native
+bottom-sheet drawer below `breakpoint` (default `lg`) instead of a small
+centered dialog — for content that benefits from more room (multi-section
+forms, longer lists) on both form factors.
+
+```tsx
+<ResponsivePanel
+  open={open}
+  onOpenChange={setOpen}
+  title="Edit customer"
+  size="lg"
+  resizable
+  draggable
+  footer={<Button onClick={() => setOpen(false)}>Done</Button>}
+>
+  ...
+</ResponsivePanel>
+```
+
+- `size` (`sm`/`md`/`lg` default/`xl`) controls the dialog width on desktop
+  and the drawer's max height on mobile (width there is always full-bleed).
+- `resizable` adds a drag grip on all four corners on desktop (each anchors
+  the opposite corner) and a drag handle on the mobile drawer (height
+  30vh–95vh); `size` then just becomes the starting size.
+- `draggable` lets the user reposition the whole panel on desktop by
+  dragging its header. Both `resizable` and `draggable` clamp to a viewport
+  margin, so the panel can never be dragged (partly) off-screen.
+- `closeOnOutsideClick` (default `true`) — set `false` to require the
+  header's close button or Esc, for panels guarding unsaved work.
+
+Footer buttons default to right-aligned (fine for a single action, or an
+adjacent Cancel + Submit pair). For a split pair like Previous/Next — one
+pinned left, the other right — wrap both in one full-width flex child:
+
+```tsx
+footer={
+  <div className="flex w-full justify-between">
+    <Button variant="outline" onClick={goBack}>Previous</Button>
+    <Button onClick={goNext}>Next</Button>
+  </div>
+}
+```
+
 ### `FormField`
 
 The "label + input + error/description" wrapper. Auto-generates an `id` via
