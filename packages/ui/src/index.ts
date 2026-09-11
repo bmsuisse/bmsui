@@ -93,7 +93,7 @@ export type { ConfirmDialogProps } from "./patterns/modal/ConfirmDialog";
 export { ConfirmDialog } from "./patterns/modal/ConfirmDialog";
 export type { FormModalProps } from "./patterns/modal/FormModal";
 export { FormModal } from "./patterns/modal/FormModal";
-export type { ResponsivePanelProps } from "./patterns/modal/ResponsivePanel";
+export type { ResponsivePanelProps, ResponsivePanelSize } from "./patterns/modal/ResponsivePanel";
 export { ResponsivePanel } from "./patterns/modal/ResponsivePanel";
 
 export type { FormFieldProps } from "./patterns/form-field/FormField";

@@ -89,9 +89,11 @@ logic above, which already had its own extraction). Structure:
     `Combobox`'s own `"data-testid"` prop, split into two named props since
     this component renders two buttons.
     `ResponsivePanel` (v0.9.0) — same `Modal` shape (title/description/
-    footer), but sized wider on desktop (`max-w-2xl` vs. `Modal`'s
-    `max-w-md`) and rendered as a bottom-sheet `Sheet` drawer below the
-    `lg` breakpoint instead of a centered dialog; a centered floating box
+    footer), but sized wider on desktop (`size` prop: `sm`/`md`/`lg`/`xl`,
+    default `lg` i.e. `max-w-2xl` vs. `Modal`'s fixed `max-w-md`) and
+    rendered as a bottom-sheet `Sheet` drawer below the `lg` breakpoint
+    instead of a centered dialog (`size` has no effect there — the drawer
+    is always full-width); a centered floating box
     with its own scroll region reads as a leftover desktop shape on a
     phone. Ported from an app-local `Modal` component (OneSales) that had
     solved this ad hoc; kept deliberately simpler than that original —

@@ -56,6 +56,23 @@ describe("ResponsivePanel", () => {
     expect(screen.queryByText("Hidden body")).not.toBeInTheDocument();
   });
 
+  it("defaults to the lg desktop size and honors an explicit size override", () => {
+    mockMatchMedia(true);
+    const { rerender } = render(
+      <ResponsivePanel open onOpenChange={vi.fn()} title="Default size">
+        <p>Body</p>
+      </ResponsivePanel>,
+    );
+    expect(screen.getByRole("dialog")).toHaveClass("max-w-2xl");
+
+    rerender(
+      <ResponsivePanel open onOpenChange={vi.fn()} title="Default size" size="xl">
+        <p>Body</p>
+      </ResponsivePanel>,
+    );
+    expect(screen.getByRole("dialog")).toHaveClass("max-w-4xl");
+  });
+
   it("renders footer content when provided", () => {
     mockMatchMedia(true);
     render(

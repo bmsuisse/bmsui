@@ -18,6 +18,15 @@ import {
   SheetTitle,
 } from "../../primitives/sheet";
 
+const desktopSizeClasses = {
+  sm: "max-w-md",
+  md: "max-w-xl",
+  lg: "max-w-2xl",
+  xl: "max-w-4xl",
+} as const;
+
+export type ResponsivePanelSize = keyof typeof desktopSizeClasses;
+
 export interface ResponsivePanelProps {
   /** Whether the panel is open. Fully controlled — no internal open state. */
   open: boolean;
@@ -38,6 +47,12 @@ export interface ResponsivePanelProps {
    * Tailwind's `lg` breakpoint, matching the rest of `@bmsuisse/ui`'s responsive patterns.
    */
   breakpoint?: string;
+  /**
+   * Desktop dialog width: `sm` (max-w-md) / `md` (max-w-xl) / `lg` (max-w-2xl,
+   * default) / `xl` (max-w-4xl). Has no effect on mobile — the drawer is
+   * always full-width there, since that's already all the screen there is.
+   */
+  size?: ResponsivePanelSize;
 }
 
 /**
@@ -56,13 +71,16 @@ export const ResponsivePanel = ({
   footer,
   className,
   breakpoint = "(min-width: 1024px)",
+  size = "lg",
 }: ResponsivePanelProps): ReactElement => {
   const isDesktop = useMediaQuery(breakpoint);
 
   if (isDesktop) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className={cn("max-h-[85vh] max-w-2xl overflow-y-auto", className)}>
+        <DialogContent
+          className={cn("max-h-[85vh] overflow-y-auto", desktopSizeClasses[size], className)}
+        >
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
             {description ? <DialogDescription>{description}</DialogDescription> : null}
