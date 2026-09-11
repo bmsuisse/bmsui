@@ -6,9 +6,10 @@ import type {
   CSSProperties,
   ElementRef,
   HTMLAttributes,
+  PointerEvent as ReactPointerEvent,
   ReactElement,
 } from "react";
-import { forwardRef, useEffect, useState } from "react";
+import { forwardRef, useEffect, useRef, useState } from "react";
 import { cn } from "../lib/utils";
 
 export const Sheet = DialogPrimitive.Root;
@@ -57,7 +58,15 @@ export const sheetVariants = cva(
 
 export interface SheetContentProps
   extends ComponentPropsWithoutRef<typeof DialogPrimitive.Content>,
-    VariantProps<typeof sheetVariants> {}
+    VariantProps<typeof sheetVariants> {
+  /**
+   * Bottom sheets only: adds a drag handle so the user can pull the sheet
+   * taller (up to 95% of the viewport) or shorter (down to 30%) with the
+   * mouse/touch instead of being stuck with the height set by className.
+   * Ignored for other sides.
+   */
+  resizable?: boolean;
+}
 
 // Off-screen starting transform for the entrance animation below — same
 // direction as each side's own `data-[state=closed]` translate class.
@@ -69,7 +78,7 @@ const enterFromTransform: Record<"top" | "bottom" | "left" | "right", string> = 
 };
 
 export const SheetContent = forwardRef<ElementRef<typeof DialogPrimitive.Content>, SheetContentProps>(
-  ({ side = "right", className, children, ...props }, ref) => {
+  ({ side = "right", className, children, resizable = false, style: styleProp, ...props }, ref) => {
     // Radix mounts Content with `data-state="open"` already on first paint,
     // so the `data-[state=...]` translate classes above never see a "before"
     // position to transition from — it just appears instead of sliding in.
@@ -82,19 +91,58 @@ export const SheetContent = forwardRef<ElementRef<typeof DialogPrimitive.Content
       const id = requestAnimationFrame(() => setEntered(true));
       return () => cancelAnimationFrame(id);
     }, []);
+
+    // Drag-to-resize: track the sheet's height in local state once the user
+    // starts dragging the handle, clamped between 30% and 95% of the
+    // viewport height (same bounds as the sheet consumers ported this from).
+    const [dragHeight, setDragHeight] = useState<number | null>(null);
+    const dragStart = useRef<{ y: number; height: number } | null>(null);
+    const canResize = resizable && side === "bottom";
+
+    const onHandlePointerDown = (e: ReactPointerEvent<HTMLDivElement>): void => {
+      const popup = e.currentTarget.closest('[data-slot="sheet-content"]');
+      if (!(popup instanceof HTMLElement)) return;
+      e.currentTarget.setPointerCapture(e.pointerId);
+      dragStart.current = { y: e.clientY, height: popup.getBoundingClientRect().height };
+    };
+    const onHandlePointerMove = (e: ReactPointerEvent<HTMLDivElement>): void => {
+      if (!dragStart.current) return;
+      const delta = dragStart.current.y - e.clientY;
+      const next = dragStart.current.height + delta;
+      const min = window.innerHeight * 0.3;
+      const max = window.innerHeight * 0.95;
+      setDragHeight(Math.min(max, Math.max(min, next)));
+    };
+    const onHandlePointerUp = (): void => {
+      dragStart.current = null;
+    };
+
     const style: CSSProperties | undefined = entered
-      ? undefined
-      : { transform: enterFromTransform[side ?? "right"] };
+      ? { ...styleProp, ...(canResize && dragHeight != null ? { height: dragHeight, maxHeight: dragHeight } : null) }
+      : { ...styleProp, transform: enterFromTransform[side ?? "right"] };
 
     return (
       <SheetPortal>
         <SheetOverlay />
         <DialogPrimitive.Content
           ref={ref}
+          data-slot="sheet-content"
           style={style}
           className={cn(sheetVariants({ side }), className)}
           {...props}
         >
+          {canResize && (
+            <div
+              data-testid="sheet-drag-handle"
+              className="-mb-2 flex shrink-0 cursor-grab touch-none justify-center py-2 active:cursor-grabbing"
+              onPointerDown={onHandlePointerDown}
+              onPointerMove={onHandlePointerMove}
+              onPointerUp={onHandlePointerUp}
+              onPointerCancel={onHandlePointerUp}
+            >
+              <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
+            </div>
+          )}
           {children}
           <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100">
             <X className="h-4 w-4" />

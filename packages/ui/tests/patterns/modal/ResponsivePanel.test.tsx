@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ResponsivePanel } from "../../../src/patterns/modal/ResponsivePanel";
 
@@ -104,5 +105,69 @@ describe("ResponsivePanel", () => {
     );
 
     expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
+  });
+
+  it("renders a corner resize handle on desktop only when resizable", () => {
+    mockMatchMedia(true);
+    const { rerender } = render(
+      <ResponsivePanel open onOpenChange={vi.fn()} title="No resize">
+        <p>Body</p>
+      </ResponsivePanel>,
+    );
+    expect(screen.queryByTestId("panel-resize-handle")).not.toBeInTheDocument();
+
+    rerender(
+      <ResponsivePanel open onOpenChange={vi.fn()} title="Resizable" resizable>
+        <p>Body</p>
+      </ResponsivePanel>,
+    );
+    expect(screen.getByTestId("panel-resize-handle")).toBeInTheDocument();
+  });
+
+  it("renders a drag handle on the mobile drawer only when resizable", () => {
+    mockMatchMedia(false);
+    const { rerender } = render(
+      <ResponsivePanel open onOpenChange={vi.fn()} title="No resize">
+        <p>Body</p>
+      </ResponsivePanel>,
+    );
+    expect(screen.queryByTestId("sheet-drag-handle")).not.toBeInTheDocument();
+
+    rerender(
+      <ResponsivePanel open onOpenChange={vi.fn()} title="Resizable" resizable>
+        <p>Body</p>
+      </ResponsivePanel>,
+    );
+    expect(screen.getByTestId("sheet-drag-handle")).toBeInTheDocument();
+  });
+
+  it("does not close on an outside click when closeOnOutsideClick is false", async () => {
+    mockMatchMedia(true);
+    const onOpenChange = vi.fn();
+    render(
+      <ResponsivePanel open onOpenChange={onOpenChange} title="Locked" closeOnOutsideClick={false}>
+        <p>Body</p>
+      </ResponsivePanel>,
+    );
+
+    const overlay = document.querySelector('[class*="bg-black/50"]');
+    if (!(overlay instanceof HTMLElement)) throw new Error("overlay not found");
+    await userEvent.pointer({ keys: "[MouseLeft]", target: overlay });
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
+
+  it("closes on an outside click by default", async () => {
+    mockMatchMedia(true);
+    const onOpenChange = vi.fn();
+    render(
+      <ResponsivePanel open onOpenChange={onOpenChange} title="Default close">
+        <p>Body</p>
+      </ResponsivePanel>,
+    );
+
+    const overlay = document.querySelector('[class*="bg-black/50"]');
+    if (!(overlay instanceof HTMLElement)) throw new Error("overlay not found");
+    await userEvent.pointer({ keys: "[MouseLeft]", target: overlay });
+    expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 });

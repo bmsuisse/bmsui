@@ -88,7 +88,7 @@ logic above, which already had its own extraction). Structure:
     breaking a Playwright E2E test that waited on it. Same convention as
     `Combobox`'s own `"data-testid"` prop, split into two named props since
     this component renders two buttons.
-    `ResponsivePanel` (v0.9.0) — same `Modal` shape (title/description/
+    `ResponsivePanel` (v0.9.0, extended in v0.10.0) — same `Modal` shape (title/description/
     footer), but sized wider on desktop (`size` prop: `sm`/`md`/`lg`/`xl`,
     default `lg` i.e. `max-w-2xl` vs. `Modal`'s fixed `max-w-md`) and
     rendered as a bottom-sheet `Sheet` drawer below the `lg` breakpoint
@@ -97,13 +97,27 @@ logic above, which already had its own extraction). Structure:
     `96vh`) rather than being a no-op; a centered floating box
     with its own scroll region reads as a leftover desktop shape on a
     phone. Ported from an app-local `Modal` component (OneSales) that had
-    solved this ad hoc; kept deliberately simpler than that original —
-    no resizable drag handle or slow-enter animation, since the `Sheet`
-    primitive here doesn't support those either. Introduces `useMediaQuery`
+    solved this ad hoc; kept deliberately simpler than that original at
+    first (no resizable drag handle or slow-enter animation), since the
+    `Sheet` primitive didn't support those either — both were since added
+    (see below). Introduces `useMediaQuery`
     (`packages/ui/src/lib/useMediaQuery.ts`, exported from the package
     root), the first `matchMedia`-based hook in this library — needed a
     `window.matchMedia` polyfill added to `tests/setup.ts` since jsdom
     doesn't implement it.
+    `resizable`/`closeOnOutsideClick` (v0.10.0) — opt-in, default `false`/
+    `true` respectively so existing consumers are unaffected. `resizable`
+    adds a drag handle: on desktop, a top-left corner grip on `DialogContent`
+    that tracks pointer deltas and switches the dialog from Radix's centered
+    transform to explicit `fixed left/top/width/height` (min 320×240, capped
+    to the viewport minus a margin) once dragging starts, keeping the
+    bottom-right corner anchored; on mobile, ported OneSales's existing
+    bottom-sheet drag handle into `SheetContent` (`resizable` prop there
+    too, bottom side only) — drags height between 30vh–95vh. `size` becomes
+    just the starting size once `resizable` is set. `closeOnOutsideClick`
+    passes an `onInteractOutside` that calls `preventDefault()` when `false`,
+    onto both `DialogContent` and `SheetContent` — Esc and the header's
+    close button still work either way.
   - `form-field/` — `FormField`, the "label + input + error/description"
     wrapper. Auto-generates an id via `useId()` unless the child already has
     one or `htmlFor` is passed; wires `aria-invalid`/`aria-describedby` onto

@@ -112,6 +112,7 @@ export function App(): ReactElement {
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [responsivePanelOpen, setResponsivePanelOpen] = useState(false);
   const [responsivePanelSize, setResponsivePanelSize] = useState<"sm" | "md" | "lg" | "xl">("lg");
+  const [resizablePanelOpen, setResizablePanelOpen] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [fieldError, setFieldError] = useState<string | undefined>(undefined);
   const [country, setCountry] = useState<string | null>("ch");
@@ -359,6 +360,23 @@ export function App(): ReactElement {
                     </p>
                   ))}
                 </div>
+              </ResponsivePanel>
+
+              <div className="mt-3">
+                <Button variant="outline" onClick={() => setResizablePanelOpen(true)}>
+                  Open resizable, locked-outside-click panel
+                </Button>
+              </div>
+              <ResponsivePanel
+                open={resizablePanelOpen}
+                onOpenChange={setResizablePanelOpen}
+                title="Resizable panel"
+                description="Drag the top-left corner (desktop) or the top handle (mobile drawer) to resize. Clicking outside won't close this one — use the X."
+                resizable
+                closeOnOutsideClick={false}
+                footer={<Button onClick={() => setResizablePanelOpen(false)}>Close</Button>}
+              >
+                <p className="text-sm">Try dragging the corner/handle, and clicking the overlay.</p>
               </ResponsivePanel>
             </>
           </Section>
