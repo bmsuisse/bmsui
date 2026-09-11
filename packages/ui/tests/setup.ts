@@ -36,3 +36,20 @@ if (typeof Element.prototype.releasePointerCapture !== "function") {
 if (typeof Element.prototype.setPointerCapture !== "function") {
   Element.prototype.setPointerCapture = () => {};
 }
+
+// jsdom doesn't implement matchMedia; useMediaQuery (and anything built on
+// it, like ResponsivePanel) needs it to determine desktop vs. mobile layout.
+// Defaults to "no match" so tests get the mobile/drawer branch unless a test
+// overrides `window.matchMedia` itself to assert the desktop branch.
+if (typeof window.matchMedia !== "function") {
+  window.matchMedia = (query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => false,
+  });
+}

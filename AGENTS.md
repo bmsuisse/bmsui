@@ -88,6 +88,19 @@ logic above, which already had its own extraction). Structure:
     breaking a Playwright E2E test that waited on it. Same convention as
     `Combobox`'s own `"data-testid"` prop, split into two named props since
     this component renders two buttons.
+    `ResponsivePanel` (v0.9.0) — same `Modal` shape (title/description/
+    footer), but sized wider on desktop (`max-w-2xl` vs. `Modal`'s
+    `max-w-md`) and rendered as a bottom-sheet `Sheet` drawer below the
+    `lg` breakpoint instead of a centered dialog; a centered floating box
+    with its own scroll region reads as a leftover desktop shape on a
+    phone. Ported from an app-local `Modal` component (OneSales) that had
+    solved this ad hoc; kept deliberately simpler than that original —
+    no resizable drag handle or slow-enter animation, since the `Sheet`
+    primitive here doesn't support those either. Introduces `useMediaQuery`
+    (`packages/ui/src/lib/useMediaQuery.ts`, exported from the package
+    root), the first `matchMedia`-based hook in this library — needed a
+    `window.matchMedia` polyfill added to `tests/setup.ts` since jsdom
+    doesn't implement it.
   - `form-field/` — `FormField`, the "label + input + error/description"
     wrapper. Auto-generates an id via `useId()` unless the child already has
     one or `htmlFor` is passed; wires `aria-invalid`/`aria-describedby` onto

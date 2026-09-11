@@ -37,6 +37,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
+  ResponsivePanel,
   Select,
   SelectContent,
   SelectItem,
@@ -109,6 +110,7 @@ export function App(): ReactElement {
   const [modalOpen, setModalOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [formModalOpen, setFormModalOpen] = useState(false);
+  const [responsivePanelOpen, setResponsivePanelOpen] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [fieldError, setFieldError] = useState<string | undefined>(undefined);
   const [country, setCountry] = useState<string | null>("ch");
@@ -317,6 +319,26 @@ export function App(): ReactElement {
                   />
                 </FormField>
               </FormModal>
+            </>
+          </Section>
+
+          <Section title="ResponsivePanel">
+            <>
+              <Button variant="outline" onClick={() => setResponsivePanelOpen(true)}>
+                Open ResponsivePanel
+              </Button>
+              <ResponsivePanel
+                open={responsivePanelOpen}
+                onOpenChange={setResponsivePanelOpen}
+                title="New note"
+                description="Uses the full width on desktop; a bottom-sheet drawer on mobile."
+                footer={<Button onClick={() => setResponsivePanelOpen(false)}>Close</Button>}
+              >
+                <p className="text-sm">
+                  Resize the window (or open dev tools' device toolbar) below 1024px to see it
+                  switch from a wide centered dialog to a native drawer.
+                </p>
+              </ResponsivePanel>
             </>
           </Section>
 

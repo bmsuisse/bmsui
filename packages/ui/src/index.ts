@@ -93,6 +93,8 @@ export type { ConfirmDialogProps } from "./patterns/modal/ConfirmDialog";
 export { ConfirmDialog } from "./patterns/modal/ConfirmDialog";
 export type { FormModalProps } from "./patterns/modal/FormModal";
 export { FormModal } from "./patterns/modal/FormModal";
+export type { ResponsivePanelProps } from "./patterns/modal/ResponsivePanel";
+export { ResponsivePanel } from "./patterns/modal/ResponsivePanel";
 
 export type { FormFieldProps } from "./patterns/form-field/FormField";
 export { FormField } from "./patterns/form-field/FormField";
@@ -140,3 +142,4 @@ export { useSidebarCollapsed } from "./patterns/sidebar/context";
 
 // --- shared utility -----------------------------------------------------------
 export { cn } from "./lib/utils";
+export { useMediaQuery } from "./lib/useMediaQuery";
