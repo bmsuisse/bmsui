@@ -92,8 +92,9 @@ logic above, which already had its own extraction). Structure:
     footer), but sized wider on desktop (`size` prop: `sm`/`md`/`lg`/`xl`,
     default `lg` i.e. `max-w-2xl` vs. `Modal`'s fixed `max-w-md`) and
     rendered as a bottom-sheet `Sheet` drawer below the `lg` breakpoint
-    instead of a centered dialog (`size` has no effect there — the drawer
-    is always full-width); a centered floating box
+    instead of a centered dialog. Since the drawer is already full-width,
+    `size` controls its max height there instead (`50vh`/`70vh`/`90vh`/
+    `96vh`) rather than being a no-op; a centered floating box
     with its own scroll region reads as a leftover desktop shape on a
     phone. Ported from an app-local `Modal` component (OneSales) that had
     solved this ad hoc; kept deliberately simpler than that original —

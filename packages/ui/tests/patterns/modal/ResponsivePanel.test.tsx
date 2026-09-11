@@ -73,6 +73,23 @@ describe("ResponsivePanel", () => {
     expect(screen.getByRole("dialog")).toHaveClass("max-w-4xl");
   });
 
+  it("defaults to the lg drawer height and honors an explicit size override on mobile", () => {
+    mockMatchMedia(false);
+    const { rerender } = render(
+      <ResponsivePanel open onOpenChange={vi.fn()} title="Default size">
+        <p>Body</p>
+      </ResponsivePanel>,
+    );
+    expect(screen.getByRole("dialog")).toHaveClass("max-h-[90vh]");
+
+    rerender(
+      <ResponsivePanel open onOpenChange={vi.fn()} title="Default size" size="sm">
+        <p>Body</p>
+      </ResponsivePanel>,
+    );
+    expect(screen.getByRole("dialog")).toHaveClass("max-h-[50vh]");
+  });
+
   it("renders footer content when provided", () => {
     mockMatchMedia(true);
     render(
