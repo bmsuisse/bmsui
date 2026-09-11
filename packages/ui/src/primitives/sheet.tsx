@@ -1,8 +1,14 @@
 import { type VariantProps, cva } from "class-variance-authority";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
-import type { ComponentPropsWithoutRef, ElementRef, HTMLAttributes, ReactElement } from "react";
-import { forwardRef } from "react";
+import type {
+  ComponentPropsWithoutRef,
+  CSSProperties,
+  ElementRef,
+  HTMLAttributes,
+  ReactElement,
+} from "react";
+import { forwardRef, useEffect, useState } from "react";
 import { cn } from "../lib/utils";
 
 export const Sheet = DialogPrimitive.Root;
@@ -53,19 +59,51 @@ export interface SheetContentProps
   extends ComponentPropsWithoutRef<typeof DialogPrimitive.Content>,
     VariantProps<typeof sheetVariants> {}
 
+// Off-screen starting transform for the entrance animation below — same
+// direction as each side's own `data-[state=closed]` translate class.
+const enterFromTransform: Record<"top" | "bottom" | "left" | "right", string> = {
+  top: "translateY(-100%)",
+  bottom: "translateY(100%)",
+  left: "translateX(-100%)",
+  right: "translateX(100%)",
+};
+
 export const SheetContent = forwardRef<ElementRef<typeof DialogPrimitive.Content>, SheetContentProps>(
-  ({ side = "right", className, children, ...props }, ref) => (
-    <SheetPortal>
-      <SheetOverlay />
-      <DialogPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props}>
-        {children}
-        <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100">
-          <X className="h-4 w-4" />
-          <span className="sr-only">Close</span>
-        </DialogPrimitive.Close>
-      </DialogPrimitive.Content>
-    </SheetPortal>
-  ),
+  ({ side = "right", className, children, ...props }, ref) => {
+    // Radix mounts Content with `data-state="open"` already on first paint,
+    // so the `data-[state=...]` translate classes above never see a "before"
+    // position to transition from — it just appears instead of sliding in.
+    // Render one frame off-screen via an inline transform (which overrides
+    // the class-based one), then clear it so the transition plays. Exit
+    // already animates correctly: Radix flips to `data-state="closed"` while
+    // still mounted and defers unmounting until the transition ends.
+    const [entered, setEntered] = useState(false);
+    useEffect(() => {
+      const id = requestAnimationFrame(() => setEntered(true));
+      return () => cancelAnimationFrame(id);
+    }, []);
+    const style: CSSProperties | undefined = entered
+      ? undefined
+      : { transform: enterFromTransform[side ?? "right"] };
+
+    return (
+      <SheetPortal>
+        <SheetOverlay />
+        <DialogPrimitive.Content
+          ref={ref}
+          style={style}
+          className={cn(sheetVariants({ side }), className)}
+          {...props}
+        >
+          {children}
+          <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100">
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </DialogPrimitive.Close>
+        </DialogPrimitive.Content>
+      </SheetPortal>
+    );
+  },
 );
 SheetContent.displayName = "SheetContent";
 

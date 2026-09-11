@@ -111,6 +111,7 @@ export function App(): ReactElement {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [responsivePanelOpen, setResponsivePanelOpen] = useState(false);
+  const [responsivePanelSize, setResponsivePanelSize] = useState<"sm" | "md" | "lg" | "xl">("lg");
   const [customerName, setCustomerName] = useState("");
   const [fieldError, setFieldError] = useState<string | undefined>(undefined);
   const [country, setCountry] = useState<string | null>("ch");
@@ -324,20 +325,40 @@ export function App(): ReactElement {
 
           <Section title="ResponsivePanel">
             <>
-              <Button variant="outline" onClick={() => setResponsivePanelOpen(true)}>
-                Open ResponsivePanel
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                {(["sm", "md", "lg", "xl"] as const).map((size) => (
+                  <Button
+                    key={size}
+                    variant="outline"
+                    onClick={() => {
+                      setResponsivePanelSize(size);
+                      setResponsivePanelOpen(true);
+                    }}
+                  >
+                    Open ({size})
+                  </Button>
+                ))}
+              </div>
               <ResponsivePanel
                 open={responsivePanelOpen}
                 onOpenChange={setResponsivePanelOpen}
                 title="New note"
-                description="Uses the full width on desktop; a bottom-sheet drawer on mobile."
+                description={`size="${responsivePanelSize}" — wider dialog on desktop, taller drawer on mobile.`}
+                size={responsivePanelSize}
                 footer={<Button onClick={() => setResponsivePanelOpen(false)}>Close</Button>}
               >
-                <p className="text-sm">
-                  Resize the window (or open dev tools' device toolbar) below 1024px to see it
-                  switch from a wide centered dialog to a native drawer.
-                </p>
+                <div className="flex flex-col gap-3 text-sm">
+                  <p>
+                    Resize the window (or open dev tools' device toolbar) below 1024px to see it
+                    switch from a centered dialog to a native drawer.
+                  </p>
+                  {Array.from({ length: 10 }, (_, i) => (
+                    <p key={i}>
+                      Filler paragraph {i + 1} — long enough content to show the size prop's
+                      height cap on mobile once it starts scrolling instead of growing forever.
+                    </p>
+                  ))}
+                </div>
               </ResponsivePanel>
             </>
           </Section>
