@@ -719,6 +719,36 @@ function KpiCardDemo(): ReactElement {
         <KpiCard label="Won" value="18" variant="mini" badge={{ text: "+3", positive: true }} />
         <KpiCard label="Churn" value="1.1 %" variant="mini" subTone="warn" sub="above goal" />
       </div>
+
+      <div className="flex flex-wrap gap-3">
+        <div className="min-w-[260px] flex-1">
+          <KpiCard
+            label="Revenue by channel"
+            variant="donut"
+            centerValue="1.2M"
+            segments={[
+              { label: "Direct", value: 52 },
+              { label: "Partners", value: 31 },
+              { label: "Online", value: 17 },
+            ]}
+          />
+        </div>
+        <div className="min-w-[260px] flex-1">
+          <KpiCard
+            label="Pipeline stage"
+            variant="donut"
+            sub="34 open deals"
+            segments={[
+              { label: "Won", value: 18 },
+              { label: "Negotiation", value: 9 },
+              { label: "Lost", value: 7 },
+            ]}
+          />
+        </div>
+        <div className="min-w-[260px] flex-1">
+          <KpiCard label="Team load" variant="donut" loading />
+        </div>
+      </div>
     </div>
   );
 }

@@ -9,7 +9,7 @@ export interface KpiCardProps {
   badge?: { text: string; positive?: boolean };
   badgeLabel?: string;
   /** @default "default" */
-  variant?: "hero" | "mini" | "default";
+  variant?: "hero" | "mini" | "default" | "donut";
   loading?: boolean;
   sub?: string;
   /** Colors `sub` on the mini variant — "warn"/"danger" flag something worth acting on (overdue, at-risk), "default" stays muted. */
@@ -22,8 +22,76 @@ export interface KpiCardProps {
   /** Hero variant only: 0-100 achievement-vs-target bar rendered under `sub`. */
   progress?: number;
   progressLabel?: string;
+  /** Donut variant only: the proportions to render as a ring chart, with a legend listing each segment's share. */
+  segments?: DonutSegment[];
+  /** Donut variant only: big label centered in the ring. Defaults to the sum of `segments`' values. */
+  centerValue?: string;
   /** For E2E tests to target a specific tile unambiguously when `label` also appears elsewhere on the page (e.g. a chart legend). */
   testId?: string;
+}
+
+export interface DonutSegment {
+  label: string;
+  value: number;
+  /** @default a color from the built-in palette, cycling by index */
+  color?: string;
+}
+
+const DONUT_COLORS = ["#3b82f6", "#22c55e", "#f59e0b", "#8b5cf6", "#ef4444", "#06b6d4"];
+
+export function DonutChart({
+  data,
+  size = 96,
+  thickness = 14,
+  centerValue,
+  centerLabel,
+}: {
+  data: DonutSegment[];
+  size?: number;
+  thickness?: number;
+  centerValue?: string;
+  centerLabel?: string;
+}): ReactElement | null {
+  const total = data.reduce((sum, d) => sum + d.value, 0);
+  if (total <= 0) return null;
+
+  const radius = (size - thickness) / 2;
+  const circumference = 2 * Math.PI * radius;
+  let offset = 0;
+
+  return (
+    <div className="relative inline-flex shrink-0 items-center justify-center" style={{ width: size, height: size }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="currentColor" className="text-muted/40" strokeWidth={thickness} />
+        {data.map((segment, i) => {
+          const fraction = segment.value / total;
+          const dash = fraction * circumference;
+          const el = (
+            <circle
+              key={segment.label}
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              fill="none"
+              stroke={segment.color ?? DONUT_COLORS[i % DONUT_COLORS.length]}
+              strokeWidth={thickness}
+              strokeDasharray={`${dash} ${circumference - dash}`}
+              strokeDashoffset={-offset}
+              strokeLinecap={data.length > 1 ? "butt" : "round"}
+            />
+          );
+          offset += dash;
+          return el;
+        })}
+      </svg>
+      {(centerValue || centerLabel) && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          {centerValue && <span className="text-base font-black tracking-tight text-foreground tabular-nums">{centerValue}</span>}
+          {centerLabel && <span className="text-[9px] font-medium text-muted-foreground uppercase">{centerLabel}</span>}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function Sparkline({ data, color }: { data: number[]; color: string }): ReactElement | null {
@@ -95,6 +163,8 @@ export const KpiCard = memo(function KpiCard({
   sparklineColor = "var(--color-primary, #3b82f6)",
   progress,
   progressLabel,
+  segments,
+  centerValue,
   testId,
 }: KpiCardProps): ReactElement {
   if (variant === "hero") {
@@ -239,6 +309,57 @@ export const KpiCard = memo(function KpiCard({
             {sparkline && <Sparkline data={sparkline} color={sparklineColor} />}
           </div>
         )}
+      </div>
+    );
+  }
+
+  if (variant === "donut") {
+    const total = segments?.reduce((sum, s) => sum + s.value, 0) ?? 0;
+
+    return (
+      <div data-testid={testId} className="rounded-xl border border-border bg-card p-5">
+        <div className={rowBetween}>
+          <p className="text-[10px] font-bold tracking-[0.12em] text-muted-foreground uppercase">{label}</p>
+          {Icon && (
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-primary/8 text-primary">
+              <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+            </div>
+          )}
+        </div>
+
+        {loading ? (
+          <div className="mt-3 flex items-center gap-4">
+            <Skeleton className="h-24 w-24 shrink-0 rounded-full" />
+            <div className="flex flex-1 flex-col gap-2">
+              <Skeleton className="h-3 w-full" />
+              <Skeleton className="h-3 w-3/4" />
+              <Skeleton className="h-3 w-1/2" />
+            </div>
+          </div>
+        ) : segments && segments.length > 0 ? (
+          <div className="mt-3 flex items-center gap-4">
+            <DonutChart data={segments} centerValue={centerValue ?? String(total)} />
+            <ul className="flex min-w-0 flex-1 flex-col gap-1.5">
+              {segments.map((segment, i) => (
+                <li key={segment.label} className="flex items-center gap-2 text-[12px]">
+                  <span
+                    className="h-2 w-2 shrink-0 rounded-full"
+                    style={{ backgroundColor: segment.color ?? DONUT_COLORS[i % DONUT_COLORS.length] }}
+                    aria-hidden="true"
+                  />
+                  <span className="min-w-0 flex-1 truncate text-muted-foreground">{segment.label}</span>
+                  <span className="shrink-0 font-semibold text-foreground tabular-nums">
+                    {total > 0 ? `${Math.round((segment.value / total) * 100)}%` : segment.value}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <span className="mt-3 block text-2xl font-black text-muted-foreground/40">—</span>
+        )}
+
+        {sub && !loading && <p className="mt-2.5 text-[11px] text-muted-foreground tabular-nums">{sub}</p>}
       </div>
     );
   }

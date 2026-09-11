@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { KpiCard } from "../../../src/patterns/kpi-card/KpiCard";
+import { DonutChart, KpiCard } from "../../../src/patterns/kpi-card/KpiCard";
 
 describe("KpiCard", () => {
   it("renders the label and value in the default variant", () => {
@@ -52,5 +52,46 @@ describe("KpiCard", () => {
   it("renders a sparkline once given at least two data points", () => {
     const { container } = render(<KpiCard label="Trend" value="10" sparkline={[1, 2, 3]} />);
     expect(container.querySelector("polyline")).toBeInTheDocument();
+  });
+
+  it("renders the donut variant with a legend and percentage shares", () => {
+    render(
+      <KpiCard
+        label="Pipeline"
+        variant="donut"
+        segments={[
+          { label: "Won", value: 30 },
+          { label: "Open", value: 10 },
+        ]}
+      />,
+    );
+    expect(screen.getByText("Won")).toBeInTheDocument();
+    expect(screen.getByText("75%")).toBeInTheDocument();
+    expect(screen.getByText("25%")).toBeInTheDocument();
+    expect(screen.getByText("40")).toBeInTheDocument();
+  });
+
+  it("shows a skeleton in the donut variant while loading", () => {
+    const { container } = render(
+      <KpiCard label="Pipeline" variant="donut" segments={[{ label: "Won", value: 1 }]} loading />,
+    );
+    expect(container.querySelector("svg")).not.toBeInTheDocument();
+    expect(screen.queryByText("Won")).not.toBeInTheDocument();
+  });
+});
+
+describe("DonutChart", () => {
+  it("returns null when the total is zero", () => {
+    const { container } = render(<DonutChart data={[{ label: "Empty", value: 0 }]} />);
+    expect(container.firstChild).toBeNull();
+  });
+
+  it("renders one circle per segment plus the track", () => {
+    const { container } = render(
+      <DonutChart data={[{ label: "A", value: 1 }, { label: "B", value: 1 }]} centerValue="2" centerLabel="total" />,
+    );
+    expect(container.querySelectorAll("circle")).toHaveLength(3);
+    expect(screen.getByText("2")).toBeInTheDocument();
+    expect(screen.getByText("total")).toBeInTheDocument();
   });
 });

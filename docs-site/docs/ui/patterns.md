@@ -154,12 +154,12 @@ together.
 
 ### `KpiCard`
 
-Dashboard metric tile in three variants: `hero` (large, primary-colored, for
+Dashboard metric tile in four variants: `hero` (large, primary-colored, for
 the single headline metric on a page), `default` (bordered card for a KPI
-grid), and `mini` (compact, for dense grids of secondary metrics). All three
-optionally show a `badge`, a trend `sparkline`, and a `loading` skeleton
-state; `hero` additionally supports a `progress` bar for a target-achievement
-readout.
+grid), `mini` (compact, for dense grids of secondary metrics), and `donut`
+(a proportion breakdown). All optionally show a `badge`, a trend `sparkline`,
+and a `loading` skeleton state; `hero` additionally supports a `progress` bar
+for a target-achievement readout.
 
 ```tsx
 <KpiCard
@@ -181,4 +181,26 @@ space-separated value like `"42 %"` into a large number plus a small
 prefix/suffix unit. `subTone` (`default`/`warn`/`danger`) colors the `mini`
 variant's `sub` text for at-a-glance status (e.g. an overdue count). The
 `Sparkline` mini line-chart is also exported on its own for reuse outside a
+`KpiCard`.
+
+The `donut` variant renders a `segments` breakdown (`{ label, value, color? }[]`)
+as a ring chart with a legend showing each segment's share, and an optional
+`centerValue` (defaults to the sum of `segments`' values) in the middle of the
+ring:
+
+```tsx
+<KpiCard
+  label="Revenue by channel"
+  variant="donut"
+  centerValue="1.2M"
+  segments={[
+    { label: "Direct", value: 52 },
+    { label: "Partners", value: 31 },
+    { label: "Online", value: 17 },
+  ]}
+/>
+```
+
+Segments without an explicit `color` cycle through a built-in palette. The
+`DonutChart` ring itself is also exported on its own for reuse outside a
 `KpiCard`.

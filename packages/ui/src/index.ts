@@ -132,8 +132,8 @@ export {
 export type { SearchBarProps } from "./patterns/search-bar/SearchBar";
 export { SearchBar } from "./patterns/search-bar/SearchBar";
 
-export type { KpiCardProps } from "./patterns/kpi-card/KpiCard";
-export { KpiCard, Sparkline } from "./patterns/kpi-card/KpiCard";
+export type { DonutSegment, KpiCardProps } from "./patterns/kpi-card/KpiCard";
+export { DonutChart, KpiCard, Sparkline } from "./patterns/kpi-card/KpiCard";
 
 export type { NavIconProps, NavItemProps } from "./patterns/sidebar/NavItem";
 export { NavItem } from "./patterns/sidebar/NavItem";
