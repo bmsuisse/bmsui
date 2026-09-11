@@ -71,7 +71,7 @@ describe("ResponsivePanel", () => {
         <p>Body</p>
       </ResponsivePanel>,
     );
-    expect(screen.getByRole("dialog")).toHaveClass("max-w-4xl");
+    expect(screen.getByRole("dialog")).toHaveClass("max-w-7xl");
   });
 
   it("defaults to the lg drawer height and honors an explicit size override on mobile", () => {

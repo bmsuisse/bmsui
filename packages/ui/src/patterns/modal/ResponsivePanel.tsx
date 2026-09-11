@@ -23,7 +23,7 @@ const desktopSizeClasses = {
   sm: "max-w-md",
   md: "max-w-xl",
   lg: "max-w-2xl",
-  xl: "max-w-4xl",
+  xl: "max-w-7xl",
 } as const;
 
 const drawerSizeClasses = {
