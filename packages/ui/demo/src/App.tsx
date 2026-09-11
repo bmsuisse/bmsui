@@ -28,6 +28,7 @@ import {
   FormField,
   FormModal,
   Input,
+  KpiCard,
   Label,
   LoadingOverlay,
   LoadingSpinner,
@@ -62,10 +63,13 @@ import {
 import {
   ClipboardCheck,
   Cog,
+  DollarSign,
   Info,
   LayoutGrid,
   ListFilter,
   Percent,
+  ShoppingCart,
+  Users,
 } from "lucide-react";
 import type { ReactElement } from "react";
 import { useEffect, useState } from "react";
@@ -653,7 +657,67 @@ export function App(): ReactElement {
           <Section title="Sidebar / NavGroup / NavItem">
             <SidebarDemo />
           </Section>
+
+          <Section title="KpiCard">
+            <KpiCardDemo />
+          </Section>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function KpiCardDemo(): ReactElement {
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap gap-3">
+        <KpiCard
+          label="Revenue"
+          value="1.2M"
+          variant="hero"
+          icon={DollarSign}
+          badge={{ text: "+12%", positive: true }}
+          sub="vs. 1.07M last year"
+          progress={72}
+          progressLabel="72% of target"
+          sparkline={[4, 6, 5, 8, 7, 9, 11, 10, 13]}
+        />
+        <div className="min-w-[200px] flex-1">
+          <KpiCard
+            label="New customers"
+            value="248"
+            icon={Users}
+            badge={{ text: "+8%", positive: true }}
+            sparkline={[3, 4, 3, 5, 6, 5, 7]}
+          />
+        </div>
+        <div className="min-w-[200px] flex-1">
+          <KpiCard
+            label="Orders"
+            value="1'042"
+            icon={ShoppingCart}
+            sub="12 kunden warten"
+            subTone="warn"
+            sparkline={[9, 7, 8, 6, 7, 5, 6]}
+          />
+        </div>
+        <div className="min-w-[200px] flex-1">
+          <KpiCard label="Conversion" value="3.4 %" loading />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <KpiCard label="Open tasks" value="5" variant="mini" icon={ClipboardCheck} href="#tasks" />
+        <KpiCard
+          label="Overdue"
+          value="2"
+          variant="mini"
+          sub="since 3 days"
+          subTone="danger"
+          sparkline={[1, 2, 2, 3, 2]}
+        />
+        <KpiCard label="Won" value="18" variant="mini" badge={{ text: "+3", positive: true }} />
+        <KpiCard label="Churn" value="1.1 %" variant="mini" subTone="warn" sub="above goal" />
       </div>
     </div>
   );

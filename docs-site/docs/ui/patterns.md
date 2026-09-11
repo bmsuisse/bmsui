@@ -151,3 +151,34 @@ them.
 
 See the [interactive demo](https://bmsuisse.github.io/bmsui/demo/ui/) for all of these rendered
 together.
+
+### `KpiCard`
+
+Dashboard metric tile in three variants: `hero` (large, primary-colored, for
+the single headline metric on a page), `default` (bordered card for a KPI
+grid), and `mini` (compact, for dense grids of secondary metrics). All three
+optionally show a `badge`, a trend `sparkline`, and a `loading` skeleton
+state; `hero` additionally supports a `progress` bar for a target-achievement
+readout.
+
+```tsx
+<KpiCard
+  label="Revenue"
+  value="1.2M"
+  variant="hero"
+  icon={DollarSign}
+  badge={{ text: "+12%", positive: true }}
+  progress={72}
+  progressLabel="72% of target"
+  sparkline={[4, 6, 5, 8, 7, 9, 11, 10, 13]}
+/>
+```
+
+`value` is a pre-formatted `string | number` — the component has no currency
+or locale opinion, so format it (CHF, percentages, thousands separators)
+before passing it in. The `default` variant additionally splits a
+space-separated value like `"42 %"` into a large number plus a small
+prefix/suffix unit. `subTone` (`default`/`warn`/`danger`) colors the `mini`
+variant's `sub` text for at-a-glance status (e.g. an overdue count). The
+`Sparkline` mini line-chart is also exported on its own for reuse outside a
+`KpiCard`.
