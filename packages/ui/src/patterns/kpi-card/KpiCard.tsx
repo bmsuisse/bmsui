@@ -37,7 +37,15 @@ export interface DonutSegment {
   color?: string;
 }
 
-const DONUT_COLORS = ["#3b82f6", "#22c55e", "#f59e0b", "#8b5cf6", "#ef4444", "#06b6d4"];
+/** Falls back to a fixed palette when the consuming app hasn't registered `--chart-1`..`--chart-6` — see the "Chart tokens" docs. */
+const DONUT_COLORS = [
+  "var(--chart-1, #3b82f6)",
+  "var(--chart-2, #22c55e)",
+  "var(--chart-3, #f59e0b)",
+  "var(--chart-4, #8b5cf6)",
+  "var(--chart-5, #ef4444)",
+  "var(--chart-6, #06b6d4)",
+];
 
 export function DonutChart({
   data,

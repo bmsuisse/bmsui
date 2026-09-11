@@ -62,6 +62,37 @@ in your `@theme` block and `:root`:
 }
 ```
 
+### Chart tokens
+
+`KpiCard`'s `donut` variant (and any future multi-series chart in the
+package) cycles through six tokens, `--chart-1` through `--chart-6`, so a
+proportion breakdown always uses one consistent, brand-tunable palette
+instead of picking its own arbitrary colors. Register them the same way:
+
+```css
+@theme inline {
+  /* ...your existing tokens... */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-chart-6: var(--chart-6);
+}
+
+:root {
+  --chart-1: oklch(0.62 0.19 260);
+  --chart-2: oklch(0.72 0.19 145);
+  --chart-3: oklch(0.75 0.16 70);
+  --chart-4: oklch(0.62 0.22 305);
+  --chart-5: oklch(0.63 0.24 25);
+  --chart-6: oklch(0.7 0.13 200);
+}
+```
+
+Segments without an explicit `color` fall back to a fixed hex palette if
+these tokens aren't registered, so `donut` still renders sensibly either way.
+
 ## What's in the package
 
 - **[Primitives](/ui/primitives)** — base components: `Button`, `Input`,

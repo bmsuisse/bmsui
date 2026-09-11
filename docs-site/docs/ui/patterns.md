@@ -201,6 +201,10 @@ ring:
 />
 ```
 
-Segments without an explicit `color` cycle through a built-in palette. The
-`DonutChart` ring itself is also exported on its own for reuse outside a
-`KpiCard`.
+Segments without an explicit `color` cycle through a shared `--chart-1`..
+`--chart-6` palette (falling back to fixed hex values if unregistered), so
+every proportion breakdown in an app looks consistent and can be re-themed
+in one place — see
+[Getting started](/ui/getting-started#chart-tokens) for how to register
+them. The `DonutChart` ring itself is also exported on its own for reuse
+outside a `KpiCard`.
