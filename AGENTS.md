@@ -88,6 +88,61 @@ logic above, which already had its own extraction). Structure:
     breaking a Playwright E2E test that waited on it. Same convention as
     `Combobox`'s own `"data-testid"` prop, split into two named props since
     this component renders two buttons.
+    `ResponsivePanel` (v0.9.0, extended in v0.10.0) — same `Modal` shape (title/description/
+    footer), but sized wider on desktop (`size` prop: `sm`/`md`/`lg`/`xl`,
+    default `lg` i.e. `max-w-2xl` vs. `Modal`'s fixed `max-w-md`) and
+    rendered as a bottom-sheet `Sheet` drawer below the `lg` breakpoint
+    instead of a centered dialog. Since the drawer is already full-width,
+    `size` controls its max height there instead (`50vh`/`70vh`/`90vh`/
+    `96vh`) rather than being a no-op; a centered floating box
+    with its own scroll region reads as a leftover desktop shape on a
+    phone. Ported from an app-local `Modal` component (OneSales) that had
+    solved this ad hoc; kept deliberately simpler than that original at
+    first (no resizable drag handle or slow-enter animation), since the
+    `Sheet` primitive didn't support those either — both were since added
+    (see below). Introduces `useMediaQuery`
+    (`packages/ui/src/lib/useMediaQuery.ts`, exported from the package
+    root), the first `matchMedia`-based hook in this library — needed a
+    `window.matchMedia` polyfill added to `tests/setup.ts` since jsdom
+    doesn't implement it.
+    `resizable`/`closeOnOutsideClick` (v0.10.0) — opt-in, default `false`/
+    `true` respectively so existing consumers are unaffected. `resizable`
+    adds a drag handle: on desktop, a top-left corner grip on `DialogContent`
+    that tracks pointer deltas and switches the dialog from Radix's centered
+    transform to explicit `fixed left/top/width/height` (min 320×240, capped
+    to the viewport minus a margin) once dragging starts, keeping the
+    bottom-right corner anchored; on mobile, ported OneSales's existing
+    bottom-sheet drag handle into `SheetContent` (`resizable` prop there
+    too, bottom side only) — drags height between 30vh–95vh. `size` becomes
+    just the starting size once `resizable` is set. `closeOnOutsideClick`
+    passes an `onInteractOutside` that calls `preventDefault()` when `false`,
+    onto both `DialogContent` and `SheetContent` — Esc and the header's
+    close button still work either way.
+    `draggable` + all-four-corner resize (v0.11.0) — `resizable` now renders
+    a grip on all four corners (each drags the opposite corner as the
+    anchor), not just top-left. New `draggable` prop (default `false`) makes
+    the desktop header itself a drag handle to reposition the whole panel,
+    reusing the same pointer-tracking hook as resize. Both share one clamp:
+    move and resize deltas are always kept within a 16px viewport margin, so
+    the panel can never end up (partly) off-screen with no way to drag it
+    back. Fixed a real bug here: Tailwind v4 compiles `-translate-x-1/2`/
+    `-translate-y-1/2` (Radix's centering classes on `DialogContent`) to the
+    standalone CSS `translate` property, not `transform` — so overriding
+    `transform: none` inline, as the original resizable/draggable code did,
+    left that half-width/half-height shift in effect and rendered the panel
+    off-screen after a move-then-resize sequence. Fix is to also set
+    `translate: none` inline once dragging starts. jsdom has no `PointerEvent`
+    constructor at all, so `tests/setup.ts` now polyfills one (`extends
+    MouseEvent`) — without it, `fireEvent.pointerDown/Move` silently drop
+    `clientX`/`clientY` and any test asserting drag deltas gets `NaN`.
+    Footer button placement convention: `DialogFooter`/`SheetFooter` are
+    `flex justify-end gap-2`, right by default for a single action (OK/Done)
+    or an adjacent pair (Cancel + Submit). For a split pair like Previous/Next
+    — one button pinned left, the other right — wrap both in a single
+    `<div className="flex w-full justify-between">` and pass that as
+    `footer`; being one full-width flex child, it fills the row and the
+    parent's `justify-end` has nothing left to do. No separate `leftActions`/
+    `rightActions` prop needed for this.
   - `form-field/` — `FormField`, the "label + input + error/description"
     wrapper. Auto-generates an id via `useId()` unless the child already has
     one or `htmlFor` is passed; wires `aria-invalid`/`aria-describedby` onto

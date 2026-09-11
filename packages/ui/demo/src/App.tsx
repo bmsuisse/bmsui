@@ -37,6 +37,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
+  ResponsivePanel,
   Select,
   SelectContent,
   SelectItem,
@@ -109,6 +110,11 @@ export function App(): ReactElement {
   const [modalOpen, setModalOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [formModalOpen, setFormModalOpen] = useState(false);
+  const [responsivePanelOpen, setResponsivePanelOpen] = useState(false);
+  const [responsivePanelSize, setResponsivePanelSize] = useState<"sm" | "md" | "lg" | "xl">("lg");
+  const [resizablePanelOpen, setResizablePanelOpen] = useState(false);
+  const [wizardPanelOpen, setWizardPanelOpen] = useState(false);
+  const [wizardStep, setWizardStep] = useState(0);
   const [customerName, setCustomerName] = useState("");
   const [fieldError, setFieldError] = useState<string | undefined>(undefined);
   const [country, setCountry] = useState<string | null>("ch");
@@ -317,6 +323,102 @@ export function App(): ReactElement {
                   />
                 </FormField>
               </FormModal>
+            </>
+          </Section>
+
+          <Section title="ResponsivePanel">
+            <>
+              <div className="flex flex-wrap gap-2">
+                {(["sm", "md", "lg", "xl"] as const).map((size) => (
+                  <Button
+                    key={size}
+                    variant="outline"
+                    onClick={() => {
+                      setResponsivePanelSize(size);
+                      setResponsivePanelOpen(true);
+                    }}
+                  >
+                    Open ({size})
+                  </Button>
+                ))}
+              </div>
+              <ResponsivePanel
+                open={responsivePanelOpen}
+                onOpenChange={setResponsivePanelOpen}
+                title="New note"
+                description={`size="${responsivePanelSize}" — wider dialog on desktop, taller drawer on mobile.`}
+                size={responsivePanelSize}
+                footer={<Button onClick={() => setResponsivePanelOpen(false)}>Close</Button>}
+              >
+                <div className="flex flex-col gap-3 text-sm">
+                  <p>
+                    Resize the window (or open dev tools' device toolbar) below 1024px to see it
+                    switch from a centered dialog to a native drawer.
+                  </p>
+                  {Array.from({ length: 10 }, (_, i) => (
+                    <p key={i}>
+                      Filler paragraph {i + 1} — long enough content to show the size prop's
+                      height cap on mobile once it starts scrolling instead of growing forever.
+                    </p>
+                  ))}
+                </div>
+              </ResponsivePanel>
+
+              <div className="mt-3">
+                <Button variant="outline" onClick={() => setResizablePanelOpen(true)}>
+                  Open resizable, draggable, locked-outside-click panel
+                </Button>
+              </div>
+              <ResponsivePanel
+                open={resizablePanelOpen}
+                onOpenChange={setResizablePanelOpen}
+                title="Resizable panel"
+                description="Drag any corner (desktop) or the top handle (mobile drawer) to resize, or drag this header to move the panel. Clicking outside won't close this one — use the X."
+                resizable
+                draggable
+                closeOnOutsideClick={false}
+                footer={<Button onClick={() => setResizablePanelOpen(false)}>OK</Button>}
+              >
+                <p className="text-sm">Try dragging a corner/handle, dragging the header, and clicking the overlay.</p>
+              </ResponsivePanel>
+
+              <div className="mt-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setWizardStep(0);
+                    setWizardPanelOpen(true);
+                  }}
+                >
+                  Open wizard (Previous/Next footer)
+                </Button>
+              </div>
+              <ResponsivePanel
+                open={wizardPanelOpen}
+                onOpenChange={setWizardPanelOpen}
+                title={`Step ${wizardStep + 1} of 3`}
+                footer={
+                  <div className="flex w-full justify-between">
+                    <Button
+                      variant="outline"
+                      disabled={wizardStep === 0}
+                      onClick={() => setWizardStep((s) => s - 1)}
+                    >
+                      Previous
+                    </Button>
+                    {wizardStep < 2 ? (
+                      <Button onClick={() => setWizardStep((s) => s + 1)}>Next</Button>
+                    ) : (
+                      <Button onClick={() => setWizardPanelOpen(false)}>Done</Button>
+                    )}
+                  </div>
+                }
+              >
+                <p className="text-sm">
+                  Wrapping Previous/Next in a single `flex w-full justify-between` div pins them
+                  to opposite corners instead of both landing on the right.
+                </p>
+              </ResponsivePanel>
             </>
           </Section>
 
