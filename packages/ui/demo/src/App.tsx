@@ -113,6 +113,8 @@ export function App(): ReactElement {
   const [responsivePanelOpen, setResponsivePanelOpen] = useState(false);
   const [responsivePanelSize, setResponsivePanelSize] = useState<"sm" | "md" | "lg" | "xl">("lg");
   const [resizablePanelOpen, setResizablePanelOpen] = useState(false);
+  const [wizardPanelOpen, setWizardPanelOpen] = useState(false);
+  const [wizardStep, setWizardStep] = useState(0);
   const [customerName, setCustomerName] = useState("");
   const [fieldError, setFieldError] = useState<string | undefined>(undefined);
   const [country, setCountry] = useState<string | null>("ch");
@@ -378,6 +380,44 @@ export function App(): ReactElement {
                 footer={<Button onClick={() => setResizablePanelOpen(false)}>OK</Button>}
               >
                 <p className="text-sm">Try dragging a corner/handle, dragging the header, and clicking the overlay.</p>
+              </ResponsivePanel>
+
+              <div className="mt-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setWizardStep(0);
+                    setWizardPanelOpen(true);
+                  }}
+                >
+                  Open wizard (Previous/Next footer)
+                </Button>
+              </div>
+              <ResponsivePanel
+                open={wizardPanelOpen}
+                onOpenChange={setWizardPanelOpen}
+                title={`Step ${wizardStep + 1} of 3`}
+                footer={
+                  <div className="flex w-full justify-between">
+                    <Button
+                      variant="outline"
+                      disabled={wizardStep === 0}
+                      onClick={() => setWizardStep((s) => s - 1)}
+                    >
+                      Previous
+                    </Button>
+                    {wizardStep < 2 ? (
+                      <Button onClick={() => setWizardStep((s) => s + 1)}>Next</Button>
+                    ) : (
+                      <Button onClick={() => setWizardPanelOpen(false)}>Done</Button>
+                    )}
+                  </div>
+                }
+              >
+                <p className="text-sm">
+                  Wrapping Previous/Next in a single `flex w-full justify-between` div pins them
+                  to opposite corners instead of both landing on the right.
+                </p>
               </ResponsivePanel>
             </>
           </Section>

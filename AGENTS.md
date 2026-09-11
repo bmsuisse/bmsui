@@ -135,6 +135,14 @@ logic above, which already had its own extraction). Structure:
     constructor at all, so `tests/setup.ts` now polyfills one (`extends
     MouseEvent`) — without it, `fireEvent.pointerDown/Move` silently drop
     `clientX`/`clientY` and any test asserting drag deltas gets `NaN`.
+    Footer button placement convention: `DialogFooter`/`SheetFooter` are
+    `flex justify-end gap-2`, right by default for a single action (OK/Done)
+    or an adjacent pair (Cancel + Submit). For a split pair like Previous/Next
+    — one button pinned left, the other right — wrap both in a single
+    `<div className="flex w-full justify-between">` and pass that as
+    `footer`; being one full-width flex child, it fills the row and the
+    parent's `justify-end` has nothing left to do. No separate `leftActions`/
+    `rightActions` prop needed for this.
   - `form-field/` — `FormField`, the "label + input + error/description"
     wrapper. Auto-generates an id via `useId()` unless the child already has
     one or `htmlFor` is passed; wires `aria-invalid`/`aria-describedby` onto
