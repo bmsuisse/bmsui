@@ -37,6 +37,20 @@ if (typeof Element.prototype.setPointerCapture !== "function") {
   Element.prototype.setPointerCapture = () => {};
 }
 
+// jsdom has no PointerEvent constructor at all, so fireEvent.pointerDown/Move
+// dispatch a plain Event with no clientX/clientY — any test asserting drag
+// deltas needs those fields, which MouseEvent already implements.
+if (typeof window.PointerEvent === "undefined") {
+  class PointerEventPolyfill extends MouseEvent {
+    pointerId: number;
+    constructor(type: string, params: PointerEventInit = {}) {
+      super(type, params);
+      this.pointerId = params.pointerId ?? 0;
+    }
+  }
+  window.PointerEvent = PointerEventPolyfill as unknown as typeof PointerEvent;
+}
+
 // jsdom doesn't implement matchMedia; useMediaQuery (and anything built on
 // it, like ResponsivePanel) needs it to determine desktop vs. mobile layout.
 // Defaults to "no match" so tests get the mobile/drawer branch unless a test

@@ -38,7 +38,7 @@ SheetOverlay.displayName = "SheetOverlay";
 // `transition-transform` plus a `translate-x`/`translate-y` toggle driven off
 // Radix's own `data-[state=open]`/`data-[state=closed]` attributes.
 export const sheetVariants = cva(
-  "fixed z-50 gap-4 bg-background p-6 shadow-lg transition-transform duration-300 ease-in-out",
+  "fixed z-50 gap-4 bg-background p-6 shadow-lg transition-[transform,box-shadow] duration-300 ease-in-out",
   {
     variants: {
       side: {
@@ -96,6 +96,7 @@ export const SheetContent = forwardRef<ElementRef<typeof DialogPrimitive.Content
     // starts dragging the handle, clamped between 30% and 95% of the
     // viewport height (same bounds as the sheet consumers ported this from).
     const [dragHeight, setDragHeight] = useState<number | null>(null);
+    const [isDragging, setIsDragging] = useState(false);
     const dragStart = useRef<{ y: number; height: number } | null>(null);
     const canResize = resizable && side === "bottom";
 
@@ -104,6 +105,7 @@ export const SheetContent = forwardRef<ElementRef<typeof DialogPrimitive.Content
       if (!(popup instanceof HTMLElement)) return;
       e.currentTarget.setPointerCapture(e.pointerId);
       dragStart.current = { y: e.clientY, height: popup.getBoundingClientRect().height };
+      setIsDragging(true);
     };
     const onHandlePointerMove = (e: ReactPointerEvent<HTMLDivElement>): void => {
       if (!dragStart.current) return;
@@ -115,6 +117,7 @@ export const SheetContent = forwardRef<ElementRef<typeof DialogPrimitive.Content
     };
     const onHandlePointerUp = (): void => {
       dragStart.current = null;
+      setIsDragging(false);
     };
 
     const style: CSSProperties | undefined = entered
@@ -128,19 +131,24 @@ export const SheetContent = forwardRef<ElementRef<typeof DialogPrimitive.Content
           ref={ref}
           data-slot="sheet-content"
           style={style}
-          className={cn(sheetVariants({ side }), className)}
+          className={cn(sheetVariants({ side }), isDragging && "shadow-2xl", className)}
           {...props}
         >
           {canResize && (
             <div
               data-testid="sheet-drag-handle"
-              className="-mb-2 flex shrink-0 cursor-grab touch-none justify-center py-2 active:cursor-grabbing"
+              className="group -mb-2 flex shrink-0 cursor-grab touch-none justify-center py-2 active:cursor-grabbing"
               onPointerDown={onHandlePointerDown}
               onPointerMove={onHandlePointerMove}
               onPointerUp={onHandlePointerUp}
               onPointerCancel={onHandlePointerUp}
             >
-              <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
+              <div
+                className={cn(
+                  "h-1 w-10 rounded-full bg-muted-foreground/30 transition-all duration-150 group-hover:w-14 group-hover:bg-muted-foreground/50",
+                  isDragging && "w-14 bg-primary/60",
+                )}
+              />
             </div>
           )}
           {children}

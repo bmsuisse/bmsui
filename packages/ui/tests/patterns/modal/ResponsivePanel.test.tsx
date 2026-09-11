@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ResponsivePanel } from "../../../src/patterns/modal/ResponsivePanel";
@@ -107,21 +107,43 @@ describe("ResponsivePanel", () => {
     expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
   });
 
-  it("renders a corner resize handle on desktop only when resizable", () => {
+  it("renders a resize handle on all four corners on desktop only when resizable", () => {
     mockMatchMedia(true);
+    const corners = ["top-left", "top-right", "bottom-left", "bottom-right"];
     const { rerender } = render(
       <ResponsivePanel open onOpenChange={vi.fn()} title="No resize">
         <p>Body</p>
       </ResponsivePanel>,
     );
-    expect(screen.queryByTestId("panel-resize-handle")).not.toBeInTheDocument();
+    for (const corner of corners) {
+      expect(screen.queryByTestId(`panel-resize-handle-${corner}`)).not.toBeInTheDocument();
+    }
 
     rerender(
       <ResponsivePanel open onOpenChange={vi.fn()} title="Resizable" resizable>
         <p>Body</p>
       </ResponsivePanel>,
     );
-    expect(screen.getByTestId("panel-resize-handle")).toBeInTheDocument();
+    for (const corner of corners) {
+      expect(screen.getByTestId(`panel-resize-handle-${corner}`)).toBeInTheDocument();
+    }
+  });
+
+  it("makes the desktop header draggable only when draggable is set", () => {
+    mockMatchMedia(true);
+    const { rerender } = render(
+      <ResponsivePanel open onOpenChange={vi.fn()} title="Not draggable">
+        <p>Body</p>
+      </ResponsivePanel>,
+    );
+    expect(screen.getByText("Not draggable").closest("div")).not.toHaveClass("cursor-move");
+
+    rerender(
+      <ResponsivePanel open onOpenChange={vi.fn()} title="Draggable" draggable>
+        <p>Body</p>
+      </ResponsivePanel>,
+    );
+    expect(screen.getByText("Draggable").closest("div")).toHaveClass("cursor-move");
   });
 
   it("renders a drag handle on the mobile drawer only when resizable", () => {
@@ -139,6 +161,52 @@ describe("ResponsivePanel", () => {
       </ResponsivePanel>,
     );
     expect(screen.getByTestId("sheet-drag-handle")).toBeInTheDocument();
+  });
+
+  it("keeps the panel fully on-screen after a move followed by a resize", () => {
+    mockMatchMedia(true);
+    render(
+      <ResponsivePanel open onOpenChange={vi.fn()} title="Move then resize" resizable draggable>
+        <p>Body</p>
+      </ResponsivePanel>,
+    );
+    const dialog = screen.getByRole("dialog");
+    vi.spyOn(dialog, "getBoundingClientRect").mockReturnValue({
+      left: 384,
+      top: 360,
+      width: 672,
+      height: 180,
+      right: 1056,
+      bottom: 540,
+      x: 384,
+      y: 360,
+      toJSON: () => ({}),
+    } as DOMRect);
+
+    const header = screen.getByRole("heading", { name: "Move then resize" }).closest("div");
+    if (!header) throw new Error("header not found");
+    fireEvent.pointerDown(header, { clientX: 500, clientY: 400 });
+    fireEvent.pointerMove(header, { clientX: -600, clientY: -400 });
+    fireEvent.pointerUp(header);
+
+    expect(dialog.style.left).toBe("16px");
+    expect(dialog.style.top).toBe("16px");
+    expect(dialog.style.translate).toBe("none");
+
+    const brHandle = screen.getByTestId("panel-resize-handle-bottom-right");
+    fireEvent.pointerDown(brHandle, { clientX: 0, clientY: 0 });
+    fireEvent.pointerMove(brHandle, { clientX: 2000, clientY: 2000 });
+    fireEvent.pointerUp(brHandle);
+
+    const left = Number.parseFloat(dialog.style.left);
+    const top = Number.parseFloat(dialog.style.top);
+    const width = Number.parseFloat(dialog.style.width);
+    const height = Number.parseFloat(dialog.style.height);
+    expect(dialog.style.translate).toBe("none");
+    expect(left).toBeGreaterThanOrEqual(0);
+    expect(top).toBeGreaterThanOrEqual(0);
+    expect(left + width).toBeLessThanOrEqual(window.innerWidth);
+    expect(top + height).toBeLessThanOrEqual(window.innerHeight);
   });
 
   it("does not close on an outside click when closeOnOutsideClick is false", async () => {

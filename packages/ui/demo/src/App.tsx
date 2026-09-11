@@ -364,19 +364,20 @@ export function App(): ReactElement {
 
               <div className="mt-3">
                 <Button variant="outline" onClick={() => setResizablePanelOpen(true)}>
-                  Open resizable, locked-outside-click panel
+                  Open resizable, draggable, locked-outside-click panel
                 </Button>
               </div>
               <ResponsivePanel
                 open={resizablePanelOpen}
                 onOpenChange={setResizablePanelOpen}
                 title="Resizable panel"
-                description="Drag the top-left corner (desktop) or the top handle (mobile drawer) to resize. Clicking outside won't close this one — use the X."
+                description="Drag any corner (desktop) or the top handle (mobile drawer) to resize, or drag this header to move the panel. Clicking outside won't close this one — use the X."
                 resizable
+                draggable
                 closeOnOutsideClick={false}
-                footer={<Button onClick={() => setResizablePanelOpen(false)}>Close</Button>}
+                footer={<Button onClick={() => setResizablePanelOpen(false)}>OK</Button>}
               >
-                <p className="text-sm">Try dragging the corner/handle, and clicking the overlay.</p>
+                <p className="text-sm">Try dragging a corner/handle, dragging the header, and clicking the overlay.</p>
               </ResponsivePanel>
             </>
           </Section>

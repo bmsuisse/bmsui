@@ -118,6 +118,23 @@ logic above, which already had its own extraction). Structure:
     passes an `onInteractOutside` that calls `preventDefault()` when `false`,
     onto both `DialogContent` and `SheetContent` — Esc and the header's
     close button still work either way.
+    `draggable` + all-four-corner resize (v0.11.0) — `resizable` now renders
+    a grip on all four corners (each drags the opposite corner as the
+    anchor), not just top-left. New `draggable` prop (default `false`) makes
+    the desktop header itself a drag handle to reposition the whole panel,
+    reusing the same pointer-tracking hook as resize. Both share one clamp:
+    move and resize deltas are always kept within a 16px viewport margin, so
+    the panel can never end up (partly) off-screen with no way to drag it
+    back. Fixed a real bug here: Tailwind v4 compiles `-translate-x-1/2`/
+    `-translate-y-1/2` (Radix's centering classes on `DialogContent`) to the
+    standalone CSS `translate` property, not `transform` — so overriding
+    `transform: none` inline, as the original resizable/draggable code did,
+    left that half-width/half-height shift in effect and rendered the panel
+    off-screen after a move-then-resize sequence. Fix is to also set
+    `translate: none` inline once dragging starts. jsdom has no `PointerEvent`
+    constructor at all, so `tests/setup.ts` now polyfills one (`extends
+    MouseEvent`) — without it, `fireEvent.pointerDown/Move` silently drop
+    `clientX`/`clientY` and any test asserting drag deltas gets `NaN`.
   - `form-field/` — `FormField`, the "label + input + error/description"
     wrapper. Auto-generates an id via `useId()` unless the child already has
     one or `htmlFor` is passed; wires `aria-invalid`/`aria-describedby` onto
