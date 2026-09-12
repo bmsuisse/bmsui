@@ -208,3 +208,36 @@ in one place — see
 [Getting started](/ui/getting-started#chart-tokens) for how to register
 them. The `DonutChart` ring itself is also exported on its own for reuse
 outside a `KpiCard`.
+
+### `SearchPanel` / `SearchTrigger`
+
+A bordered search card (`SearchPanel`) and an icon-only header button that
+opens one (`SearchTrigger`). Together they cover a topbar search icon that
+expands into an input with a keyboard-shortcut hint and mode-switcher pills —
+without dictating what triggers the open/close or what renders the results.
+
+```tsx
+<SearchTrigger onClick={() => setOpen(true)} />
+
+{open && (
+  <SearchPanel
+    value={query}
+    onChange={setQuery}
+    isLoading={isSearching}
+    shortcutHint="⌘K"
+    modes={[
+      { key: "search", label: "Search", icon: Search },
+      { key: "ask", label: "Ask AI", icon: Sparkles },
+    ]}
+    activeMode={mode}
+    onModeChange={setMode}
+  />
+)}
+```
+
+`SearchPanel` is headless on results: it renders only the input row and the
+optional mode-pill row, and leaves any dropdown or inline results list to the
+caller. Pass `expanded` to square its bottom corners when a results panel is
+anchored directly beneath it, and `trailingSlot` for extras like a mic
+button. For an always-visible filter input instead of an icon-triggered
+overlay, use `SearchBar`.
