@@ -112,20 +112,42 @@ export function Sidebar({
         >
           {(header || onCollapsedChange) && (
             <div className="flex h-16 items-center gap-2 border-b border-border px-3">
-              {header && <div className="min-w-0 flex-1">{resolve(header, collapsed)}</div>}
-              {onCollapsedChange && (
+              {collapsed && onCollapsedChange ? (
+                // Collapsed rail: the header slot (e.g. a compact logo mark) and the
+                // expand toggle would otherwise compete for the narrow rail's width
+                // and clip each other, so they're stacked instead — the header shows
+                // by default and cross-fades to the toggle icon on hover, matching
+                // the same affordance OneSales' own sidebar rail uses.
                 <button
                   type="button"
                   onClick={() => onCollapsedChange(!collapsed)}
-                  aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                  aria-label="Expand sidebar"
+                  className="group relative flex h-9 w-9 shrink-0 items-center justify-center"
                 >
-                  {collapsed ? (
-                    <PanelLeftOpen className="h-4 w-4" aria-hidden />
-                  ) : (
-                    <PanelLeftClose className="h-4 w-4" aria-hidden />
+                  {header && (
+                    <span className="transition-opacity group-hover:opacity-0">
+                      {resolve(header, collapsed)}
+                    </span>
                   )}
+                  <PanelLeftOpen
+                    className="absolute h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
+                    aria-hidden
+                  />
                 </button>
+              ) : (
+                <>
+                  {header && <div className="min-w-0 flex-1">{resolve(header, collapsed)}</div>}
+                  {onCollapsedChange && (
+                    <button
+                      type="button"
+                      onClick={() => onCollapsedChange(!collapsed)}
+                      aria-label="Collapse sidebar"
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                    >
+                      <PanelLeftClose className="h-4 w-4" aria-hidden />
+                    </button>
+                  )}
+                </>
               )}
             </div>
           )}

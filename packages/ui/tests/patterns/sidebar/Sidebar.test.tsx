@@ -36,6 +36,24 @@ describe("Sidebar", () => {
     expect(onCollapsedChange).toHaveBeenCalledWith(true);
   });
 
+  it("collapses the header and toggle into a single hoverable button on the rail, keeping the header visible", () => {
+    const onCollapsedChange = vi.fn();
+    render(
+      <Sidebar
+        collapsed
+        onCollapsedChange={onCollapsedChange}
+        header={(collapsed) => (collapsed ? "D" : "Demo")}
+      >
+        <div />
+      </Sidebar>,
+    );
+    expect(screen.getByText("D")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Collapse sidebar" })).not.toBeInTheDocument();
+    const toggle = screen.getByRole("button", { name: "Expand sidebar" });
+    fireEvent.click(toggle);
+    expect(onCollapsedChange).toHaveBeenCalledWith(false);
+  });
+
   it("renders at the rail width when collapsed", () => {
     const { container } = render(
       <Sidebar collapsed railWidth={56}>
