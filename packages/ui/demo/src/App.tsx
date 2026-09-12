@@ -25,6 +25,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  EmptyState,
   FormField,
   FormModal,
   Input,
@@ -57,12 +58,15 @@ import {
   Sidebar,
   Skeleton,
   StatusBadge,
+  Stepper,
   TagCombobox,
   Textarea,
+  ToastProvider,
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
+  useToast,
 } from "@bmsuisse/ui";
 import {
   Building2,
@@ -70,6 +74,7 @@ import {
   ClipboardCheck,
   Clock,
   Cog,
+  FileUp,
   Info,
   LayoutGrid,
   ListFilter,
@@ -77,6 +82,8 @@ import {
   Mic,
   Package,
   Percent,
+  Plus,
+  RefreshCw,
   Search,
   Sparkles,
   TrendingUp,
@@ -175,7 +182,7 @@ export function App(): ReactElement {
   );
 
   return (
-    <div>
+    <ToastProvider>
       <div className="min-h-screen bg-background px-4 py-6 text-foreground md:p-8">
         <div className="mx-auto flex max-w-3xl flex-col gap-10">
           <header className="flex items-center justify-between">
@@ -678,6 +685,191 @@ export function App(): ReactElement {
           <Section title="SearchBar / SearchPanel / SearchTrigger">
             <SearchDemo />
           </Section>
+
+          <Section title="Toast (ToastProvider / useToast)">
+            <ToastDemo />
+          </Section>
+
+          <Section title="Stepper">
+            <StepperDemo />
+          </Section>
+
+          <Section title="EmptyState">
+            <EmptyStateDemo />
+          </Section>
+        </div>
+      </div>
+    </ToastProvider>
+  );
+}
+
+function ToastDemo(): ReactElement {
+  const { toast, dismiss } = useToast();
+  return (
+    <div className="flex w-full flex-col gap-3">
+      <p className="max-w-prose text-sm text-muted-foreground">
+        The stack sits bottom-right on desktop and full-width at the bottom on a phone. Errors and loading toasts
+        stay until dismissed; everything else auto-closes after 5s with the timer paused on hover, focus or when the
+        window loses focus. Swipe right to dismiss on touch, Escape on the keyboard, F8 to jump to the stack.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <Button data-testid="toast-success" onClick={() => toast.success("Customer saved", { description: "Muster Bau AG · 10023" })}>
+          Success
+        </Button>
+        <Button
+          variant="outline"
+          data-testid="toast-error"
+          onClick={() =>
+            toast.error("Sync failed", {
+              description: "3 visit reports could not be uploaded. They stay on this device until the next attempt.",
+              action: { label: "Retry", onClick: () => toast.info("Retrying…") },
+            })
+          }
+        >
+          Error with action
+        </Button>
+        <Button variant="outline" onClick={() => toast.warning("Offline", { description: "Showing cached data from 08:42." })}>
+          Warning
+        </Button>
+        <Button variant="outline" onClick={() => toast.info("New version available", { action: { label: "Reload", onClick: () => location.reload() } })}>
+          Info
+        </Button>
+        <Button
+          variant="outline"
+          data-testid="toast-promise"
+          onClick={() =>
+            void toast
+              .promise(sleep(1800).then(() => "Offer 2024-0812"), {
+                loading: "Sending offer…",
+                success: (ref) => `${ref} sent`,
+                error: "Could not send offer",
+              })
+              .catch(() => undefined)
+          }
+        >
+          Promise (loading → success)
+        </Button>
+        <Button
+          variant="ghost"
+          onClick={() =>
+            toast({
+              title: "Task deleted",
+              action: { label: "Undo", onClick: () => toast.success("Task restored"), altText: "Undo deleting the task" },
+            })
+          }
+        >
+          Neutral with Undo
+        </Button>
+        <Button variant="ghost" onClick={() => dismiss()}>
+          Dismiss all
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+const WIZARD_STEPS = [
+  { id: "upload", label: "Upload", description: "Capture" },
+  { id: "match", label: "Match articles", description: "Capture" },
+  { id: "review", label: "Review prices", description: "Check" },
+  { id: "customer", label: "Customer" },
+  { id: "send", label: "Send offer", description: "Done" },
+];
+
+function StepperDemo(): ReactElement {
+  const [active, setActive] = useState("review");
+  const [furthest, setFurthest] = useState("review");
+  const activeIndex = WIZARD_STEPS.findIndex((s) => s.id === active);
+
+  function go(delta: number): void {
+    const next = WIZARD_STEPS[activeIndex + delta];
+    if (!next) return;
+    setActive(next.id);
+    if (WIZARD_STEPS.findIndex((s) => s.id === next.id) > WIZARD_STEPS.findIndex((s) => s.id === furthest)) {
+      setFurthest(next.id);
+    }
+  }
+
+  return (
+    <div className="flex w-full flex-col gap-6">
+      <div className="flex w-full flex-col gap-4 rounded-2xl border border-border bg-card p-4">
+        <Stepper steps={WIZARD_STEPS} activeStep={active} furthestStep={furthest} onStepChange={setActive} />
+        <div className="flex items-center justify-between gap-3 border-t border-border pt-3">
+          <p className="text-sm text-muted-foreground">
+            Completed steps are clickable; steps beyond <code className="text-xs">furthestStep</code> are not. Resize below{" "}
+            <code className="text-xs">md</code> for the compact phone bar.
+          </p>
+          <div className="flex shrink-0 gap-2">
+            <Button variant="outline" size="sm" onClick={() => go(-1)} disabled={activeIndex === 0}>
+              Back
+            </Button>
+            <Button size="sm" onClick={() => go(1)} disabled={activeIndex === WIZARD_STEPS.length - 1}>
+              Next
+            </Button>
+          </div>
+        </div>
+      </div>
+      <div className="grid w-full gap-4 md:grid-cols-2">
+        <div className="rounded-2xl border border-border bg-card p-4">
+          <p className="mb-3 text-xs font-medium text-muted-foreground">Read-only, with an error step</p>
+          <Stepper
+            mobile="full"
+            steps={[
+              { id: "a", label: "Draft" },
+              { id: "b", label: "Approval", error: true },
+              { id: "c", label: "Signed" },
+            ]}
+            activeStep="b"
+          />
+        </div>
+        <div className="rounded-2xl border border-border bg-card p-4">
+          <p className="mb-3 text-xs font-medium text-muted-foreground">Vertical</p>
+          <Stepper
+            orientation="vertical"
+            activeStep="match"
+            steps={WIZARD_STEPS.slice(0, 4)}
+            onStepChange={() => undefined}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EmptyStateDemo(): ReactElement {
+  const { toast } = useToast();
+  return (
+    <div className="grid w-full gap-4 md:grid-cols-2">
+      <div className="rounded-2xl border border-border bg-card">
+        <EmptyState
+          title="No offers yet"
+          description="Upload a supplier quote and the parser turns it into an offer you can send in minutes."
+          action={{ label: "Upload quote", icon: FileUp, onClick: () => toast.info("Upload dialog would open") }}
+          secondaryAction={{ label: "Create manually", icon: Plus, onClick: () => undefined }}
+        />
+      </div>
+      <div className="rounded-2xl border border-border bg-card">
+        <EmptyState
+          variant="no-results"
+          title="No customers match “Rigips Zürich”"
+          description="Try fewer words, or search by customer number."
+          action={{ label: "Clear search", onClick: () => undefined }}
+        />
+      </div>
+      <div className="rounded-2xl border border-border bg-card">
+        <EmptyState
+          variant="error"
+          title="Couldn't load visit reports"
+          description="The server didn't answer in time. Your drafts are safe on this device."
+          action={{ label: "Try again", icon: RefreshCw, onClick: () => toast.promise(sleep(1200), { loading: "Loading…", success: "Reports loaded", error: "Still failing" }) }}
+        />
+      </div>
+      <div className="flex flex-col gap-3">
+        <div className="rounded-2xl border border-border bg-card">
+          <EmptyState size="sm" title="No open tasks" description="You're clear for today." />
+        </div>
+        <div className="rounded-2xl border border-border bg-card">
+          <EmptyState size="sm" variant="offline" title="Offline" description="Cached data from 08:42." />
         </div>
       </div>
     </div>

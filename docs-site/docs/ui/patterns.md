@@ -286,3 +286,96 @@ way iOS Safari accepts as part of the opening tap.
 
 The `useVisualViewportHeight` hook the overlay uses is exported for callers
 that build their own keyboard-aware sheets.
+
+### `ToastProvider` / `useToast`
+
+Transient notifications. Mount `ToastProvider` once near the app root
+(outside anything that re-mounts on navigation), then call `useToast()`
+anywhere below it:
+
+```tsx
+const { toast, dismiss } = useToast();
+
+toast.success("Customer saved", { description: "Muster Bau AG · 10023" });
+toast.error("Sync failed", {
+  description: "3 visit reports could not be uploaded.",
+  action: { label: "Retry", onClick: retry },
+});
+await toast.promise(sendOffer(), {
+  loading: "Sending offer…",
+  success: (ref) => `${ref} sent`,
+  error: "Could not send offer",
+});
+```
+
+Variants: `success`, `error`, `warning`, `info`, `neutral`, `loading`.
+Timed toasts auto-dismiss after the provider's `duration` (5s) with a thin
+progress bar that pauses on hover, focus, or when the window loses focus;
+`error` and `loading` toasts stay until dismissed or updated. Reusing an
+`id` (or calling `update`) changes a toast in place — how "Saving…" becomes
+"Saved". The stack is capped at `max` (3); the oldest non-error toasts retire
+first, errors never get pushed out by a flood of successes.
+
+On a phone the stack is full-width at the bottom, clear of the home
+indicator; from `sm` up it anchors at `position` (`bottom-right` default,
+`top-right`, `top-center`, `bottom-center`). Built on Radix Toast, so the
+region is announced to screen readers (assertively for errors/warnings,
+politely otherwise), F8 focuses the stack, Escape dismisses the focused
+toast, and a right swipe dismisses on touch.
+
+### `Stepper`
+
+Wizard progress indicator: numbered markers joined by connectors, completed
+steps ticked and clickable, the current one filled, upcoming ones muted.
+
+```tsx
+<Stepper
+  steps={[
+    { id: "upload", label: "Upload", description: "Capture" },
+    { id: "match", label: "Match articles" },
+    { id: "review", label: "Review prices", error: hasPriceErrors },
+    { id: "send", label: "Send offer" },
+  ]}
+  activeStep={step}
+  furthestStep={furthestVisited}
+  onStepChange={setStep}
+/>
+```
+
+Completed steps are buttons once `onStepChange` is set; `furthestStep`
+additionally unlocks steps ahead the user has already visited. Omit
+`onStepChange` for a read-only indicator. `error: true` on a step turns
+its marker red wherever it sits. Below `md` a horizontal stepper collapses
+to a compact bar — the active label, a "Step 3 of 5" counter
+(`formatCounter` for other languages) and a segmented track — because five
+labelled markers never fit a phone without truncating the labels they exist
+to show; `mobile="full"` keeps the markers and scrolls them instead.
+`orientation="vertical"` stacks the steps for a side rail or a settings-style
+flow. The component owns only the indicator: step content and the
+Back/Next buttons stay with the caller, whose form state decides what
+"next" means.
+
+### `EmptyState`
+
+The placeholder a list, table, search result or panel shows when there is
+nothing to render — built to teach the interface, not just say "nothing
+here".
+
+```tsx
+<EmptyState
+  title="No offers yet"
+  description="Upload a supplier quote and the parser turns it into an offer."
+  action={{ label: "Upload quote", icon: FileUp, onClick: openUpload }}
+  secondaryAction={{ label: "Create manually", onClick: createBlank }}
+/>
+
+<EmptyState variant="error" title="Couldn't load visit reports" action={{ label: "Try again", onClick: refetch }} />
+```
+
+`variant` picks the default icon and tone: `empty` (nothing created yet),
+`no-results` (a search/filter excluded everything — offer to widen it),
+`error` (a failed load, rendered as `role="alert"` with a destructive tint
+and an outline retry button), `offline`. `size="sm"` is the in-card version
+for a dashboard tile; `fill` stretches to center inside a flex-column
+region. Pass `icon` to override the default, and `children` for a hint or
+link under the actions.
