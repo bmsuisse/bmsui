@@ -50,6 +50,25 @@ describe("SearchBar", () => {
     expect(container.querySelector('[role="status"]')).toBeInTheDocument();
   });
 
+  it("fires onSubmit on Enter and clears on Escape", () => {
+    const onSubmit = vi.fn();
+    const onChange = vi.fn();
+    render(<SearchBar value="acme" onChange={onChange} onSubmit={onSubmit} placeholder="Search…" />);
+    const input = screen.getByPlaceholderText("Search…");
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(onSubmit).toHaveBeenCalledWith("acme");
+    fireEvent.keyDown(input, { key: "Escape" });
+    expect(onChange).toHaveBeenCalledWith("");
+  });
+
+  it("sets mobile keyboard hints and renders a trailing slot", () => {
+    render(<SearchBar value="" onChange={vi.fn()} placeholder="Search…" trailingSlot={<span>mic</span>} />);
+    const input = screen.getByPlaceholderText("Search…");
+    expect(input).toHaveAttribute("enterkeyhint", "search");
+    expect(input).toHaveAttribute("autocapitalize", "none");
+    expect(screen.getByText("mic")).toBeInTheDocument();
+  });
+
   it("suppresses the native type=search clear/decoration controls, so only our own clear button shows", () => {
     render(<SearchBar value="foo" onChange={() => {}} placeholder="Search…" />);
     const input = screen.getByPlaceholderText("Search…");

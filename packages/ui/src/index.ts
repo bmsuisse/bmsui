@@ -130,7 +130,7 @@ export {
 } from "./patterns/loading-spinner/LoadingSpinner";
 
 export type { SearchBarProps } from "./patterns/search-bar/SearchBar";
-export { SearchBar } from "./patterns/search-bar/SearchBar";
+export { SearchBar, searchInputKeyboardProps } from "./patterns/search-bar/SearchBar";
 
 export type { DonutSegment, KpiCardProps } from "./patterns/kpi-card/KpiCard";
 export { DonutChart, KpiCard, Sparkline } from "./patterns/kpi-card/KpiCard";
@@ -139,6 +139,8 @@ export type { SearchPanelMode, SearchPanelProps } from "./patterns/search-panel/
 export { SearchPanel } from "./patterns/search-panel/SearchPanel";
 export type { SearchTriggerProps } from "./patterns/search-panel/SearchTrigger";
 export { SearchTrigger } from "./patterns/search-panel/SearchTrigger";
+export type { SearchOverlayProps } from "./patterns/search-panel/SearchOverlay";
+export { SearchOverlay } from "./patterns/search-panel/SearchOverlay";
 
 export type { NavIconProps, NavItemProps } from "./patterns/sidebar/NavItem";
 export { NavItem } from "./patterns/sidebar/NavItem";
@@ -151,3 +153,4 @@ export { useSidebarCollapsed } from "./patterns/sidebar/context";
 // --- shared utility -----------------------------------------------------------
 export { cn } from "./lib/utils";
 export { useMediaQuery } from "./lib/useMediaQuery";
+export { useVisualViewportHeight } from "./lib/useVisualViewportHeight";

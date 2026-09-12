@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { DonutChart, KpiCard } from "../../../src/patterns/kpi-card/KpiCard";
 
 describe("KpiCard", () => {
@@ -42,6 +42,29 @@ describe("KpiCard", () => {
     const link = screen.getByRole("link");
     expect(link).toHaveAttribute("href", "/tasks");
     expect(screen.getByTestId("icon")).toBeInTheDocument();
+  });
+
+  it("makes the whole card a button with onClick", () => {
+    const onClick = vi.fn();
+    render(<KpiCard label="Backlog" value="CHF 412k" variant="mini" onClick={onClick} testId="tile" />);
+    fireEvent.click(screen.getByTestId("tile"));
+    expect(onClick).toHaveBeenCalled();
+    expect(screen.getByRole("button")).toHaveAttribute("data-testid", "tile");
+  });
+
+  it("splits a currency-prefixed value into unit and magnitude", () => {
+    render(<KpiCard label="Sales" value="CHF 1.24 Mio." variant="hero" />);
+    expect(screen.getByText("CHF")).toBeInTheDocument();
+    expect(screen.getByText("1.24 Mio.")).toBeInTheDocument();
+  });
+
+  it("renders a negative badge with a down arrow and a neutral badge without one", () => {
+    const { container, rerender } = render(<KpiCard label="Visits" value="212" badge={{ text: "-4%", positive: false }} />);
+    expect(screen.getByText("-4%")).toHaveClass("text-rose-800");
+    expect(container.querySelector(".lucide-arrow-down-right")).toBeInTheDocument();
+    rerender(<KpiCard label="Visits" value="212" badge={{ text: "12" }} />);
+    expect(screen.getByText("12")).toHaveClass("text-muted-foreground");
+    expect(container.querySelector("svg.lucide")).not.toBeInTheDocument();
   });
 
   it("colors the mini variant's sub text by subTone", () => {

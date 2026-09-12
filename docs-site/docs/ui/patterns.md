@@ -176,12 +176,21 @@ for a target-achievement readout.
 
 `value` is a pre-formatted `string | number` — the component has no currency
 or locale opinion, so format it (CHF, percentages, thousands separators)
-before passing it in. The `default` variant additionally splits a
-space-separated value like `"42 %"` into a large number plus a small
-prefix/suffix unit. `subTone` (`default`/`warn`/`danger`) colors the `mini`
-variant's `sub` text for at-a-glance status (e.g. an overdue count). The
-`Sparkline` mini line-chart is also exported on its own for reuse outside a
-`KpiCard`.
+before passing it in. Every variant then steps a leading currency code or a
+trailing unit down in size (`"CHF 1.2 Mio."` reads as a small `CHF` plus a big
+`1.2 Mio.`, `"42 %"` as `42` plus a small `%`), so the magnitude is the only
+thing a rep scans on a phone. `badge.positive` drives the delta's colour and
+arrow: `true` is green/up, `false` red/down, omitted stays neutral (a count,
+not a direction). `subTone` (`default`/`warn`/`danger`) colours `sub` for
+at-a-glance status (e.g. an overdue count).
+
+Pass `href` (an `<a>`) or `onClick` (a `<button>`) to make the **whole tile**
+the tap target — with press feedback and a focus ring — instead of relying on
+a small icon link. The tiles are sized mobile-first for a two-column grid at
+320–430px: labels clamp to two lines, and the mini variant hides its sparkline
+below ~176px of tile width when a `sub` line is also present (a container
+query, not a viewport breakpoint). The `Sparkline` mini line-chart is also
+exported on its own for reuse outside a `KpiCard`.
 
 The `donut` variant renders a `segments` breakdown (`{ label, value, color? }[]`)
 as a ring chart with a legend showing each segment's share, and an optional
@@ -209,35 +218,71 @@ in one place — see
 them. The `DonutChart` ring itself is also exported on its own for reuse
 outside a `KpiCard`.
 
-### `SearchPanel` / `SearchTrigger`
+### `SearchBar`
 
-A bordered search card (`SearchPanel`) and an icon-only header button that
-opens one (`SearchTrigger`). Together they cover a topbar search icon that
-expands into an input with a keyboard-shortcut hint and mode-switcher pills —
-without dictating what triggers the open/close or what renders the results.
+Pill-shaped, always-visible search input for filtering a table or list. 44px
+tall with 16px type on a phone (16px is what stops iOS Safari zooming the page
+on focus), 40px/15px from `md`. Ships mobile keyboard defaults — a "Search"
+return key, no auto-capitalisation, no autocorrect on article numbers — via
+the exported `searchInputKeyboardProps`, all overridable through the input
+props spread.
 
 ```tsx
-<SearchTrigger onClick={() => setOpen(true)} />
-
-{open && (
-  <SearchPanel
-    value={query}
-    onChange={setQuery}
-    isLoading={isSearching}
-    shortcutHint="⌘K"
-    modes={[
-      { key: "search", label: "Search", icon: Search },
-      { key: "ask", label: "Ask AI", icon: Sparkles },
-    ]}
-    activeMode={mode}
-    onModeChange={setMode}
-  />
-)}
+<SearchBar
+  value={query}
+  onChange={setQuery}
+  isLoading={isFetching}
+  onSubmit={runSearch}          // Enter / the keyboard's Search key
+  trailingSlot={<VoiceMicButton />}
+  placeholder="Search customers…"
+/>
 ```
 
-`SearchPanel` is headless on results: it renders only the input row and the
-optional mode-pill row, and leaves any dropdown or inline results list to the
-caller. Pass `expanded` to square its bottom corners when a results panel is
-anchored directly beneath it, and `trailingSlot` for extras like a mic
-button. For an always-visible filter input instead of an icon-triggered
-overlay, use `SearchBar`.
+A clear (×) button appears once there is a value (Escape clears too); pass
+`onClear={false}` to hide it or a function to override what it does.
+
+### `SearchPanel` / `SearchTrigger` / `SearchOverlay`
+
+`SearchPanel` is the search card itself: an input row (leading icon/spinner,
+input, clear button, optional `trailingSlot` and `shortcutHint`) plus an
+optional row of mode-switcher pills. It is headless on results and works in
+page flow — Cockpit's in-canvas hero search — with `expanded` squaring its
+bottom corners so a results dropdown beneath reads as one surface.
+`appearance="flush"` drops the card chrome for embedding in a header or an
+overlay that already draws the surface.
+
+`SearchTrigger` is the button that opens a search: `variant="icon"` (default)
+for a toolbar, `variant="field"` for a header where the search deserves to be
+seen — a field-shaped button with `placeholder` text and a `shortcutHint`.
+
+`SearchOverlay` is the presentation for a global, command-palette style
+search. On a phone it takes over the screen (back button, input, results
+scrolling beneath, sized to the *visual* viewport so the on-screen keyboard
+never covers the results); from `breakpoint` (default `md`) up it is a
+centered dialog. Escape clears a non-empty query first and closes on the
+second press. Results are `children`; the input focuses itself on open in a
+way iOS Safari accepts as part of the opening tap.
+
+```tsx
+<SearchTrigger variant="field" placeholder="Customers, articles, places…" shortcutHint="⌘K" onClick={() => setOpen(true)} />
+
+<SearchOverlay
+  open={open}
+  onOpenChange={setOpen}
+  value={query}
+  onChange={setQuery}
+  isLoading={isSearching}
+  modes={[
+    { key: "search", label: "Search", icon: Search },
+    { key: "ask", label: "Ask AI", icon: Sparkles },
+  ]}
+  activeMode={mode}
+  onModeChange={setMode}
+  footer={<KeyboardHints />}
+>
+  <ResultsList … />
+</SearchOverlay>
+```
+
+The `useVisualViewportHeight` hook the overlay uses is exported for callers
+that build their own keyboard-aware sheets.

@@ -40,6 +40,7 @@ import {
   PopoverTrigger,
   ResponsivePanel,
   SearchBar,
+  SearchOverlay,
   SearchPanel,
   SearchTrigger,
   Select,
@@ -64,17 +65,24 @@ import {
   TooltipTrigger,
 } from "@bmsuisse/ui";
 import {
+  Building2,
+  CalendarDays,
   ClipboardCheck,
+  Clock,
   Cog,
-  DollarSign,
   Info,
   LayoutGrid,
   ListFilter,
+  MapPin,
+  Mic,
+  Package,
   Percent,
   Search,
-  ShoppingCart,
   Sparkles,
+  TrendingUp,
+  UserPlus,
   Users,
+  Wallet,
 } from "lucide-react";
 import type { ReactElement } from "react";
 import { useEffect, useState } from "react";
@@ -168,7 +176,7 @@ export function App(): ReactElement {
 
   return (
     <div>
-      <div className="min-h-screen bg-background p-8 text-foreground">
+      <div className="min-h-screen bg-background px-4 py-6 text-foreground md:p-8">
         <div className="mx-auto flex max-w-3xl flex-col gap-10">
           <header className="flex items-center justify-between">
             <div>
@@ -676,50 +684,200 @@ export function App(): ReactElement {
   );
 }
 
-function SearchDemo(): ReactElement {
-  const [barQuery, setBarQuery] = useState("");
-  const [panelOpen, setPanelOpen] = useState(false);
-  const [panelQuery, setPanelQuery] = useState("");
-  const [mode, setMode] = useState("search");
+const SEARCH_RESULTS: { group: string; items: { title: string; sub: string; icon: typeof Users }[] }[] = [
+  {
+    group: "Customers",
+    items: [
+      { title: "Muster Bau AG", sub: "10023 · Zürich", icon: Building2 },
+      { title: "Musterhaus Sanitär GmbH", sub: "10871 · Winterthur", icon: Building2 },
+      { title: "Mustermann Holzbau", sub: "11402 · Chur", icon: Building2 },
+    ],
+  },
+  {
+    group: "Appointments",
+    items: [{ title: "Baustellenbesuch Muster Bau", sub: "Tomorrow · 09:30 · Zürich-Altstetten", icon: CalendarDays }],
+  },
+  {
+    group: "Products",
+    items: [
+      { title: "Rigips RB 12.5 mm", sub: "Art. 204571 · 2'400 Stk. Lager", icon: Package },
+      { title: "Rigips Fugenfüller Vario 25 kg", sub: "Art. 206113", icon: Package },
+    ],
+  },
+];
+
+function SearchResults({ query, onPick }: { query: string; onPick: () => void }): ReactElement {
+  const q = query.trim().toLowerCase();
+  const groups = SEARCH_RESULTS.map((g) => ({
+    ...g,
+    items: q ? g.items.filter((i) => `${i.title} ${i.sub}`.toLowerCase().includes(q)) : g.items,
+  })).filter((g) => g.items.length > 0);
+
+  if (groups.length === 0) {
+    return (
+      <div className="flex flex-col items-center gap-1 px-6 py-12 text-center">
+        <p className="text-[15px] font-medium text-foreground">Nothing matches “{query.trim()}”</p>
+        <p className="text-[13px] text-muted-foreground">Try a customer number, an article number or a place.</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <p className="mb-2 text-xs font-medium text-muted-foreground">
-          SearchBar — an always-visible pill input, e.g. filtering a table.
+    <div className="flex flex-col py-1">
+      {groups.map((g) => (
+        <div key={g.group} className="py-1">
+          <p className="px-4 pt-2 pb-1 text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+            {g.group}
+          </p>
+          {g.items.map((item) => (
+            <button
+              key={item.title}
+              type="button"
+              onClick={onPick}
+              className="flex h-12 w-full items-center gap-3 px-4 text-left transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none md:h-11"
+            >
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <item.icon className="h-4 w-4" aria-hidden="true" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[15px] text-foreground md:text-[14px]">{item.title}</span>
+                <span className="block truncate text-[12px] text-muted-foreground tabular-nums">{item.sub}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SearchDemo(): ReactElement {
+  const [barQuery, setBarQuery] = useState("");
+  const [barLoading, setBarLoading] = useState(false);
+  const [panelQuery, setPanelQuery] = useState("");
+  const [mode, setMode] = useState("search");
+  const [overlayOpen, setOverlayOpen] = useState(false);
+  const [overlayQuery, setOverlayQuery] = useState("");
+  const [overlayMode, setOverlayMode] = useState("search");
+
+  // Fake search-as-you-type latency so the spinner state is visible.
+  useEffect(() => {
+    if (!barQuery) {
+      setBarLoading(false);
+      return;
+    }
+    setBarLoading(true);
+    const t = setTimeout(() => setBarLoading(false), 500);
+    return () => clearTimeout(t);
+  }, [barQuery]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent): void => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setOverlayOpen((v) => !v);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const micButton = (
+    <button
+      type="button"
+      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:h-8 md:w-8"
+      aria-label="Voice search"
+    >
+      <Mic className="h-4 w-4" aria-hidden="true" />
+    </button>
+  );
+
+  const modes = [
+    { key: "search", label: "Search", icon: Search },
+    { key: "ask", label: "Ask AI", icon: Sparkles },
+  ];
+
+  return (
+    <div className="flex w-full flex-col gap-8">
+      <div className="flex flex-col gap-2">
+        <p className="text-xs font-medium text-muted-foreground">
+          SearchBar — always-visible filter above a table. Enter fires <code>onSubmit</code>, Escape clears.
         </p>
-        <SearchBar value={barQuery} onChange={setBarQuery} placeholder="Search customers…" className="max-w-md" />
+        <SearchBar
+          value={barQuery}
+          onChange={setBarQuery}
+          isLoading={barLoading}
+          onSubmit={() => setBarLoading(false)}
+          placeholder="Search customers…"
+          aria-label="Search customers"
+          trailingSlot={micButton}
+          className="max-w-md"
+        />
       </div>
 
-      <div>
-        <p className="mb-2 text-xs font-medium text-muted-foreground">
-          SearchTrigger — an icon-only header button that opens a search overlay (here, a SearchPanel).
+      <div className="flex flex-col gap-2">
+        <p className="text-xs font-medium text-muted-foreground">
+          SearchTrigger — <code>icon</code> for a toolbar, <code>field</code> for a header. Both open the SearchOverlay
+          (⌘K works too).
         </p>
-        <div className="relative inline-block">
-          <SearchTrigger onClick={() => setPanelOpen((v) => !v)} />
-          {panelOpen && (
-            <div className="absolute top-full left-0 z-10 mt-2 w-[420px]">
-              <SearchPanel
-                value={panelQuery}
-                onChange={setPanelQuery}
-                placeholder="Customers, visits, places…"
-                shortcutHint="⌘K"
-                trailingSlot={
-                  <button type="button" className="text-muted-foreground hover:text-foreground" aria-label="Voice search">
-                    <Search className="h-4 w-4" aria-hidden="true" />
-                  </button>
-                }
-                modes={[
-                  { key: "search", label: "Search", icon: Search },
-                  { key: "ask", label: "Ask AI", icon: Sparkles },
-                ]}
-                activeMode={mode}
-                onModeChange={setMode}
-                expanded
-              />
-              <div className="rounded-b-2xl border border-t-0 border-border bg-card px-4 py-5 text-center text-[12px] text-muted-foreground shadow-sm">
-                Results go here — SearchPanel owns none of this, just the input chrome above.
-              </div>
+        <div className="flex items-center gap-3">
+          <SearchTrigger onClick={() => setOverlayOpen(true)} />
+          <SearchTrigger
+            variant="field"
+            placeholder="Customers, articles, places…"
+            shortcutHint="⌘K"
+            onClick={() => setOverlayOpen(true)}
+            className="min-w-0 max-w-xs flex-1"
+          />
+        </div>
+        <SearchOverlay
+          open={overlayOpen}
+          onOpenChange={setOverlayOpen}
+          value={overlayQuery}
+          onChange={setOverlayQuery}
+          placeholder="Customers, articles, places…"
+          shortcutHint="Esc"
+          trailingSlot={micButton}
+          modes={modes}
+          activeMode={overlayMode}
+          onModeChange={setOverlayMode}
+          footer={
+            <div className="hidden items-center gap-4 px-4 py-2 text-[11px] text-muted-foreground md:flex">
+              <span>
+                <kbd className="rounded border border-border bg-muted/60 px-1 font-sans">↑↓</kbd> navigate
+              </span>
+              <span>
+                <kbd className="rounded border border-border bg-muted/60 px-1 font-sans">↵</kbd> open
+              </span>
+              <span>
+                <kbd className="rounded border border-border bg-muted/60 px-1 font-sans">esc</kbd> clear / close
+              </span>
+            </div>
+          }
+        >
+          <SearchResults query={overlayQuery} onPick={() => setOverlayOpen(false)} />
+        </SearchOverlay>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <p className="text-xs font-medium text-muted-foreground">
+          SearchPanel — the in-page hero search (Cockpit). Headless: the results dropdown below is the caller’s.
+        </p>
+        <div className="w-full max-w-2xl">
+          <SearchPanel
+            value={panelQuery}
+            onChange={setPanelQuery}
+            placeholder={mode === "ask" ? "Ask anything about your customers…" : "Customers, articles, places…"}
+            shortcutHint="⌘K"
+            trailingSlot={micButton}
+            modes={modes}
+            activeMode={mode}
+            onModeChange={setMode}
+            expanded={panelQuery.length > 0}
+          />
+          {panelQuery.length > 0 && (
+            <div className="rounded-b-2xl border border-t-0 border-border bg-card shadow-[0_8px_24px_-12px_rgb(0_0_0/0.18)]">
+              <SearchResults query={panelQuery} onPick={() => setPanelQuery("")} />
             </div>
           )}
         </div>
@@ -729,85 +887,172 @@ function SearchDemo(): ReactElement {
 }
 
 function KpiCardDemo(): ReactElement {
+  const [loading, setLoading] = useState(false);
+  const [tapped, setTapped] = useState<string | null>(null);
+
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap gap-3">
-        <KpiCard
-          label="Revenue"
-          value="1.2M"
-          variant="hero"
-          icon={DollarSign}
-          badge={{ text: "+12%", positive: true }}
-          sub="vs. 1.07M last year"
-          progress={72}
-          progressLabel="72% of target"
-          sparkline={[4, 6, 5, 8, 7, 9, 11, 10, 13]}
-        />
-        <div className="min-w-[200px] flex-1">
-          <KpiCard
-            label="New customers"
-            value="248"
-            icon={Users}
-            badge={{ text: "+8%", positive: true }}
-            sparkline={[3, 4, 3, 5, 6, 5, 7]}
-          />
-        </div>
-        <div className="min-w-[200px] flex-1">
-          <KpiCard
-            label="Orders"
-            value="1'042"
-            icon={ShoppingCart}
-            sub="12 kunden warten"
-            subTone="warn"
-            sparkline={[9, 7, 8, 6, 7, 5, 6]}
-          />
-        </div>
-        <div className="min-w-[200px] flex-1">
-          <KpiCard label="Conversion" value="3.4 %" loading />
-        </div>
+    <div className="flex w-full flex-col gap-8">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs font-medium text-muted-foreground">
+          Cockpit “Ziel” zone as the field-sales app lays it out: two heroes, then minis in a two-up grid on a phone.
+          {tapped && <span className="ml-2 text-foreground">Tapped: {tapped}</span>}
+        </p>
+        <Button size="sm" variant="outline" onClick={() => setLoading((v) => !v)}>
+          {loading ? "Show data" : "Show loading"}
+        </Button>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <KpiCard label="Open tasks" value="5" variant="mini" icon={ClipboardCheck} href="#tasks" />
+      {/* Same split as OneSales' Cockpit: heroes in their own row (full-width on a
+          phone, side by side from sm), minis two-up on a phone and three-up from sm. */}
+      <div className="grid grid-cols-2 gap-3">
         <KpiCard
-          label="Overdue"
-          value="2"
+          variant="hero"
+          icon={TrendingUp}
+          label="Umsatz laufendes Jahr"
+          value="CHF 1.24 Mio."
+          loading={loading}
+          badge={{ text: "+12%", positive: true }}
+          badgeLabel="vs. Vorjahr"
+          sub="LY CHF 1.07 Mio. · noch CHF 118k"
+          progress={72}
+          progressLabel="72% Budget"
+          sparkline={[64, 71, 68, 83, 79, 92, 104, 99, 118, 121]}
+          onClick={() => setTapped("Umsatz")}
+          className="sm:col-span-1"
+        />
+        <KpiCard
+          variant="hero"
+          icon={Wallet}
+          label="Marge laufendes Jahr"
+          value="CHF 312k"
+          loading={loading}
+          badge={{ text: "-3%", positive: false }}
+          badgeLabel="vs. Vorjahr"
+          sub="LY CHF 341k · noch CHF 29k"
+          progress={58}
+          progressLabel="58% Budget"
+          sparkline={[22, 24, 21, 26, 23, 27, 25, 29, 28, 30]}
+          className="sm:col-span-1"
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <KpiCard
           variant="mini"
-          sub="since 3 days"
+          icon={Users}
+          label="Aktive Kunden"
+          value="1'042"
+          loading={loading}
+          sub="14 gefährdet"
+          subTone="warn"
+          href="#customers"
+        />
+        <KpiCard
+          variant="mini"
+          icon={Wallet}
+          label="Private Label (vorläufig)"
+          value="18%"
+          loading={loading}
+          sub="CHF 224k"
+        />
+        <KpiCard
+          variant="mini"
+          icon={UserPlus}
+          label="Neukunden"
+          value="37"
+          loading={loading}
+          badge={{ text: "+9", positive: true }}
+          sub="CHF 86k Umsatz"
+        />
+        <KpiCard
+          variant="mini"
+          icon={Percent}
+          label="Ø Umsatz pro aktivem Monat (Proxy)"
+          value="CHF 138k"
+          loading={loading}
+          sub="9 aktive Monate"
+        />
+        <KpiCard
+          variant="mini"
+          icon={Package}
+          label="Auftragsbestand"
+          value="CHF 412k"
+          loading={loading}
+          sparkline={[30, 34, 31, 38, 41, 39, 44]}
+          onClick={() => setTapped("Auftragsbestand")}
+        />
+        <KpiCard variant="mini" icon={MapPin} label="Besuche" value="212" loading={loading} badge={{ text: "-4%", positive: false }} sub="LY 221" />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <KpiCard
+          variant="mini"
+          icon={ClipboardCheck}
+          label="Nachfassquote"
+          value="84%"
+          loading={loading}
+          sub="21 / 25 erledigt"
+          href="#tasks"
+        />
+        <KpiCard
+          variant="mini"
+          icon={CalendarDays}
+          label="Termine diese Woche"
+          value="—"
+          loading={loading}
+          sub="Kalender nicht erreichbar"
+          subTone="danger"
+        />
+        <KpiCard
+          variant="mini"
+          icon={Clock}
+          label="Überfällig"
+          value="2"
+          loading={loading}
+          sub="seit 3 Tagen"
           subTone="danger"
           sparkline={[1, 2, 2, 3, 2]}
         />
-        <KpiCard label="Won" value="18" variant="mini" badge={{ text: "+3", positive: true }} />
-        <KpiCard label="Churn" value="1.1 %" variant="mini" subTone="warn" sub="above goal" />
       </div>
 
-      <div className="flex flex-wrap gap-3">
-        <div className="min-w-[260px] flex-1">
+      <div className="flex flex-col gap-2">
+        <p className="text-xs font-medium text-muted-foreground">
+          default + donut — the customer-detail KPI grid. Unit and currency step down so the magnitude leads.
+        </p>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <KpiCard
-            label="Revenue by channel"
+            label="Umsatz 12 Monate"
+            value="CHF 184'300"
+            icon={TrendingUp}
+            loading={loading}
+            badge={{ text: "+8%", positive: true }}
+            badgeLabel="vs. Vorjahr"
+            sparkline={[12, 14, 13, 15, 16, 15, 17, 18]}
+          />
+          <KpiCard label="Offene Posten" value="12 kunden" icon={Users} loading={loading} sub="CHF 41'200 fällig" subTone="warn" />
+          <KpiCard label="Konversion" value="3.4 %" loading />
+          <KpiCard
+            label="Umsatz nach Kanal"
             variant="donut"
+            loading={loading}
             centerValue="1.2M"
             segments={[
-              { label: "Direct", value: 52 },
-              { label: "Partners", value: 31 },
+              { label: "Direkt", value: 52 },
+              { label: "Partner", value: 31 },
               { label: "Online", value: 17 },
             ]}
           />
-        </div>
-        <div className="min-w-[260px] flex-1">
           <KpiCard
-            label="Pipeline stage"
+            label="Pipeline"
             variant="donut"
-            sub="34 open deals"
+            loading={loading}
+            sub="34 offene Deals"
             segments={[
-              { label: "Won", value: 18 },
-              { label: "Negotiation", value: 9 },
-              { label: "Lost", value: 7 },
+              { label: "Gewonnen", value: 18 },
+              { label: "Verhandlung", value: 9 },
+              { label: "Verloren", value: 7 },
             ]}
           />
-        </div>
-        <div className="min-w-[260px] flex-1">
-          <KpiCard label="Team load" variant="donut" loading />
+          <KpiCard label="Teamauslastung" variant="donut" loading />
         </div>
       </div>
     </div>
