@@ -135,7 +135,7 @@ export const FileAttachmentChip = forwardRef<HTMLDivElement, FileAttachmentChipP
             type="button"
             onClick={onRemove}
             aria-label={`Remove ${name}`}
-            className="flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground"
+            className="flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <X aria-hidden="true" className="size-3.5" />
           </button>
@@ -145,7 +145,7 @@ export const FileAttachmentChip = forwardRef<HTMLDivElement, FileAttachmentChipP
             type="button"
             onClick={onDownload}
             aria-label={`Download ${name}`}
-            className="flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground"
+            className="flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <Download aria-hidden="true" className="size-3.5" />
           </button>

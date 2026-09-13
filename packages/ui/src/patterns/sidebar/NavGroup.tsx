@@ -50,7 +50,7 @@ export function NavGroup({
             type="button"
             onClick={() => setGroupCollapsed(!groupCollapsed)}
             aria-expanded={!groupCollapsed}
-            className="group flex w-full items-center justify-between px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground/80 hover:text-foreground"
+            className="group flex w-full items-center justify-between rounded-sm px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground/80 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <span>{label}</span>
             <ChevronDown
