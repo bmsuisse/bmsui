@@ -1,4 +1,5 @@
-import { memo, type ComponentType, type ReactElement } from "react";
+import { ArrowDownRight, ArrowUpRight } from "lucide-react";
+import { memo, type ComponentType, type CSSProperties, type ReactElement, type ReactNode } from "react";
 import { cn } from "../../lib/utils";
 import { Skeleton } from "../../primitives/skeleton";
 
@@ -6,16 +7,23 @@ export interface KpiCardProps {
   label: string;
   value?: string | number | null;
   icon?: ComponentType<{ className?: string }>;
+  /**
+   * Period-over-period delta. `positive: true` renders green with an up arrow,
+   * `positive: false` red with a down arrow, omitted stays neutral (a count, a
+   * status — anything that isn't a direction).
+   */
   badge?: { text: string; positive?: boolean };
   badgeLabel?: string;
   /** @default "default" */
   variant?: "hero" | "mini" | "default" | "donut";
   loading?: boolean;
   sub?: string;
-  /** Colors `sub` on the mini variant — "warn"/"danger" flag something worth acting on (overdue, at-risk), "default" stays muted. */
+  /** Colors `sub` — "warn"/"danger" flag something worth acting on (overdue, at-risk), "default" stays muted. */
   subTone?: "default" | "warn" | "danger";
-  /** Makes the icon (mini variant) or the whole card clickable. */
+  /** Makes the whole card a link (an `<a>`). Prefer `onClick` for client-side routers. */
   href?: string;
+  /** Makes the whole card a button. Ignored when `href` is set. */
+  onClick?: () => void;
   sparkline?: number[];
   /** @default "var(--color-primary, #3b82f6)" */
   sparklineColor?: string;
@@ -28,6 +36,7 @@ export interface KpiCardProps {
   centerValue?: string;
   /** For E2E tests to target a specific tile unambiguously when `label` also appears elsewhere on the page (e.g. a chart legend). */
   testId?: string;
+  className?: string;
 }
 
 export interface DonutSegment {
@@ -70,7 +79,7 @@ export function DonutChart({
   return (
     <div className="relative inline-flex shrink-0 items-center justify-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="currentColor" className="text-muted/40" strokeWidth={thickness} />
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="currentColor" className="text-muted" strokeWidth={thickness} />
         {data.map((segment, i) => {
           const fraction = segment.value / total;
           const dash = fraction * circumference;
@@ -94,8 +103,8 @@ export function DonutChart({
       </svg>
       {(centerValue || centerLabel) && (
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          {centerValue && <span className="text-base font-black tracking-tight text-foreground tabular-nums">{centerValue}</span>}
-          {centerLabel && <span className="text-[9px] font-medium text-muted-foreground uppercase">{centerLabel}</span>}
+          {centerValue && <span className="text-base font-bold tracking-tight text-foreground tabular-nums">{centerValue}</span>}
+          {centerLabel && <span className="text-[11px] font-medium text-muted-foreground uppercase">{centerLabel}</span>}
         </div>
       )}
     </div>
@@ -107,54 +116,264 @@ export function Sparkline({ data, color }: { data: number[]; color: string }): R
   const min = Math.min(...data);
   const max = Math.max(...data);
   const range = max - min || 1;
-  const W = 72;
-  const H = 28;
+  const W = 64;
+  const H = 24;
   const pts = data
-    .map((v, i) => `${(i / (data.length - 1)) * W},${H - ((v - min) / range) * (H - 2) - 1}`)
+    .map((v, i) => `${(i / (data.length - 1)) * W},${H - ((v - min) / range) * (H - 3) - 1.5}`)
     .join(" ");
+  const [lx, ly] = pts.split(" ").at(-1)!.split(",");
   return (
-    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="overflow-visible opacity-70">
-      <polyline points={pts} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="shrink-0 overflow-visible" aria-hidden="true">
+      <polyline
+        points={pts}
+        fill="none"
+        stroke={color}
+        strokeOpacity="0.7"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx={lx} cy={ly} r="2" fill={color} />
     </svg>
   );
 }
 
-function AreaSparkline({ data, color }: { data: number[]; color: string }): ReactElement | null {
+function AreaSparkline({ data }: { data: number[] }): ReactElement | null {
   if (data.length < 2) return null;
   const min = Math.min(...data);
   const max = Math.max(...data);
   const range = max - min || 1;
   const W = 200;
-  const H = 28;
-  const P = 2;
+  const H = 32;
+  const P = 3;
   const xs = data.map((_, i) => (i / (data.length - 1)) * W);
   const ys = data.map((v) => H - ((v - min) / range) * (H - 2 * P) - P);
   const linePts = xs.map((x, i) => `${x},${ys[i]}`).join(" ");
   const areaPath = `M${xs[0]},${H} ` + xs.map((x, i) => `L${x},${ys[i]}`).join(" ") + ` L${xs[xs.length - 1]},${H} Z`;
 
+  // `currentColor` throughout: the hero sets `text-primary-foreground` on this
+  // wrapper, so the trend stays legible on whatever the brand's primary is.
   return (
-    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="overflow-visible" preserveAspectRatio="none">
+    <svg
+      width="100%"
+      height={H}
+      viewBox={`0 0 ${W} ${H}`}
+      className="block overflow-visible"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
       <defs>
         <linearGradient id="kpi-card-spark-fill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.22" />
-          <stop offset="100%" stopColor={color} stopOpacity="0" />
+          <stop offset="0%" stopColor="currentColor" stopOpacity="0.28" />
+          <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
         </linearGradient>
       </defs>
       <path d={areaPath} fill="url(#kpi-card-spark-fill)" />
-      <polyline points={linePts} fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx={xs[xs.length - 1]} cy={ys[ys.length - 1]} r="2.5" fill={color} />
+      <polyline
+        points={linePts}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        vectorEffect="non-scaling-stroke"
+      />
+      <circle cx={xs[xs.length - 1]} cy={ys[ys.length - 1]} r="2.5" fill="currentColor" />
     </svg>
   );
 }
 
-const rowBetween = "flex items-center justify-between";
+// ---------------------------------------------------------------------------
+// Shared building blocks
+// ---------------------------------------------------------------------------
 
 /**
- * Dashboard KPI tile in three variants — `hero` (large, primary-colored,
- * for the single headline metric), `default` (bordered card for a KPI
- * grid), and `mini` (compact, for dense grids of secondary metrics).
- * Optionally shows a badge, a trend sparkline, and (hero only) a
- * progress-vs-target bar.
+ * Splits a pre-formatted value into a big magnitude plus a small unit so
+ * "CHF 1.2 Mio." reads as [CHF] 1.2 Mio., "42 %" as 42 [%] and "12 kunden" as
+ * 12 [kunden]. The number is the only thing a rep scans on a phone; the unit
+ * only needs to be findable.
+ */
+function splitValue(value: string): { prefix: string | null; number: string; suffix: string | null } {
+  const parts = value.split(/\s(.+)/);
+  if (parts.length === 1 || !parts[1]) return { prefix: null, number: value, suffix: null };
+  const head = parts[0]!;
+  const tail = parts[1]!;
+  // Leading currency/unit code ("CHF 1.2 Mio.", "EUR 300") — 2-4 letters, then digits.
+  if (/^[A-Za-z€$£]{1,4}$/.test(head) && /^[\d'’.,-]/.test(tail)) return { prefix: head, number: tail, suffix: null };
+  // Trailing short unit ("42 %", "3.4 pt") or word ("12 kunden").
+  if (/^[\d'’.,+-]/.test(head)) return { prefix: null, number: head, suffix: tail };
+  return { prefix: null, number: value, suffix: null };
+}
+
+const valueSize = {
+  hero: { number: "text-[30px] md:text-[28px]", unit: "text-[13px]" },
+  default: { number: "text-[26px]", unit: "text-[13px]" },
+  mini: { number: "text-[22px] md:text-[20px]", unit: "text-[12px]" },
+} as const;
+
+function KpiValue({
+  value,
+  size,
+  onColor = false,
+}: {
+  value: string | number;
+  size: keyof typeof valueSize;
+  onColor?: boolean;
+}): ReactElement {
+  const str = String(value);
+  const { prefix, number, suffix } = splitValue(str);
+  const unitClass = cn(
+    "font-semibold tracking-normal",
+    valueSize[size].unit,
+    onColor ? "text-primary-foreground/70" : "text-muted-foreground",
+  );
+  return (
+    // The one authored moment: the number arrives. `starting:` needs no plugin
+    // (@starting-style), so consumers get it without tailwindcss-animate.
+    <span
+      title={str}
+      className={cn(
+        "block min-w-0 truncate leading-none font-bold tracking-tight tabular-nums transition-[opacity,translate] duration-200 ease-out starting:translate-y-1 starting:opacity-0 motion-reduce:transition-none",
+        valueSize[size].number,
+        onColor ? "text-primary-foreground" : "text-foreground",
+      )}
+    >
+      {prefix && <span className={cn(unitClass, "mr-1")}>{prefix}</span>}
+      {number}
+      {suffix && <span className={cn(unitClass, "ml-1")}>{suffix}</span>}
+    </span>
+  );
+}
+
+function TrendBadge({
+  badge,
+  onColor = false,
+  size = "md",
+}: {
+  badge: { text: string; positive?: boolean };
+  onColor?: boolean;
+  size?: "sm" | "md";
+}): ReactElement {
+  const Arrow = badge.positive === true ? ArrowUpRight : badge.positive === false ? ArrowDownRight : null;
+  return (
+    <span
+      className={cn(
+        "inline-flex shrink-0 items-center gap-0.5 rounded-md font-semibold tabular-nums",
+        size === "sm" ? "h-5 px-1.5 text-[11px]" : "h-6 px-2 text-[12px]",
+        onColor
+          ? badge.positive === false
+            ? "bg-black/25 text-primary-foreground"
+            : "bg-primary-foreground/18 text-primary-foreground"
+          : badge.positive === true
+            ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300"
+            : badge.positive === false
+              ? "bg-rose-100 text-rose-800 dark:bg-rose-500/15 dark:text-rose-300"
+              : "bg-muted text-muted-foreground",
+      )}
+    >
+      {Arrow && <Arrow className={cn("-ml-0.5", size === "sm" ? "h-3 w-3" : "h-3.5 w-3.5")} strokeWidth={2.5} aria-hidden="true" />}
+      {badge.text}
+    </span>
+  );
+}
+
+const subToneClass = {
+  default: "text-muted-foreground",
+  warn: "font-semibold text-amber-700 dark:text-amber-300",
+  danger: "font-semibold text-red-600 dark:text-red-400",
+} as const;
+
+function IconChip({
+  icon: Icon,
+  onColor = false,
+  interactive = false,
+}: {
+  icon: ComponentType<{ className?: string }>;
+  onColor?: boolean;
+  interactive?: boolean;
+}): ReactElement {
+  return (
+    <span
+      className={cn(
+        "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors duration-150",
+        onColor
+          ? "bg-primary-foreground/15 text-primary-foreground ring-1 ring-primary-foreground/20"
+          : "bg-primary/10 text-primary",
+        interactive && !onColor && "group-hover:bg-primary group-hover:text-primary-foreground",
+      )}
+    >
+      <Icon className="h-4 w-4" aria-hidden="true" />
+    </span>
+  );
+}
+
+// `overflow-wrap: anywhere` so a single long word ("Auftragsbestand" in a
+// 140px tile) wraps instead of clipping mid-word under the line clamp.
+const labelClass =
+  "min-w-0 text-[11px] font-semibold leading-[1.25] tracking-[0.08em] uppercase line-clamp-2 [overflow-wrap:anywhere]";
+
+/**
+ * Card shell. With `href` it is an `<a>`, with `onClick` a `<button>`, else a
+ * `<div>` — the whole tile is the target (a 28px icon was the smallest thing
+ * to hit on the mobile Cockpit), with press feedback and a real focus ring.
+ */
+function Shell({
+  href,
+  onClick,
+  testId,
+  className,
+  style,
+  children,
+}: {
+  href?: string;
+  onClick?: () => void;
+  testId?: string;
+  className?: string;
+  style?: CSSProperties;
+  children: ReactNode;
+}): ReactElement {
+  const interactive = Boolean(href || onClick);
+  const classes = cn(
+    "group relative flex min-w-0 flex-col overflow-hidden text-left",
+    interactive &&
+      "cursor-pointer transition-[border-color,box-shadow,scale,background-color] duration-150 ease-out active:scale-[0.985] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none motion-reduce:active:scale-100",
+    className,
+  );
+  if (href) {
+    return (
+      <a href={href} data-testid={testId} className={classes} style={style}>
+        {children}
+      </a>
+    );
+  }
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} data-testid={testId} className={cn(classes, "w-full")} style={style}>
+        {children}
+      </button>
+    );
+  }
+  return (
+    <div data-testid={testId} className={classes} style={style}>
+      {children}
+    </div>
+  );
+}
+
+const cardSurface = "rounded-2xl border border-border bg-card text-card-foreground";
+const cardInteractive = "hover:border-primary/30 hover:shadow-[0_2px_10px_-4px_rgb(0_0_0/0.12)]";
+
+// ---------------------------------------------------------------------------
+// KpiCard
+// ---------------------------------------------------------------------------
+
+/**
+ * Dashboard KPI tile in four variants — `hero` (primary-colored headline
+ * metric with trend, target progress and an area sparkline), `default`
+ * (bordered card for a KPI grid), `mini` (compact, for two-up phone grids of
+ * secondary metrics) and `donut` (a proportion breakdown). Sized mobile-first
+ * for a two-column grid at 320-430px; pass `href`/`onClick` to make the whole
+ * tile tappable.
  */
 export const KpiCard = memo(function KpiCard({
   label,
@@ -167,6 +386,7 @@ export const KpiCard = memo(function KpiCard({
   sub,
   subTone = "default",
   href,
+  onClick,
   sparkline,
   sparklineColor = "var(--color-primary, #3b82f6)",
   progress,
@@ -174,150 +394,128 @@ export const KpiCard = memo(function KpiCard({
   segments,
   centerValue,
   testId,
+  className,
 }: KpiCardProps): ReactElement {
+  const interactive = Boolean(href || onClick);
+  const hasTrend = Boolean(sparkline && sparkline.length > 1);
+
   if (variant === "hero") {
+    const pct = progress != null ? Math.min(100, Math.max(0, progress)) : null;
     return (
-      <div
-        data-testid={testId}
-        className="relative col-span-2 flex min-w-0 flex-1 flex-col gap-1.5 overflow-hidden rounded-2xl p-4 md:p-3 lg:col-span-1 lg:max-w-[340px] lg:min-w-[260px]"
+      <Shell
+        href={href}
+        onClick={onClick}
+        testId={testId}
+        className={cn(
+          "col-span-2 h-full gap-2 rounded-2xl p-4 text-primary-foreground lg:col-span-1",
+          interactive && "hover:brightness-[1.06] active:brightness-100",
+          className,
+        )}
         style={{
-          background: "var(--color-primary)",
-          boxShadow: "0 2px 10px color-mix(in oklch, var(--color-primary) 18%, transparent)",
+          // A touch darker toward the bottom-right gives the surface material
+          // without reading as a gradient effect; the shadow is the primary's own hue.
+          background:
+            "linear-gradient(160deg, var(--color-primary) 0%, color-mix(in oklab, var(--color-primary) 86%, black) 100%)",
+          boxShadow: "0 4px 14px -6px color-mix(in oklab, var(--color-primary) 55%, transparent)",
         }}
       >
-        <div className="relative flex items-start justify-between">
-          <p className="text-[11px] font-bold tracking-[0.14em] text-white/70 uppercase md:text-[10px]">{label}</p>
-          {Icon && (
-            <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-white/15 ring-1 ring-white/20">
-              <Icon className="h-3 w-3 text-white/90" aria-hidden="true" />
-            </div>
-          )}
+        <div className="flex items-start justify-between gap-3">
+          <p className={cn(labelClass, "pt-1 text-primary-foreground/75")} title={label}>
+            {label}
+          </p>
+          {Icon && <IconChip icon={Icon} onColor />}
         </div>
 
-        <div className="relative">
-          {loading ? (
-            <div className="h-6 w-28 animate-pulse rounded-lg bg-white/15" />
-          ) : (
-            <p className="text-2xl leading-none font-black tracking-tight text-white tabular-nums md:text-[22px]">
-              {value ?? "—"}
-            </p>
-          )}
-        </div>
+        {loading ? (
+          <div className="h-[30px] w-32 animate-pulse rounded-md bg-primary-foreground/15 md:h-7" />
+        ) : (
+          <KpiValue value={value ?? "—"} size="hero" onColor />
+        )}
 
         {(badge || badgeLabel) && !loading && (
-          <div className="relative flex items-center gap-2">
-            {badge && (
-              <span
-                className={cn(
-                  "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold tabular-nums ring-1",
-                  badge.positive ? "bg-white/15 text-white ring-white/25" : "bg-black/25 text-white ring-white/15",
-                )}
-              >
-                {badge.text}
-              </span>
-            )}
-            {badgeLabel && <span className="text-[11px] text-white/70">{badgeLabel}</span>}
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            {badge && <TrendBadge badge={badge} onColor />}
+            {badgeLabel && <span className="text-[12px] text-primary-foreground/75">{badgeLabel}</span>}
           </div>
         )}
 
-        {sub && !loading && (
-          <p className="relative -mt-1 text-[11px] font-medium text-white/75 tabular-nums">{sub}</p>
-        )}
+        {sub && !loading && <p className="text-[12px] text-primary-foreground/80 tabular-nums">{sub}</p>}
 
-        {progress != null && !loading && (
-          <div className="relative flex items-center gap-1.5">
-            <div className="h-1 flex-1 overflow-hidden rounded-full bg-white/20">
-              <div className="h-1 rounded-full bg-white/85" style={{ width: `${Math.min(100, Math.max(0, progress))}%` }} />
+        {pct != null && !loading && (
+          <div className="mt-0.5 flex items-center gap-2">
+            <div
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Math.round(pct)}
+              aria-label={progressLabel}
+              className="h-1.5 flex-1 overflow-hidden rounded-full bg-primary-foreground/20"
+            >
+              <div
+                className="h-full w-(--kpi-progress) rounded-full bg-primary-foreground/90 transition-[width] duration-500 ease-out starting:w-0 motion-reduce:transition-none"
+                style={{ "--kpi-progress": `${pct}%` } as CSSProperties}
+              />
             </div>
-            {progressLabel && <span className="shrink-0 text-[10px] font-semibold text-white/80 tabular-nums">{progressLabel}</span>}
+            {progressLabel && (
+              <span className="shrink-0 text-[12px] font-semibold text-primary-foreground/90 tabular-nums">{progressLabel}</span>
+            )}
           </div>
         )}
 
-        {/* Area sparkline pinned to bottom, always white: the hero card's own
-            background is the `var(--color-primary)` gradient above, so a
-            primary-colored line (the default) disappears against it. */}
-        {sparkline && sparkline.length > 1 && !loading && (
-          <div className="relative -mx-4 mt-auto -mb-4 md:-mx-3 md:-mb-3">
-            <AreaSparkline data={sparkline} color="#ffffff" />
+        {hasTrend && !loading && (
+          <div className="-mx-4 -mb-4 mt-auto pt-2">
+            <AreaSparkline data={sparkline!} />
           </div>
         )}
-      </div>
+      </Shell>
     );
   }
 
   if (variant === "mini") {
-    const iconSlot = Icon ? (
-      href ? (
-        <a
-          href={href}
-          className="tap-target flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-[background-color,scale] hover:bg-primary/20 active:scale-90 motion-reduce:transition-none md:h-6 md:w-6"
-        >
-          <Icon className="h-4 w-4 md:h-3.5 md:w-3.5" aria-hidden="true" />
-        </a>
-      ) : (
-        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary md:h-6 md:w-6">
-          <Icon className="h-4 w-4 md:h-3.5 md:w-3.5" aria-hidden="true" />
-        </div>
-      )
-    ) : null;
-
     return (
-      <div
-        data-testid={testId}
-        className={cn(
-          "flex h-full min-w-0 flex-1 flex-col gap-1.5 overflow-hidden rounded-2xl border border-border bg-card p-3 transition-shadow md:p-2.5",
-          href && "hover:border-primary/20 hover:shadow-md",
-        )}
+      <Shell
+        href={href}
+        onClick={onClick}
+        testId={testId}
+        className={cn("@container h-full gap-2 p-3", cardSurface, interactive && cardInteractive, className)}
       >
-        <div className={rowBetween}>
-          <p className="text-[10px] font-bold tracking-[0.12em] text-muted-foreground uppercase">{label}</p>
-          {iconSlot}
+        <div className="flex items-start justify-between gap-2">
+          <p className={cn(labelClass, "pt-0.5 text-muted-foreground")} title={label}>
+            {label}
+          </p>
+          {Icon && <IconChip icon={Icon} interactive={interactive} />}
         </div>
 
-        <div className="flex min-w-0 flex-1 items-center gap-2">
+        <div className="mt-auto flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
           {loading ? (
-            <Skeleton className="h-6 w-16" />
+            <Skeleton className="h-[22px] w-20 md:h-5" />
           ) : (
             <>
-              <p className="min-w-0 animate-in truncate text-[20px] leading-none font-black tracking-tight text-foreground duration-200 fade-in-0 tabular-nums motion-reduce:animate-none md:text-[16px]">
-                {value ?? "—"}
-              </p>
-              {badge && (
-                <span
-                  className={cn(
-                    "shrink-0 animate-in rounded-md px-1.5 py-0.5 text-[10px] font-bold duration-200 fade-in-0 tabular-nums motion-reduce:animate-none",
-                    badge.positive
-                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                      : "bg-muted text-muted-foreground",
-                  )}
-                >
-                  {badge.text}
-                </span>
-              )}
+              <KpiValue value={value ?? "—"} size="mini" />
+              {badge && <TrendBadge badge={badge} size="sm" />}
             </>
           )}
         </div>
 
-        {(sub || sparkline) && !loading && (
+        {(sub || hasTrend) && !loading && (
           <div className="flex items-end justify-between gap-2">
-            {sub && (
-              <p
-                className={cn(
-                  "text-[11px]",
-                  subTone === "danger"
-                    ? "font-semibold text-red-600 dark:text-red-400"
-                    : subTone === "warn"
-                      ? "font-semibold text-amber-600 dark:text-amber-400"
-                      : "text-muted-foreground",
-                )}
-              >
+            {sub ? (
+              <p className={cn("min-w-0 truncate text-[12px] leading-4", subToneClass[subTone])} title={sub}>
                 {sub}
               </p>
+            ) : (
+              <span />
             )}
-            {sparkline && <Sparkline data={sparkline} color={sparklineColor} />}
+            {/* Container query, not a viewport breakpoint: a 140px tile in a two-up
+                phone grid has no room for both a sub line and a trend. */}
+            {hasTrend && (
+              <span className={cn("shrink-0", sub && "hidden @[176px]:inline-flex")}>
+                <Sparkline data={sparkline!} color={sparklineColor} />
+              </span>
+            )}
           </div>
         )}
-      </div>
+      </Shell>
     );
   }
 
@@ -325,31 +523,34 @@ export const KpiCard = memo(function KpiCard({
     const total = segments?.reduce((sum, s) => sum + s.value, 0) ?? 0;
 
     return (
-      <div data-testid={testId} className="rounded-xl border border-border bg-card p-5">
-        <div className={rowBetween}>
-          <p className="text-[10px] font-bold tracking-[0.12em] text-muted-foreground uppercase">{label}</p>
-          {Icon && (
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-primary/8 text-primary">
-              <Icon className="h-3.5 w-3.5" aria-hidden="true" />
-            </div>
-          )}
+      <Shell
+        href={href}
+        onClick={onClick}
+        testId={testId}
+        className={cn("h-full gap-3 p-4", cardSurface, interactive && cardInteractive, className)}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <p className={cn(labelClass, "pt-0.5 text-muted-foreground")} title={label}>
+            {label}
+          </p>
+          {Icon && <IconChip icon={Icon} interactive={interactive} />}
         </div>
 
         {loading ? (
-          <div className="mt-3 flex items-center gap-4">
+          <div className="flex items-center gap-4">
             <Skeleton className="h-24 w-24 shrink-0 rounded-full" />
-            <div className="flex flex-1 flex-col gap-2">
+            <div className="flex flex-1 flex-col gap-2.5">
               <Skeleton className="h-3 w-full" />
               <Skeleton className="h-3 w-3/4" />
               <Skeleton className="h-3 w-1/2" />
             </div>
           </div>
         ) : segments && segments.length > 0 ? (
-          <div className="mt-3 flex items-center gap-4">
+          <div className="flex items-center gap-4">
             <DonutChart data={segments} centerValue={centerValue ?? String(total)} />
             <ul className="flex min-w-0 flex-1 flex-col gap-1.5">
               {segments.map((segment, i) => (
-                <li key={segment.label} className="flex items-center gap-2 text-[12px]">
+                <li key={segment.label} className="flex items-center gap-2 text-[12px] leading-4">
                   <span
                     className="h-2 w-2 shrink-0 rounded-full"
                     style={{ backgroundColor: segment.color ?? DONUT_COLORS[i % DONUT_COLORS.length] }}
@@ -364,74 +565,49 @@ export const KpiCard = memo(function KpiCard({
             </ul>
           </div>
         ) : (
-          <span className="mt-3 block text-2xl font-black text-muted-foreground/40">—</span>
+          <span className="block text-2xl font-bold text-muted-foreground/50">—</span>
         )}
 
-        {sub && !loading && <p className="mt-2.5 text-[11px] text-muted-foreground tabular-nums">{sub}</p>}
-      </div>
+        {sub && !loading && <p className={cn("text-[12px] leading-4 tabular-nums", subToneClass[subTone])}>{sub}</p>}
+      </Shell>
     );
   }
 
-  // Default variant: splits a value like "12 kunden" or "42 %" into a
-  // large number plus a small prefix/suffix unit.
-  const strValue = value != null ? String(value) : null;
-  const parts = strValue ? strValue.split(/\s(.+)/) : null;
-  const plain = !parts || parts.length === 1;
-  const isSuffix = !plain && /^\d/.test(parts![0]!) && parts![1]!.length <= 3;
-  const prefix = isSuffix ? null : parts?.[0];
-  const number = isSuffix ? parts![0] : (parts?.[1] ?? parts?.[0]);
-  const suffix = isSuffix ? parts![1] : null;
-
+  // Default variant
   return (
-    <div data-testid={testId} className="rounded-xl border border-border bg-card p-5">
-      <div className={rowBetween}>
-        <p className="text-[10px] font-bold tracking-[0.12em] text-muted-foreground uppercase">{label}</p>
-        {Icon && (
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-primary/8 text-primary">
-            <Icon className="h-3.5 w-3.5" aria-hidden="true" />
-          </div>
-        )}
+    <Shell
+      href={href}
+      onClick={onClick}
+      testId={testId}
+      className={cn("h-full gap-3 p-4", cardSurface, interactive && cardInteractive, className)}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <p className={cn(labelClass, "pt-0.5 text-muted-foreground")} title={label}>
+          {label}
+        </p>
+        {Icon && <IconChip icon={Icon} interactive={interactive} />}
       </div>
 
-      <div className="mt-3">
+      <div className="flex flex-col gap-1">
         {loading ? (
-          <Skeleton className="h-7 w-20" />
+          <Skeleton className="h-[26px] w-24" />
         ) : value == null ? (
-          <span className="text-2xl font-black text-muted-foreground/40">—</span>
-        ) : plain ? (
-          <span className="animate-in text-2xl font-black tracking-tight text-foreground duration-200 fade-in-0 tabular-nums motion-reduce:animate-none">
-            {strValue}
-          </span>
+          <span className="block text-[26px] leading-none font-bold text-muted-foreground/50">—</span>
         ) : (
-          <span className="animate-in font-black tracking-tight text-foreground duration-200 fade-in-0 tabular-nums motion-reduce:animate-none">
-            {prefix && <span className="text-sm text-muted-foreground">{prefix} </span>}
-            <span className="text-2xl">{number}</span>
-            {suffix && <span className="text-sm text-muted-foreground"> {suffix}</span>}
-          </span>
+          <KpiValue value={value} size="default" />
         )}
-        {sub && !loading && <p className="mt-0.5 text-[11px] text-muted-foreground tabular-nums">{sub}</p>}
+        {sub && !loading && <p className={cn("text-[12px] leading-4 tabular-nums", subToneClass[subTone])}>{sub}</p>}
       </div>
 
-      {(badge || badgeLabel || sparkline) && !loading && (
-        <div className="mt-2.5 flex items-end justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-2">
-            {badge && (
-              <span
-                className={cn(
-                  "rounded-md px-1.5 py-0.5 text-[11px] font-semibold tabular-nums",
-                  badge.positive
-                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                    : "bg-muted text-muted-foreground",
-                )}
-              >
-                {badge.text}
-              </span>
-            )}
-            {badgeLabel && <span className="text-[11px] text-muted-foreground">{badgeLabel}</span>}
+      {(badge || badgeLabel || hasTrend) && !loading && (
+        <div className="flex items-end justify-between gap-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+            {badge && <TrendBadge badge={badge} size="sm" />}
+            {badgeLabel && <span className="text-[12px] leading-4 text-muted-foreground">{badgeLabel}</span>}
           </div>
-          {sparkline && <Sparkline data={sparkline} color={sparklineColor} />}
+          {hasTrend && <Sparkline data={sparkline!} color={sparklineColor} />}
         </div>
       )}
-    </div>
+    </Shell>
   );
 });

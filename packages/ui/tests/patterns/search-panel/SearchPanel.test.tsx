@@ -51,7 +51,31 @@ describe("SearchPanel", () => {
   });
 });
 
+describe("SearchPanel clear button and appearance", () => {
+  it("shows a clear button once there is a value and clears via onChange('')", () => {
+    const onChange = vi.fn();
+    const { rerender } = render(<SearchPanel value="" onChange={onChange} />);
+    expect(screen.queryByRole("button", { name: "Clear search" })).not.toBeInTheDocument();
+    rerender(<SearchPanel value="acme" onChange={onChange} />);
+    fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
+    expect(onChange).toHaveBeenCalledWith("");
+  });
+
+  it("drops the card chrome with appearance=flush", () => {
+    const { container } = render(<SearchPanel value="" onChange={vi.fn()} appearance="flush" />);
+    expect(container.firstChild).not.toHaveClass("rounded-2xl");
+    expect(container.firstChild).not.toHaveClass("border");
+    expect(container.firstChild).toHaveAttribute("role", "search");
+  });
+});
+
 describe("SearchTrigger", () => {
+  it("renders the field variant with placeholder text and a shortcut hint", () => {
+    render(<SearchTrigger variant="field" placeholder="Customers, places…" shortcutHint="⌘K" onClick={vi.fn()} />);
+    expect(screen.getByRole("button", { name: "Search" })).toHaveTextContent("Customers, places…");
+    expect(screen.getByText("⌘K")).toBeInTheDocument();
+  });
+
   it("renders an accessible icon button and forwards onClick", () => {
     const onClick = vi.fn();
     render(<SearchTrigger onClick={onClick} />);

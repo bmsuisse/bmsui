@@ -316,6 +316,46 @@ logic above, which already had its own extraction). Structure:
     to avoid fighting Radix `ScrollArea`'s nested viewport — `SidebarNav`
     uses a plain `overflow-y-auto` div instead, matching what both source
     apps already did.
+  - `toast/` — `ToastProvider` + `useToast` (v0.12.0), the notification
+    stack. Extracted from a survey of two consuming apps: the contract-
+    management app (Angular) had a hand-rolled `AlertService` + fixed
+    `alert` container (severity→class map, shrinking time bar, mouseenter
+    pause, action-button row, 5-toast cap), OneSales had *no* toast
+    infrastructure at all. Built on `@radix-ui/react-toast` (the one new
+    dependency) rather than re-hand-rolling, because the parts the Angular
+    version got wrong are exactly what Radix provides: an aria-live region
+    (assertive for `error`/`warning`, polite otherwise), the F8 hotkey to
+    reach the stack, Escape to dismiss, swipe-to-dismiss, and pausing the
+    timer on focus/window-blur — not just hover. State lives in a small
+    external `ToastStore` per provider (not React state) so `toast()` can be
+    called from mutation callbacks without a hook in scope; the auto-dismiss
+    progress bar is a Web Animations API animation (this package ships no
+    stylesheet, and the bar must restart on in-place updates). Errors and
+    `loading` toasts default to `Infinity` duration and are never evicted by
+    the `max` cap. Phone: full-width bottom stack with safe-area padding;
+    from `sm`: 380px anchored at `position`.
+  - `stepper/` — `Stepper` (v0.12.0), wizard progress indicator. Both
+    surveyed apps hand-rolled one: OneSales's `pages/offerParser/Stepper.tsx`
+    (a horizontally scrolling `<ol>` of number bubbles with `aria-current`,
+    reused by `ProspectWizard`) and the contract-management app's print
+    wizard (`ngbNav` tabs repurposed as steps with per-step Back/Next). Owns
+    only the indicator — content and Back/Next stay with the caller.
+    Step reachability is `onStepChange` (completed steps clickable) plus an
+    optional `furthestStep` unlock, mirroring OneSales's `maxStep`. The
+    mobile problem OneSales solved with `min-w-[700px]` + horizontal scroll
+    is solved here by default with a compact "Step 3 of 5" bar + segmented
+    track below `md` (`mobile="full"` keeps the scroll behavior); the
+    labelled `<ol>` stays the accessible source of truth (`hidden md:flex`),
+    the compact bar is `aria-hidden`.
+  - `empty-state/` — `EmptyState` (v0.12.0). OneSales had a small
+    `components/ui/EmptyState.tsx` (icon tile + title + body, `sm`/`md`,
+    `fill`) with most empty states still inline copies; the contract-
+    management app had none. Adds what both lacked: `action`/
+    `secondaryAction`, and an `error` variant (`role="alert"`, destructive
+    tint, outline retry button) so a region's empty and failed-load states
+    share one shape, plus `no-results` and `offline` variants with their own
+    default lucide icons. Non-error variants render `role="status"` so a
+    screen reader hears the outcome of a search.
 - `packages/ui/demo/` — same pattern as `packages/datagrid/demo`: a Vite
   app aliasing `@bmsuisse/ui` straight to `src/index.ts`, using the same
   reference-app-derived Tailwind v4 tokens, for visual QA.

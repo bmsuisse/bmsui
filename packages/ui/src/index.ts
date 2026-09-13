@@ -130,7 +130,7 @@ export {
 } from "./patterns/loading-spinner/LoadingSpinner";
 
 export type { SearchBarProps } from "./patterns/search-bar/SearchBar";
-export { SearchBar } from "./patterns/search-bar/SearchBar";
+export { SearchBar, searchInputKeyboardProps } from "./patterns/search-bar/SearchBar";
 
 export type { DonutSegment, KpiCardProps } from "./patterns/kpi-card/KpiCard";
 export { DonutChart, KpiCard, Sparkline } from "./patterns/kpi-card/KpiCard";
@@ -139,6 +139,25 @@ export type { SearchPanelMode, SearchPanelProps } from "./patterns/search-panel/
 export { SearchPanel } from "./patterns/search-panel/SearchPanel";
 export type { SearchTriggerProps } from "./patterns/search-panel/SearchTrigger";
 export { SearchTrigger } from "./patterns/search-panel/SearchTrigger";
+export type { SearchOverlayProps } from "./patterns/search-panel/SearchOverlay";
+export { SearchOverlay } from "./patterns/search-panel/SearchOverlay";
+
+export type { ToastContextValue, ToastPosition, ToastProviderProps } from "./patterns/toast/ToastProvider";
+export { ToastProvider } from "./patterns/toast/ToastProvider";
+export type {
+  ToastAction,
+  ToastOptions,
+  ToastRecord,
+  ToastVariant,
+} from "./patterns/toast/toast-store";
+export type { PromiseToastMessages, ToastApi } from "./patterns/toast/useToast";
+export { useToast } from "./patterns/toast/useToast";
+
+export type { StepperProps, StepperStep } from "./patterns/stepper/Stepper";
+export { Stepper } from "./patterns/stepper/Stepper";
+
+export type { EmptyStateAction, EmptyStateProps, EmptyStateVariant } from "./patterns/empty-state/EmptyState";
+export { EmptyState } from "./patterns/empty-state/EmptyState";
 
 export type { NavIconProps, NavItemProps } from "./patterns/sidebar/NavItem";
 export { NavItem } from "./patterns/sidebar/NavItem";
@@ -151,3 +170,4 @@ export { useSidebarCollapsed } from "./patterns/sidebar/context";
 // --- shared utility -----------------------------------------------------------
 export { cn } from "./lib/utils";
 export { useMediaQuery } from "./lib/useMediaQuery";
+export { useVisualViewportHeight } from "./lib/useVisualViewportHeight";
