@@ -223,6 +223,13 @@ export { ChatComposer, ChatComposerInput, ChatSendButton } from "./patterns/chat
 export type { ScrollToBottomButtonProps } from "./patterns/chat/ScrollToBottomButton";
 export { ScrollToBottomButton } from "./patterns/chat/ScrollToBottomButton";
 
+export type { VoiceMicButtonProps } from "./patterns/voice/VoiceMicButton";
+export { VoiceMicButton } from "./patterns/voice/VoiceMicButton";
+export type { VoiceCapturePanelProps } from "./patterns/voice/VoiceCapturePanel";
+export { VoiceCapturePanel } from "./patterns/voice/VoiceCapturePanel";
+export type { VoiceNoteCardProps } from "./patterns/voice/VoiceNoteCard";
+export { VoiceNoteCard } from "./patterns/voice/VoiceNoteCard";
+
 export type { NavIconProps, NavItemProps } from "./patterns/sidebar/NavItem";
 export { NavItem } from "./patterns/sidebar/NavItem";
 export type { NavGroupProps } from "./patterns/sidebar/NavGroup";

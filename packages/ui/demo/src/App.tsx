@@ -78,6 +78,9 @@ import {
   Stepper,
   SuggestionChips,
   TagCombobox,
+  Tabs,
+  TabsList,
+  TabsTrigger,
   Textarea,
   ToastProvider,
   Tooltip,
@@ -86,6 +89,9 @@ import {
   TooltipTrigger,
   useNotificationBanner,
   useToast,
+  VoiceCapturePanel,
+  VoiceMicButton,
+  VoiceNoteCard,
 } from "@bmsuisse/ui";
 import {
   Building2,
@@ -743,6 +749,10 @@ export function App(): ReactElement {
 
           <Section title="Chat (ChatMessage / AiActivity / ChoiceBlock / SuggestionChips / ChatComposer)">
             <ChatDemo />
+          </Section>
+
+          <Section title="Voice (VoiceMicButton / VoiceCapturePanel / VoiceNoteCard)">
+            <VoiceDemo />
           </Section>
         </div>
       </div>
@@ -1789,6 +1799,135 @@ function ChatDemo(): ReactElement {
       <Button variant="outline" size="sm" className="w-fit" onClick={() => setShowScrollToBottom((v) => !v)}>
         Toggle scroll-to-bottom pill
       </Button>
+    </div>
+  );
+}
+
+/**
+ * Simulates a live mic level (0–1) via a jittering sine wave, the way the
+ * capture panel's bar visualizer is meant to be fed from a real recorder's
+ * analyser node — no product logic here, just enough motion to review the
+ * bars and the panel's transcript auto-scroll while dictation is "live".
+ */
+function useFakeAudioLevel(active: boolean): number {
+  const [level, setLevel] = useState(0);
+  useEffect(() => {
+    if (!active) {
+      setLevel(0);
+      return;
+    }
+    const id = setInterval(() => setLevel(0.35 + Math.random() * 0.6), 120);
+    return () => clearInterval(id);
+  }, [active]);
+  return level;
+}
+
+const VOICE_DICTATION_LINES = [
+  "Visited the Rigi site today,",
+  "the client confirmed the delivery window for next Tuesday,",
+  "and asked for an updated quote on the additional gypsum board.",
+];
+
+function VoiceDemo(): ReactElement {
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [transcript, setTranscript] = useState("");
+  const [partial, setPartial] = useState("");
+  const [lang, setLang] = useState("de");
+  const audioLevel = useFakeAudioLevel(panelOpen);
+
+  // Feeds the transcript one line at a time while the panel is open, so the
+  // demo shows the auto-scrolling transcript box and the timer advancing
+  // without needing a real microphone.
+  useEffect(() => {
+    if (!panelOpen) {
+      setTranscript("");
+      setPartial("");
+      return;
+    }
+    let i = 0;
+    const id = setInterval(() => {
+      if (i >= VOICE_DICTATION_LINES.length) return;
+      const line = VOICE_DICTATION_LINES[i]!;
+      i += 1;
+      setPartial(line);
+      setTimeout(() => {
+        setTranscript((prev) => (prev ? `${prev} ${line}` : line));
+        setPartial("");
+      }, 900);
+    }, 1800);
+    return () => clearInterval(id);
+  }, [panelOpen]);
+
+  const [noteCardOpen, setNoteCardOpen] = useState(false);
+  const [noteMicState, setNoteMicState] = useState<"idle" | "recording">("idle");
+  const [noteValue, setNoteValue] = useState("");
+  const [extracting, setExtracting] = useState(false);
+
+  return (
+    <div className="flex w-full max-w-2xl flex-col gap-6">
+      <div>
+        <p className="mb-3 max-w-prose text-sm text-muted-foreground">
+          <code>VoiceMicButton</code> at its three sizes — inline (sm), a composer corner (md), and the
+          standalone dial-in trigger (lg).
+        </p>
+        <div className="flex items-center gap-4">
+          <VoiceMicButton size="sm" />
+          <VoiceMicButton size="md" />
+          <VoiceMicButton size="lg" />
+          <VoiceMicButton size="lg" state="recording" />
+          <VoiceMicButton size="md" error="Mic permission denied" />
+        </div>
+      </div>
+
+      <div>
+        <p className="mb-3 max-w-prose text-sm text-muted-foreground">
+          <code>VoiceCapturePanel</code> — the floating "recording right now" surface: a bottom sheet on
+          mobile, a centered dock on desktop, both driven from the same <code>open</code> state.
+        </p>
+        <Button size="sm" className="w-fit" onClick={() => setPanelOpen(true)}>
+          Start dictation
+        </Button>
+        <VoiceCapturePanel
+          open={panelOpen}
+          audioLevel={audioLevel}
+          transcript={transcript}
+          partial={partial}
+          contextLabel="Visit note"
+          onStop={() => setPanelOpen(false)}
+          onDiscard={() => setPanelOpen(false)}
+          tabs={
+            <Tabs value={lang} onValueChange={setLang}>
+              <TabsList>
+                <TabsTrigger value="de">DE</TabsTrigger>
+                <TabsTrigger value="fr">FR</TabsTrigger>
+                <TabsTrigger value="it">IT</TabsTrigger>
+                <TabsTrigger value="en">EN</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          }
+        />
+      </div>
+
+      <div>
+        <p className="mb-3 max-w-prose text-sm text-muted-foreground">
+          <code>VoiceNoteCard</code> — a collapsed trigger row that opens into a dictate-then-extract
+          card, for forms where the surrounding fields should stay visible while dictating.
+        </p>
+        <VoiceNoteCard
+          open={noteCardOpen}
+          onOpen={() => setNoteCardOpen(true)}
+          onClose={() => setNoteCardOpen(false)}
+          micState={noteMicState}
+          onMicToggle={() => setNoteMicState((s) => (s === "idle" ? "recording" : "idle"))}
+          value={noteValue}
+          onValueChange={setNoteValue}
+          onSubmit={() => {
+            setExtracting(true);
+            setTimeout(() => setExtracting(false), 1200);
+          }}
+          submitting={extracting}
+        />
+      </div>
     </div>
   );
 }
