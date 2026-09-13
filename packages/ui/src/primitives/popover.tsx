@@ -1,6 +1,6 @@
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import type { ComponentPropsWithoutRef, ElementRef } from "react";
-import { forwardRef } from "react";
+import { forwardRef, useEffect, useState } from "react";
 import { cn } from "../lib/utils";
 
 export const Popover = PopoverPrimitive.Root;
@@ -18,18 +18,31 @@ export const PopoverContent = forwardRef<
      * instead. */
     container?: ComponentPropsWithoutRef<typeof PopoverPrimitive.Portal>["container"];
   }
->(({ className, align = "start", sideOffset = 4, container, ...props }, ref) => (
-  <PopoverPrimitive.Portal container={container}>
-    <PopoverPrimitive.Content
-      ref={ref}
-      align={align}
-      sideOffset={sideOffset}
-      className={cn(
-        "z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none",
-        className,
-      )}
-      {...props}
-    />
-  </PopoverPrimitive.Portal>
-));
+>(({ className, align = "start", sideOffset = 4, container, style: styleProp, ...props }, ref) => {
+  // Same rAF-driven entrance as DialogContent/SheetContent: Radix mounts
+  // already at data-state="open", so the initial frame is rendered
+  // faded-out/scaled-down via inline style, then cleared so the transition
+  // plays. Exit already animates via Radix's own defer-unmount-until-done.
+  const [entered, setEntered] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setEntered(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  return (
+    <PopoverPrimitive.Portal container={container}>
+      <PopoverPrimitive.Content
+        ref={ref}
+        align={align}
+        sideOffset={sideOffset}
+        style={entered ? styleProp : { opacity: 0, transform: "scale(0.95)", ...styleProp }}
+        className={cn(
+          "z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none transition-[opacity,transform] duration-150 ease-out motion-reduce:transition-opacity data-[state=closed]:opacity-0 motion-safe:data-[state=closed]:scale-95",
+          className,
+        )}
+        {...props}
+      />
+    </PopoverPrimitive.Portal>
+  );
+});
 PopoverContent.displayName = "PopoverContent";
