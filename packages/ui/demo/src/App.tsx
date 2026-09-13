@@ -28,6 +28,7 @@ import {
   FormField,
   FormModal,
   Input,
+  KpiCard,
   Label,
   LoadingOverlay,
   LoadingSpinner,
@@ -38,6 +39,9 @@ import {
   PopoverContent,
   PopoverTrigger,
   ResponsivePanel,
+  SearchBar,
+  SearchPanel,
+  SearchTrigger,
   Select,
   SelectContent,
   SelectItem,
@@ -62,10 +66,15 @@ import {
 import {
   ClipboardCheck,
   Cog,
+  DollarSign,
   Info,
   LayoutGrid,
   ListFilter,
   Percent,
+  Search,
+  ShoppingCart,
+  Sparkles,
+  Users,
 } from "lucide-react";
 import type { ReactElement } from "react";
 import { useEffect, useState } from "react";
@@ -653,6 +662,152 @@ export function App(): ReactElement {
           <Section title="Sidebar / NavGroup / NavItem">
             <SidebarDemo />
           </Section>
+
+          <Section title="KpiCard">
+            <KpiCardDemo />
+          </Section>
+
+          <Section title="SearchBar / SearchPanel / SearchTrigger">
+            <SearchDemo />
+          </Section>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SearchDemo(): ReactElement {
+  const [barQuery, setBarQuery] = useState("");
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [panelQuery, setPanelQuery] = useState("");
+  const [mode, setMode] = useState("search");
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div>
+        <p className="mb-2 text-xs font-medium text-muted-foreground">
+          SearchBar — an always-visible pill input, e.g. filtering a table.
+        </p>
+        <SearchBar value={barQuery} onChange={setBarQuery} placeholder="Search customers…" className="max-w-md" />
+      </div>
+
+      <div>
+        <p className="mb-2 text-xs font-medium text-muted-foreground">
+          SearchTrigger — an icon-only header button that opens a search overlay (here, a SearchPanel).
+        </p>
+        <div className="relative inline-block">
+          <SearchTrigger onClick={() => setPanelOpen((v) => !v)} />
+          {panelOpen && (
+            <div className="absolute top-full left-0 z-10 mt-2 w-[420px]">
+              <SearchPanel
+                value={panelQuery}
+                onChange={setPanelQuery}
+                placeholder="Customers, visits, places…"
+                shortcutHint="⌘K"
+                trailingSlot={
+                  <button type="button" className="text-muted-foreground hover:text-foreground" aria-label="Voice search">
+                    <Search className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                }
+                modes={[
+                  { key: "search", label: "Search", icon: Search },
+                  { key: "ask", label: "Ask AI", icon: Sparkles },
+                ]}
+                activeMode={mode}
+                onModeChange={setMode}
+                expanded
+              />
+              <div className="rounded-b-2xl border border-t-0 border-border bg-card px-4 py-5 text-center text-[12px] text-muted-foreground shadow-sm">
+                Results go here — SearchPanel owns none of this, just the input chrome above.
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function KpiCardDemo(): ReactElement {
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap gap-3">
+        <KpiCard
+          label="Revenue"
+          value="1.2M"
+          variant="hero"
+          icon={DollarSign}
+          badge={{ text: "+12%", positive: true }}
+          sub="vs. 1.07M last year"
+          progress={72}
+          progressLabel="72% of target"
+          sparkline={[4, 6, 5, 8, 7, 9, 11, 10, 13]}
+        />
+        <div className="min-w-[200px] flex-1">
+          <KpiCard
+            label="New customers"
+            value="248"
+            icon={Users}
+            badge={{ text: "+8%", positive: true }}
+            sparkline={[3, 4, 3, 5, 6, 5, 7]}
+          />
+        </div>
+        <div className="min-w-[200px] flex-1">
+          <KpiCard
+            label="Orders"
+            value="1'042"
+            icon={ShoppingCart}
+            sub="12 kunden warten"
+            subTone="warn"
+            sparkline={[9, 7, 8, 6, 7, 5, 6]}
+          />
+        </div>
+        <div className="min-w-[200px] flex-1">
+          <KpiCard label="Conversion" value="3.4 %" loading />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <KpiCard label="Open tasks" value="5" variant="mini" icon={ClipboardCheck} href="#tasks" />
+        <KpiCard
+          label="Overdue"
+          value="2"
+          variant="mini"
+          sub="since 3 days"
+          subTone="danger"
+          sparkline={[1, 2, 2, 3, 2]}
+        />
+        <KpiCard label="Won" value="18" variant="mini" badge={{ text: "+3", positive: true }} />
+        <KpiCard label="Churn" value="1.1 %" variant="mini" subTone="warn" sub="above goal" />
+      </div>
+
+      <div className="flex flex-wrap gap-3">
+        <div className="min-w-[260px] flex-1">
+          <KpiCard
+            label="Revenue by channel"
+            variant="donut"
+            centerValue="1.2M"
+            segments={[
+              { label: "Direct", value: 52 },
+              { label: "Partners", value: 31 },
+              { label: "Online", value: 17 },
+            ]}
+          />
+        </div>
+        <div className="min-w-[260px] flex-1">
+          <KpiCard
+            label="Pipeline stage"
+            variant="donut"
+            sub="34 open deals"
+            segments={[
+              { label: "Won", value: 18 },
+              { label: "Negotiation", value: 9 },
+              { label: "Lost", value: 7 },
+            ]}
+          />
+        </div>
+        <div className="min-w-[260px] flex-1">
+          <KpiCard label="Team load" variant="donut" loading />
         </div>
       </div>
     </div>

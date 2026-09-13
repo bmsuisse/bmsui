@@ -151,3 +151,93 @@ them.
 
 See the [interactive demo](https://bmsuisse.github.io/bmsui/demo/ui/) for all of these rendered
 together.
+
+### `KpiCard`
+
+Dashboard metric tile in four variants: `hero` (large, primary-colored, for
+the single headline metric on a page), `default` (bordered card for a KPI
+grid), `mini` (compact, for dense grids of secondary metrics), and `donut`
+(a proportion breakdown). All optionally show a `badge`, a trend `sparkline`,
+and a `loading` skeleton state; `hero` additionally supports a `progress` bar
+for a target-achievement readout.
+
+```tsx
+<KpiCard
+  label="Revenue"
+  value="1.2M"
+  variant="hero"
+  icon={DollarSign}
+  badge={{ text: "+12%", positive: true }}
+  progress={72}
+  progressLabel="72% of target"
+  sparkline={[4, 6, 5, 8, 7, 9, 11, 10, 13]}
+/>
+```
+
+`value` is a pre-formatted `string | number` — the component has no currency
+or locale opinion, so format it (CHF, percentages, thousands separators)
+before passing it in. The `default` variant additionally splits a
+space-separated value like `"42 %"` into a large number plus a small
+prefix/suffix unit. `subTone` (`default`/`warn`/`danger`) colors the `mini`
+variant's `sub` text for at-a-glance status (e.g. an overdue count). The
+`Sparkline` mini line-chart is also exported on its own for reuse outside a
+`KpiCard`.
+
+The `donut` variant renders a `segments` breakdown (`{ label, value, color? }[]`)
+as a ring chart with a legend showing each segment's share, and an optional
+`centerValue` (defaults to the sum of `segments`' values) in the middle of the
+ring:
+
+```tsx
+<KpiCard
+  label="Revenue by channel"
+  variant="donut"
+  centerValue="1.2M"
+  segments={[
+    { label: "Direct", value: 52 },
+    { label: "Partners", value: 31 },
+    { label: "Online", value: 17 },
+  ]}
+/>
+```
+
+Segments without an explicit `color` cycle through a shared `--chart-1`..
+`--chart-6` palette (falling back to fixed hex values if unregistered), so
+every proportion breakdown in an app looks consistent and can be re-themed
+in one place — see
+[Getting started](/ui/getting-started#chart-tokens) for how to register
+them. The `DonutChart` ring itself is also exported on its own for reuse
+outside a `KpiCard`.
+
+### `SearchPanel` / `SearchTrigger`
+
+A bordered search card (`SearchPanel`) and an icon-only header button that
+opens one (`SearchTrigger`). Together they cover a topbar search icon that
+expands into an input with a keyboard-shortcut hint and mode-switcher pills —
+without dictating what triggers the open/close or what renders the results.
+
+```tsx
+<SearchTrigger onClick={() => setOpen(true)} />
+
+{open && (
+  <SearchPanel
+    value={query}
+    onChange={setQuery}
+    isLoading={isSearching}
+    shortcutHint="⌘K"
+    modes={[
+      { key: "search", label: "Search", icon: Search },
+      { key: "ask", label: "Ask AI", icon: Sparkles },
+    ]}
+    activeMode={mode}
+    onModeChange={setMode}
+  />
+)}
+```
+
+`SearchPanel` is headless on results: it renders only the input row and the
+optional mode-pill row, and leaves any dropdown or inline results list to the
+caller. Pass `expanded` to square its bottom corners when a results panel is
+anchored directly beneath it, and `trailingSlot` for extras like a mic
+button. For an always-visible filter input instead of an icon-triggered
+overlay, use `SearchBar`.

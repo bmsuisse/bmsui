@@ -19,15 +19,17 @@ export interface AlertBoxProps {
   icon?: ReactNode;
 }
 
-// `error` reuses the shared `destructive` theme token, matching the banner
-// pattern already used elsewhere. `warning`/`info`/`success` have no equivalent tokens
-// in @bmsuisse/ui's theme (it only defines background/foreground/primary/muted/
-// popover/accent/destructive/border/input/ring), so these three variants use
-// fixed Tailwind palette colors instead of theme tokens. A consumer app with
-// different brand colors will need to override these via `className`.
+// `error` borders/background reuse the shared `destructive` theme token, but the text
+// color is a fixed red rather than `text-destructive` because that token is tuned for
+// solid button fills, not small text on a tinted background, and fails WCAG AA contrast
+// there. `warning`/`info`/`success` have no equivalent tokens in @bmsuisse/ui's theme (it
+// only defines background/foreground/primary/muted/popover/accent/destructive/border/
+// input/ring), so these three variants use fixed Tailwind palette colors instead of theme
+// tokens. A consumer app with different brand colors will need to override these via
+// `className`.
 const variantStyles: Record<AlertBoxVariant, string> = {
-  error: "border-destructive bg-destructive/10 text-destructive",
-  warning: "border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-300",
+  error: "border-destructive bg-destructive/10 text-red-800 dark:text-red-300",
+  warning: "border-amber-500 bg-amber-500/10 text-amber-900 dark:text-amber-200",
   info: "border-sky-500 bg-sky-500/10 text-sky-700 dark:text-sky-300",
   success: "border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
 };

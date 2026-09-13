@@ -11,14 +11,16 @@ export type StatusTone = "success" | "warning" | "error" | "info" | "neutral";
  * mode is a `.dark` ancestor class) because the shared theme currently only
  * defines background/foreground/primary/muted/popover/accent/destructive/
  * border/input/ring tokens — no warning/info/success tokens exist yet, same
- * reasoning AlertBox uses for those tones. `error` and `neutral` instead
- * reuse the existing `destructive` and `muted` theme tokens directly.
+ * reasoning AlertBox uses for those tones. `neutral` reuses the `muted` token
+ * directly; `error` reuses `destructive` for the tint but, like AlertBox, uses a
+ * fixed red for the text because `text-destructive` is tuned for solid button
+ * fills and only reaches ~3.9:1 (light) / ~3.5:1 (dark) on its own 15% tint.
  */
 const TONE_CLASSES: Record<StatusTone, string> = {
   success: "border-transparent bg-emerald-500/15 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300",
-  warning: "border-transparent bg-amber-500/15 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300",
+  warning: "border-transparent bg-amber-500/15 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300",
   info: "border-transparent bg-sky-500/15 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300",
-  error: "border-transparent bg-destructive/15 text-destructive",
+  error: "border-transparent bg-destructive/15 text-red-800 dark:text-red-300",
   neutral: "border-transparent bg-muted text-muted-foreground",
 };
 

@@ -132,6 +132,14 @@ export {
 export type { SearchBarProps } from "./patterns/search-bar/SearchBar";
 export { SearchBar } from "./patterns/search-bar/SearchBar";
 
+export type { DonutSegment, KpiCardProps } from "./patterns/kpi-card/KpiCard";
+export { DonutChart, KpiCard, Sparkline } from "./patterns/kpi-card/KpiCard";
+
+export type { SearchPanelMode, SearchPanelProps } from "./patterns/search-panel/SearchPanel";
+export { SearchPanel } from "./patterns/search-panel/SearchPanel";
+export type { SearchTriggerProps } from "./patterns/search-panel/SearchTrigger";
+export { SearchTrigger } from "./patterns/search-panel/SearchTrigger";
+
 export type { NavIconProps, NavItemProps } from "./patterns/sidebar/NavItem";
 export { NavItem } from "./patterns/sidebar/NavItem";
 export type { NavGroupProps } from "./patterns/sidebar/NavGroup";
