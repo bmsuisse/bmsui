@@ -42,12 +42,17 @@ export const sheetVariants = cva(
   {
     variants: {
       side: {
-        top: "inset-x-0 top-0 border-b data-[state=closed]:-translate-y-full data-[state=open]:translate-y-0",
+        // Every edge border below is paired with `border-border` explicitly —
+        // Tailwind v4's bare `border-*` utilities default to `currentColor`,
+        // not the theme's border token, which otherwise renders this seam in
+        // the foreground text color (a harsh, high-contrast line in both
+        // themes) instead of the intended subtle divider.
+        top: "inset-x-0 top-0 border-b border-border data-[state=closed]:-translate-y-full data-[state=open]:translate-y-0",
         bottom:
-          "inset-x-0 bottom-0 border-t data-[state=closed]:translate-y-full data-[state=open]:translate-y-0",
-        left: "inset-y-0 left-0 h-full w-3/4 border-r data-[state=closed]:-translate-x-full data-[state=open]:translate-x-0 sm:max-w-sm",
+          "inset-x-0 bottom-0 border-t border-border data-[state=closed]:translate-y-full data-[state=open]:translate-y-0",
+        left: "inset-y-0 left-0 h-full w-3/4 border-r border-border data-[state=closed]:-translate-x-full data-[state=open]:translate-x-0 sm:max-w-sm",
         right:
-          "inset-y-0 right-0 h-full w-3/4 border-l data-[state=closed]:translate-x-full data-[state=open]:translate-x-0 sm:max-w-sm",
+          "inset-y-0 right-0 h-full w-3/4 border-l border-border data-[state=closed]:translate-x-full data-[state=open]:translate-x-0 sm:max-w-sm",
       },
     },
     defaultVariants: {

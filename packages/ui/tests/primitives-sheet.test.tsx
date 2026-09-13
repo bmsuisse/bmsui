@@ -88,4 +88,26 @@ describe("Sheet", () => {
       expect(await screen.findByText(`${side} sheet`)).toBeInTheDocument();
     },
   );
+
+  // Tailwind v4's bare `border-*` utilities default to `currentColor`, not the
+  // theme's border token — without an explicit `border-border` pairing, the
+  // edge seam silently renders in the foreground text color instead of the
+  // intended subtle divider (reported against ActionSheet: a bright line atop
+  // a dark sheet in dark mode).
+  it.each(["left", "right", "top", "bottom"] as const)(
+    "pairs its edge border with the border-border token for side=%s",
+    async (side) => {
+      render(
+        <Sheet>
+          <SheetTrigger>Open {side}</SheetTrigger>
+          <SheetContent side={side} data-testid="sheet-content">
+            <SheetTitle>{side} sheet</SheetTitle>
+          </SheetContent>
+        </Sheet>,
+      );
+
+      await userEvent.click(screen.getByText(`Open ${side}`));
+      expect(await screen.findByTestId("sheet-content")).toHaveClass("border-border");
+    },
+  );
 });
