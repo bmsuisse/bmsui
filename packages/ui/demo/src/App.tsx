@@ -1,4 +1,8 @@
 import {
+  ActionButton,
+  ActionSheet,
+  AiMarker,
+  AiSuggestion,
   AlertBox,
   Badge,
   Button,
@@ -10,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
   Combobox,
+  ConfidenceIndicator,
   ConfirmDialog,
   Dialog,
   DialogContent,
@@ -36,6 +41,10 @@ import {
   Modal,
   NavGroup,
   NavItem,
+  NotificationBannerHost,
+  NotificationBell,
+  NotificationCard,
+  NotificationPanel,
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -66,6 +75,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
+  useNotificationBanner,
   useToast,
 } from "@bmsuisse/ui";
 import {
@@ -79,11 +89,13 @@ import {
   LayoutGrid,
   ListFilter,
   MapPin,
+  MessageSquare,
   Mic,
   Package,
   Percent,
   Plus,
   RefreshCw,
+  ScanLine,
   Search,
   Sparkles,
   TrendingUp,
@@ -92,7 +104,7 @@ import {
   Wallet,
 } from "lucide-react";
 import type { ReactElement } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 function Section({ title, children }: { title: string; children: ReactElement }): ReactElement {
   return (
@@ -183,6 +195,7 @@ export function App(): ReactElement {
 
   return (
     <ToastProvider>
+      <NotificationBannerHost>
       <div className="min-h-screen bg-background px-4 py-6 text-foreground md:p-8">
         <div className="mx-auto flex max-w-3xl flex-col gap-10">
           <header className="flex items-center justify-between">
@@ -697,8 +710,29 @@ export function App(): ReactElement {
           <Section title="EmptyState">
             <EmptyStateDemo />
           </Section>
+
+          <Section title="AiMarker / ConfidenceIndicator">
+            <AiPrimitivesDemo />
+          </Section>
+
+          <Section title="AiSuggestion">
+            <AiSuggestionDemo />
+          </Section>
+
+          <Section title="ActionButton / ActionSheet">
+            <ActionButtonDemo />
+          </Section>
+
+          <Section title="NotificationBell / NotificationCard / NotificationPanel">
+            <NotificationCenterDemo />
+          </Section>
+
+          <Section title="NotificationBanner">
+            <NotificationBannerDemo />
+          </Section>
         </div>
       </div>
+      </NotificationBannerHost>
     </ToastProvider>
   );
 }
@@ -1292,6 +1326,328 @@ function SidebarDemo(): ReactElement {
       </Sidebar>
       <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
         Drag the sidebar's right edge to resize, or use the header button to rail-collapse it.
+      </div>
+    </div>
+  );
+}
+
+function AiPrimitivesDemo(): ReactElement {
+  return (
+    <div className="flex w-full flex-col gap-4">
+      <p className="max-w-prose text-sm text-muted-foreground">
+        <code>AiMarker</code> is the shared provenance glyph for anything a model touched; <code>pulse</code>{" "}
+        swaps its label for an in-progress message and switches on <code>role="status"</code> instead of
+        spinning. <code>ConfidenceIndicator</code> never uses green (reserved for human-verified statuses) or
+        red (reserved for real errors) — only amber at the low band, everything else in the dedicated{" "}
+        <code>--ai</code> hue or a muted foreground tint.
+      </p>
+
+      <div className="flex flex-wrap items-center gap-4">
+        <AiMarker />
+        <AiMarker variant="inline" label="AI generated" />
+        <AiMarker size="xs" label="Auto-filled" />
+        <AiMarker pulse label="Extracting…" />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <ConfidenceIndicator value={0.94} />
+        <ConfidenceIndicator value={0.7} />
+        <ConfidenceIndicator value={0.42} />
+        <ConfidenceIndicator value={null} />
+      </div>
+
+      <div className="flex flex-wrap items-center gap-4">
+        <ConfidenceIndicator value={0.87} format="meter" />
+        <ConfidenceIndicator value={0.87} format="label" />
+        <ConfidenceIndicator value={0.87} format="percent" />
+        <ConfidenceIndicator value={0.87} showPercent />
+      </div>
+    </div>
+  );
+}
+
+type DemoSuggestionStatus = "loading" | "pending" | "accepted" | "edited" | "rejected";
+
+function AiSuggestionDemo(): ReactElement {
+  const [matchStatus, setMatchStatus] = useState<DemoSuggestionStatus>("pending");
+  const [qtyStatus, setQtyStatus] = useState<DemoSuggestionStatus>("pending");
+
+  return (
+    <div className="flex w-full flex-col gap-4">
+      <p className="max-w-prose text-sm text-muted-foreground">
+        An offer parser's per-field match override: the model proposes a catalog match for a supplier line
+        item, and the buyer accepts, edits or rejects it before the offer is saved. <code>status</code> is
+        controlled by the consumer, so a dirty-field guard can own the transition.
+      </p>
+
+      <AiSuggestion
+        status={matchStatus}
+        confidence={0.91}
+        label="Suggested from PDF"
+        meta="gpt-x · 2 min ago"
+        onAccept={() => setMatchStatus("accepted")}
+        onEdit={() => setMatchStatus("edited")}
+        onReject={() => setMatchStatus("rejected")}
+        onRestore={() => setMatchStatus("pending")}
+      >
+        <div className="flex flex-col gap-0.5 text-sm">
+          <span className="font-medium text-foreground">Art. 48213 — Stainless steel elbow 90°, DN50</span>
+          <span className="text-muted-foreground">matched from “Rohrbogen 90° DN50 Edelstahl”</span>
+        </div>
+      </AiSuggestion>
+
+      <AiSuggestion status="loading" label="Matching supplier line item…">
+        <span />
+      </AiSuggestion>
+
+      <div className="rounded-lg border border-border p-3">
+        <p className="mb-2 text-xs font-medium text-muted-foreground">Dense field list (inline layout)</p>
+        <div className="flex flex-col gap-2">
+          <AiSuggestion
+            layout="inline"
+            status={qtyStatus}
+            confidence={0.58}
+            onAccept={() => setQtyStatus("accepted")}
+            onEdit={() => setQtyStatus("edited")}
+            onReject={() => setQtyStatus("rejected")}
+            onRestore={() => setQtyStatus("pending")}
+          >
+            <span className="text-sm">Quantity: 240 pcs</span>
+          </AiSuggestion>
+          <AiSuggestion layout="inline" status="accepted">
+            <span className="text-sm">Unit: EA</span>
+          </AiSuggestion>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" size="sm" onClick={() => setMatchStatus("pending")}>
+          Reset block demo
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => setQtyStatus("pending")}>
+          Reset inline demo
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+const QUICK_ACTIONS = [
+  {
+    id: "new-order",
+    label: "New order",
+    sublabel: "Start from a blank form",
+    icon: Plus,
+    onSelect: () => {},
+  },
+  { id: "scan", label: "Scan barcode", sublabel: "Add a line by scanning", icon: ScanLine, onSelect: () => {} },
+  { id: "customer", label: "New customer", icon: UserPlus, onSelect: () => {} },
+];
+
+const QUICK_SECONDARY = [
+  { id: "search", label: "Search", icon: Search, onSelect: () => {} },
+  { id: "feedback", label: "Send feedback", icon: MessageSquare, onSelect: () => {} },
+];
+
+function ActionButtonDemo(): ReactElement {
+  const [showCorner, setShowCorner] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  return (
+    <div className="flex w-full flex-col gap-3">
+      <p className="max-w-prose text-sm text-muted-foreground">
+        The floating “+” that replaces a tab-bar FAB plus two hand-rolled bottom sheets: a bottom sheet list
+        on a phone, a dropdown menu anchored to a 36px trigger from <code>md</code> up.{" "}
+        <code>placement="corner"</code> is <code>position: fixed</code>, so it's toggled on here rather than
+        mounted permanently — it would otherwise float over the rest of this page.
+      </p>
+      <div className="flex flex-wrap items-center gap-3">
+        <Button variant="outline" onClick={() => setShowCorner((v) => !v)}>
+          {showCorner ? "Hide corner FAB" : "Show corner FAB"}
+        </Button>
+        <span className="text-sm text-muted-foreground">Docked (tab-bar slot):</span>
+        <ActionButton
+          label="Quick actions"
+          placement="docked"
+          actions={QUICK_ACTIONS}
+          secondaryActions={QUICK_SECONDARY}
+          sheetTitle="New"
+        />
+        <Button variant="ghost" onClick={() => setSheetOpen(true)}>
+          Open ActionSheet standalone
+        </Button>
+      </div>
+      {showCorner && (
+        <ActionButton
+          label="Quick actions"
+          placement="corner"
+          actions={QUICK_ACTIONS}
+          secondaryActions={QUICK_SECONDARY}
+          sheetTitle="New"
+        />
+      )}
+      <ActionSheet
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        title="New"
+        actions={QUICK_ACTIONS}
+        secondaryActions={QUICK_SECONDARY}
+      />
+    </div>
+  );
+}
+
+interface DemoNotification {
+  id: string;
+  title: string;
+  body: string;
+  timestamp: Date;
+  unread: boolean;
+  source: "system" | "person" | "ai";
+  actor?: { name: string };
+  priority?: "normal" | "high";
+}
+
+const INITIAL_NOTIFICATIONS: DemoNotification[] = [
+  {
+    id: "n1",
+    title: "Price list import finished",
+    body: "1,204 articles updated, 3 warnings to review before publishing.",
+    timestamp: new Date(Date.now() - 2 * 60_000),
+    unread: true,
+    source: "system",
+  },
+  {
+    id: "n2",
+    title: "Maria Keller approved your quote",
+    body: "Quote #10432 for Muster Bau AG is ready to send.",
+    timestamp: new Date(Date.now() - 55 * 60_000),
+    unread: true,
+    source: "person",
+    actor: { name: "Maria Keller" },
+  },
+  {
+    id: "n3",
+    title: "Contract renewal due in 3 days",
+    body: "Rigips Zürich's service contract expires Friday — no renewal drafted yet.",
+    timestamp: new Date(Date.now() - 5 * 3_600_000),
+    unread: true,
+    source: "system",
+    priority: "high",
+  },
+  {
+    id: "n4",
+    title: "Draft summary ready",
+    body: "The assistant drafted a reply to the delivery delay complaint.",
+    timestamp: new Date(Date.now() - 26 * 3_600_000),
+    unread: false,
+    source: "ai",
+  },
+  {
+    id: "n5",
+    title: "Weekly report generated",
+    body: "Visit reports for last week are ready to download.",
+    timestamp: new Date(Date.now() - 9 * 86_400_000),
+    unread: false,
+    source: "system",
+  },
+];
+
+function NotificationCenterDemo(): ReactElement {
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [items, setItems] = useState(INITIAL_NOTIFICATIONS);
+  const bellRef = useRef<HTMLButtonElement>(null);
+
+  const unreadCount = items.filter((n) => n.unread).length;
+
+  return (
+    <div className="flex w-full flex-col gap-4">
+      <p className="max-w-prose text-sm text-muted-foreground">
+        <strong className="text-foreground">Toast</strong> is feedback about what you just did (saved, failed,
+        undo) — five seconds at the thumb edge, then gone.{" "}
+        <strong className="text-foreground">NotificationCenter</strong> is for events that happened elsewhere
+        (a background job finished, an approval landed, a reminder came due) — it persists until acted on and
+        lives in an inbox so it can be found again. Never route an event through <code>toast()</code>.
+      </p>
+      <div className="flex items-center gap-2">
+        <NotificationBell
+          ref={bellRef}
+          count={unreadCount}
+          open={panelOpen}
+          onClick={() => setPanelOpen((v) => !v)}
+        />
+        <span className="text-sm text-muted-foreground">Click the bell to open the inbox</span>
+      </div>
+      <NotificationPanel
+        open={panelOpen}
+        onOpenChange={setPanelOpen}
+        anchor={bellRef}
+        unreadCount={unreadCount}
+        onMarkAllRead={() => setItems((prev) => prev.map((n) => ({ ...n, unread: false })))}
+        footer={
+          <Button variant="ghost" size="sm" className="w-full justify-center">
+            View all notifications
+          </Button>
+        }
+      >
+        {items.map((n) => (
+          <NotificationCard
+            key={n.id}
+            title={n.title}
+            body={n.body}
+            timestamp={n.timestamp}
+            unread={n.unread}
+            source={n.source}
+            actor={n.actor}
+            priority={n.priority}
+            onSelect={() => setItems((prev) => prev.map((i) => (i.id === n.id ? { ...i, unread: false } : i)))}
+            onDismiss={() => setItems((prev) => prev.filter((i) => i.id !== n.id))}
+            actions={n.source === "person" ? [{ label: "Open quote", onClick: () => {} }] : undefined}
+          />
+        ))}
+      </NotificationPanel>
+    </div>
+  );
+}
+
+function NotificationBannerDemo(): ReactElement {
+  const { show } = useNotificationBanner();
+
+  return (
+    <div className="flex w-full flex-col gap-3">
+      <p className="max-w-prose text-sm text-muted-foreground">
+        The arrival surface, anchored at the top on purpose: the Toast stack owns the bottom edge on a phone,
+        and so does a corner <code>ActionButton</code>, so nothing has to negotiate for the same space. A
+        normal banner clears itself after 8s; a <code>high</code> one waits to be acted on.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <Button
+          onClick={() =>
+            show({
+              title: "New comment from Maria Keller",
+              body: "“Can we revisit the Q3 assumption?” on the Q3 forecast.",
+              timestamp: new Date(),
+              source: "person",
+              actor: { name: "Maria Keller" },
+            })
+          }
+        >
+          Show normal banner (8s)
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() =>
+            show({
+              title: "Approval required",
+              body: "The refund for order #10493 needs your sign-off before it can be processed.",
+              timestamp: new Date(),
+              priority: "high",
+              actions: [{ label: "Review", onClick: () => {} }],
+            })
+          }
+        >
+          Show high-priority banner (stays)
+        </Button>
       </div>
     </div>
   );

@@ -260,9 +260,24 @@ export const ToastProvider = ({
           className={cn(
             "fixed inset-x-0 bottom-0 z-[100] m-0 flex max-h-screen w-full list-none flex-col gap-2 p-4 outline-none",
             // Keep clear of the home indicator / bottom tab bars on phones.
-            "pb-[max(1rem,env(safe-area-inset-bottom))]",
+            // `--ui-bottom-inset` is the cross-pattern contract (see
+            // ActionButton/ActionSheet): a consumer sets it once on <body>
+            // (e.g. `calc(72px + env(safe-area-inset-bottom))` for a 72px tab
+            // bar) instead of passing a one-off `viewportClassName="pb-20"`.
+            // Falls back to the safe-area inset alone when unset, so this is
+            // pure back-compat for consumers that never set the variable.
+            "pb-[max(1rem,calc(var(--ui-bottom-inset,env(safe-area-inset-bottom,0px))+0.5rem))]",
             "sm:inset-x-auto sm:w-[380px] sm:max-w-[calc(100vw-2rem)] sm:p-0 sm:pb-0",
             isTop ? "sm:pt-0" : "sm:bottom-4",
+            // FAB column reservation: an ActionButton with placement="corner"
+            // sets data-ui-fab="left"|"right" on <html> for as long as it's
+            // mounted (see ActionButton.tsx). Reading it here with a plain CSS
+            // attribute selector — rather than a MutationObserver/context —
+            // keeps the two patterns decoupled: neither needs to know the
+            // other exists. Tailwind v4 supports the `&`-relative arbitrary
+            // variant used below, so this needed no JS fallback.
+            "[html[data-ui-fab=right]_&]:pr-[4.5rem] [html[data-ui-fab=left]_&]:pl-[4.5rem]",
+            "sm:[html[data-ui-fab=right]_&]:max-w-[calc(100vw-5.5rem)] sm:[html[data-ui-fab=left]_&]:max-w-[calc(100vw-5.5rem)]",
             POSITION_CLASS[position],
             viewportClassName,
           )}
