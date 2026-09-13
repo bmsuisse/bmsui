@@ -1868,12 +1868,15 @@ function VoiceDemo(): ReactElement {
       <div>
         <p className="mb-3 max-w-prose text-sm text-muted-foreground">
           <code>VoiceMicButton</code> at its three sizes — inline (sm), a composer corner (md), and the
-          standalone dial-in trigger (lg).
+          standalone dial-in trigger (lg) — idle and recording side by side, so the recording ring stays
+          checkable without opening a card.
         </p>
         <div className="flex items-center gap-4">
           <VoiceMicButton size="sm" />
           <VoiceMicButton size="md" />
           <VoiceMicButton size="lg" />
+          <VoiceMicButton size="sm" state="recording" />
+          <VoiceMicButton size="md" state="recording" />
           <VoiceMicButton size="lg" state="recording" />
           <VoiceMicButton size="md" error="Mic permission denied" />
         </div>

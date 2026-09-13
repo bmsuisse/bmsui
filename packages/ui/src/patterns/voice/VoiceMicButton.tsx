@@ -40,6 +40,13 @@ const DEFAULT_LABELS: Required<NonNullable<VoiceMicButtonProps["labels"]>> = {
  * composer corner where a 48px circle would dominate the row — `tap-target`
  * grows the invisible hit area to the floor without changing the visible
  * size, the same trick `ChatSendButton`'s neighbors use.
+ *
+ * **Recording is always `destructive` (red), never `primary`.** A universal
+ * "you are live" color, consistent across every size, matters more here than
+ * matching the brand accent. The "live" cue pulses a ring, not the
+ * element's own opacity — `animate-pulse` would fade the icon and its
+ * background toward the page color on every cycle, which briefly makes an
+ * active recording look disabled.
  */
 export const VoiceMicButton = forwardRef<HTMLButtonElement, VoiceMicButtonProps>(
   ({ state = "idle", size = "md", error, onToggle, labels, className, disabled, ...props }, ref) => {
@@ -71,7 +78,7 @@ export const VoiceMicButton = forwardRef<HTMLButtonElement, VoiceMicButtonProps>
               : recording || transcribing
                 ? size === "lg"
                   ? "bg-destructive text-destructive-foreground"
-                  : "animate-pulse bg-primary/10 text-primary"
+                  : "bg-destructive/10 text-destructive motion-safe:animate-[voice-mic-ring_1.6s_ease-in-out_infinite]"
                 : size === "lg"
                   ? "bg-primary/10 text-primary hover:bg-primary/20"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -88,6 +95,14 @@ export const VoiceMicButton = forwardRef<HTMLButtonElement, VoiceMicButtonProps>
             <Mic aria-hidden="true" className={icon} />
           )}
         </button>
+        {recording && size !== "lg" && (
+          <style>{`
+            @keyframes voice-mic-ring {
+              0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklch, var(--color-destructive) 45%, transparent); }
+              50% { box-shadow: 0 0 0 4px color-mix(in oklch, var(--color-destructive) 0%, transparent); }
+            }
+          `}</style>
+        )}
         {error && (
           <div
             data-slot="voice-mic-error"
