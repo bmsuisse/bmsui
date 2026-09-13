@@ -183,6 +183,7 @@ export const ChoiceBlock = forwardRef<HTMLDivElement, ChoiceBlockProps>(function
             }}
             className={cn(
               "flex min-h-11 flex-col items-start gap-0.5 rounded-xl border px-3 py-2 text-left text-sm transition-colors",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
               "disabled:cursor-not-allowed",
               isLastOddSpan && "col-span-2",
               tone === "warning"
