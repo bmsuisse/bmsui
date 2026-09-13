@@ -51,4 +51,32 @@ describe("EmptyState", () => {
     expect(el).toHaveClass("flex-1");
     expect(el).toHaveClass("py-5");
   });
+
+  it("renders footer content", () => {
+    render(<EmptyState title="Empty" footer={<button type="button">Suggestion chip</button>} />);
+    expect(screen.getByRole("button", { name: "Suggestion chip" })).toBeInTheDocument();
+  });
+
+  it("renders footer without the text-xs hint wrapper", () => {
+    render(<EmptyState title="Empty" footer={<button type="button">Suggestion chip</button>} />);
+    const button = screen.getByRole("button", { name: "Suggestion chip" });
+    expect(button.parentElement).not.toHaveClass("text-xs");
+    expect(button.parentElement).not.toHaveClass("text-muted-foreground");
+  });
+
+  it("renders children and footer together", () => {
+    render(
+      <EmptyState title="Empty" footer={<button type="button">Suggestion chip</button>}>
+        Hint text
+      </EmptyState>,
+    );
+    expect(screen.getByText("Hint text")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Suggestion chip" })).toBeInTheDocument();
+  });
+
+  it("renders nothing extra when footer is omitted", () => {
+    render(<EmptyState title="Empty" testId="es" />);
+    const el = screen.getByTestId("es");
+    expect(el.querySelector(".max-w-lg")).not.toBeInTheDocument();
+  });
 });

@@ -1,8 +1,8 @@
 import { Plus } from "lucide-react";
 import type { ComponentType, ReactElement } from "react";
 import { useCallback, useEffect, useState } from "react";
+import { useKeyboardOffset } from "../../lib/useKeyboardOffset";
 import { useMediaQuery } from "../../lib/useMediaQuery";
-import { useVisualViewportHeight } from "../../lib/useVisualViewportHeight";
 import { cn } from "../../lib/utils";
 import {
   DropdownMenu,
@@ -54,10 +54,6 @@ export interface ActionButtonProps {
    */
   breakpoint?: string;
 }
-
-/** More than this many px of visual-viewport shrink versus the tallest we've
- * observed means an on-screen keyboard opened, not just a URL bar collapsing. */
-const KEYBOARD_SHRINK_THRESHOLD = 150;
 
 // Reference-counted per side rather than a plain boolean: a consuming app
 // shouldn't mount two corner FABs at once, but two independent features each
@@ -153,23 +149,12 @@ export const ActionButton = ({
     [isControlled, onOpenChange],
   );
 
-  // Keyboard-avoidance: compare the current visual viewport height against
-  // the tallest one observed so far (its value with no keyboard up). A drop
-  // past the threshold means an on-screen keyboard opened. This replaces a
-  // consuming app's DOM-focus heuristics ("did an <input> just get focus")
-  // with a viewport measurement, which also survives focus staying on a
+  // Keyboard-avoidance: a viewport-measurement based offset (see
+  // useKeyboardOffset) replaces a consuming app's DOM-focus heuristics ("did
+  // an <input> just get focus"), which also survives focus staying on a
   // non-text control while a keyboard-adjacent picker is open.
-  const viewportHeight = useVisualViewportHeight();
-  const [maxViewportHeight, setMaxViewportHeight] = useState<number | null>(null);
-  useEffect(() => {
-    if (viewportHeight == null) return;
-    setMaxViewportHeight((prev) => (prev == null ? viewportHeight : Math.max(prev, viewportHeight)));
-  }, [viewportHeight]);
-  const keyboardHidden =
-    hideOnKeyboard &&
-    viewportHeight != null &&
-    maxViewportHeight != null &&
-    maxViewportHeight - viewportHeight > KEYBOARD_SHRINK_THRESHOLD;
+  const keyboardOffset = useKeyboardOffset();
+  const keyboardHidden = hideOnKeyboard && keyboardOffset > 0;
 
   const fabSide = placement === "corner" && !hidden ? side : null;
   useFabReservation(fabSide);

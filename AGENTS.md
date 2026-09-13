@@ -387,6 +387,42 @@ logic above, which already had its own extraction). Structure:
     `NotificationBanner` mounts a **second** `@radix-ui/react-toast`
     provider with `swipeDirection="up"`; its viewport takes `hotkey={[]}` so
     F8 still reaches the toast stack only, never the banner host.
+  - `chat/` + `ai/AiActivity.tsx` — `ChatMessage`/`ChatMessageSkeleton`,
+    `ChatComposer`/`ChatComposerInput`/`ChatSendButton`, `ChoiceBlock`,
+    `SuggestionChips`, `ScrollToBottomButton`, `AiActivity` (v0.12.0). Mined
+    from OneSales' actual chat, which is built on **assistant-ui** (a
+    headless chat runtime) — the runtime owns scrolling/anchoring,
+    streaming, and send/stop toggling, and injects these as
+    `render={<Component/>}` targets. Consequence honored throughout: every
+    one of these is a plain `forwardRef` DOM component with **no internal
+    behavioral state**. `AiActivity` unifies a live "AI is doing X" strip and
+    a finished-turn step summary that had been two components; `status` is
+    explicit, never inferred from `steps`, and it auto-expands its step list
+    when any step is `denied`/`interrupted` so a blocked/cancelled call can't
+    hide behind a collapsed "N more". `ChoiceBlock` unifies a disambiguation
+    prompt and an amber human-in-the-loop approval card into one
+    options-array shape with a `tone`; selection persists (highlighted, not
+    reset) through `disabled` so an old decision still reads as settled when
+    scrolling back through the transcript, and its `1`-`9`/`A`-`Z` keyboard
+    shortcuts bail whenever a `TEXTAREA`/`INPUT`/`contentEditable` is
+    focused so they never fight the composer. `SuggestionChips` collapses
+    five ad hoc "here's what you can ask" treatments into one data model and
+    a `list`/`row`/`wrap` `layout`; `row`'s edge fades are RTL-aware.
+    `ChatComposerInput` is `text-base` (16px, prevents iOS Safari's
+    focus-zoom) with a `scrollHeight`-based autogrow (guarded to no-op under
+    jsdom, which always reports `scrollHeight` as 0). `ChatSendButton` morphs
+    one button between `send`/`stop` states rather than swapping elements,
+    bumped to `size-10 md:size-8` since the source app's 28px desktop button
+    sat below this library's touch-target floor. `ScrollToBottomButton` maps
+    `visible={false}` onto its own `disabled` (`disabled:invisible`, not
+    unmounted) so it works unchanged as a runtime `render` target. Also
+    added: `useKeyboardOffset` (shared 80px on-screen-keyboard threshold,
+    unifying `ActionButton`'s prior 150px heuristic with OneSales' own hook),
+    `AiMarker`'s `decorative` prop (suppresses its own `role="status"` when
+    nested inside a component — `AiActivity` — that already owns one), and
+    `EmptyState`'s `footer` slot (full-width, un-styled, for interactive
+    content like `SuggestionChips`, as distinct from `children`'s quiet
+    `text-xs` hint line).
 - `packages/ui/demo/` — same pattern as `packages/datagrid/demo`: a Vite
   app aliasing `@bmsuisse/ui` straight to `src/index.ts`, using the same
   reference-app-derived Tailwind v4 tokens, for visual QA.

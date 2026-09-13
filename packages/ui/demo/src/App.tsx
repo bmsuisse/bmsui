@@ -1,6 +1,7 @@
 import {
   ActionButton,
   ActionSheet,
+  AiActivity,
   AiMarker,
   AiSuggestion,
   AlertBox,
@@ -13,6 +14,12 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
+  ChatComposer,
+  ChatComposerInput,
+  ChatMessage,
+  ChatMessageSkeleton,
+  ChatSendButton,
+  ChoiceBlock,
   Combobox,
   ConfidenceIndicator,
   ConfirmDialog,
@@ -58,6 +65,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  ScrollToBottomButton,
   Sheet,
   SheetContent,
   SheetDescription,
@@ -68,6 +76,7 @@ import {
   Skeleton,
   StatusBadge,
   Stepper,
+  SuggestionChips,
   TagCombobox,
   Textarea,
   ToastProvider,
@@ -84,6 +93,7 @@ import {
   ClipboardCheck,
   Clock,
   Cog,
+  FileText,
   FileUp,
   Info,
   LayoutGrid,
@@ -729,6 +739,10 @@ export function App(): ReactElement {
 
           <Section title="NotificationBanner">
             <NotificationBannerDemo />
+          </Section>
+
+          <Section title="Chat (ChatMessage / AiActivity / ChoiceBlock / SuggestionChips / ChatComposer)">
+            <ChatDemo />
           </Section>
         </div>
       </div>
@@ -1649,6 +1663,132 @@ function NotificationBannerDemo(): ReactElement {
           Show high-priority banner (stays)
         </Button>
       </div>
+    </div>
+  );
+}
+
+const CHAT_SUPPLIER_CHOICES = [
+  { id: "sika-ve", label: "Sika Schweiz AG – VE PCI", description: "Zurich · last order 3 weeks ago" },
+  { id: "sika-bau", label: "Sika Schweiz AG – Bauchemie", description: "Zurich · last order 5 months ago" },
+];
+
+const CHAT_APPROVAL_CHOICES = [
+  { id: "approve", label: "Approve" },
+  { id: "deny", label: "Deny", description: "The mail stays in drafts" },
+];
+
+const CHAT_SUGGESTIONS = [
+  { id: "summarize", label: "Summarize this thread", icon: Sparkles },
+  { id: "draft", label: "Draft a reply", icon: MessageSquare },
+  { id: "invoices", label: "Find related invoices", icon: FileText },
+];
+
+/**
+ * Assembles the new chat primitives into one realistic transcript, the way
+ * they compose inside assistant-ui's `render={<Component/>}` slots in
+ * OneSales — not as isolated swatches. `ChoiceBlock`/`AiActivity` stay
+ * controlled here the same way a headless runtime would own them.
+ */
+function ChatDemo(): ReactElement {
+  const [supplierChoice, setSupplierChoice] = useState<string | null>(null);
+  const [approvalChoice, setApprovalChoice] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [showScrollToBottom, setShowScrollToBottom] = useState(true);
+
+  return (
+    <div className="flex w-full max-w-2xl flex-col gap-3">
+      <p className="max-w-prose text-sm text-muted-foreground">
+        One transcript, not a swatch grid: a disambiguation <code>ChoiceBlock</code>, an amber approval
+        one, a running then a denied-step <code>AiActivity</code>, a loading <code>ChatMessageSkeleton</code>,
+        and a docked <code>ChatComposer</code> with the send/stop morph and scroll-to-bottom pill.
+      </p>
+
+      <div className="relative flex h-[32rem] w-full flex-col overflow-hidden rounded-2xl border border-border">
+        <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
+          <ChatMessage role="user">Who's the usual supplier for gypsum board on the Rigi site?</ChatMessage>
+
+          <ChatMessage role="assistant" marker>
+            There are two Sika accounts that match — which one do you mean?
+          </ChatMessage>
+
+          <ChoiceBlock
+            question="Which supplier account?"
+            options={CHAT_SUPPLIER_CHOICES}
+            value={supplierChoice}
+            onSelect={(option) => setSupplierChoice(option.id)}
+          />
+
+          {supplierChoice && (
+            <>
+              <ChatMessage role="assistant">
+                <AiActivity
+                  status={supplierChoice ? "done" : "running"}
+                  idleLabel="Looking up recent orders…"
+                  steps={[
+                    { id: "lookup", label: "Queried supplier ledger", status: "done", detail: "SELECT * FROM orders" },
+                    { id: "match", label: "Matched account VE PCI", status: "done" },
+                  ]}
+                />
+                Found 6 orders in the last quarter, all under the VE PCI account.
+              </ChatMessage>
+
+              <ChatMessage role="assistant" marker>
+                <AiActivity
+                  status="done"
+                  steps={[
+                    { id: "draft", label: "Drafted a reorder email", status: "done" },
+                    { id: "send", label: "Send email to purchasing@sika.ch", status: "denied" },
+                  ]}
+                />
+                I've drafted the reorder — sending it needs your sign-off first.
+              </ChatMessage>
+
+              <ChoiceBlock
+                tone="warning"
+                eyebrow="Approval required"
+                meta="send_email"
+                question="Send the reorder email to purchasing@sika.ch?"
+                options={CHAT_APPROVAL_CHOICES}
+                value={approvalChoice}
+                onSelect={(option) => setApprovalChoice(option.id)}
+              />
+            </>
+          )}
+
+          {!supplierChoice && <ChatMessageSkeleton turns={1} />}
+
+          <SuggestionChips layout="row" suggestions={CHAT_SUGGESTIONS} onPick={() => {}} />
+        </div>
+
+        <div className="relative flex flex-col items-center border-t border-border p-2">
+          <ScrollToBottomButton
+            visible={showScrollToBottom}
+            offset="-3.25rem"
+            onClick={() => setShowScrollToBottom(false)}
+          />
+          <ChatComposer
+            className="w-full"
+            action={
+              <ChatSendButton
+                state={sending ? "stop" : "send"}
+                onClick={() => setSending((v) => !v)}
+              />
+            }
+          >
+            <ChatComposerInput
+              placeholder="Ask about a supplier, order, or site…"
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              onSubmit={() => setSending(true)}
+            />
+          </ChatComposer>
+        </div>
+      </div>
+
+      <Button variant="outline" size="sm" className="w-fit" onClick={() => setShowScrollToBottom((v) => !v)}>
+        Toggle scroll-to-bottom pill
+      </Button>
     </div>
   );
 }

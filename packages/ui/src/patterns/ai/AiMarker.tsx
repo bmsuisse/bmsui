@@ -16,6 +16,14 @@ export interface AiMarkerProps extends Omit<HTMLAttributes<HTMLSpanElement>, "ch
   variant?: "chip" | "inline";
   /** @default "sm" */
   size?: "xs" | "sm";
+  /**
+   * Suppresses the marker's own live region: renders `aria-hidden` and skips
+   * `role="status"` even when `pulse` is true. For when the marker is nested
+   * inside a larger status region (e.g. `AiActivity`'s own `role="status"`),
+   * where two nested live regions would announce the same thing twice.
+   * @default false
+   */
+  decorative?: boolean;
 }
 
 // `gap` is separate from `chip` because both variants need it: `inline` has no
@@ -58,12 +66,20 @@ const SIZE_CLASSES: Record<
  * lifecycle (streaming tokens, cancellation) that doesn't belong in a shared
  * atom. A plain wait uses the existing `LoadingSpinner`; only the "AI is
  * the one doing this wait" framing belongs to `AiMarker`.
+ *
+ * `decorative` exists because `pulse` otherwise always claims its own
+ * `role="status"`, and a marker is frequently dropped inside a surface that
+ * already has one (`AiActivity`'s own live region, a toast, a banner). Two
+ * nested live regions firing for the same underlying event means assistive
+ * tech announces it twice; `decorative` lets the parent surface own the
+ * announcement while the marker keeps its visual pulse.
  */
 export const AiMarker = ({
   label = "AI",
   pulse = false,
   variant = "chip",
   size = "sm",
+  decorative = false,
   className,
   ...props
 }: AiMarkerProps): ReactElement => {
@@ -71,7 +87,8 @@ export const AiMarker = ({
 
   return (
     <span
-      role={pulse ? "status" : undefined}
+      role={pulse && !decorative ? "status" : undefined}
+      aria-hidden={decorative ? true : undefined}
       className={cn(
         "inline-flex shrink-0 items-center justify-center font-semibold tracking-[0.08em] uppercase",
         "text-[var(--ai,#6366f1)]",

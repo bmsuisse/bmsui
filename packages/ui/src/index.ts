@@ -169,6 +169,12 @@ export {
 } from "./patterns/ai/ConfidenceIndicator";
 export type { AiSuggestionProps, AiSuggestionStatus } from "./patterns/ai/AiSuggestion";
 export { AiSuggestion } from "./patterns/ai/AiSuggestion";
+export type {
+  AiActivityProps,
+  AiActivityStep,
+  AiActivityStepStatus,
+} from "./patterns/ai/AiActivity";
+export { AiActivity } from "./patterns/ai/AiActivity";
 
 export type { ActionButtonProps, ActionItem } from "./patterns/action-button/ActionButton";
 export { ActionButton } from "./patterns/action-button/ActionButton";
@@ -198,6 +204,25 @@ export type {
   NotificationBannerRecord,
 } from "./patterns/notification-center/notification-banner-store";
 
+export type {
+  ChatMessageProps,
+  ChatMessageRole,
+  ChatMessageSkeletonProps,
+} from "./patterns/chat/ChatMessage";
+export { ChatMessage, ChatMessageSkeleton } from "./patterns/chat/ChatMessage";
+export type { Suggestion, SuggestionChipsProps } from "./patterns/chat/SuggestionChips";
+export { SuggestionChips } from "./patterns/chat/SuggestionChips";
+export type { ChoiceBlockProps, ChoiceOption } from "./patterns/chat/ChoiceBlock";
+export { ChoiceBlock } from "./patterns/chat/ChoiceBlock";
+export type {
+  ChatComposerInputProps,
+  ChatComposerProps,
+  ChatSendButtonProps,
+} from "./patterns/chat/ChatComposer";
+export { ChatComposer, ChatComposerInput, ChatSendButton } from "./patterns/chat/ChatComposer";
+export type { ScrollToBottomButtonProps } from "./patterns/chat/ScrollToBottomButton";
+export { ScrollToBottomButton } from "./patterns/chat/ScrollToBottomButton";
+
 export type { NavIconProps, NavItemProps } from "./patterns/sidebar/NavItem";
 export { NavItem } from "./patterns/sidebar/NavItem";
 export type { NavGroupProps } from "./patterns/sidebar/NavGroup";
@@ -210,3 +235,4 @@ export { useSidebarCollapsed } from "./patterns/sidebar/context";
 export { cn } from "./lib/utils";
 export { useMediaQuery } from "./lib/useMediaQuery";
 export { useVisualViewportHeight } from "./lib/useVisualViewportHeight";
+export { useKeyboardOffset } from "./lib/useKeyboardOffset";

@@ -40,4 +40,15 @@ describe("AiMarker", () => {
     const el = screen.getByText("AI").parentElement!;
     expect(el).toHaveClass("custom-class");
   });
+
+  it("suppresses role=status when decorative, even while pulsing", () => {
+    render(<AiMarker pulse decorative label="Extracting…" />);
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("sets aria-hidden when decorative", () => {
+    render(<AiMarker decorative />);
+    const el = screen.getByText("AI").parentElement!;
+    expect(el).toHaveAttribute("aria-hidden", "true");
+  });
 });
