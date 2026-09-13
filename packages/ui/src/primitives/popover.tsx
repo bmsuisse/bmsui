@@ -37,7 +37,7 @@ export const PopoverContent = forwardRef<
         sideOffset={sideOffset}
         style={entered ? styleProp : { opacity: 0, transform: "scale(0.95)", ...styleProp }}
         className={cn(
-          "z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none transition-[opacity,transform] duration-150 ease-out motion-reduce:transition-opacity data-[state=closed]:opacity-0 motion-safe:data-[state=closed]:scale-95",
+          "z-50 w-72 rounded-md border border-border bg-popover p-4 text-popover-foreground shadow-md outline-none transition-[opacity,transform] duration-150 ease-out motion-reduce:transition-opacity data-[state=closed]:opacity-0 motion-safe:data-[state=closed]:scale-95",
           className,
         )}
         {...props}

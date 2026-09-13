@@ -81,7 +81,7 @@ export const FileAttachmentChip = forwardRef<HTMLDivElement, FileAttachmentChipP
         data-slot="file-attachment-chip"
         data-state={state}
         className={cn(
-          "flex w-56 items-center gap-2 rounded-lg border bg-card px-2.5 py-2 text-sm transition-[opacity,transform] duration-200 ease-out",
+          "flex w-56 items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-2 text-sm transition-[opacity,transform] duration-200 ease-out",
           "motion-safe:translate-y-0 motion-safe:opacity-100",
           !entered && "motion-safe:translate-y-1 motion-safe:opacity-0",
           errored ? "border-destructive/30 bg-destructive/5" : "border-border/60",

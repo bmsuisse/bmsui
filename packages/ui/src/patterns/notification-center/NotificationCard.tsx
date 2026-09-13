@@ -158,7 +158,7 @@ export const NotificationCard = ({
       data-priority={priority}
       className={cn(
         "relative flex gap-3 border-b border-border last:border-b-0",
-        isCard ? "items-start rounded-lg border p-4" : "items-start px-3 py-3",
+        isCard ? "items-start rounded-lg border border-border p-4" : "items-start px-3 py-3",
         unread && "bg-primary/10",
         priority === "high" && "border-l-2 border-l-primary",
       )}

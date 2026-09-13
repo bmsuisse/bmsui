@@ -49,7 +49,7 @@ export const DialogContent = forwardRef<
         ref={ref}
         style={entered ? styleProp : { opacity: 0, transform: "translate(-50%, -50%) scale(0.95)", ...styleProp }}
         className={cn(
-          "fixed left-1/2 top-1/2 z-50 max-h-[85vh] w-full max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-lg border bg-background p-6 shadow-lg transition-[opacity,transform] duration-200 ease-out motion-reduce:transition-opacity data-[state=closed]:opacity-0 motion-safe:data-[state=closed]:scale-95",
+          "fixed left-1/2 top-1/2 z-50 max-h-[85vh] w-full max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-lg border border-border bg-background p-6 shadow-lg transition-[opacity,transform] duration-200 ease-out motion-reduce:transition-opacity data-[state=closed]:opacity-0 motion-safe:data-[state=closed]:scale-95",
           className,
         )}
         {...props}

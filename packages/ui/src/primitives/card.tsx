@@ -7,7 +7,7 @@ import { cn } from "../lib/utils";
 // and adding one just for this component would be a second, redundant
 // "surface" token to keep in sync.
 export const Card = ({ className, ...props }: HTMLAttributes<HTMLDivElement>): ReactElement => (
-  <div className={cn("rounded-lg border bg-background text-foreground shadow-sm", className)} {...props} />
+  <div className={cn("rounded-lg border border-border bg-background text-foreground shadow-sm", className)} {...props} />
 );
 
 export const CardHeader = ({
