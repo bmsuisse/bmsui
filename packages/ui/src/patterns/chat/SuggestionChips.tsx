@@ -243,7 +243,7 @@ function Chip({ suggestion, layout, disabled, onPick }: ChipProps): ReactElement
         data-slot="suggestion-chip"
         disabled={disabled}
         className={cn(
-          "flex min-h-10 w-full items-center gap-3 rounded-xl border bg-muted px-3.5 py-2.5 text-left transition-colors md:min-h-8",
+          "flex min-h-10 w-full items-center gap-3 rounded-xl border border-border bg-muted px-3.5 py-2.5 text-left transition-colors md:min-h-8",
           "hover:bg-muted/80",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
           "disabled:pointer-events-none disabled:opacity-50",

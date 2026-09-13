@@ -21,6 +21,8 @@ import {
   ChatSendButton,
   ChoiceBlock,
   Combobox,
+  FileAttachmentChip,
+  FileDropzone,
   ConfidenceIndicator,
   ConfirmDialog,
   Dialog,
@@ -87,6 +89,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
+  useFileDropzone,
   useNotificationBanner,
   useToast,
   VoiceCapturePanel,
@@ -122,12 +125,107 @@ import {
 import type { ReactElement } from "react";
 import { useEffect, useRef, useState } from "react";
 
+function slug(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
 function Section({ title, children }: { title: string; children: ReactElement }): ReactElement {
   return (
-    <section className="flex flex-col gap-3">
+    <section id={slug(title)} className="scroll-mt-20 flex flex-col gap-3">
       <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{title}</h2>
       <div className="flex flex-wrap items-start gap-4">{children}</div>
     </section>
+  );
+}
+
+// Purely a navigation index — doesn't affect render order below. Grouping the
+// same flat section list by category here (instead of physically reordering
+// 500+ lines of demo JSX) keeps every Section's surrounding code untouched
+// while still giving the page a browsable table of contents.
+const NAV_GROUPS: { label: string; sections: string[] }[] = [
+  { label: "Actions & buttons", sections: ["Buttons", "Button variants (secondary / link) & sizes", "ButtonGroup", "Badges"] },
+  {
+    label: "Forms & inputs",
+    sections: [
+      "Form fields",
+      "Combobox (autocomplete)",
+      "Combobox (grouped, multi-select)",
+      "TagCombobox (client-side filter)",
+      "TagCombobox (server-driven search)",
+      "TagCombobox (grouped)",
+    ],
+  },
+  {
+    label: "Overlays",
+    sections: ["Dialog", "Popover", "Sheet", "Tooltip", "DropdownMenu", "Modal / ConfirmDialog / FormModal", "ResponsivePanel"],
+  },
+  { label: "Feedback & status", sections: ["AlertBox", "StatusBadge", "Skeleton", "LoadingSpinner", "Toast (ToastProvider / useToast)", "EmptyState"] },
+  { label: "Layout & navigation", sections: ["Card", "Sidebar / NavGroup / NavItem", "Stepper", "KpiCard"] },
+  { label: "Search", sections: ["SearchBar / SearchPanel / SearchTrigger"] },
+  { label: "AI", sections: ["AiMarker / ConfidenceIndicator", "AiSuggestion"] },
+  {
+    label: "Mobile actions & notifications",
+    sections: ["ActionButton / ActionSheet", "NotificationBell / NotificationCard / NotificationPanel", "NotificationBanner"],
+  },
+  {
+    label: "Chat & files",
+    sections: [
+      "Chat (ChatMessage / AiActivity / ChoiceBlock / SuggestionChips / ChatComposer)",
+      "FileDropzone / FileAttachmentChip (document upload, not chat-specific)",
+      "Voice (VoiceMicButton / VoiceCapturePanel / VoiceNoteCard)",
+    ],
+  },
+];
+
+function DemoNav(): ReactElement {
+  return (
+    <nav aria-label="Sections" className="sticky top-6 hidden max-h-[calc(100vh-3rem)] w-52 shrink-0 flex-col gap-4 overflow-y-auto pb-6 lg:flex">
+      {NAV_GROUPS.map((group) => (
+        <div key={group.label} className="flex flex-col gap-0.5">
+          <p className="px-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{group.label}</p>
+          {group.sections.map((title) => (
+            <a
+              key={title}
+              href={`#${slug(title)}`}
+              className="truncate rounded-md px-2 py-1 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              {title}
+            </a>
+          ))}
+        </div>
+      ))}
+    </nav>
+  );
+}
+
+function DemoMobileNav(): ReactElement {
+  return (
+    <select
+      aria-label="Jump to section"
+      defaultValue=""
+      className="rounded-md border border-border bg-background px-2 py-2 text-sm lg:hidden"
+      onChange={(e) => {
+        if (!e.target.value) return;
+        document.getElementById(e.target.value)?.scrollIntoView({ behavior: "smooth", block: "start" });
+        e.target.value = "";
+      }}
+    >
+      <option value="" disabled>
+        Jump to…
+      </option>
+      {NAV_GROUPS.map((group) => (
+        <optgroup key={group.label} label={group.label}>
+          {group.sections.map((title) => (
+            <option key={title} value={slug(title)}>
+              {title}
+            </option>
+          ))}
+        </optgroup>
+      ))}
+    </select>
   );
 }
 
@@ -212,18 +310,25 @@ export function App(): ReactElement {
   return (
     <ToastProvider>
       <NotificationBannerHost>
-      <div className="min-h-screen bg-background px-4 py-6 text-foreground md:p-8">
-        <div className="mx-auto flex max-w-3xl flex-col gap-10">
-          <header className="flex items-center justify-between">
+      <div className="min-h-screen bg-background text-foreground">
+        <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 px-4 py-4 backdrop-blur-md md:px-8">
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
             <div>
               <h1 className="text-xl font-semibold">@bmsuisse/ui</h1>
               <p className="text-sm text-muted-foreground">Shared primitives — visual QA demo</p>
             </div>
-            <Button variant="outline" data-testid="dark-mode-toggle" onClick={toggleDarkMode}>
-              {dark ? "Light mode" : "Dark mode"}
-            </Button>
-          </header>
+            <div className="flex items-center gap-2">
+              <DemoMobileNav />
+              <Button variant="outline" data-testid="dark-mode-toggle" onClick={toggleDarkMode}>
+                {dark ? "Light mode" : "Dark mode"}
+              </Button>
+            </div>
+          </div>
+        </header>
 
+        <div className="mx-auto flex max-w-6xl gap-10 px-4 py-6 md:px-8 md:py-8">
+          <DemoNav />
+          <div className="flex min-w-0 flex-1 flex-col gap-10">
           <Section title="Buttons">
             <>
               <Button>Default</Button>
@@ -751,9 +856,14 @@ export function App(): ReactElement {
             <ChatDemo />
           </Section>
 
+          <Section title="FileDropzone / FileAttachmentChip (document upload, not chat-specific)">
+            <FileUploadDemo />
+          </Section>
+
           <Section title="Voice (VoiceMicButton / VoiceCapturePanel / VoiceNoteCard)">
             <VoiceDemo />
           </Section>
+          </div>
         </div>
       </div>
       </NotificationBannerHost>
@@ -1699,19 +1809,46 @@ const CHAT_SUGGESTIONS = [
  * OneSales — not as isolated swatches. `ChoiceBlock`/`AiActivity` stay
  * controlled here the same way a headless runtime would own them.
  */
+interface DemoAttachment {
+  id: string;
+  name: string;
+  size: number;
+  progress: number;
+}
+
 function ChatDemo(): ReactElement {
   const [supplierChoice, setSupplierChoice] = useState<string | null>(null);
   const [approvalChoice, setApprovalChoice] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [draft, setDraft] = useState("");
   const [showScrollToBottom, setShowScrollToBottom] = useState(true);
+  const [attachments, setAttachments] = useState<DemoAttachment[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const addFiles = (files: File[]): void => {
+    for (const file of files) {
+      const id = crypto.randomUUID();
+      setAttachments((prev) => [...prev, { id, name: file.name, size: file.size, progress: 0 }]);
+      const tick = (progress: number): void => {
+        setTimeout(() => {
+          setAttachments((prev) => prev.map((a) => (a.id === id ? { ...a, progress } : a)));
+          if (progress < 100) tick(progress + 34);
+        }, 350);
+      };
+      tick(34);
+    }
+  };
+
+  const { dragging, handlers: dropzoneHandlers } = useFileDropzone(addFiles);
 
   return (
     <div className="flex w-full max-w-2xl flex-col gap-3">
       <p className="max-w-prose text-sm text-muted-foreground">
         One transcript, not a swatch grid: a disambiguation <code>ChoiceBlock</code>, an amber approval
         one, a running then a denied-step <code>AiActivity</code>, a loading <code>ChatMessageSkeleton</code>,
-        and a docked <code>ChatComposer</code> with the send/stop morph and scroll-to-bottom pill.
+        a docked <code>ChatComposer</code> with the send/stop morph and scroll-to-bottom pill, and{" "}
+        <code>FileAttachmentChip</code> in both directions — drag a file onto the composer (or use the
+        paperclip) to attach one, and the assistant's drafted email carries its own exported PDF back.
       </p>
 
       <div className="relative flex h-[32rem] w-full flex-col overflow-hidden rounded-2xl border border-border">
@@ -1752,6 +1889,13 @@ function ChatDemo(): ReactElement {
                   ]}
                 />
                 I've drafted the reorder — sending it needs your sign-off first.
+                <FileAttachmentChip
+                  className="mt-2"
+                  variant="export"
+                  name="reorder-sika-ve-pci.pdf"
+                  size={182_000}
+                  onDownload={() => {}}
+                />
               </ChatMessage>
 
               <ChoiceBlock
@@ -1779,6 +1923,30 @@ function ChatDemo(): ReactElement {
           />
           <ChatComposer
             className="w-full"
+            dragging={dragging}
+            {...dropzoneHandlers}
+            extras={
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Attach a file"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <FileUp className="size-4" />
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={(event) => {
+                    addFiles(Array.from(event.target.files ?? []));
+                    event.target.value = "";
+                  }}
+                />
+              </>
+            }
             action={
               <ChatSendButton
                 state={sending ? "stop" : "send"}
@@ -1786,6 +1954,20 @@ function ChatDemo(): ReactElement {
               />
             }
           >
+            {attachments.length > 0 && (
+              <div className="mb-2 flex flex-wrap gap-2">
+                {attachments.map((a) => (
+                  <FileAttachmentChip
+                    key={a.id}
+                    name={a.name}
+                    size={a.size}
+                    state={a.progress < 100 ? "uploading" : "idle"}
+                    progress={a.progress}
+                    onRemove={() => setAttachments((prev) => prev.filter((x) => x.id !== a.id))}
+                  />
+                ))}
+              </div>
+            )}
             <ChatComposerInput
               placeholder="Ask about a supplier, order, or site…"
               value={draft}
@@ -1799,6 +1981,71 @@ function ChatDemo(): ReactElement {
       <Button variant="outline" size="sm" className="w-fit" onClick={() => setShowScrollToBottom((v) => !v)}>
         Toggle scroll-to-bottom pill
       </Button>
+    </div>
+  );
+}
+
+interface DemoDocument {
+  id: string;
+  name: string;
+  size: number;
+  progress: number;
+}
+
+function FileUploadDemo(): ReactElement {
+  const [uploads, setUploads] = useState<DemoDocument[]>([]);
+
+  const addFiles = (files: File[]): void => {
+    for (const file of files) {
+      const id = crypto.randomUUID();
+      setUploads((prev) => [...prev, { id, name: file.name, size: file.size, progress: 0 }]);
+      const tick = (progress: number): void => {
+        setTimeout(() => {
+          setUploads((prev) => prev.map((u) => (u.id === id ? { ...u, progress } : u)));
+          if (progress < 100) tick(progress + 34);
+        }, 350);
+      };
+      tick(34);
+    }
+  };
+
+  return (
+    <div className="flex w-full max-w-2xl flex-col gap-4">
+      <p className="max-w-prose text-sm text-muted-foreground">
+        The same <code>FileAttachmentChip</code> from the chat composer, paired with{" "}
+        <code>FileDropzone</code> — a standalone drop target for surfaces that aren't a chat shell at
+        all, e.g. a site's supporting-documents upload, or a supplier record's attached certificates.
+      </p>
+
+      <FileDropzone onFiles={addFiles} hint="PDF, DOCX, or images, up to 10 MB each" />
+
+      {uploads.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {uploads.map((u) => (
+            <FileAttachmentChip
+              key={u.id}
+              name={u.name}
+              size={u.size}
+              state={u.progress < 100 ? "uploading" : "idle"}
+              progress={u.progress}
+              onRemove={() => setUploads((prev) => prev.filter((x) => x.id !== u.id))}
+            />
+          ))}
+        </div>
+      )}
+
+      <div>
+        <p className="mb-2 text-sm font-medium text-foreground">Already on file</p>
+        <div className="flex flex-wrap gap-2">
+          <FileAttachmentChip
+            variant="export"
+            name="site-insurance-certificate.pdf"
+            size={412_000}
+            onDownload={() => {}}
+          />
+          <FileAttachmentChip variant="export" name="rigi-photos.zip" size={8_400_000} onDownload={() => {}} />
+        </div>
+      </div>
     </div>
   );
 }
