@@ -8,7 +8,7 @@ export interface VoiceMicButtonProps extends Omit<ButtonHTMLAttributes<HTMLButto
   state?: "idle" | "recording" | "transcribing";
   /** `sm`/`md` are inline sizes (a comment textarea's corner); `lg` is the standalone dial-in button. @default "md" */
   size?: "sm" | "md" | "lg";
-  /** Shown as a small tooltip above the button and swaps its color to destructive, without disabling it — the user should be able to just tap it again. */
+  /** Recolors the button to destructive and reveals a tooltip above it on hover/focus, without disabling it — the user should be able to just tap it again. */
   error?: string | null;
   onToggle?: () => void;
   labels?: { start?: string; stop?: string };
@@ -28,9 +28,12 @@ const DEFAULT_LABELS: Required<NonNullable<VoiceMicButtonProps["labels"]>> = {
  *
  * **`error` doesn't disable the button.** A failed connection or a denied
  * mic permission is a one-tap-away retry, not a dead end — the button stays
- * live and just recolors to `destructive` with the message in a tooltip
- * above it, mirroring the way this library treats recoverable errors
- * elsewhere (inline messages, not disabled controls).
+ * live and just recolors to `destructive`, mirroring the way this library
+ * treats recoverable errors elsewhere (inline messages, not disabled
+ * controls). The message itself only appears on hover/focus, like a native
+ * tooltip — rendering it at rest would float above the button permanently
+ * and collide with whatever content sits just above it in the caller's
+ * layout.
  *
  * **Sizing floor.** `lg` (48px) already clears the WCAG 2.5.8 minimum on its
  * own. `sm`/`md` render smaller (24px/30px) for contexts like an inline
@@ -48,7 +51,7 @@ export const VoiceMicButton = forwardRef<HTMLButtonElement, VoiceMicButtonProps>
     const icon = size === "sm" ? "size-3.5" : size === "lg" ? "size-5" : "size-4";
 
     return (
-      <div className="relative inline-flex flex-col items-center">
+      <div className="group relative inline-flex flex-col items-center">
         <button
           ref={ref}
           type="button"
@@ -89,7 +92,7 @@ export const VoiceMicButton = forwardRef<HTMLButtonElement, VoiceMicButtonProps>
           <div
             data-slot="voice-mic-error"
             role="alert"
-            className="absolute bottom-full left-1/2 mb-1.5 w-60 -translate-x-1/2 rounded-lg border border-destructive/30 bg-destructive/10 px-2.5 py-1.5 text-[10.5px] text-destructive shadow-md"
+            className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1.5 w-60 -translate-x-1/2 rounded-lg border border-destructive/30 bg-destructive/10 px-2.5 py-1.5 text-[10.5px] text-destructive opacity-0 shadow-md transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
           >
             {error}
           </div>
