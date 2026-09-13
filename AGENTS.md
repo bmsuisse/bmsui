@@ -356,6 +356,37 @@ logic above, which already had its own extraction). Structure:
     share one shape, plus `no-results` and `offline` variants with their own
     default lucide icons. Non-error variants render `role="status"` so a
     screen reader hears the outcome of a search.
+  - `ai/` — `AiMarker`, `ConfidenceIndicator`, `AiSuggestion` (v0.12.0),
+    plus the `--ai` theme token (see docs-site's "AI token"). A surveyed app
+    had **three** different confidence widgets with three threshold sets and
+    three palettes, and indigo+sparkle as a de-facto AI marker in 48 files;
+    this names that hue and gives the three a single shape.
+    `ConfidenceIndicator` is a 3-bar signal meter with fixed colour rules —
+    **never green** (green is `StatusBadge`'s human-verified tone; a model's
+    90% is not that), **never red** (low confidence is a prompt to look, not
+    an error), amber only at `low`. Its `resolveConfidenceBand` is exported
+    so anything stating confidence in words agrees with the bars beside it.
+    `AiSuggestion`'s `status` is controlled-only on purpose: a form's
+    dirty-field guard has to own the accept→edited transition.
+  - `action-button/` — `ActionButton` + `ActionSheet` (v0.12.0). Replaces a
+    tab-bar FAB plus two divergent hand-rolled bottom sheets: a bottom sheet
+    list on a phone, a `DropdownMenu` from `md` up. A radial speed dial was
+    rejected (40px unlabelled targets, no room for 6-8 contextual actions,
+    poor screen-reader story). Introduces the **`--ui-bottom-inset`**
+    contract — a consumer sets it once on `<body>` and the Toast viewport,
+    the corner FAB and the sheet all clear a tab bar, replacing the
+    `viewportClassName="pb-20"` workaround — and **`data-ui-fab`**, which a
+    `corner` FAB sets on `<html>` so `ToastProvider`'s viewport reserves its
+    column via a plain CSS selector (no context coupling between the two).
+  - `notification-center/` — `NotificationBell`, `NotificationCard`,
+    `NotificationPanel`, `NotificationBanner` (v0.12.0). The team rule:
+    **Toast = feedback about what you just did; NotificationCenter = events
+    that happened elsewhere.** Never route an event through `toast()`. The
+    panel is a bottom `Sheet` on a phone (not a desktop aside squeezed onto
+    it) and a 400px anchored `Popover` from `md`, and is headless about data.
+    `NotificationBanner` mounts a **second** `@radix-ui/react-toast`
+    provider with `swipeDirection="up"`; its viewport takes `hotkey={[]}` so
+    F8 still reaches the toast stack only, never the banner host.
 - `packages/ui/demo/` — same pattern as `packages/datagrid/demo`: a Vite
   app aliasing `@bmsuisse/ui` straight to `src/index.ts`, using the same
   reference-app-derived Tailwind v4 tokens, for visual QA.

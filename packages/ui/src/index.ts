@@ -159,6 +159,45 @@ export { Stepper } from "./patterns/stepper/Stepper";
 export type { EmptyStateAction, EmptyStateProps, EmptyStateVariant } from "./patterns/empty-state/EmptyState";
 export { EmptyState } from "./patterns/empty-state/EmptyState";
 
+export type { AiMarkerProps } from "./patterns/ai/AiMarker";
+export { AiMarker } from "./patterns/ai/AiMarker";
+export type { ConfidenceBand, ConfidenceIndicatorProps } from "./patterns/ai/ConfidenceIndicator";
+export {
+  ConfidenceIndicator,
+  DEFAULT_CONFIDENCE_THRESHOLDS,
+  resolveConfidenceBand,
+} from "./patterns/ai/ConfidenceIndicator";
+export type { AiSuggestionProps, AiSuggestionStatus } from "./patterns/ai/AiSuggestion";
+export { AiSuggestion } from "./patterns/ai/AiSuggestion";
+
+export type { ActionButtonProps, ActionItem } from "./patterns/action-button/ActionButton";
+export { ActionButton } from "./patterns/action-button/ActionButton";
+export type { ActionSheetLabels, ActionSheetProps } from "./patterns/action-button/ActionSheet";
+export { ActionSheet } from "./patterns/action-button/ActionSheet";
+
+export type { NotificationBellProps } from "./patterns/notification-center/NotificationBell";
+export { NotificationBell } from "./patterns/notification-center/NotificationBell";
+export type {
+  NotificationAction,
+  NotificationCardProps,
+} from "./patterns/notification-center/NotificationCard";
+export { NotificationCard } from "./patterns/notification-center/NotificationCard";
+export type { NotificationPanelProps } from "./patterns/notification-center/NotificationPanel";
+export { NotificationPanel } from "./patterns/notification-center/NotificationPanel";
+export type {
+  NotificationBannerApi,
+  NotificationBannerContextValue,
+  NotificationBannerHostProps,
+} from "./patterns/notification-center/NotificationBanner";
+export {
+  NotificationBannerHost,
+  useNotificationBanner,
+} from "./patterns/notification-center/NotificationBanner";
+export type {
+  NotificationBannerOptions,
+  NotificationBannerRecord,
+} from "./patterns/notification-center/notification-banner-store";
+
 export type { NavIconProps, NavItemProps } from "./patterns/sidebar/NavItem";
 export { NavItem } from "./patterns/sidebar/NavItem";
 export type { NavGroupProps } from "./patterns/sidebar/NavGroup";

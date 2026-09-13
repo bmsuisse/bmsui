@@ -93,6 +93,35 @@ instead of picking its own arbitrary colors. Register them the same way:
 Segments without an explicit `color` fall back to a fixed hex palette if
 these tokens aren't registered, so `donut` still renders sensibly either way.
 
+### AI token
+
+`AiMarker` and `ConfidenceIndicator` use one dedicated hue, `--ai`, for AI
+provenance — a field a model filled in, a generated summary, a confidence
+score. It's kept separate from `--color-primary` and from every status tone
+so model output never reads as either brand-authored UI or a human-verified
+state (especially the `success`/green tone `StatusBadge` uses for
+`approved`/`paid`/`completed`). Register it the same way:
+
+```css
+@theme inline {
+  /* ...your existing tokens... */
+  --color-ai: var(--ai);
+}
+
+:root {
+  --ai: oklch(0.585 0.2 277); /* indigo-500, ~4.6:1 on white */
+}
+
+.dark {
+  --ai: oklch(0.72 0.15 277); /* indigo-400 */
+}
+```
+
+Because this package ships no CSS, both components read the token via the
+arbitrary-value-with-fallback form (`bg-[var(--ai,#6366f1)]`) rather than a
+`bg-ai`/`text-ai` utility class, so they render sensibly even before you've
+registered `--color-ai`.
+
 ## What's in the package
 
 - **[Primitives](/ui/primitives)** — base components: `Button`, `Input`,
