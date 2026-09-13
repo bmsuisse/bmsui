@@ -38,11 +38,12 @@ function formatBytes(bytes: number): string {
 }
 
 /**
- * A single attached-or-produced file, rendered as a compact card — meant to
- * sit in `ChatComposer`'s `extras` row (attach) or inline in a message body
- * (export). Two variants because the two files have different lifecycles:
- * an attachment can be un-attached before sending, an exported file cannot
- * be "removed" without also un-sending the message it came from.
+ * A single attached-or-produced file, rendered as a compact card — a chat
+ * composer's attach row, a `FileDropzone`'s picked-files list, a document
+ * upload panel, an inline "download the result" affordance. Two variants
+ * because the two files have different lifecycles: an attachment can be
+ * un-attached before it's sent/uploaded, an exported/produced file cannot
+ * be "removed" without also undoing whatever generated it.
  */
 export const FileAttachmentChip = forwardRef<HTMLDivElement, FileAttachmentChipProps>(
   (

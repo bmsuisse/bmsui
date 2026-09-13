@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { FileAttachmentChip } from "../../../src/patterns/chat/FileAttachmentChip";
+import { FileAttachmentChip } from "../../../src/patterns/file-upload/FileAttachmentChip";
 
 describe("FileAttachmentChip", () => {
   it("shows the name and a formatted size", () => {

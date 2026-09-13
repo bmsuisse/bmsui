@@ -222,8 +222,10 @@ export type {
 export { ChatComposer, ChatComposerInput, ChatSendButton } from "./patterns/chat/ChatComposer";
 export type { ScrollToBottomButtonProps } from "./patterns/chat/ScrollToBottomButton";
 export { ScrollToBottomButton } from "./patterns/chat/ScrollToBottomButton";
-export type { FileAttachmentChipProps } from "./patterns/chat/FileAttachmentChip";
-export { FileAttachmentChip } from "./patterns/chat/FileAttachmentChip";
+export type { FileAttachmentChipProps } from "./patterns/file-upload/FileAttachmentChip";
+export { FileAttachmentChip } from "./patterns/file-upload/FileAttachmentChip";
+export type { FileDropzoneProps } from "./patterns/file-upload/FileDropzone";
+export { FileDropzone } from "./patterns/file-upload/FileDropzone";
 
 export type { NavIconProps, NavItemProps } from "./patterns/sidebar/NavItem";
 export { NavItem } from "./patterns/sidebar/NavItem";

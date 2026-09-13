@@ -22,6 +22,7 @@ import {
   ChoiceBlock,
   Combobox,
   FileAttachmentChip,
+  FileDropzone,
   ConfidenceIndicator,
   ConfirmDialog,
   Dialog,
@@ -745,6 +746,10 @@ export function App(): ReactElement {
 
           <Section title="Chat (ChatMessage / AiActivity / ChoiceBlock / SuggestionChips / ChatComposer)">
             <ChatDemo />
+          </Section>
+
+          <Section title="FileDropzone / FileAttachmentChip (document upload, not chat-specific)">
+            <FileUploadDemo />
           </Section>
         </div>
       </div>
@@ -1863,6 +1868,71 @@ function ChatDemo(): ReactElement {
       <Button variant="outline" size="sm" className="w-fit" onClick={() => setShowScrollToBottom((v) => !v)}>
         Toggle scroll-to-bottom pill
       </Button>
+    </div>
+  );
+}
+
+interface DemoDocument {
+  id: string;
+  name: string;
+  size: number;
+  progress: number;
+}
+
+function FileUploadDemo(): ReactElement {
+  const [uploads, setUploads] = useState<DemoDocument[]>([]);
+
+  const addFiles = (files: File[]): void => {
+    for (const file of files) {
+      const id = crypto.randomUUID();
+      setUploads((prev) => [...prev, { id, name: file.name, size: file.size, progress: 0 }]);
+      const tick = (progress: number): void => {
+        setTimeout(() => {
+          setUploads((prev) => prev.map((u) => (u.id === id ? { ...u, progress } : u)));
+          if (progress < 100) tick(progress + 34);
+        }, 350);
+      };
+      tick(34);
+    }
+  };
+
+  return (
+    <div className="flex w-full max-w-2xl flex-col gap-4">
+      <p className="max-w-prose text-sm text-muted-foreground">
+        The same <code>FileAttachmentChip</code> from the chat composer, paired with{" "}
+        <code>FileDropzone</code> — a standalone drop target for surfaces that aren't a chat shell at
+        all, e.g. a site's supporting-documents upload, or a supplier record's attached certificates.
+      </p>
+
+      <FileDropzone onFiles={addFiles} hint="PDF, DOCX, or images, up to 10 MB each" />
+
+      {uploads.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {uploads.map((u) => (
+            <FileAttachmentChip
+              key={u.id}
+              name={u.name}
+              size={u.size}
+              state={u.progress < 100 ? "uploading" : "idle"}
+              progress={u.progress}
+              onRemove={() => setUploads((prev) => prev.filter((x) => x.id !== u.id))}
+            />
+          ))}
+        </div>
+      )}
+
+      <div>
+        <p className="mb-2 text-sm font-medium text-foreground">Already on file</p>
+        <div className="flex flex-wrap gap-2">
+          <FileAttachmentChip
+            variant="export"
+            name="site-insurance-certificate.pdf"
+            size={412_000}
+            onDownload={() => {}}
+          />
+          <FileAttachmentChip variant="export" name="rigi-photos.zip" size={8_400_000} onDownload={() => {}} />
+        </div>
+      </div>
     </div>
   );
 }
