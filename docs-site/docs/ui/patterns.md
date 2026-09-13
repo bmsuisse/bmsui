@@ -588,3 +588,156 @@ mounts its own `@radix-ui/react-toast` provider, independent of
 providers means two default F8 hotkeys competing, so the banner viewport is
 given `hotkey={[]}`: **F8 always reaches the toast viewport, never the banner
 host.**
+
+### `AiActivity`
+
+The live "AI is doing X" strip and the finished-turn collapsed step summary,
+unified into one component because they turned out to be the same shape in
+two lifecycle states.
+
+```tsx
+<AiActivity status="running" idleLabel="Looking up recent orders…" />
+
+<AiActivity
+  status="done"
+  steps={[
+    { id: "lookup", label: "Queried supplier ledger", status: "done" },
+    { id: "send", label: "Send email to purchasing@sika.ch", status: "denied" },
+  ]}
+/>
+```
+
+`status` is explicit, never inferred from `steps` — a turn can be `"running"`
+with no step yet (idle label only), and `"done"` while a step is still stuck
+at `status: "running"` (a stream cut off mid-call). The disclosure defaults
+open whenever any step is `denied` or `interrupted`, so a blocked or
+cancelled tool call can never hide behind a collapsed "N more". Colour rule
+matches `ConfidenceIndicator`'s: `running`/`done` are muted (never green — a
+finished tool call isn't a success signal), `failed` is destructive red,
+`denied`/`interrupted` share the amber pair used across the library. The
+nested glyph is always `<AiMarker decorative />` — the root already owns
+`role="status"` while running, so `AiMarker`'s own live region would
+announce the same event twice.
+
+### `ChatMessage` / `ChatMessageSkeleton`
+
+One transcript turn — a right-aligned user bubble or a full-width assistant
+prose block — plus its loading placeholder.
+
+```tsx
+<ChatMessage role="user">Who's the usual supplier for gypsum board?</ChatMessage>
+<ChatMessage role="assistant" marker>There are two Sika accounts that match.</ChatMessage>
+<ChatMessage role="assistant" error="The lookup timed out.">Partial result…</ChatMessage>
+
+<ChatMessageSkeleton turns={3} />
+```
+
+`marker` prefixes the assistant bubble with an `AiMarker` — pass `true` for
+the default, or a node to replace it. There's no `aria-live` here on
+purpose: a headless chat runtime (assistant-ui) already owns the viewport's
+live region, and a second one on every message would double-announce a
+streaming reply. The `actions` row (copy/regenerate) reserves a fixed
+`min-h-7.5` so its buttons never reflow the message above when they fade in.
+
+### `SuggestionChips`
+
+"Here's what you can ask" offers, collapsing five ad hoc treatments (a
+welcome list, a sidebar hint, a bottom-sheet list, empty-state ghost pills, a
+follow-up scroller) into one data model and three `layout`s.
+
+```tsx
+<SuggestionChips
+  layout="row"
+  suggestions={[
+    { id: "summarize", label: "Summarize this thread", icon: Sparkles },
+    { id: "draft", label: "Draft a reply", icon: MessageSquare },
+  ]}
+  onPick={(s) => sendSuggestion(s)}
+/>
+```
+
+`list` is a vertical card stack for an empty/welcome state; `row` is a
+one-line horizontal scroller with RTL-aware edge fades, for follow-ups under
+a finished turn; `wrap` (default) is centred wrapping pills. None of the
+three use a primary fill — a suggestion is an offer, not a selection, so a
+solid brand colour would misrepresent it as already chosen. `onDismiss`
+renders the `×` as a sibling button, never nested inside the chip, since a
+`<button>` inside a `<button>` is invalid HTML.
+
+### `ChoiceBlock`
+
+An inline decision surface for a chat transcript — a "which of these did you
+mean?" disambiguation prompt and an amber human-in-the-loop approval card
+are the same shape (an options array, one selection), so this is one
+component with a `tone`.
+
+```tsx
+<ChoiceBlock
+  question="Which supplier account?"
+  options={[{ id: "a", label: "Sika – VE PCI" }, { id: "b", label: "Sika – Bauchemie" }]}
+  value={choice}
+  onSelect={(option) => setChoice(option.id)}
+/>
+
+<ChoiceBlock
+  tone="warning"
+  eyebrow="Approval required"
+  question="Send the reorder email?"
+  options={[{ id: "approve", label: "Approve" }, { id: "deny", label: "Deny" }]}
+  value={approval}
+  onSelect={(option) => setApproval(option.id)}
+/>
+```
+
+`value` is controlled, with no memory of its own — once a question is
+answered, the consumer flips `disabled` but keeps passing the same `value`,
+and the chosen option stays highlighted while its siblings dim, so a
+decision made turns ago still reads as settled when scrolling back through
+the transcript. `keyboardShortcuts` (default `true`) binds `1`–`9` then
+`A`–`Z`, but the listener bails whenever a `TEXTAREA`/`INPUT`/
+`contentEditable` is focused, so it never steals a keystroke from the
+composer. `tone="warning"` fills the chosen option with amber, never the
+primary colour — the choice is a consequential, human-authorized action, not
+an ordinary preference pick.
+
+### `ChatComposer` / `ChatComposerInput` / `ChatSendButton`
+
+The chat input shell, its auto-growing textarea, and the send/stop button
+that occupies one spot in the action row.
+
+```tsx
+<ChatComposer action={<ChatSendButton state={sending ? "stop" : "send"} onClick={toggleSend} />}>
+  <ChatComposerInput
+    value={draft}
+    onChange={(e) => setDraft(e.target.value)}
+    onSubmit={() => send(draft)}
+  />
+</ChatComposer>
+```
+
+`ChatComposer` owns only layout and the `dragging`/`disabled` visual states —
+never the typed value or submission, since every real consumer here runs on
+a headless chat runtime (assistant-ui) that already owns that state.
+`ChatComposerInput` is deliberately a plain, borderless textarea (the shell
+already draws the card border) at `text-base` (16px), which is load-bearing:
+anything smaller makes iOS Safari zoom the page on focus. `ChatSendButton`
+morphs between `"send"` and `"stop"` in the same slot rather than swapping
+in two different elements, so the composer never jitters while a reply is
+streaming; it's sized `size-10 md:size-8` to stay above this library's
+40px/32px touch-target floor.
+
+### `ScrollToBottomButton`
+
+The "jump back to the latest message" pill that floats just above a chat
+composer once the reader has scrolled up.
+
+```tsx
+<ScrollToBottomButton visible={hasNewMessages} onClick={scrollToBottom} />
+```
+
+It only renders the button — a headless runtime already tracks scroll
+position and unread count and passes them in as `visible`/`onClick`.
+`visible={false}` maps onto the button's own `disabled` (styled
+`disabled:invisible`, not unmounted) rather than a separate prop, so this
+component works unchanged as a runtime `render` target that toggles
+`disabled` to mean "not applicable right now."

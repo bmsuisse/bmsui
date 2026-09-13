@@ -23,7 +23,21 @@ export interface EmptyStateProps extends Omit<HTMLAttributes<HTMLDivElement>, "t
   description?: ReactNode;
   /** @default "empty" */
   variant?: EmptyStateVariant;
-  /** Replaces the variant's default lucide icon. */
+  /**
+   * Replaces the variant's default lucide icon.
+   *
+   * AI empty-state recipe: for an AI welcome/empty screen, pass
+   * `icon={Sparkles}` (lucide) and tint the icon tile to the AI hue with
+   * `className`. `className` only reaches the root element, not the icon
+   * tile itself, so the tint has to be applied through the tile's
+   * `data-slot="icon"` marker, e.g.
+   * `className="[&_[data-slot=icon]]:bg-[var(--ai,#6366f1)]/10 [&_[data-slot=icon]]:text-[var(--ai,#6366f1)]"`.
+   * That `[var(--ai,#6366f1)]` arbitrary-value-with-fallback form is the same
+   * convention `AiMarker` uses: this package ships no CSS, so a `bg-ai`/
+   * `text-ai` token class only resolves once the consuming app has
+   * registered `--color-ai` in its own `@theme inline` block, while the
+   * arbitrary-value form works everywhere, token or not.
+   */
   icon?: ComponentType<{ className?: string }>;
   /** Primary next step (a solid button). For `error`, this is where "Try again" goes. */
   action?: EmptyStateAction;
@@ -40,8 +54,20 @@ export interface EmptyStateProps extends Omit<HTMLAttributes<HTMLDivElement>, "t
    * (a scroll region, a card body) instead of sitting at its top.
    */
   fill?: boolean;
-  /** Extra content under the actions (a hint, a link to docs). */
+  /**
+   * Extra content under the actions (a hint, a link to docs). Renders as a
+   * quiet `text-xs text-muted-foreground` line — for interactive content
+   * (suggestion chips, a compact form), use `footer` instead, which is
+   * un-styled and full-width.
+   */
   children?: ReactNode;
+  /**
+   * Full-width, un-styled slot below the actions for INTERACTIVE content
+   * (suggestion chips, a compact form) — unlike `children`, which is the
+   * quiet hint line and imposes `text-xs text-muted-foreground`. Capped at
+   * `max-w-lg` so it stays readable in a wide panel.
+   */
+  footer?: ReactNode;
   testId?: string;
 }
 
@@ -73,6 +99,7 @@ export const EmptyState = ({
   size = "md",
   fill = false,
   children,
+  footer,
   className,
   testId,
   ...props
@@ -98,6 +125,7 @@ export const EmptyState = ({
     >
       <span
         aria-hidden="true"
+        data-slot="icon"
         className={cn(
           "flex shrink-0 items-center justify-center rounded-full",
           sm ? "size-9" : "size-14",
@@ -145,6 +173,7 @@ export const EmptyState = ({
         </div>
       )}
       {children != null && <div className="text-xs text-muted-foreground">{children}</div>}
+      {footer != null && <div className="w-full max-w-lg">{footer}</div>}
     </div>
   );
 };
