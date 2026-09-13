@@ -21,6 +21,7 @@ import {
   ChatSendButton,
   ChoiceBlock,
   Combobox,
+  FileAttachmentChip,
   ConfidenceIndicator,
   ConfirmDialog,
   Dialog,
@@ -87,6 +88,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
+  useFileDropzone,
   useNotificationBanner,
   useToast,
   VoiceCapturePanel,
@@ -1699,19 +1701,46 @@ const CHAT_SUGGESTIONS = [
  * OneSales — not as isolated swatches. `ChoiceBlock`/`AiActivity` stay
  * controlled here the same way a headless runtime would own them.
  */
+interface DemoAttachment {
+  id: string;
+  name: string;
+  size: number;
+  progress: number;
+}
+
 function ChatDemo(): ReactElement {
   const [supplierChoice, setSupplierChoice] = useState<string | null>(null);
   const [approvalChoice, setApprovalChoice] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [draft, setDraft] = useState("");
   const [showScrollToBottom, setShowScrollToBottom] = useState(true);
+  const [attachments, setAttachments] = useState<DemoAttachment[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const addFiles = (files: File[]): void => {
+    for (const file of files) {
+      const id = crypto.randomUUID();
+      setAttachments((prev) => [...prev, { id, name: file.name, size: file.size, progress: 0 }]);
+      const tick = (progress: number): void => {
+        setTimeout(() => {
+          setAttachments((prev) => prev.map((a) => (a.id === id ? { ...a, progress } : a)));
+          if (progress < 100) tick(progress + 34);
+        }, 350);
+      };
+      tick(34);
+    }
+  };
+
+  const { dragging, handlers: dropzoneHandlers } = useFileDropzone(addFiles);
 
   return (
     <div className="flex w-full max-w-2xl flex-col gap-3">
       <p className="max-w-prose text-sm text-muted-foreground">
         One transcript, not a swatch grid: a disambiguation <code>ChoiceBlock</code>, an amber approval
         one, a running then a denied-step <code>AiActivity</code>, a loading <code>ChatMessageSkeleton</code>,
-        and a docked <code>ChatComposer</code> with the send/stop morph and scroll-to-bottom pill.
+        a docked <code>ChatComposer</code> with the send/stop morph and scroll-to-bottom pill, and{" "}
+        <code>FileAttachmentChip</code> in both directions — drag a file onto the composer (or use the
+        paperclip) to attach one, and the assistant's drafted email carries its own exported PDF back.
       </p>
 
       <div className="relative flex h-[32rem] w-full flex-col overflow-hidden rounded-2xl border border-border">
@@ -1752,6 +1781,13 @@ function ChatDemo(): ReactElement {
                   ]}
                 />
                 I've drafted the reorder — sending it needs your sign-off first.
+                <FileAttachmentChip
+                  className="mt-2"
+                  variant="export"
+                  name="reorder-sika-ve-pci.pdf"
+                  size={182_000}
+                  onDownload={() => {}}
+                />
               </ChatMessage>
 
               <ChoiceBlock
@@ -1779,6 +1815,30 @@ function ChatDemo(): ReactElement {
           />
           <ChatComposer
             className="w-full"
+            dragging={dragging}
+            {...dropzoneHandlers}
+            extras={
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Attach a file"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <FileUp className="size-4" />
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={(event) => {
+                    addFiles(Array.from(event.target.files ?? []));
+                    event.target.value = "";
+                  }}
+                />
+              </>
+            }
             action={
               <ChatSendButton
                 state={sending ? "stop" : "send"}
@@ -1786,6 +1846,20 @@ function ChatDemo(): ReactElement {
               />
             }
           >
+            {attachments.length > 0 && (
+              <div className="mb-2 flex flex-wrap gap-2">
+                {attachments.map((a) => (
+                  <FileAttachmentChip
+                    key={a.id}
+                    name={a.name}
+                    size={a.size}
+                    state={a.progress < 100 ? "uploading" : "idle"}
+                    progress={a.progress}
+                    onRemove={() => setAttachments((prev) => prev.filter((x) => x.id !== a.id))}
+                  />
+                ))}
+              </div>
+            )}
             <ChatComposerInput
               placeholder="Ask about a supplier, order, or site…"
               value={draft}

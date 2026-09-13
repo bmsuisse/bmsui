@@ -222,6 +222,8 @@ export type {
 export { ChatComposer, ChatComposerInput, ChatSendButton } from "./patterns/chat/ChatComposer";
 export type { ScrollToBottomButtonProps } from "./patterns/chat/ScrollToBottomButton";
 export { ScrollToBottomButton } from "./patterns/chat/ScrollToBottomButton";
+export type { FileAttachmentChipProps } from "./patterns/chat/FileAttachmentChip";
+export { FileAttachmentChip } from "./patterns/chat/FileAttachmentChip";
 
 export type { VoiceMicButtonProps } from "./patterns/voice/VoiceMicButton";
 export { VoiceMicButton } from "./patterns/voice/VoiceMicButton";
@@ -243,3 +245,5 @@ export { cn } from "./lib/utils";
 export { useMediaQuery } from "./lib/useMediaQuery";
 export { useVisualViewportHeight } from "./lib/useVisualViewportHeight";
 export { useKeyboardOffset } from "./lib/useKeyboardOffset";
+export type { FileDropzoneHandlers } from "./lib/useFileDropzone";
+export { useFileDropzone } from "./lib/useFileDropzone";
