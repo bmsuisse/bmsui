@@ -52,16 +52,22 @@ export const FileDropzone = forwardRef<HTMLDivElement, FileDropzoneProps>(
           }
         }}
         className={cn(
-          "flex flex-col items-center gap-2 rounded-xl border-2 border-dashed border-border p-6 text-center transition-colors",
+          "flex flex-col items-center gap-2 rounded-xl border-2 border-dashed border-border p-6 text-center transition-[color,background-color,border-color,transform] duration-200 ease-out",
           "hover:border-ring/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-          dragging && "border-ring bg-accent/40",
+          dragging && "motion-safe:scale-[1.01] border-ring bg-accent/40",
           disabled && "pointer-events-none cursor-not-allowed opacity-50",
           className,
         )}
         {...handlers}
         {...props}
       >
-        <UploadCloud aria-hidden="true" className="size-6 text-muted-foreground" />
+        <UploadCloud
+          aria-hidden="true"
+          className={cn(
+            "size-6 text-muted-foreground transition-transform duration-200 ease-out",
+            dragging && "motion-safe:-translate-y-0.5",
+          )}
+        />
         <span className="text-sm font-medium text-foreground">
           {label ?? "Drag files here, or click to browse"}
         </span>
