@@ -119,12 +119,100 @@ import {
 import type { ReactElement } from "react";
 import { useEffect, useRef, useState } from "react";
 
+function slug(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
 function Section({ title, children }: { title: string; children: ReactElement }): ReactElement {
   return (
-    <section className="flex flex-col gap-3">
+    <section id={slug(title)} className="scroll-mt-20 flex flex-col gap-3">
       <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{title}</h2>
       <div className="flex flex-wrap items-start gap-4">{children}</div>
     </section>
+  );
+}
+
+// Purely a navigation index — doesn't affect render order below. Grouping the
+// same flat section list by category here (instead of physically reordering
+// 500+ lines of demo JSX) keeps every Section's surrounding code untouched
+// while still giving the page a browsable table of contents.
+const NAV_GROUPS: { label: string; sections: string[] }[] = [
+  { label: "Actions & buttons", sections: ["Buttons", "Button variants (secondary / link) & sizes", "ButtonGroup", "Badges"] },
+  {
+    label: "Forms & inputs",
+    sections: [
+      "Form fields",
+      "Combobox (autocomplete)",
+      "Combobox (grouped, multi-select)",
+      "TagCombobox (client-side filter)",
+      "TagCombobox (server-driven search)",
+      "TagCombobox (grouped)",
+    ],
+  },
+  {
+    label: "Overlays",
+    sections: ["Dialog", "Popover", "Sheet", "Tooltip", "DropdownMenu", "Modal / ConfirmDialog / FormModal", "ResponsivePanel"],
+  },
+  { label: "Feedback & status", sections: ["AlertBox", "StatusBadge", "Skeleton", "LoadingSpinner", "Toast (ToastProvider / useToast)", "EmptyState"] },
+  { label: "Layout & navigation", sections: ["Card", "Sidebar / NavGroup / NavItem", "Stepper", "KpiCard"] },
+  { label: "Search", sections: ["SearchBar / SearchPanel / SearchTrigger"] },
+  { label: "AI", sections: ["AiMarker / ConfidenceIndicator", "AiSuggestion"] },
+  {
+    label: "Mobile actions & notifications",
+    sections: ["ActionButton / ActionSheet", "NotificationBell / NotificationCard / NotificationPanel", "NotificationBanner"],
+  },
+  { label: "Chat & files", sections: ["Chat (ChatMessage / AiActivity / ChoiceBlock / SuggestionChips / ChatComposer)", "FileDropzone / FileAttachmentChip (document upload, not chat-specific)"] },
+];
+
+function DemoNav(): ReactElement {
+  return (
+    <nav aria-label="Sections" className="sticky top-6 hidden max-h-[calc(100vh-3rem)] w-52 shrink-0 flex-col gap-4 overflow-y-auto pb-6 lg:flex">
+      {NAV_GROUPS.map((group) => (
+        <div key={group.label} className="flex flex-col gap-0.5">
+          <p className="px-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{group.label}</p>
+          {group.sections.map((title) => (
+            <a
+              key={title}
+              href={`#${slug(title)}`}
+              className="truncate rounded-md px-2 py-1 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              {title}
+            </a>
+          ))}
+        </div>
+      ))}
+    </nav>
+  );
+}
+
+function DemoMobileNav(): ReactElement {
+  return (
+    <select
+      aria-label="Jump to section"
+      defaultValue=""
+      className="rounded-md border border-border bg-background px-2 py-2 text-sm lg:hidden"
+      onChange={(e) => {
+        if (!e.target.value) return;
+        document.getElementById(e.target.value)?.scrollIntoView({ behavior: "smooth", block: "start" });
+        e.target.value = "";
+      }}
+    >
+      <option value="" disabled>
+        Jump to…
+      </option>
+      {NAV_GROUPS.map((group) => (
+        <optgroup key={group.label} label={group.label}>
+          {group.sections.map((title) => (
+            <option key={title} value={slug(title)}>
+              {title}
+            </option>
+          ))}
+        </optgroup>
+      ))}
+    </select>
   );
 }
 
@@ -209,18 +297,25 @@ export function App(): ReactElement {
   return (
     <ToastProvider>
       <NotificationBannerHost>
-      <div className="min-h-screen bg-background px-4 py-6 text-foreground md:p-8">
-        <div className="mx-auto flex max-w-3xl flex-col gap-10">
-          <header className="flex items-center justify-between">
+      <div className="min-h-screen bg-background text-foreground">
+        <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 px-4 py-4 backdrop-blur-md md:px-8">
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
             <div>
               <h1 className="text-xl font-semibold">@bmsuisse/ui</h1>
               <p className="text-sm text-muted-foreground">Shared primitives — visual QA demo</p>
             </div>
-            <Button variant="outline" data-testid="dark-mode-toggle" onClick={toggleDarkMode}>
-              {dark ? "Light mode" : "Dark mode"}
-            </Button>
-          </header>
+            <div className="flex items-center gap-2">
+              <DemoMobileNav />
+              <Button variant="outline" data-testid="dark-mode-toggle" onClick={toggleDarkMode}>
+                {dark ? "Light mode" : "Dark mode"}
+              </Button>
+            </div>
+          </div>
+        </header>
 
+        <div className="mx-auto flex max-w-6xl gap-10 px-4 py-6 md:px-8 md:py-8">
+          <DemoNav />
+          <div className="flex min-w-0 flex-1 flex-col gap-10">
           <Section title="Buttons">
             <>
               <Button>Default</Button>
@@ -751,6 +846,7 @@ export function App(): ReactElement {
           <Section title="FileDropzone / FileAttachmentChip (document upload, not chat-specific)">
             <FileUploadDemo />
           </Section>
+          </div>
         </div>
       </div>
       </NotificationBannerHost>
