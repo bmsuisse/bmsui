@@ -78,6 +78,16 @@ describe("KpiCard", () => {
     expect(container.querySelector("svg")).not.toBeInTheDocument();
     expect(screen.queryByText("Won")).not.toBeInTheDocument();
   });
+
+  it("applies the background prop on every variant, overriding the default surface", () => {
+    for (const variant of ["hero", "mini", "donut", "default"] as const) {
+      const { container, unmount } = render(
+        <KpiCard label="Revenue" value="1.2M" variant={variant} background="#0f766e" testId="kpi" />,
+      );
+      expect(container.querySelector('[data-testid="kpi"]')).toHaveStyle({ background: "#0f766e" });
+      unmount();
+    }
+  });
 });
 
 describe("DonutChart", () => {
