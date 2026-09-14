@@ -127,6 +127,8 @@ export function App(): ReactElement {
   const [customerName, setCustomerName] = useState("");
   const [fieldError, setFieldError] = useState<string | undefined>(undefined);
   const [country, setCountry] = useState<string | null>("ch");
+  const [gridCountry, setGridCountry] = useState<string | null>(null);
+  const [gridTeamMembers, setGridTeamMembers] = useState<string[]>([]);
   const [teamMembers, setTeamMembers] = useState<string[]>([]);
   const [colors, setColors] = useState<string[]>(["red", "blue"]);
   const [tagTeamMembers, setTagTeamMembers] = useState<string[]>(["alice"]);
@@ -552,6 +554,51 @@ export function App(): ReactElement {
                 onChange={setTeamMembers}
                 placeholder="Select team members"
                 searchPlaceholder="Search…"
+              />
+            </div>
+          </Section>
+
+          <Section title="Combobox (grid columns)">
+            <div className="w-64">
+              <Combobox
+                data-testid="employee-grid-combobox"
+                columns={[
+                  { key: "label", header: "Name" },
+                  { key: "role", header: "Role" },
+                  { key: "location", header: "Location" },
+                ]}
+                options={[
+                  { value: "e1", label: "Alice Meier", data: { role: "Engineer", location: "Zurich" } },
+                  { value: "e2", label: "Bruno Keller", data: { role: "Designer", location: "Bern" } },
+                  { value: "e3", label: "Chiara Rossi", data: { role: "Product Manager", location: "Lugano" } },
+                  { value: "e4", label: "David Wyss", data: { role: "Engineer", location: "Basel" } },
+                ]}
+                value={gridCountry}
+                onChange={setGridCountry}
+                placeholder="Select an employee"
+                searchPlaceholder="Search employees…"
+              />
+            </div>
+          </Section>
+
+          <Section title="TagCombobox (grid columns)">
+            <div className="w-80">
+              <TagCombobox
+                data-testid="employee-grid-tag-combobox"
+                columns={[
+                  { key: "label", header: "Name" },
+                  { key: "role", header: "Role" },
+                  { key: "location", header: "Location" },
+                ]}
+                options={[
+                  { value: "e1", label: "Alice Meier", data: { role: "Engineer", location: "Zurich" } },
+                  { value: "e2", label: "Bruno Keller", data: { role: "Designer", location: "Bern" } },
+                  { value: "e3", label: "Chiara Rossi", data: { role: "Product Manager", location: "Lugano" } },
+                  { value: "e4", label: "David Wyss", data: { role: "Engineer", location: "Basel" } },
+                ]}
+                value={gridTeamMembers}
+                onChange={setGridTeamMembers}
+                placeholder="Select employees"
               />
             </div>
           </Section>

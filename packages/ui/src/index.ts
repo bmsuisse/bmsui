@@ -99,6 +99,8 @@ export { ResponsivePanel } from "./patterns/modal/ResponsivePanel";
 export type { FormFieldProps } from "./patterns/form-field/FormField";
 export { FormField } from "./patterns/form-field/FormField";
 
+export type { GridColumn as ComboboxColumn } from "./lib/optionGrid";
+
 export type {
   ComboboxMultiProps,
   ComboboxOption,

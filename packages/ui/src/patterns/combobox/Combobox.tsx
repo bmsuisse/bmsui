@@ -1,5 +1,5 @@
 import { Check, ChevronsUpDown, X } from "lucide-react";
-import type { ComponentProps, KeyboardEvent, ReactElement } from "react";
+import type { ComponentProps, KeyboardEvent, ReactElement, ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "../../lib/utils";
 import {
@@ -8,6 +8,7 @@ import {
   groupMembers,
   type OptionRow as ImportedOptionRow,
 } from "../../lib/optionGrouping";
+import { renderGridOptions, type GridColumn } from "../../lib/optionGrid";
 import { Button } from "../../primitives/button";
 import { Input } from "../../primitives/input";
 import { Popover, PopoverContent, PopoverTrigger } from "../../primitives/popover";
@@ -21,8 +22,13 @@ export interface ComboboxOption {
    * on the base props). Options sharing a `group` must be contiguous in `options` —
    * the component renders a header the first time a group key is seen and does not
    * re-sort the list, so interleaved groups would render more than one header for the
-   * same key. Ungrouped options (no `group`) render individually, with no header. */
+   * same key. Ungrouped options (no `group`) render individually, with no header.
+   * Ignored when `columns` is set (see that prop's own doc). */
   group?: string;
+  /** Extra fields for this option, surfaced as additional columns when the
+   * base props' `columns` is set — e.g. `{ email: "a@b.com", role: "Admin" }`.
+   * Ignored otherwise. */
+  data?: Record<string, ReactNode>;
 }
 
 interface ComboboxBaseProps {
@@ -65,6 +71,15 @@ interface ComboboxBaseProps {
    * selected option was found by an earlier query and isn't part of the current
    * result page. Ignored once a matching option is found in `options`. */
   selectedLabel?: string;
+  /** Renders the popup's option list as a multi-column grid instead of a flat
+   * label list — one column per entry here, each reading either the option's
+   * own `label` (`key: "label"`) or `option.data[key]`. Useful when users need
+   * more context than a label to tell options apart (e.g. an id/email/role
+   * table instead of a bare name). Mutually exclusive with `group` — a grid
+   * row has no natural place for a group header spanning several unrelated
+   * columns, so `group` is ignored on every option while this is set. The
+   * popup grows to fit the columns (at least as wide as the trigger). */
+  columns?: GridColumn[];
 }
 
 export interface ComboboxSingleProps extends ComboboxBaseProps {
@@ -151,6 +166,7 @@ export function Combobox(props: ComboboxProps): ReactElement {
     container,
     onSearchChange,
     selectedLabel,
+    columns,
   } = props;
   const testId = props["data-testid"];
   const [open, setOpen] = useState(false);
@@ -252,7 +268,11 @@ export function Combobox(props: ComboboxProps): ReactElement {
         : (props.multiple ? resolveGroupTriggerLabel(options, selectedValues, groupLabel) : null) ??
           `${selectedOptions.length} selected`;
 
-  const renderChunks = useMemo(() => buildRenderChunks(visibleOptions), [visibleOptions]);
+  // Skipped entirely in grid mode (`columns` set) — its result is only ever
+  // read from the flat/grouped rendering branch below, so building it there
+  // would just re-walk `visibleOptions` on every keystroke for a value
+  // nothing then reads.
+  const renderChunks = useMemo(() => (columns ? [] : buildRenderChunks(visibleOptions)), [visibleOptions, columns]);
 
   function renderOption({ option, index }: OptionRow): ReactElement {
     const isSelected = selectedValues.includes(option.value);
@@ -333,7 +353,10 @@ export function Combobox(props: ComboboxProps): ReactElement {
       <PopoverContent
         align="start"
         container={container}
-        className="w-[var(--radix-popover-trigger-width)] min-w-[10rem] p-2"
+        className={cn(
+          "w-[var(--radix-popover-trigger-width)] min-w-[10rem] p-2",
+          columns && "w-max min-w-[var(--radix-popover-trigger-width)] max-w-[min(40rem,90vw)]",
+        )}
         onOpenAutoFocus={(event) => event.preventDefault()}
       >
         <div className="flex flex-col gap-2">
@@ -348,9 +371,20 @@ export function Combobox(props: ComboboxProps): ReactElement {
             placeholder={searchPlaceholder}
             aria-label={searchPlaceholder}
           />
-          <div role="listbox" className="flex max-h-60 flex-col gap-0.5 overflow-y-auto">
-            {renderChunks.length === 0 ? (
+          <div role="listbox" className={cn("max-h-60 overflow-y-auto", !columns && "flex flex-col gap-0.5")}>
+            {visibleOptions.length === 0 ? (
               <p className="py-2 text-center text-sm text-muted-foreground">{emptyMessage}</p>
+            ) : columns ? (
+              renderGridOptions({
+                columns,
+                options: visibleOptions,
+                activeIndex,
+                multiple: Boolean(props.multiple),
+                isSelected: (option) => selectedValues.includes(option.value),
+                onSelect: selectOption,
+                onHover: setActiveIndex,
+                testId,
+              })
             ) : (
               renderChunks.map((chunk) => {
                 if (chunk.kind === "single") return renderOption(chunk.row);
