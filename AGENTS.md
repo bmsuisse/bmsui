@@ -316,6 +316,27 @@ logic above, which already had its own extraction). Structure:
     to avoid fighting Radix `ScrollArea`'s nested viewport — `SidebarNav`
     uses a plain `overflow-y-auto` div instead, matching what both source
     apps already did.
+  - `ai/` — `AiButton`, `AiExplainButton`, `VoiceInputButton`,
+    `VoiceTranscript` and the `useSpeechRecognition` hook behind the last
+    two. The "do something with AI" affordances several apps were about to
+    hand-roll separately: a sparkle-accented button with a built-in
+    in-flight state (`AiButton`, three tones on top of `Button`), a lazily
+    loading explain-this popover (`AiExplainButton` — `onExplain` fires on
+    first open, not mount, and a rejection renders inline with a retry),
+    and dictation. Dictation is the browser's own `SpeechRecognition`
+    (`window.SpeechRecognition ?? window.webkitSpeechRecognition`), not a
+    dependency or a server round-trip — so it's Chromium/Safari-only, and
+    `VoiceInputButton` deliberately renders *disabled* with a crossed-out
+    mic where the API is missing (Firefox, most mobile) rather than hiding
+    itself, to keep layouts stable across browsers; `supported` is exposed
+    on the hook for callers that want to branch themselves. The Web Speech
+    API isn't in TypeScript's DOM lib, so `useSpeechRecognition.ts`
+    declares the minimal shape it touches rather than pulling in
+    `@types/dom-speech-recognition`. `VoiceTranscript` composes mic +
+    editable transcript + a caller-supplied `onTransform(text)` model call,
+    keeping the pre-transform text for a one-click undo. Unlike `Button`'s
+    `swiss-primary` variant, the violet AI accent uses stock Tailwind
+    colors, so it needs no tokens from the consuming app's theme.
 - `packages/ui/demo/` — same pattern as `packages/datagrid/demo`: a Vite
   app aliasing `@bmsuisse/ui` straight to `src/index.ts`, using the same
   reference-app-derived Tailwind v4 tokens, for visual QA.

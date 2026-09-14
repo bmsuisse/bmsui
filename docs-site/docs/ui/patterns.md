@@ -241,3 +241,72 @@ caller. Pass `expanded` to square its bottom corners when a results panel is
 anchored directly beneath it, and `trailingSlot` for extras like a mic
 button. For an always-visible filter input instead of an icon-triggered
 overlay, use `SearchBar`.
+
+### `AiButton` / `AiExplainButton`
+
+The "do something with AI" affordance: a sparkle-accented button with a
+built-in in-flight state, in three tones (`solid` gradient CTA, `subtle`
+tinted chip, `ghost` inline action). It wraps `Button`, so every other
+Button prop still applies.
+
+```tsx
+<AiButton tone="solid" loading={isGenerating} onClick={generate}>
+  Generate description
+</AiButton>
+
+<AiButton tone="subtle" icon={Wand2}>Rewrite</AiButton>
+```
+
+`AiExplainButton` is the "what am I looking at?" case — a sparkle button
+next to a KPI, a chart or a form field that opens a popover and asks the
+caller's model to explain it. `onExplain` runs the first time the popover
+opens (not on mount, so nothing is spent on a button nobody clicks) and
+returns any node, so an explanation can be prose, a list, or a small
+rendered breakdown. Failures show inline with a "Try again" button.
+
+```tsx
+<AiExplainButton
+  title="Why is revenue up?"
+  onExplain={() => api.explain({ metric: "revenue", window: "30d" })}
+/>
+```
+
+Both use Tailwind's stock `violet-*` palette rather than theme tokens, so
+they need no setup in the consuming app (unlike `Button`'s `swiss-primary`
+variant, which assumes `--color-swiss-primary`).
+
+### `VoiceInputButton` / `VoiceTranscript` / `useSpeechRecognition`
+
+Dictation, on the browser's built-in `SpeechRecognition` — no API key, no
+audio upload, no extra dependency. `VoiceInputButton` is a microphone
+button that pulses while listening and reports each finalized chunk of
+speech:
+
+```tsx
+<VoiceInputButton
+  lang="de-CH"
+  onTranscript={(text) => setNote((v) => (v ? `${v} ${text}` : text))}
+/>
+```
+
+Where the API is missing (Firefox, most mobile browsers) the button renders
+disabled with a crossed-out mic and an explanatory `title` rather than
+disappearing, so the layout doesn't shift between browsers. Check
+`useSpeechRecognition().supported` if you'd rather branch yourself.
+
+`VoiceTranscript` is the composed workflow: dictate into an editable
+transcript, then hand it to a model and swap in the result — with one-click
+undo, since a model rewriting your own words is exactly where you want an
+escape hatch. It's controlled (like `SearchBar`), and `onTransform` can be
+async; a rejection surfaces inline and leaves the transcript untouched.
+
+```tsx
+<VoiceTranscript
+  value={note}
+  onChange={setNote}
+  onTransform={(text) => api.rewrite(text)}
+  transformLabel="Clean up with AI"
+/>
+```
+
+Omit `onTransform` for plain dictation without the AI action.

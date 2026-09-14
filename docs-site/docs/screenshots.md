@@ -19,6 +19,16 @@ and [patterns](/ui/patterns), light and dark:
   <img src="/bmsui/img/screenshots/ui-dark.png" alt="@bmsuisse/ui demo, dark mode" style={{flex: '1 1 320px', maxWidth: '100%', border: '1px solid var(--ifm-color-emphasis-300)', borderRadius: '8px'}} />
 </div>
 
+AI actions — `AiButton` in its three tones and `AiExplainButton`'s lazily
+loaded popover:
+
+<img src="/bmsui/img/screenshots/ui-ai.png" alt="AiButton and AiExplainButton demo" style={{maxWidth: '100%', border: '1px solid var(--ifm-color-emphasis-300)', borderRadius: '8px'}} />
+
+Voice input — `VoiceInputButton` next to a field, and `VoiceTranscript`'s
+dictate → edit → transform-with-AI box:
+
+<img src="/bmsui/img/screenshots/ui-voice.png" alt="VoiceInputButton and VoiceTranscript demo" style={{maxWidth: '100%', border: '1px solid var(--ifm-color-emphasis-300)', borderRadius: '8px'}} />
+
 ## @bmsuisse/datagrid
 
 The orders grid — sortable/filterable columns, a filter row, and the column
