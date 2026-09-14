@@ -118,7 +118,7 @@ export function Sidebar({
                   type="button"
                   onClick={() => onCollapsedChange(!collapsed)}
                   aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   {collapsed ? (
                     <PanelLeftOpen className="h-4 w-4" aria-hidden />

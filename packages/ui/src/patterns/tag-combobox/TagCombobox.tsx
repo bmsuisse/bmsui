@@ -253,7 +253,7 @@ export function TagCombobox({
                 <button
                   type="button"
                   aria-label={`Remove ${option.label}`}
-                  className="rounded-full p-0.5 hover:bg-accent hover:text-accent-foreground"
+                  className="rounded-full p-0.5 hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   onClick={(event) => {
                     event.stopPropagation();
                     removeValue(option.value);
