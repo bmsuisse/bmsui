@@ -320,7 +320,8 @@ logic above, which already had its own extraction). Structure:
     `VoiceTranscript` and the `useSpeechRecognition` hook behind the last
     two. The "do something with AI" affordances several apps were about to
     hand-roll separately: a sparkle-accented button with a built-in
-    in-flight state (`AiButton`, three tones on top of `Button`), a lazily
+    in-flight state (`AiButton`, a `forwardRef` wrapper over `Button`'s
+    `ai`/`ai-subtle`/`ai-ghost` variants), a lazily
     loading explain-this popover (`AiExplainButton` — `onExplain` fires on
     first open, not mount, and a rejection renders inline with a retry),
     and dictation. Dictation is the browser's own `SpeechRecognition`
@@ -334,9 +335,17 @@ logic above, which already had its own extraction). Structure:
     declares the minimal shape it touches rather than pulling in
     `@types/dom-speech-recognition`. `VoiceTranscript` composes mic +
     editable transcript + a caller-supplied `onTransform(text)` model call,
-    keeping the pre-transform text for a one-click undo. Unlike `Button`'s
-    `swiss-primary` variant, the violet AI accent uses stock Tailwind
-    colors, so it needs no tokens from the consuming app's theme.
+    keeping the pre-transform text for a one-click undo; transform and
+    mic errors render as an `AlertBox` (mic codes via `describeSpeechError`,
+    which maps `not-allowed` etc. to a sentence and drops `aborted`).
+    The violet accent lives in `buttonVariants` itself, not in the pattern,
+    and is a fixed Tailwind palette for the same reason `Badge`'s `warning`
+    and AlertBox/StatusBadge's warning/info/success tones are: the shared
+    theme has no such token, and unlike `swiss-primary` these must work in
+    a consuming app with zero setup. `VoiceInputButton`'s listening state
+    reuses AlertBox's `destructive` error tint and pulses only the mic
+    icon (stock `animate-pulse` + `motion-reduce:animate-none`, no
+    `tailwindcss-animate`).
 - `packages/ui/demo/` — same pattern as `packages/datagrid/demo`: a Vite
   app aliasing `@bmsuisse/ui` straight to `src/index.ts`, using the same
   reference-app-derived Tailwind v4 tokens, for visual QA.

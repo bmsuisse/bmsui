@@ -244,25 +244,27 @@ overlay, use `SearchBar`.
 
 ### `AiButton` / `AiExplainButton`
 
-The "do something with AI" affordance: a sparkle-accented button with a
-built-in in-flight state, in three tones (`solid` gradient CTA, `subtle`
-tinted chip, `ghost` inline action). It wraps `Button`, so every other
-Button prop still applies.
+The "do something with AI" affordance: a sparkle icon plus a built-in
+in-flight state on top of `Button`'s three violet `ai` variants (`ai` solid
+CTA, `ai-subtle` tinted chip — the default — and `ai-ghost` inline action).
+Every other `Button` prop (`size`, `asChild`, `data-testid`, …) still
+applies, and the ref is forwarded.
 
 ```tsx
-<AiButton tone="solid" loading={isGenerating} onClick={generate}>
+<AiButton variant="ai" loading={isGenerating} onClick={generate}>
   Generate description
 </AiButton>
 
-<AiButton tone="subtle" icon={Wand2}>Rewrite</AiButton>
+<AiButton icon={Wand2}>Rewrite</AiButton>
 ```
 
-`AiExplainButton` is the "what am I looking at?" case — a sparkle button
-next to a KPI, a chart or a form field that opens a popover and asks the
+`AiExplainButton` is the "what am I looking at?" case — an `AiButton` next
+to a KPI, a chart or a form field that opens a popover and asks the
 caller's model to explain it. `onExplain` runs the first time the popover
 opens (not on mount, so nothing is spent on a button nobody clicks) and
 returns any node, so an explanation can be prose, a list, or a small
-rendered breakdown. Failures show inline with a "Try again" button.
+rendered breakdown. A rejection renders as an `AlertBox` with a "Try again"
+button.
 
 ```tsx
 <AiExplainButton
@@ -271,16 +273,18 @@ rendered breakdown. Failures show inline with a "Try again" button.
 />
 ```
 
-Both use Tailwind's stock `violet-*` palette rather than theme tokens, so
-they need no setup in the consuming app (unlike `Button`'s `swiss-primary`
-variant, which assumes `--color-swiss-primary`).
+The `ai` variants use a fixed Tailwind palette (violet), the same choice as
+`Badge`'s `warning` and `AlertBox`'s warning/info/success tones, since the
+base shadcn/ui theme has no AI-accent token — so unlike `swiss-primary`
+they need no setup in the consuming app. Use `<Button variant="ai">`
+directly when you want the accent without the sparkle/loading behaviour.
 
 ### `VoiceInputButton` / `VoiceTranscript` / `useSpeechRecognition`
 
 Dictation, on the browser's built-in `SpeechRecognition` — no API key, no
-audio upload, no extra dependency. `VoiceInputButton` is a microphone
-button that pulses while listening and reports each finalized chunk of
-speech:
+audio upload, no extra dependency. `VoiceInputButton` is an `outline`
+microphone button that takes the `destructive` tint while listening and
+reports each finalized chunk of speech:
 
 ```tsx
 <VoiceInputButton
@@ -293,12 +297,17 @@ Where the API is missing (Firefox, most mobile browsers) the button renders
 disabled with a crossed-out mic and an explanatory `title` rather than
 disappearing, so the layout doesn't shift between browsers. Check
 `useSpeechRecognition().supported` if you'd rather branch yourself.
+`onError` receives the recognizer's raw code (`"not-allowed"`,
+`"no-speech"`, …); `describeSpeechError(code)` turns it into a sentence a
+user can act on, or `null` for the `aborted` code every programmatic stop
+emits.
 
 `VoiceTranscript` is the composed workflow: dictate into an editable
 transcript, then hand it to a model and swap in the result — with one-click
 undo, since a model rewriting your own words is exactly where you want an
 escape hatch. It's controlled (like `SearchBar`), and `onTransform` can be
-async; a rejection surfaces inline and leaves the transcript untouched.
+async; a rejection (or a mic error) renders as an `AlertBox` under the
+buttons and leaves the transcript untouched.
 
 ```tsx
 <VoiceTranscript

@@ -1086,46 +1086,55 @@ function AiActionsDemo(): ReactElement {
   const [summarizing, setSummarizing] = useState(false);
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <AiButton tone="solid">Generate description</AiButton>
-        <AiButton tone="subtle" icon={Wand2}>
-          Rewrite
-        </AiButton>
-        <AiButton tone="ghost" icon={BookOpen}>
-          Suggest tags
-        </AiButton>
-        <AiButton
-          tone="solid"
-          loading={summarizing}
-          onClick={() => {
-            setSummarizing(true);
-            void sleep(1200).then(() => setSummarizing(false));
-          }}
-        >
-          Summarize (click me)
-        </AiButton>
-      </div>
-      <div className="flex items-center gap-3 rounded-lg border border-border p-4">
-        <div>
-          <p className="text-2xl font-semibold">CHF 2.4M</p>
-          <p className="text-xs text-muted-foreground">Revenue, last 30 days</p>
+    <div className="flex flex-col gap-6">
+      <div>
+        <p className="mb-2 text-xs font-medium text-muted-foreground">
+          AiButton — Button's three ai variants plus a built-in in-flight state (click Summarize).
+        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <AiButton variant="ai">Generate description</AiButton>
+          <AiButton icon={Wand2}>Rewrite</AiButton>
+          <AiButton variant="ai-ghost" icon={BookOpen}>
+            Suggest tags
+          </AiButton>
+          <AiButton
+            variant="ai"
+            loading={summarizing}
+            onClick={() => {
+              setSummarizing(true);
+              void sleep(1200).then(() => setSummarizing(false));
+            }}
+          >
+            Summarize
+          </AiButton>
         </div>
-        <AiExplainButton
-          title="Why is revenue up?"
-          onExplain={async () => {
-            await sleep(800);
-            return (
-              <>
-                <p>Revenue is 18% above the previous 30 days, driven by:</p>
-                <ul className="mt-2 list-disc pl-4">
-                  <li>Two Q4 framework renewals (CHF 310k combined)</li>
-                  <li>Higher average order value in the insulation category</li>
-                </ul>
-              </>
-            );
-          }}
-        />
+      </div>
+
+      <div>
+        <p className="mb-2 text-xs font-medium text-muted-foreground">
+          AiExplainButton — a "why?" affordance next to a metric; the explanation loads on first open, not on mount.
+        </p>
+        <div className="flex items-center gap-4 rounded-xl border border-border bg-card p-4">
+          <div>
+            <p className="text-2xl font-semibold tabular-nums">CHF 2.4M</p>
+            <p className="text-xs text-muted-foreground">Revenue, last 30 days</p>
+          </div>
+          <AiExplainButton
+            title="Why is revenue up?"
+            onExplain={async () => {
+              await sleep(800);
+              return (
+                <>
+                  <p>Revenue is 18% above the previous 30 days, driven by:</p>
+                  <ul className="mt-2 list-disc pl-4">
+                    <li>Two Q4 framework renewals (CHF 310k combined)</li>
+                    <li>Higher average order value in the insulation category</li>
+                  </ul>
+                </>
+              );
+            }}
+          />
+        </div>
       </div>
     </div>
   );
@@ -1141,8 +1150,7 @@ function VoiceDemo(): ReactElement {
     <div className="flex w-full max-w-xl flex-col gap-6">
       <div>
         <p className="mb-2 text-xs font-medium text-muted-foreground">
-          VoiceInputButton — dictation next to any field, via the browser's built-in speech
-          recognition (disabled where the browser has none).
+          VoiceInputButton — dictation next to any field via the browser's own speech recognition; disabled (not hidden) where there is none.
         </p>
         <div className="flex items-center gap-2">
           <Input
@@ -1153,10 +1161,10 @@ function VoiceDemo(): ReactElement {
           <VoiceInputButton onTranscript={(text) => setQuick((v) => (v ? `${v} ${text}` : text))} />
         </div>
       </div>
+
       <div>
         <p className="mb-2 text-xs font-medium text-muted-foreground">
-          VoiceTranscript — dictate, edit the transcript, then hand it to a model and undo if the
-          rewrite isn't better.
+          VoiceTranscript — dictate, edit, then hand the text to a model; Undo if the rewrite isn't better.
         </p>
         <VoiceTranscript value={note} onChange={setNote} onTransform={fakeModel} />
       </div>

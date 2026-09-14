@@ -1,10 +1,11 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { useState } from "react";
+import { createRef, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AiButton } from "../../../src/patterns/ai/AiButton";
 import { AiExplainButton } from "../../../src/patterns/ai/AiExplainButton";
 import { VoiceInputButton } from "../../../src/patterns/ai/VoiceInputButton";
 import { VoiceTranscript } from "../../../src/patterns/ai/VoiceTranscript";
+import { describeSpeechError } from "../../../src/patterns/ai/useSpeechRecognition";
 
 // jsdom has no Web Speech API, so the tests that need one install this fake
 // and drive it by hand. `instances` lets a test reach the recognizer the
@@ -63,12 +64,29 @@ describe("AiButton", () => {
     fireEvent.click(screen.getByRole("button", { name: /Summarize/ }));
     expect(onClick).toHaveBeenCalledOnce();
   });
+
+  it("renders through Button's ai variants and forwards the ref", () => {
+    const ref = createRef<HTMLButtonElement>();
+    const { rerender } = render(
+      <AiButton ref={ref} data-testid="ai" className="mt-1">
+        Summarize
+      </AiButton>,
+    );
+    expect(ref.current).toBe(screen.getByTestId("ai"));
+    expect(ref.current).toHaveClass("bg-violet-500/10", "mt-1");
+    rerender(<AiButton variant="ai">Summarize</AiButton>);
+    expect(screen.getByRole("button")).toHaveClass("bg-violet-600");
+  });
 });
 
 describe("VoiceInputButton", () => {
   it("renders disabled when the browser has no speech recognition", () => {
     render(<VoiceInputButton onTranscript={() => {}} />);
-    expect(screen.getByRole("button", { name: /isn't available/i })).toBeDisabled();
+    const button = screen.getByRole("button", { name: /isn't available/i });
+    expect(button).toBeDisabled();
+    expect(button).not.toHaveAttribute("aria-pressed");
+    // Explanation on the wrapper: a disabled button has pointer-events-none, so its own title never shows.
+    expect(button.parentElement).toHaveAttribute("title", expect.stringMatching(/isn't available/i));
   });
 
   it("starts listening on click and reports finalized chunks", () => {
@@ -80,10 +98,12 @@ describe("VoiceInputButton", () => {
     const recognition = instances[0]!;
     expect(recognition.started).toBe(true);
     expect(recognition.lang).toBe("de-CH");
-    expect(screen.getByRole("button", { name: "Stop dictation" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
+    const listening = screen.getByRole("button", { name: "Stop dictation" });
+    expect(listening).toHaveAttribute("aria-pressed", "true");
+    // Recording state = destructive tint on the button, pulse on the icon only.
+    expect(listening).toHaveClass("border-destructive");
+    expect(listening).not.toHaveClass("animate-pulse");
+    expect(listening.querySelector("svg")).toHaveClass("animate-pulse");
 
     act(() => recognition.emitFinal("  hello world  "));
     expect(onTranscript).toHaveBeenCalledWith("hello world");
@@ -106,6 +126,20 @@ describe("VoiceInputButton", () => {
     fireEvent.click(screen.getByRole("button", { name: "Start dictation" }));
     act(() => instances[0]!.onerror?.({ error: "not-allowed" }));
     expect(onError).toHaveBeenCalledWith("not-allowed");
+  });
+
+  it("forwards the ref and extra button props", () => {
+    const ref = createRef<HTMLButtonElement>();
+    render(<VoiceInputButton ref={ref} onTranscript={() => {}} data-testid="mic" />);
+    expect(ref.current).toBe(screen.getByTestId("mic"));
+  });
+});
+
+describe("describeSpeechError", () => {
+  it("turns recognizer codes into actionable text and swallows aborts", () => {
+    expect(describeSpeechError("not-allowed")).toMatch(/microphone access/i);
+    expect(describeSpeechError("aborted")).toBeNull();
+    expect(describeSpeechError("something-new")).toBe("Speech recognition failed (something-new).");
   });
 });
 
@@ -147,6 +181,21 @@ describe("VoiceTranscript", () => {
   it("hides the transform button when no onTransform is given", () => {
     render(<ControlledTranscript />);
     expect(screen.queryByRole("button", { name: /Transform with AI/ })).not.toBeInTheDocument();
+  });
+
+  it("shows a mic error as a sentence, not the raw recognizer code", () => {
+    installSpeechApi();
+    render(<ControlledTranscript />);
+    fireEvent.click(screen.getByRole("button", { name: /Dictate/ }));
+    act(() => instances[0]!.onerror?.({ error: "not-allowed" }));
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent(/microphone access is blocked/i);
+    expect(alert).not.toHaveTextContent("not-allowed");
+  });
+
+  it("spreads root attributes like data-testid", () => {
+    render(<VoiceTranscript value="" onChange={() => {}} data-testid="transcript" />);
+    expect(screen.getByTestId("transcript")).toContainElement(screen.getByRole("textbox"));
   });
 });
 

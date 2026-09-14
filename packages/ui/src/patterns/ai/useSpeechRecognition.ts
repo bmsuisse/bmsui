@@ -35,6 +35,30 @@ function getCtor(): SpeechRecognitionCtor | undefined {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition;
 }
 
+/**
+ * Turns a recognizer error code into a sentence a user can act on, or `null`
+ * for codes that aren't the user's problem (`aborted` fires on every
+ * programmatic stop/unmount and would otherwise flash an alert on each one).
+ * `onError` still receives the raw code, for callers who want to branch.
+ */
+export function describeSpeechError(code: string): string | null {
+  switch (code) {
+    case "aborted":
+      return null;
+    case "not-allowed":
+    case "service-not-allowed":
+      return "Microphone access is blocked. Allow it in the browser's site settings and try again.";
+    case "audio-capture":
+      return "No microphone was found.";
+    case "no-speech":
+      return "No speech was detected.";
+    case "network":
+      return "Speech recognition needs a network connection.";
+    default:
+      return `Speech recognition failed (${code}).`;
+  }
+}
+
 export interface UseSpeechRecognitionOptions {
   /** BCP-47 tag passed to the recognizer, e.g. `"de-CH"`. @default the document language, else "en-US" */
   lang?: string;

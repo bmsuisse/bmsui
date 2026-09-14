@@ -1,13 +1,15 @@
 import { Undo2, Wand2 } from "lucide-react";
-import type { ReactElement } from "react";
+import type { HTMLAttributes, ReactElement } from "react";
 import { useState } from "react";
 import { Textarea } from "../../primitives/textarea";
 import { Button } from "../../primitives/button";
 import { cn } from "../../lib/utils";
+import { AlertBox } from "../alert-box/AlertBox";
 import { AiButton } from "./AiButton";
 import { VoiceInputButton } from "./VoiceInputButton";
+import { describeSpeechError } from "./useSpeechRecognition";
 
-export interface VoiceTranscriptProps {
+export interface VoiceTranscriptProps extends Omit<HTMLAttributes<HTMLDivElement>, "onChange"> {
   /** The transcript. Controlled, like `SearchBar` — the caller owns the text. */
   value: string;
   onChange: (value: string) => void;
@@ -23,6 +25,7 @@ export interface VoiceTranscriptProps {
   placeholder?: string;
   /** BCP-47 tag for dictation, e.g. `"de-CH"`. Defaults to the document language. */
   lang?: string;
+  /** @default 4 */
   rows?: number;
   disabled?: boolean;
   className?: string;
@@ -44,6 +47,7 @@ export function VoiceTranscript({
   rows = 4,
   disabled,
   className,
+  ...props
 }: VoiceTranscriptProps): ReactElement {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -76,18 +80,19 @@ export function VoiceTranscript({
   };
 
   return (
-    <div className={cn("flex flex-col gap-2", className)}>
+    <div className={cn("flex flex-col gap-2", className)} {...props}>
       <Textarea
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         rows={rows}
         disabled={disabled || loading}
+        aria-busy={loading || undefined}
       />
       <div className="flex flex-wrap items-center gap-2">
         <VoiceInputButton
           onTranscript={append}
-          onError={setError}
+          onError={(code) => setError(describeSpeechError(code))}
           lang={lang}
           label="Dictate"
           size="sm"
@@ -96,7 +101,7 @@ export function VoiceTranscript({
         />
         {onTransform ? (
           <AiButton
-            tone="solid"
+            variant="ai"
             size="sm"
             icon={Wand2}
             loading={loading}
@@ -108,16 +113,18 @@ export function VoiceTranscript({
         ) : null}
         {previous !== null && !loading ? (
           <Button type="button" variant="ghost" size="sm" onClick={undo}>
-            <Undo2 className="h-4 w-4" aria-hidden={true} />
+            <Undo2 className="h-4 w-4" aria-hidden="true" />
             Undo
           </Button>
         ) : null}
-        {error ? (
-          <span role="alert" className="text-sm text-destructive">
-            {error}
-          </span>
-        ) : null}
       </div>
+      {error ? (
+        // AlertBox has no `role` prop, so the live region wraps it; same shape
+        // a consuming app's own form errors take.
+        <div role="alert">
+          <AlertBox variant="error">{error}</AlertBox>
+        </div>
+      ) : null}
     </div>
   );
 }

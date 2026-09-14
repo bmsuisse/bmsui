@@ -24,6 +24,16 @@ export const buttonVariants = cva(
           "bg-swiss-primary text-swiss-primary-foreground font-semibold shadow-sm hover:bg-swiss-primary-hover hover:-translate-y-px active:translate-y-px",
         "swiss-secondary":
           "border border-input bg-background font-semibold text-foreground shadow-sm hover:bg-accent hover:-translate-y-px active:translate-y-px",
+        // Violet "AI action" accent, in the same three weights as default/outline/ghost.
+        // Fixed Tailwind palette rather than a token — same choice as Badge's `warning`
+        // and AlertBox/StatusBadge's warning/info/success tones: the shared theme has no
+        // `ai` color, and unlike `swiss-primary` these should work in a consuming app with
+        // zero setup. Tints go through `violet-500/N` (not per-mode `violet-50`/`-950`
+        // shades) so one class list reads correctly on both light and dark surfaces.
+        ai: "bg-violet-600 text-white shadow-sm hover:bg-violet-600/90",
+        "ai-subtle":
+          "border border-violet-500/30 bg-violet-500/10 text-violet-700 hover:bg-violet-500/20 dark:text-violet-300",
+        "ai-ghost": "text-violet-700 hover:bg-violet-500/10 dark:text-violet-300",
       },
       size: {
         default: "h-9 px-3",
