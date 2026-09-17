@@ -150,6 +150,9 @@ export type { SidebarNavProps, SidebarProps } from "./patterns/sidebar/Sidebar";
 export { Sidebar, SidebarNav } from "./patterns/sidebar/Sidebar";
 export { useSidebarCollapsed } from "./patterns/sidebar/context";
 
+export type { StepperProps, StepperStep } from "./patterns/stepper/Stepper";
+export { Stepper } from "./patterns/stepper/Stepper";
+
 // --- shared utility -----------------------------------------------------------
 export { cn } from "./lib/utils";
 export { useMediaQuery } from "./lib/useMediaQuery";

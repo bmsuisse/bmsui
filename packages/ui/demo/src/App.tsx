@@ -56,6 +56,7 @@ import {
   Sidebar,
   Skeleton,
   StatusBadge,
+  Stepper,
   TagCombobox,
   Textarea,
   Tooltip,
@@ -710,6 +711,10 @@ export function App(): ReactElement {
             <SidebarDemo />
           </Section>
 
+          <Section title="Stepper">
+            <StepperDemo />
+          </Section>
+
           <Section title="KpiCard">
             <KpiCardDemo />
           </Section>
@@ -902,6 +907,49 @@ function SidebarDemo(): ReactElement {
       </Sidebar>
       <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
         Drag the sidebar's right edge to resize, or use the header button to rail-collapse it.
+      </div>
+    </div>
+  );
+}
+
+const stepperSteps = [
+  { n: 1, label: "Type", phase: "Setup" },
+  { n: 2, label: "Details", phase: "Setup" },
+  { n: 3, label: "Pricing", phase: "Review" },
+  { n: 4, label: "Confirm", phase: "Review" },
+  { n: 5, label: "Done", phase: "Finish" },
+];
+
+function StepperDemo(): ReactElement {
+  const [step, setStep] = useState(1);
+  const [maxStep, setMaxStep] = useState(1);
+
+  return (
+    <div className="flex w-full flex-col gap-4">
+      <Stepper
+        step={step}
+        maxStep={maxStep}
+        onNavigate={setStep}
+        onNew={() => {
+          setStep(1);
+          setMaxStep(1);
+        }}
+        newLabel="Start over"
+        steps={stepperSteps}
+      />
+      <div>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={step >= stepperSteps.length}
+          onClick={() => {
+            const next = Math.min(step + 1, stepperSteps.length);
+            setStep(next);
+            setMaxStep((m) => Math.max(m, next));
+          }}
+        >
+          Next
+        </Button>
       </div>
     </div>
   );
