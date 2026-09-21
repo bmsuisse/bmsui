@@ -317,9 +317,9 @@ logic above, which already had its own extraction). Structure:
     uses a plain `overflow-y-auto` div instead, matching what both source
     apps already did.
   - `ai/` — `AiButton`, `AiExplainButton`, `VoiceInputButton`,
-    `VoiceTranscript` and the `useSpeechRecognition` hook behind the last
-    two. The "do something with AI" affordances several apps were about to
-    hand-roll separately: a sparkle-accented button with a built-in
+    `VoiceTranscript` (v0.16.0) and the `useSpeechRecognition` hook behind
+    the last two. The "do something with AI" affordances several apps were
+    about to hand-roll separately: a sparkle-accented button with a built-in
     in-flight state (`AiButton`, a `forwardRef` wrapper over `Button`'s
     `ai`/`ai-subtle`/`ai-ghost` variants), a lazily
     loading explain-this popover (`AiExplainButton` — `onExplain` fires on
