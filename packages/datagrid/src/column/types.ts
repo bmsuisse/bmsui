@@ -194,6 +194,13 @@ export type BooleanColumn<TRow> = BaseColumn<TRow> & { type: "boolean" };
 export interface EnumOption {
   value: string;
   label: string;
+  /**
+   * Optional group label. Options sharing the same `group` are clustered
+   * together under a group header in `EnumFilter`'s dropdown, with a
+   * checkbox that selects/deselects every option in that group at once.
+   * Options with no `group` render ungrouped, above any named groups.
+   */
+  group?: string;
 }
 
 export type EnumColumn<TRow> = BaseColumn<TRow> & {

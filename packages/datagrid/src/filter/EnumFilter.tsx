@@ -1,7 +1,7 @@
 import { FunnelIcon } from "@heroicons/react/24/outline";
 import type { ReactElement } from "react";
 import { useMemo, useState } from "react";
-import type { EnumColumn } from "../column/types";
+import type { EnumColumn, EnumOption } from "../column/types";
 import { Button } from "../components/ui/button";
 import { Checkbox } from "../components/ui/checkbox";
 import { Input } from "../components/ui/input";
@@ -21,6 +21,38 @@ function toggle(selected: string[], optionValue: string): string[] {
     : [...selected, optionValue];
 }
 
+interface OptionGroup {
+  /** undefined for the ungrouped section, which is always listed first. */
+  group: string | undefined;
+  options: EnumOption[];
+}
+
+/**
+ * Buckets `options` by `option.group`, preserving each group's first-seen
+ * order and each option's original order within its group — same idiom as
+ * `column-selector/visibility.ts`'s `groupColumns`. The ungrouped section is
+ * always first, regardless of where ungrouped options fall in the input.
+ */
+function groupOptions(options: EnumOption[]): OptionGroup[] {
+  const ungrouped: EnumOption[] = [];
+  const named = new Map<string, EnumOption[]>();
+
+  for (const option of options) {
+    if (option.group === undefined) {
+      ungrouped.push(option);
+      continue;
+    }
+    const bucket = named.get(option.group);
+    if (bucket) bucket.push(option);
+    else named.set(option.group, [option]);
+  }
+
+  const result: OptionGroup[] = [];
+  if (ungrouped.length > 0) result.push({ group: undefined, options: ungrouped });
+  for (const [group, groupedOptions] of named) result.push({ group, options: groupedOptions });
+  return result;
+}
+
 /**
  * Default filter widget for `type: "enum"` columns: a single Excel-style
  * checkbox list, regardless of how many `column.options` there are (no
@@ -32,6 +64,11 @@ function toggle(selected: string[], optionValue: string): string[] {
  * - a tri-state "Select all" checkbox acts on whatever subset is currently
  *   visible after that search, not the full option set — matching Excel's
  *   own column-filter behavior ("select all of what's shown").
+ * - options that share an `EnumOption.group` are clustered under a group
+ *   header with its own tri-state checkbox, letting a whole group be
+ *   selected/deselected in one click; the header's state and toggle are
+ *   scoped to that group's currently-*visible* options, same as "Select
+ *   all". Ungrouped options render first, with no header.
  * - every visible option gets its own plain checkbox + label row (a real
  *   shadcn `Checkbox`, not a menu item), inside a scrollable list so long
  *   option lists don't blow up the popover's height.
@@ -60,6 +97,8 @@ export function EnumFilter<TRow>({
     return column.options.filter((option) => option.label.toLowerCase().includes(term));
   }, [column.options, search]);
 
+  const visibleGroups = useMemo(() => groupOptions(visibleOptions), [visibleOptions]);
+
   function emit(next: string[]): void {
     onChange(next.length === 0 ? undefined : { field: column.id, operator: "in", value: next });
   }
@@ -77,6 +116,17 @@ export function EnumFilter<TRow>({
     }
     const next = new Set(selected);
     for (const v of visibleValues) next.add(v);
+    emit([...next]);
+  }
+
+  /** Selects/deselects every currently-*visible* option within a single group. */
+  function toggleGroup(groupValues: string[], allSelected: boolean): void {
+    if (allSelected) {
+      emit(selected.filter((v) => !groupValues.includes(v)));
+      return;
+    }
+    const next = new Set(selected);
+    for (const v of groupValues) next.add(v);
     emit([...next]);
   }
 
@@ -100,21 +150,45 @@ export function EnumFilter<TRow>({
         Select all
       </label>
       <div className="flex max-h-60 flex-col gap-1 overflow-y-auto">
-        {visibleOptions.length === 0 ? (
+        {visibleGroups.length === 0 ? (
           <p className="py-2 text-center text-sm text-muted-foreground">No matches.</p>
         ) : (
-          visibleOptions.map((option) => (
-            <label
-              key={option.value}
-              className="flex items-center gap-2 rounded-sm px-1 py-1 text-sm hover:bg-accent hover:text-accent-foreground"
-            >
-              <Checkbox
-                checked={selected.includes(option.value)}
-                onCheckedChange={() => emit(toggle(selected, option.value))}
-              />
-              {option.label}
-            </label>
-          ))
+          visibleGroups.map((optionGroup) => {
+            const groupValues = optionGroup.options.map((option) => option.value);
+            const groupSelectedCount = groupValues.filter((v) => selected.includes(v)).length;
+            const allGroupSelected = groupSelectedCount === groupValues.length;
+            const someGroupSelected = groupSelectedCount > 0 && !allGroupSelected;
+
+            return (
+              <div key={optionGroup.group ?? "__ungrouped"}>
+                {optionGroup.group !== undefined && (
+                  <label className="flex items-center gap-2 rounded-sm px-1 py-1 text-xs font-medium uppercase tracking-wide text-muted-foreground hover:bg-accent hover:text-accent-foreground">
+                    <Checkbox
+                      checked={someGroupSelected ? "indeterminate" : allGroupSelected}
+                      onCheckedChange={() => toggleGroup(groupValues, allGroupSelected)}
+                      aria-label={`Select all in ${optionGroup.group}`}
+                    />
+                    {optionGroup.group}
+                  </label>
+                )}
+                {optionGroup.options.map((option) => (
+                  <label
+                    key={option.value}
+                    className={cn(
+                      "flex items-center gap-2 rounded-sm px-1 py-1 text-sm hover:bg-accent hover:text-accent-foreground",
+                      optionGroup.group !== undefined && "pl-5",
+                    )}
+                  >
+                    <Checkbox
+                      checked={selected.includes(option.value)}
+                      onCheckedChange={() => emit(toggle(selected, option.value))}
+                    />
+                    {option.label}
+                  </label>
+                ))}
+              </div>
+            );
+          })
         )}
       </div>
     </div>
