@@ -83,5 +83,5 @@ export const DialogFooter = ({
   className,
   ...props
 }: HTMLAttributes<HTMLDivElement>): ReactElement => (
-  <div className={cn("flex justify-end gap-2", className)} {...props} />
+  <div className={cn("mt-4 flex justify-end gap-2", className)} {...props} />
 );

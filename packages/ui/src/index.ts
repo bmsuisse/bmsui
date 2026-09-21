@@ -91,10 +91,14 @@ export type { ModalProps } from "./patterns/modal/Modal";
 export { Modal } from "./patterns/modal/Modal";
 export type { ConfirmDialogProps } from "./patterns/modal/ConfirmDialog";
 export { ConfirmDialog } from "./patterns/modal/ConfirmDialog";
+export type { DialogActionsProps } from "./patterns/modal/DialogActions";
+export { DialogActions } from "./patterns/modal/DialogActions";
 export type { FormModalProps } from "./patterns/modal/FormModal";
 export { FormModal } from "./patterns/modal/FormModal";
 export type { ResponsivePanelProps, ResponsivePanelSize } from "./patterns/modal/ResponsivePanel";
 export { ResponsivePanel } from "./patterns/modal/ResponsivePanel";
+export type { QuestionDialogAction, QuestionDialogProps } from "./patterns/modal/QuestionDialog";
+export { QuestionDialog } from "./patterns/modal/QuestionDialog";
 
 export type { FormFieldProps } from "./patterns/form-field/FormField";
 export { FormField } from "./patterns/form-field/FormField";
@@ -156,3 +160,5 @@ export { Stepper } from "./patterns/stepper/Stepper";
 // --- shared utility -----------------------------------------------------------
 export { cn } from "./lib/utils";
 export { useMediaQuery } from "./lib/useMediaQuery";
+export type { ConfirmButtonPlacement } from "./lib/platform";
+export { getConfirmButtonPlacement, isWindowsPlatform } from "./lib/platform";

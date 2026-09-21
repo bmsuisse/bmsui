@@ -38,6 +38,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
+  QuestionDialog,
   ResponsivePanel,
   SearchBar,
   SearchPanel,
@@ -119,6 +120,7 @@ export function App(): ReactElement {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [questionOpen, setQuestionOpen] = useState(false);
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [responsivePanelOpen, setResponsivePanelOpen] = useState(false);
   const [responsivePanelSize, setResponsivePanelSize] = useState<"sm" | "md" | "lg" | "xl">("lg");
@@ -307,6 +309,20 @@ export function App(): ReactElement {
                 variant="destructive"
                 confirmLabel="Delete"
                 onConfirm={() => sleep(800)}
+              />
+
+              <Button variant="outline" onClick={() => setQuestionOpen(true)}>
+                Close tab…
+              </Button>
+              <QuestionDialog
+                open={questionOpen}
+                onOpenChange={setQuestionOpen}
+                title="Save changes before closing?"
+                description="Your edits haven't been saved yet."
+                actions={[
+                  { label: "Don't Save", variant: "outline", onClick: () => sleep(400) },
+                  { label: "Save", onClick: () => sleep(800) },
+                ]}
               />
 
               <Button variant="outline" onClick={() => setFormModalOpen(true)}>
