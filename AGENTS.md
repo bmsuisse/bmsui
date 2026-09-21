@@ -324,16 +324,25 @@ logic above, which already had its own extraction). Structure:
     `ai`/`ai-subtle`/`ai-ghost` variants), a lazily
     loading explain-this popover (`AiExplainButton` — `onExplain` fires on
     first open, not mount, and a rejection renders inline with a retry),
-    and dictation. Dictation is the browser's own `SpeechRecognition`
-    (`window.SpeechRecognition ?? window.webkitSpeechRecognition`), not a
-    dependency or a server round-trip — so it's Chromium/Safari-only, and
-    `VoiceInputButton` deliberately renders *disabled* with a crossed-out
-    mic where the API is missing (Firefox, most mobile) rather than hiding
-    itself, to keep layouts stable across browsers; `supported` is exposed
-    on the hook for callers that want to branch themselves. The Web Speech
-    API isn't in TypeScript's DOM lib, so `useSpeechRecognition.ts`
-    declares the minimal shape it touches rather than pulling in
-    `@types/dom-speech-recognition`. `VoiceTranscript` composes mic +
+    and dictation. Dictation defaults to the browser's own
+    `SpeechRecognition` (`window.SpeechRecognition ?? window.webkitSpeechRecognition`),
+    not a dependency or a server round-trip — so it's Chromium/Safari-only by
+    default, and `VoiceInputButton` deliberately renders *disabled* with a
+    crossed-out mic where the API is missing (Firefox, most mobile) rather
+    than hiding itself, to keep layouts stable across browsers; `supported`
+    is exposed on the hook for callers that want to branch themselves.
+    `useSpeechRecognition`'s `engine` option (also on `VoiceInputButton` and
+    `VoiceTranscript`, which just forward it down) swaps that default for
+    any factory satisfying `SpeechRecognitionEngine` — e.g. one piping audio
+    to a server-side transcription API — and passing it makes `supported`
+    unconditionally `true`, since browser-API presence is no longer what
+    "supported" means. `start()` calls the factory fresh each session rather
+    than reusing an instance, matching how `new Ctor()` already worked for
+    the browser engine. The Web Speech API isn't in TypeScript's DOM lib, so
+    `useSpeechRecognition.ts` declares the minimal shape it touches rather
+    than pulling in `@types/dom-speech-recognition` — `SpeechRecognitionEngine`
+    is that same shape, exported so a custom engine can implement it.
+    `VoiceTranscript` composes mic +
     editable transcript + a caller-supplied `onTransform(text)` model call,
     keeping the pre-transform text for a one-click undo; transform and
     mic errors render as an `AlertBox` (mic codes via `describeSpeechError`,

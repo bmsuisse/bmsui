@@ -7,7 +7,7 @@ import { cn } from "../../lib/utils";
 import { AlertBox } from "../alert-box/AlertBox";
 import { AiButton } from "./AiButton";
 import { VoiceInputButton } from "./VoiceInputButton";
-import { describeSpeechError } from "./useSpeechRecognition";
+import { describeSpeechError, type SpeechRecognitionEngineFactory } from "./useSpeechRecognition";
 
 export interface VoiceTranscriptProps extends Omit<HTMLAttributes<HTMLDivElement>, "onChange"> {
   /** The transcript. Controlled, like `SearchBar` — the caller owns the text. */
@@ -25,6 +25,13 @@ export interface VoiceTranscriptProps extends Omit<HTMLAttributes<HTMLDivElement
   placeholder?: string;
   /** BCP-47 tag for dictation, e.g. `"de-CH"`. Defaults to the document language. */
   lang?: string;
+  /**
+   * Overrides what backs dictation — e.g. to stream audio to a server-side
+   * transcription API instead of the browser's on-device `SpeechRecognition`.
+   * Forwarded to `VoiceInputButton`; see `useSpeechRecognition`'s `engine`
+   * option.
+   */
+  engine?: SpeechRecognitionEngineFactory;
   /** @default 4 */
   rows?: number;
   disabled?: boolean;
@@ -44,6 +51,7 @@ export function VoiceTranscript({
   transformLabel = "Transform with AI",
   placeholder = "Speak or type…",
   lang,
+  engine,
   rows = 4,
   disabled,
   className,
@@ -94,6 +102,7 @@ export function VoiceTranscript({
           onTranscript={append}
           onError={(code) => setError(describeSpeechError(code))}
           lang={lang}
+          engine={engine}
           label="Dictate"
           size="sm"
           showInterim

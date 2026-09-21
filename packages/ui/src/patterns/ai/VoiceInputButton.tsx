@@ -2,7 +2,7 @@ import { Mic, MicOff } from "lucide-react";
 import { forwardRef } from "react";
 import { Button, type ButtonProps } from "../../primitives/button";
 import { cn } from "../../lib/utils";
-import { useSpeechRecognition } from "./useSpeechRecognition";
+import { type SpeechRecognitionEngineFactory, useSpeechRecognition } from "./useSpeechRecognition";
 
 export interface VoiceInputButtonProps
   extends Omit<ButtonProps, "onError" | "variant" | "children"> {
@@ -12,6 +12,14 @@ export interface VoiceInputButtonProps
   onError?: (error: string) => void;
   /** BCP-47 tag, e.g. `"de-CH"`. Defaults to the document language. */
   lang?: string;
+  /**
+   * Overrides what backs dictation — e.g. to stream audio to a server-side
+   * transcription API instead of the browser's on-device `SpeechRecognition`.
+   * See `useSpeechRecognition`'s `engine` option. Passing this makes the
+   * button render enabled unconditionally, since browser support no longer
+   * applies.
+   */
+  engine?: SpeechRecognitionEngineFactory;
   /** Rendered next to the icon. Icon-only (the default) when omitted. */
   label?: string;
   /** Accessible name while idle (icon-only buttons only). @default "Start dictation" */
@@ -24,12 +32,15 @@ export interface VoiceInputButtonProps
 
 /**
  * Push-to-dictate microphone button, backed by the browser's built-in
- * `SpeechRecognition` — no API key, no upload, no extra dependency. While
- * listening it takes the `destructive` tint (the same one AlertBox's `error`
- * uses) and only the mic icon pulses, so the "recording" signal reads at a
- * glance without the whole control throbbing. Where the API is missing
- * (Firefox, most mobile) the button renders disabled with a crossed-out mic
- * rather than vanishing, so the layout doesn't shift between browsers.
+ * `SpeechRecognition` by default — no API key, no upload, no extra
+ * dependency. Pass `engine` to back it with something else instead, such as
+ * a server-side transcription API (see `useSpeechRecognition`'s `engine`
+ * option). While listening it takes the `destructive` tint (the same one
+ * AlertBox's `error` uses) and only the mic icon pulses, so the "recording"
+ * signal reads at a glance without the whole control throbbing. Where
+ * neither `engine` nor the browser API is available (Firefox, most mobile)
+ * the button renders disabled with a crossed-out mic rather than vanishing,
+ * so the layout doesn't shift between browsers.
  */
 export const VoiceInputButton = forwardRef<HTMLButtonElement, VoiceInputButtonProps>(
   (
@@ -37,6 +48,7 @@ export const VoiceInputButton = forwardRef<HTMLButtonElement, VoiceInputButtonPr
       onTranscript,
       onError,
       lang,
+      engine,
       label,
       startLabel = "Start dictation",
       stopLabel = "Stop dictation",
@@ -52,6 +64,7 @@ export const VoiceInputButton = forwardRef<HTMLButtonElement, VoiceInputButtonPr
       lang,
       onResult: onTranscript,
       onError,
+      engine,
     });
     const unsupportedTitle = "Speech recognition isn't available in this browser";
 

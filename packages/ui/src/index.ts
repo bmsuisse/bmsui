@@ -163,6 +163,8 @@ export { VoiceInputButton } from "./patterns/ai/VoiceInputButton";
 export type { VoiceTranscriptProps } from "./patterns/ai/VoiceTranscript";
 export { VoiceTranscript } from "./patterns/ai/VoiceTranscript";
 export type {
+  SpeechRecognitionEngine,
+  SpeechRecognitionEngineFactory,
   SpeechRecognitionState,
   UseSpeechRecognitionOptions,
 } from "./patterns/ai/useSpeechRecognition";

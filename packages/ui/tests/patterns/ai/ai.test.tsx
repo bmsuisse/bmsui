@@ -133,6 +133,29 @@ describe("VoiceInputButton", () => {
     render(<VoiceInputButton ref={ref} onTranscript={() => {}} data-testid="mic" />);
     expect(ref.current).toBe(screen.getByTestId("mic"));
   });
+
+  it("renders enabled with a custom engine even when the browser has no speech API", () => {
+    // No installSpeechApi() here -- `engine` alone must be enough.
+    const onTranscript = vi.fn();
+    render(<VoiceInputButton onTranscript={onTranscript} engine={() => new FakeRecognition()} />);
+    const button = screen.getByRole("button", { name: "Start dictation" });
+    expect(button).not.toBeDisabled();
+
+    fireEvent.click(button);
+    const recognition = instances[0]!;
+    expect(recognition.started).toBe(true);
+    act(() => recognition.emitFinal("from a custom engine"));
+    expect(onTranscript).toHaveBeenCalledWith("from a custom engine");
+  });
+
+  it("builds a fresh engine instance for every start()", () => {
+    const engine = vi.fn(() => new FakeRecognition());
+    render(<VoiceInputButton onTranscript={() => {}} engine={engine} />);
+    fireEvent.click(screen.getByRole("button", { name: "Start dictation" }));
+    fireEvent.click(screen.getByRole("button", { name: "Stop dictation" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start dictation" }));
+    expect(engine).toHaveBeenCalledTimes(2);
+  });
 });
 
 describe("describeSpeechError", () => {

@@ -281,10 +281,10 @@ directly when you want the accent without the sparkle/loading behaviour.
 
 ### `VoiceInputButton` / `VoiceTranscript` / `useSpeechRecognition`
 
-Dictation, on the browser's built-in `SpeechRecognition` — no API key, no
-audio upload, no extra dependency. `VoiceInputButton` is an `outline`
-microphone button that takes the `destructive` tint while listening and
-reports each finalized chunk of speech:
+Dictation, on the browser's built-in `SpeechRecognition` by default — no API
+key, no audio upload, no extra dependency. `VoiceInputButton` is an
+`outline` microphone button that takes the `destructive` tint while
+listening and reports each finalized chunk of speech:
 
 ```tsx
 <VoiceInputButton
@@ -302,6 +302,27 @@ disappearing, so the layout doesn't shift between browsers. Check
 user can act on, or `null` for the `aborted` code every programmatic stop
 emits.
 
+Pass `engine` to back dictation with something other than the browser API —
+a server-side transcription endpoint, for example — instead of (or as a
+fallback for browsers without) `SpeechRecognition`. It's a factory called
+once per `start()`; the object it returns just needs to satisfy
+`SpeechRecognitionEngine` (`start`/`stop`/`abort` plus `onresult`/`onerror`/
+`onend`, matching the shape of the Web Speech API this wraps by default).
+Supplying `engine` also makes the button render enabled unconditionally,
+since browser support no longer applies:
+
+```tsx
+<VoiceInputButton
+  onTranscript={(text) => setNote((v) => (v ? `${v} ${text}` : text))}
+  engine={() => createServerSpeechEngine({ endpoint: "/api/transcribe" })}
+/>
+```
+
+`createServerSpeechEngine` above is application code, not part of this
+library — it just needs to open whatever connection your backend expects
+(a WebSocket, `MediaRecorder` chunks over `fetch`, …), and call `onresult`/
+`onerror`/`onend` the way `SpeechRecognition` does.
+
 `VoiceTranscript` is the composed workflow: dictate into an editable
 transcript, then hand it to a model and swap in the result — with one-click
 undo, since a model rewriting your own words is exactly where you want an
@@ -318,4 +339,5 @@ buttons and leaves the transcript untouched.
 />
 ```
 
-Omit `onTransform` for plain dictation without the AI action.
+Omit `onTransform` for plain dictation without the AI action. `VoiceTranscript`
+forwards `engine` straight to its internal `VoiceInputButton`.
