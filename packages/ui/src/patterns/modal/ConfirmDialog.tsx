@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 import { useState } from "react";
 import { Button } from "../../primitives/button";
+import { getConfirmButtonPlacement } from "../../lib/platform";
 import { Modal } from "./Modal";
 
 export interface ConfirmDialogProps {
@@ -47,6 +48,9 @@ export const ConfirmDialog = ({
   cancelTestId,
 }: ConfirmDialogProps): ReactElement => {
   const [pending, setPending] = useState(false);
+  // Platform doesn't change mid-session, so this is computed once rather
+  // than re-read from `navigator` on every render.
+  const [confirmButtonPlacement] = useState(getConfirmButtonPlacement);
 
   const handleCancel = (): void => {
     onOpenChange(false);
@@ -68,6 +72,22 @@ export const ConfirmDialog = ({
     }
   };
 
+  const cancelButton = (
+    <Button variant="outline" onClick={handleCancel} disabled={pending} data-testid={cancelTestId}>
+      {cancelLabel}
+    </Button>
+  );
+  const confirmButton = (
+    <Button
+      variant={variant === "destructive" ? "destructive" : "default"}
+      onClick={handleConfirm}
+      disabled={pending}
+      data-testid={confirmTestId}
+    >
+      {pending ? `${confirmLabel}…` : confirmLabel}
+    </Button>
+  );
+
   return (
     <Modal
       open={open}
@@ -75,19 +95,17 @@ export const ConfirmDialog = ({
       title={title}
       description={description}
       footer={
-        <>
-          <Button variant="outline" onClick={handleCancel} disabled={pending} data-testid={cancelTestId}>
-            {cancelLabel}
-          </Button>
-          <Button
-            variant={variant === "destructive" ? "destructive" : "default"}
-            onClick={handleConfirm}
-            disabled={pending}
-            data-testid={confirmTestId}
-          >
-            {pending ? `${confirmLabel}…` : confirmLabel}
-          </Button>
-        </>
+        confirmButtonPlacement === "leading" ? (
+          <>
+            {confirmButton}
+            {cancelButton}
+          </>
+        ) : (
+          <>
+            {cancelButton}
+            {confirmButton}
+          </>
+        )
       }
     >
       {null}

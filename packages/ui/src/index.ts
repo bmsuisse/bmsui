@@ -156,3 +156,5 @@ export { Stepper } from "./patterns/stepper/Stepper";
 // --- shared utility -----------------------------------------------------------
 export { cn } from "./lib/utils";
 export { useMediaQuery } from "./lib/useMediaQuery";
+export type { ConfirmButtonPlacement } from "./lib/platform";
+export { getConfirmButtonPlacement, isWindowsPlatform } from "./lib/platform";
