@@ -97,6 +97,8 @@ export type { FormModalProps } from "./patterns/modal/FormModal";
 export { FormModal } from "./patterns/modal/FormModal";
 export type { ResponsivePanelProps, ResponsivePanelSize } from "./patterns/modal/ResponsivePanel";
 export { ResponsivePanel } from "./patterns/modal/ResponsivePanel";
+export type { QuestionDialogAction, QuestionDialogProps } from "./patterns/modal/QuestionDialog";
+export { QuestionDialog } from "./patterns/modal/QuestionDialog";
 
 export type { FormFieldProps } from "./patterns/form-field/FormField";
 export { FormField } from "./patterns/form-field/FormField";

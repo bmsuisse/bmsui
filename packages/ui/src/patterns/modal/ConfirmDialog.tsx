@@ -91,7 +91,7 @@ export const ConfirmDialog = ({
       onOpenChange={onOpenChange}
       title={title}
       description={description}
-      footer={<DialogActions primary={confirmButton} secondary={cancelButton} />}
+      footer={<DialogActions actions={[confirmButton]} cancel={cancelButton} />}
     >
       {null}
     </Modal>
