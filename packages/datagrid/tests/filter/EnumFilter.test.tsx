@@ -281,3 +281,102 @@ describe("EnumFilter: 'Select all' is tri-state and scoped to the filtered subse
     });
   });
 });
+
+const groupedColumn: EnumColumn<Row> = {
+  id: "status",
+  type: "enum",
+  header: "Status",
+  options: [
+    { value: "new", label: "New" }, // ungrouped
+    { value: "pending", label: "Pending", group: "Open" },
+    { value: "shipped", label: "Shipped", group: "Open" },
+    { value: "delivered", label: "Delivered", group: "Closed" },
+    { value: "cancelled", label: "Cancelled", group: "Closed" },
+  ],
+};
+
+describe("EnumFilter: grouped options", () => {
+  it("renders a group header for each distinct option.group, and none for ungrouped options", async () => {
+    render(<EnumFilter column={groupedColumn} value={undefined} onChange={vi.fn()} />);
+    await userEvent.click(screen.getByRole("button"));
+
+    expect(screen.getByRole("checkbox", { name: "Select all of Open" })).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "Select all of Closed" })).toBeInTheDocument();
+    expect(screen.queryByRole("checkbox", { name: "Select all of undefined" })).not.toBeInTheDocument();
+    expect(screen.getByText("New")).toBeInTheDocument();
+  });
+
+  it("selects every option in a group when its header checkbox is toggled on", async () => {
+    const onChangeSpy = vi.fn();
+    render(<ControlledFilter<EnumColumn<Row>> Widget={EnumFilter} column={groupedColumn} onChangeSpy={onChangeSpy} />);
+
+    await userEvent.click(screen.getByRole("button"));
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select all of Open" }));
+
+    expect(onChangeSpy).toHaveBeenLastCalledWith({
+      field: "status",
+      operator: "in",
+      value: ["pending", "shipped"],
+    });
+  });
+
+  it("deselects every option in a group when its header checkbox is toggled off", async () => {
+    const onChangeSpy = vi.fn();
+    render(
+      <ControlledFilter<EnumColumn<Row>>
+        Widget={EnumFilter}
+        column={groupedColumn}
+        initial={{ field: "status", operator: "in", value: ["new", "pending", "shipped"] }}
+        onChangeSpy={onChangeSpy}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("button"));
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select all of Open" }));
+
+    expect(onChangeSpy).toHaveBeenLastCalledWith({
+      field: "status",
+      operator: "in",
+      value: ["new"],
+    });
+  });
+
+  it("shows the group header checkbox as indeterminate when only some of the group is selected", async () => {
+    render(
+      <EnumFilter
+        column={groupedColumn}
+        value={{ field: "status", operator: "in", value: ["pending"] }}
+        onChange={vi.fn()}
+      />,
+    );
+    await userEvent.click(screen.getByRole("button"));
+
+    const groupCheckbox = screen.getByRole("checkbox", { name: "Select all of Open" });
+    expect(groupCheckbox).not.toBeChecked();
+    expect(groupCheckbox).toBePartiallyChecked();
+  });
+
+  it("shows the group header checkbox as checked when the whole group is selected", async () => {
+    render(
+      <EnumFilter
+        column={groupedColumn}
+        value={{ field: "status", operator: "in", value: ["pending", "shipped"] }}
+        onChange={vi.fn()}
+      />,
+    );
+    await userEvent.click(screen.getByRole("button"));
+
+    expect(screen.getByRole("checkbox", { name: "Select all of Open" })).toBeChecked();
+  });
+
+  it("hides a group's header entirely when the search term matches none of its options", async () => {
+    render(<EnumFilter column={groupedColumn} value={undefined} onChange={vi.fn()} />);
+
+    await userEvent.click(screen.getByRole("button"));
+    const search = screen.getByPlaceholderText("Search status...");
+    await userEvent.type(search, "Pending");
+
+    expect(screen.getByRole("checkbox", { name: "Select all of Open" })).toBeInTheDocument();
+    expect(screen.queryByRole("checkbox", { name: "Select all of Closed" })).not.toBeInTheDocument();
+  });
+});

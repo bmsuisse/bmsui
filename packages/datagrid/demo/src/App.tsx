@@ -48,10 +48,10 @@ const columns: ColumnDef<Order>[] = [
     filterable: true,
     group: "Details",
     options: [
-      { value: "pending", label: "Pending" },
-      { value: "shipped", label: "Shipped" },
-      { value: "delivered", label: "Delivered" },
-      { value: "cancelled", label: "Cancelled" },
+      { value: "pending", label: "Pending", group: "Open" },
+      { value: "shipped", label: "Shipped", group: "Open" },
+      { value: "delivered", label: "Delivered", group: "Closed" },
+      { value: "cancelled", label: "Cancelled", group: "Closed" },
     ],
   },
   {
