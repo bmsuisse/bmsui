@@ -195,10 +195,13 @@ export interface EnumOption {
   value: string;
   label: string;
   /**
-   * Optional group label. Options sharing the same `group` are clustered
-   * together under a group header in `EnumFilter`'s dropdown, with a
-   * checkbox that selects/deselects every option in that group at once.
-   * Options with no `group` render ungrouped, above any named groups.
+   * Groups this option under a sticky header in `EnumFilter`'s dropdown,
+   * with a tri-state checkbox that selects/deselects the whole group at
+   * once — mirrors `@bmsuisse/ui`'s `ComboboxOption.group`/
+   * `TagComboboxOption.group`. Options sharing a `group` must be adjacent in
+   * `options`: a header renders the first time a group key is seen, so
+   * interleaved groups would render more than one header for the same key.
+   * Options with no `group` render individually, with no header.
    */
   group?: string;
 }

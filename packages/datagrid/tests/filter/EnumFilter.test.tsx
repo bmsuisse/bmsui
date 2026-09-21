@@ -300,9 +300,9 @@ describe("EnumFilter: grouped options", () => {
     render(<EnumFilter column={groupedColumn} value={undefined} onChange={vi.fn()} />);
     await userEvent.click(screen.getByRole("button"));
 
-    expect(screen.getByRole("checkbox", { name: "Select all in Open" })).toBeInTheDocument();
-    expect(screen.getByRole("checkbox", { name: "Select all in Closed" })).toBeInTheDocument();
-    expect(screen.queryByRole("checkbox", { name: "Select all in undefined" })).not.toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "Select all of Open" })).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "Select all of Closed" })).toBeInTheDocument();
+    expect(screen.queryByRole("checkbox", { name: "Select all of undefined" })).not.toBeInTheDocument();
     expect(screen.getByText("New")).toBeInTheDocument();
   });
 
@@ -311,7 +311,7 @@ describe("EnumFilter: grouped options", () => {
     render(<ControlledFilter<EnumColumn<Row>> Widget={EnumFilter} column={groupedColumn} onChangeSpy={onChangeSpy} />);
 
     await userEvent.click(screen.getByRole("button"));
-    await userEvent.click(screen.getByRole("checkbox", { name: "Select all in Open" }));
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select all of Open" }));
 
     expect(onChangeSpy).toHaveBeenLastCalledWith({
       field: "status",
@@ -332,7 +332,7 @@ describe("EnumFilter: grouped options", () => {
     );
 
     await userEvent.click(screen.getByRole("button"));
-    await userEvent.click(screen.getByRole("checkbox", { name: "Select all in Open" }));
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select all of Open" }));
 
     expect(onChangeSpy).toHaveBeenLastCalledWith({
       field: "status",
@@ -351,7 +351,7 @@ describe("EnumFilter: grouped options", () => {
     );
     await userEvent.click(screen.getByRole("button"));
 
-    const groupCheckbox = screen.getByRole("checkbox", { name: "Select all in Open" });
+    const groupCheckbox = screen.getByRole("checkbox", { name: "Select all of Open" });
     expect(groupCheckbox).not.toBeChecked();
     expect(groupCheckbox).toBePartiallyChecked();
   });
@@ -366,7 +366,7 @@ describe("EnumFilter: grouped options", () => {
     );
     await userEvent.click(screen.getByRole("button"));
 
-    expect(screen.getByRole("checkbox", { name: "Select all in Open" })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Select all of Open" })).toBeChecked();
   });
 
   it("hides a group's header entirely when the search term matches none of its options", async () => {
@@ -376,7 +376,7 @@ describe("EnumFilter: grouped options", () => {
     const search = screen.getByPlaceholderText("Search status...");
     await userEvent.type(search, "Pending");
 
-    expect(screen.getByRole("checkbox", { name: "Select all in Open" })).toBeInTheDocument();
-    expect(screen.queryByRole("checkbox", { name: "Select all in Closed" })).not.toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "Select all of Open" })).toBeInTheDocument();
+    expect(screen.queryByRole("checkbox", { name: "Select all of Closed" })).not.toBeInTheDocument();
   });
 });
