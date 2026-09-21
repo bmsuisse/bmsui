@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
 import { useState } from "react";
 import { Button } from "../../primitives/button";
-import { getConfirmButtonPlacement } from "../../lib/platform";
+import { DialogActions } from "./DialogActions";
 import { Modal } from "./Modal";
 
 export interface ConfirmDialogProps {
@@ -48,9 +48,6 @@ export const ConfirmDialog = ({
   cancelTestId,
 }: ConfirmDialogProps): ReactElement => {
   const [pending, setPending] = useState(false);
-  // Platform doesn't change mid-session, so this is computed once rather
-  // than re-read from `navigator` on every render.
-  const [confirmButtonPlacement] = useState(getConfirmButtonPlacement);
 
   const handleCancel = (): void => {
     onOpenChange(false);
@@ -94,19 +91,7 @@ export const ConfirmDialog = ({
       onOpenChange={onOpenChange}
       title={title}
       description={description}
-      footer={
-        confirmButtonPlacement === "leading" ? (
-          <>
-            {confirmButton}
-            {cancelButton}
-          </>
-        ) : (
-          <>
-            {cancelButton}
-            {confirmButton}
-          </>
-        )
-      }
+      footer={<DialogActions primary={confirmButton} secondary={cancelButton} />}
     >
       {null}
     </Modal>

@@ -91,6 +91,8 @@ export type { ModalProps } from "./patterns/modal/Modal";
 export { Modal } from "./patterns/modal/Modal";
 export type { ConfirmDialogProps } from "./patterns/modal/ConfirmDialog";
 export { ConfirmDialog } from "./patterns/modal/ConfirmDialog";
+export type { DialogActionsProps } from "./patterns/modal/DialogActions";
+export { DialogActions } from "./patterns/modal/DialogActions";
 export type { FormModalProps } from "./patterns/modal/FormModal";
 export { FormModal } from "./patterns/modal/FormModal";
 export type { ResponsivePanelProps, ResponsivePanelSize } from "./patterns/modal/ResponsivePanel";
