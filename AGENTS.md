@@ -346,6 +346,27 @@ logic above, which already had its own extraction). Structure:
     reuses AlertBox's `destructive` error tint and pulses only the mic
     icon (stock `animate-pulse` + `motion-reduce:animate-none`, no
     `tailwindcss-animate`).
+  - `stepper/` — `Stepper` (v0.13.0), a numbered-chip wizard progress
+    indicator: a horizontally-scrolling row of step chips (done/active/
+    upcoming, connected by a line that fills in as steps complete), plus an
+    optional trailing "start over" button (`onNew`/`newLabel`/`newTestId`)
+    pinned as a sibling of the scrolling region rather than inside it, so it
+    doesn't scroll off-screen at narrower widths. Ported from OneSales's
+    OfferParser wizard, which had this hand-rolled locally — its newer
+    ProspectWizard/CustomerWizard flow already reuses that same local
+    component today, so this replaces one duplication with a second consumer
+    already lined up rather than a hypothetical one. `navLabel`/`newLabel`
+    are plain string props with English defaults (`"Steps"`/`"New"`) instead
+    of the original's `useTranslation()` calls, matching `SearchBar`'s
+    `clearLabel` convention, since this package has no i18n dependency of
+    its own. Deliberately does **not** port the original's `tinderSubStep`
+    prop, which injected a one-off "matcher" chip with a sparkle icon
+    between two specific steps for OfferParser's own tinder-swipe matching
+    sub-screen — too bespoke to generalize, and both current consumers work
+    fine without it. This was a conscious scope decision made when
+    extracting the component, not an oversight; don't reintroduce full
+    `tinderSubStep` support here by copying it back from the old OneSales
+    file.
 - `packages/ui/demo/` — same pattern as `packages/datagrid/demo`: a Vite
   app aliasing `@bmsuisse/ui` straight to `src/index.ts`, using the same
   reference-app-derived Tailwind v4 tokens, for visual QA.

@@ -51,6 +51,7 @@ import {
   PopoverAnchor,
   PopoverContent,
   PopoverTrigger,
+  QuestionDialog,
   ResponsivePanel,
   ScrollArea,
   SearchBar,
@@ -76,6 +77,7 @@ import {
   Skeleton,
   Sparkline,
   StatusBadge,
+  Stepper,
   Switch,
   Table,
   TableBody,
@@ -158,6 +160,7 @@ export function App(): ReactElement {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [questionOpen, setQuestionOpen] = useState(false);
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [responsivePanelOpen, setResponsivePanelOpen] = useState(false);
   const [responsivePanelSize, setResponsivePanelSize] = useState<"sm" | "md" | "lg" | "xl">("lg");
@@ -167,6 +170,8 @@ export function App(): ReactElement {
   const [customerName, setCustomerName] = useState("");
   const [fieldError, setFieldError] = useState<string | undefined>(undefined);
   const [country, setCountry] = useState<string | null>("ch");
+  const [gridCountry, setGridCountry] = useState<string | null>(null);
+  const [gridTeamMembers, setGridTeamMembers] = useState<string[]>([]);
   const [teamMembers, setTeamMembers] = useState<string[]>([]);
   const [colors, setColors] = useState<string[]>(["red", "blue"]);
   const [tagTeamMembers, setTagTeamMembers] = useState<string[]>(["alice"]);
@@ -362,6 +367,20 @@ export function App(): ReactElement {
                 variant="destructive"
                 confirmLabel="Delete"
                 onConfirm={() => sleep(800)}
+              />
+
+              <Button variant="outline" onClick={() => setQuestionOpen(true)}>
+                Close tab…
+              </Button>
+              <QuestionDialog
+                open={questionOpen}
+                onOpenChange={setQuestionOpen}
+                title="Save changes before closing?"
+                description="Your edits haven't been saved yet."
+                actions={[
+                  { label: "Don't Save", variant: "outline", onClick: () => sleep(400) },
+                  { label: "Save", onClick: () => sleep(800) },
+                ]}
               />
 
               <Button variant="outline" onClick={() => setFormModalOpen(true)}>
@@ -635,6 +654,51 @@ export function App(): ReactElement {
             </div>
           </Section>
 
+          <Section title="Combobox (grid columns)">
+            <div className="w-64">
+              <Combobox
+                data-testid="employee-grid-combobox"
+                columns={[
+                  { key: "label", header: "Name" },
+                  { key: "role", header: "Role" },
+                  { key: "location", header: "Location" },
+                ]}
+                options={[
+                  { value: "e1", label: "Alice Meier", data: { role: "Engineer", location: "Zurich" } },
+                  { value: "e2", label: "Bruno Keller", data: { role: "Designer", location: "Bern" } },
+                  { value: "e3", label: "Chiara Rossi", data: { role: "Product Manager", location: "Lugano" } },
+                  { value: "e4", label: "David Wyss", data: { role: "Engineer", location: "Basel" } },
+                ]}
+                value={gridCountry}
+                onChange={setGridCountry}
+                placeholder="Select an employee"
+                searchPlaceholder="Search employees…"
+              />
+            </div>
+          </Section>
+
+          <Section title="TagCombobox (grid columns)">
+            <div className="w-80">
+              <TagCombobox
+                data-testid="employee-grid-tag-combobox"
+                columns={[
+                  { key: "label", header: "Name" },
+                  { key: "role", header: "Role" },
+                  { key: "location", header: "Location" },
+                ]}
+                options={[
+                  { value: "e1", label: "Alice Meier", data: { role: "Engineer", location: "Zurich" } },
+                  { value: "e2", label: "Bruno Keller", data: { role: "Designer", location: "Bern" } },
+                  { value: "e3", label: "Chiara Rossi", data: { role: "Product Manager", location: "Lugano" } },
+                  { value: "e4", label: "David Wyss", data: { role: "Engineer", location: "Basel" } },
+                ]}
+                value={gridTeamMembers}
+                onChange={setGridTeamMembers}
+                placeholder="Select employees"
+              />
+            </div>
+          </Section>
+
           <Section title="TagCombobox (client-side filter)">
             <div className="w-80">
               <TagCombobox
@@ -748,6 +812,10 @@ export function App(): ReactElement {
 
           <Section title="Sidebar / NavGroup / NavItem">
             <SidebarDemo />
+          </Section>
+
+          <Section title="Stepper">
+            <StepperDemo />
           </Section>
 
           <Section title="KpiCard">
@@ -1073,6 +1141,49 @@ function SidebarDemo(): ReactElement {
   );
 }
 
+
+const stepperSteps = [
+  { n: 1, label: "Type", phase: "Setup" },
+  { n: 2, label: "Details", phase: "Setup" },
+  { n: 3, label: "Pricing", phase: "Review" },
+  { n: 4, label: "Confirm", phase: "Review" },
+  { n: 5, label: "Done", phase: "Finish" },
+];
+
+function StepperDemo(): ReactElement {
+  const [step, setStep] = useState(1);
+  const [maxStep, setMaxStep] = useState(1);
+
+  return (
+    <div className="flex w-full flex-col gap-4">
+      <Stepper
+        step={step}
+        maxStep={maxStep}
+        onNavigate={setStep}
+        onNew={() => {
+          setStep(1);
+          setMaxStep(1);
+        }}
+        newLabel="Start over"
+        steps={stepperSteps}
+      />
+      <div>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={step >= stepperSteps.length}
+          onClick={() => {
+            const next = Math.min(step + 1, stepperSteps.length);
+            setStep(next);
+            setMaxStep((m) => Math.max(m, next));
+          }}
+        >
+          Next
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 // Fake "model" call: the components take a promise, so a consuming app can
 // wire any backend behind them -- this demo just delays and rewrites locally.

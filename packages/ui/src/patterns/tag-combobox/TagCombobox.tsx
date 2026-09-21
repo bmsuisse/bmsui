@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import type { ComponentProps, KeyboardEvent, ReactElement } from "react";
+import type { ComponentProps, KeyboardEvent, ReactElement, ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "../../lib/utils";
 import {
@@ -8,6 +8,7 @@ import {
   groupMembers,
   type OptionRow,
 } from "../../lib/optionGrouping";
+import { renderGridOptions, type GridColumn } from "../../lib/optionGrid";
 import { Popover, PopoverAnchor, PopoverContent } from "../../primitives/popover";
 
 export interface TagComboboxOption {
@@ -18,8 +19,13 @@ export interface TagComboboxOption {
    * plus a tri-state "select all" checkbox (unchecked/checked/indeterminate, reflecting
    * how many of the group's members are selected — toggling it selects or clears the
    * whole group). Options sharing a `group` must be contiguous in `options` — see
-   * `Combobox`'s own `group` doc for the same constraint and the reasoning behind it. */
+   * `Combobox`'s own `group` doc for the same constraint and the reasoning behind it.
+   * Ignored when `columns` is set (see that prop's own doc). */
   group?: string;
+  /** Extra fields for this option, surfaced as additional columns when
+   * `columns` is set — e.g. `{ email: "a@b.com", role: "Admin" }`. Ignored
+   * otherwise. */
+  data?: Record<string, ReactNode>;
 }
 
 export interface TagComboboxProps {
@@ -58,6 +64,10 @@ export interface TagComboboxProps {
   /** Display label for a group key (`TagComboboxOption.group`). Falls back to the raw
    * key when an entry is missing. Only relevant when at least one option sets `group`. */
   groupLabels?: Record<string, string>;
+  /** Renders the popup's option list as a multi-column grid instead of a flat
+   * label list — see `Combobox`'s own `columns` doc for the full contract
+   * (including its interaction with `group`, and the widened popup). */
+  columns?: GridColumn[];
 }
 
 /**
@@ -85,6 +95,7 @@ export function TagCombobox({
   onSearchChange,
   container,
   groupLabels,
+  columns,
   ...rest
 }: TagComboboxProps): ReactElement {
   const testId = rest["data-testid"];
@@ -114,7 +125,9 @@ export function TagCombobox({
     setActiveIndex((i) => Math.min(Math.max(i, 0), Math.max(visibleOptions.length - 1, 0)));
   }, [visibleOptions.length]);
 
-  const renderChunks = useMemo(() => buildRenderChunks(visibleOptions), [visibleOptions]);
+  // Skipped entirely in grid mode (`columns` set) — see `Combobox`'s own
+  // identical `renderChunks` doc for why.
+  const renderChunks = useMemo(() => (columns ? [] : buildRenderChunks(visibleOptions)), [visibleOptions, columns]);
 
   // Reset the search term and re-point `activeIndex` each time the popover
   // opens -- intentionally NOT reactive to `options`/`value` changes while it
@@ -281,7 +294,10 @@ export function TagCombobox({
       <PopoverContent
         align="start"
         container={container}
-        className="w-[var(--radix-popover-trigger-width)] min-w-[10rem] p-2"
+        className={cn(
+          "w-[var(--radix-popover-trigger-width)] min-w-[10rem] p-2",
+          columns && "w-max min-w-[var(--radix-popover-trigger-width)] max-w-[min(40rem,90vw)]",
+        )}
         onOpenAutoFocus={(event) => event.preventDefault()}
         onCloseAutoFocus={(event) => event.preventDefault()}
         // Radix's non-modal Popover content treats a focus/pointer event as
@@ -297,11 +313,22 @@ export function TagCombobox({
           if (fieldRef.current?.contains(event.target as Node)) event.preventDefault();
         }}
       >
-        <div role="listbox" className="flex max-h-60 flex-col gap-0.5 overflow-y-auto">
+        <div role="listbox" className={cn("max-h-60 overflow-y-auto", !columns && "flex flex-col gap-0.5")}>
           {loading ? (
             <p className="py-2 text-center text-sm text-muted-foreground">{loadingMessage}</p>
-          ) : renderChunks.length === 0 ? (
+          ) : visibleOptions.length === 0 ? (
             <p className="py-2 text-center text-sm text-muted-foreground">{emptyMessage}</p>
+          ) : columns ? (
+            renderGridOptions({
+              columns,
+              options: visibleOptions,
+              activeIndex,
+              multiple: true,
+              isSelected: (option) => value.includes(option.value),
+              onSelect: toggleOption,
+              onHover: setActiveIndex,
+              testId,
+            })
           ) : (
             renderChunks.map((chunk) => {
               if (chunk.kind === "single") return renderOption(chunk.row);

@@ -519,3 +519,41 @@ describe("Combobox (server-driven search)", () => {
     expect(screen.getByRole("combobox")).toHaveTextContent("Germany");
   });
 });
+
+describe("Combobox with columns (grid mode)", () => {
+  const GRID_OPTIONS: ComboboxOption[] = [
+    { value: "ch", label: "Switzerland", data: { capital: "Bern", region: "Europe" } },
+    { value: "de", label: "Germany", data: { capital: "Berlin", region: "Europe" } },
+    { value: "us", label: "United States", data: { capital: "Washington, D.C.", region: "Americas" } },
+  ];
+  const COLUMNS = [
+    { key: "label", header: "Country" },
+    { key: "capital", header: "Capital" },
+    { key: "region", header: "Region" },
+  ];
+
+  it("renders a header row and one column per entry, reading extra fields from option.data", async () => {
+    render(<Combobox options={GRID_OPTIONS} value={null} onChange={vi.fn()} columns={COLUMNS} />);
+    await userEvent.click(screen.getByRole("combobox"));
+    expect(await screen.findByRole("columnheader", { name: "Capital" })).toBeInTheDocument();
+    const germanyRow = await screen.findByRole("option", { name: /Germany/ });
+    expect(germanyRow).toHaveTextContent("Berlin");
+    expect(germanyRow).toHaveTextContent("Europe");
+  });
+
+  it("selects a row on click just like the flat list", async () => {
+    const onChange = vi.fn();
+    render(<Combobox options={GRID_OPTIONS} value={null} onChange={onChange} columns={COLUMNS} />);
+    await userEvent.click(screen.getByRole("combobox"));
+    await userEvent.click(await screen.findByRole("option", { name: /United States/ }));
+    expect(onChange).toHaveBeenCalledWith("us");
+  });
+
+  it("shows the empty message when nothing matches, same as the flat list", async () => {
+    render(<Combobox options={GRID_OPTIONS} value={null} onChange={vi.fn()} columns={COLUMNS} />);
+    await userEvent.click(screen.getByRole("combobox"));
+    const search = await screen.findByPlaceholderText("Search…");
+    await userEvent.type(search, "zzz");
+    expect(screen.getByText("No matches.")).toBeInTheDocument();
+  });
+});
