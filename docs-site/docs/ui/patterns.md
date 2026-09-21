@@ -241,3 +241,103 @@ caller. Pass `expanded` to square its bottom corners when a results panel is
 anchored directly beneath it, and `trailingSlot` for extras like a mic
 button. For an always-visible filter input instead of an icon-triggered
 overlay, use `SearchBar`.
+
+### `AiButton` / `AiExplainButton`
+
+The "do something with AI" affordance: a sparkle icon plus a built-in
+in-flight state on top of `Button`'s three violet `ai` variants (`ai` solid
+CTA, `ai-subtle` tinted chip — the default — and `ai-ghost` inline action).
+Every other `Button` prop (`size`, `asChild`, `data-testid`, …) still
+applies, and the ref is forwarded.
+
+```tsx
+<AiButton variant="ai" loading={isGenerating} onClick={generate}>
+  Generate description
+</AiButton>
+
+<AiButton icon={Wand2}>Rewrite</AiButton>
+```
+
+`AiExplainButton` is the "what am I looking at?" case — an `AiButton` next
+to a KPI, a chart or a form field that opens a popover and asks the
+caller's model to explain it. `onExplain` runs the first time the popover
+opens (not on mount, so nothing is spent on a button nobody clicks) and
+returns any node, so an explanation can be prose, a list, or a small
+rendered breakdown. A rejection renders as an `AlertBox` with a "Try again"
+button.
+
+```tsx
+<AiExplainButton
+  title="Why is revenue up?"
+  onExplain={() => api.explain({ metric: "revenue", window: "30d" })}
+/>
+```
+
+The `ai` variants use a fixed Tailwind palette (violet), the same choice as
+`Badge`'s `warning` and `AlertBox`'s warning/info/success tones, since the
+base shadcn/ui theme has no AI-accent token — so unlike `swiss-primary`
+they need no setup in the consuming app. Use `<Button variant="ai">`
+directly when you want the accent without the sparkle/loading behaviour.
+
+### `VoiceInputButton` / `VoiceTranscript` / `useSpeechRecognition`
+
+Dictation, on the browser's built-in `SpeechRecognition` by default — no API
+key, no audio upload, no extra dependency. `VoiceInputButton` is an
+`outline` microphone button that takes the `destructive` tint while
+listening and reports each finalized chunk of speech:
+
+```tsx
+<VoiceInputButton
+  lang="de-CH"
+  onTranscript={(text) => setNote((v) => (v ? `${v} ${text}` : text))}
+/>
+```
+
+Where the API is missing (Firefox, most mobile browsers) the button renders
+disabled with a crossed-out mic and an explanatory `title` rather than
+disappearing, so the layout doesn't shift between browsers. Check
+`useSpeechRecognition().supported` if you'd rather branch yourself.
+`onError` receives the recognizer's raw code (`"not-allowed"`,
+`"no-speech"`, …); `describeSpeechError(code)` turns it into a sentence a
+user can act on, or `null` for the `aborted` code every programmatic stop
+emits.
+
+Pass `engine` to back dictation with something other than the browser API —
+a server-side transcription endpoint, for example — instead of (or as a
+fallback for browsers without) `SpeechRecognition`. It's a factory called
+once per `start()`; the object it returns just needs to satisfy
+`SpeechRecognitionEngine` (`start`/`stop`/`abort` plus `onresult`/`onerror`/
+`onend`, matching the shape of the Web Speech API this wraps by default).
+Supplying `engine` also makes the button render enabled unconditionally,
+since browser support no longer applies:
+
+```tsx
+<VoiceInputButton
+  onTranscript={(text) => setNote((v) => (v ? `${v} ${text}` : text))}
+  engine={() => createServerSpeechEngine({ endpoint: "/api/transcribe" })}
+/>
+```
+
+`createServerSpeechEngine` above is application code, not part of this
+library — it just needs to open whatever connection your backend expects
+(a WebSocket, `MediaRecorder` chunks over `fetch`, …), and call `onresult`/
+`onerror`/`onend` the way `SpeechRecognition` does.
+
+`VoiceTranscript` is the composed workflow: dictate into an editable
+transcript, then hand it to a model and swap in the result — with one-click
+undo, since a model rewriting your own words is exactly where you want an
+escape hatch. It's controlled (like `SearchBar`), and `onTransform` can be
+async; a rejection (or a mic error) renders as an `AlertBox` under the
+buttons and leaves the transcript untouched.
+
+```tsx
+<VoiceTranscript
+  value={note}
+  onChange={setNote}
+  onTransform={(text) => api.rewrite(text)}
+  transformLabel="Clean up with AI"
+/>
+```
+
+Omit `onTransform` for plain dictation without the AI action. `VoiceTranscript`
+forwards `engine` straight to its internal `VoiceInputButton`.

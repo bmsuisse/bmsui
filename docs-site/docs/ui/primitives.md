@@ -12,7 +12,7 @@ copy-pasted into your repo.
 
 | Component | Notes |
 | --- | --- |
-| `Button` | Variants: `default`, `outline`, `secondary`, `link`, `destructive`, `ghost`. Sizes: `default`, `sm`, `lg`, `xs`, `icon`, `icon-sm`, `icon-lg`, `icon-xs`. Icons render at a consistent `size-4` automatically when passed as a bare child. |
+| `Button` | Variants: `default`, `outline`, `secondary`, `link`, `destructive`, `ghost`, plus the violet `ai` / `ai-subtle` / `ai-ghost` accent used by [`AiButton`](/ui/patterns#aibutton--aiexplainbutton). Sizes: `default`, `sm`, `lg`, `xs`, `icon`, `icon-sm`, `icon-lg`, `icon-xs`. Icons render at a consistent `size-4` automatically when passed as a bare child. |
 | `Input` / `Textarea` / `Label` | Standard form fields, styled to match `border-input`/`ring` focus tokens. |
 | `Card` | `Card`, `CardHeader`, `CardTitle`, `CardDescription`, `CardContent`, `CardFooter`. |
 | `Badge` | Variants: `default`, `secondary`, `destructive`, `outline`, `warning`. |
