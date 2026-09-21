@@ -45,7 +45,7 @@ describe("QuestionDialog", () => {
     expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
   });
 
-  it("puts the action nearest Cancel last in `actions`, adjacent to Cancel, on Windows", () => {
+  it("puts the primary (last) action opposite Cancel — leading, with Cancel trailing — on Windows", () => {
     vi.spyOn(navigator, "userAgent", "get").mockReturnValue(
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
     );
@@ -64,10 +64,10 @@ describe("QuestionDialog", () => {
     const buttons = screen
       .getAllByRole("button", { name: /^(Don't Save|Save|Cancel)$/ })
       .map((button) => button.textContent);
-    expect(buttons).toEqual(["Don't Save", "Save", "Cancel"]);
+    expect(buttons).toEqual(["Save", "Don't Save", "Cancel"]);
   });
 
-  it("reverses `actions` so the action nearest Cancel is still last, with Cancel leading, on iOS", () => {
+  it("puts the primary (last) action opposite Cancel — trailing, with Cancel leading — on iOS", () => {
     vi.spyOn(navigator, "userAgent", "get").mockReturnValue(
       "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15",
     );
@@ -86,7 +86,7 @@ describe("QuestionDialog", () => {
     const buttons = screen
       .getAllByRole("button", { name: /^(Don't Save|Save|Cancel)$/ })
       .map((button) => button.textContent);
-    expect(buttons).toEqual(["Cancel", "Save", "Don't Save"]);
+    expect(buttons).toEqual(["Cancel", "Don't Save", "Save"]);
   });
 
   it("cancel closes without calling any action", async () => {

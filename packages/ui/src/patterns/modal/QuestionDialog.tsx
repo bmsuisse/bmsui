@@ -25,10 +25,11 @@ export interface QuestionDialogProps {
   /** Optional supporting copy shown under the title. */
   description?: string;
   /**
-   * The dialog's non-cancel actions, ordered from *furthest from Cancel* to
-   * *nearest to Cancel* (see `DialogActions`) — e.g.
-   * `[{ label: "Don't Save", ... }, { label: "Save", ... }]` puts "Save"
-   * next to Cancel on every platform.
+   * The dialog's non-cancel actions, ordered from *nearest Cancel* to *most
+   * primary* (see `DialogActions`) — e.g.
+   * `[{ label: "Don't Save", ... }, { label: "Save", ... }]` puts "Save",
+   * the primary action, at the edge opposite Cancel on every platform,
+   * matching native "Save changes?"-style dialogs.
    */
   actions: QuestionDialogAction[];
   /** Label for the cancel button. Defaults to `"Cancel"`. */
@@ -48,7 +49,7 @@ export interface QuestionDialogProps {
  *
  * Button order follows the current platform's own convention via
  * `DialogActions` — pick `actions`' order by *meaning* (least to most
- * committal, say), not by which edge Cancel happens to land on.
+ * primary), not by which edge Cancel happens to land on.
  */
 export const QuestionDialog = ({
   open,

@@ -4,9 +4,9 @@ import { getConfirmButtonPlacement } from "../../lib/platform";
 
 export interface DialogActionsProps {
   /**
-   * The dialog's non-cancel actions, ordered from *furthest from Cancel* to
-   * *nearest to Cancel* — e.g. `[secondaryAction, primaryAction]`. For a
-   * plain two-button confirm dialog, pass a single primary action here.
+   * The dialog's non-cancel actions, ordered from *nearest to Cancel* to
+   * *most primary* — e.g. `[secondaryAction, primaryAction]`. For a plain
+   * two-button confirm dialog, pass a single primary action here.
    */
   actions: ReactNode[];
   /** The dismissive/cancel action. */
@@ -22,11 +22,15 @@ export interface DialogActionsProps {
  * directly for any other dialog/panel footer with the same
  * actions-plus-cancel shape.
  *
- * `actions` is reversed when Cancel sits on the left, so the action nearest
- * Cancel is always the *last* element of `actions` and the one furthest
- * from Cancel is always the *first*, regardless of platform — a caller
- * picks the order once, by meaning, and doesn't have to reason about which
- * edge Cancel lands on.
+ * Matches native multi-button "Save changes?"-style dialogs: the most
+ * primary action sits at the edge *opposite* Cancel (Windows:
+ * `Save · Don't Save · Cancel`; iOS/macOS: `Cancel · Don't Save · Save`),
+ * not next to it. `actions` is reversed when Cancel sits on the right
+ * (Windows), so the last element of `actions` — the primary action — is
+ * always the one furthest from Cancel, and the first element is always the
+ * one nearest Cancel, regardless of platform — a caller picks the order
+ * once, by meaning, and doesn't have to reason about which edge Cancel
+ * lands on.
  *
  * Renders no wrapping element of its own — nest it inside the caller's own
  * footer container (e.g. `DialogFooter`, or `Modal`'s `footer` prop) for
@@ -37,7 +41,7 @@ export function DialogActions({ actions, cancel }: DialogActionsProps): ReactEle
   // than re-read from `navigator` on every render.
   const [placement] = useState(getConfirmButtonPlacement);
   const cancelLeading = placement === "trailing";
-  const ordered = cancelLeading ? [...actions].reverse() : actions;
+  const ordered = cancelLeading ? actions : [...actions].reverse();
 
   const renderedActions = ordered.map((action, index) => (
     <Fragment key={actionKey(action, index)}>{action}</Fragment>

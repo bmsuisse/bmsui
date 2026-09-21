@@ -27,7 +27,7 @@ describe("DialogActions", () => {
     expect(buttons).toEqual(["Cancel", "Save"]);
   });
 
-  it("keeps multiple actions in order, with Cancel trailing, on Windows", () => {
+  it("reverses multiple actions so the primary (last) action leads, with Cancel trailing, on Windows", () => {
     vi.spyOn(navigator, "userAgent", "get").mockReturnValue(
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
     );
@@ -42,10 +42,10 @@ describe("DialogActions", () => {
     );
 
     const buttons = screen.getAllByRole("button").map((button) => button.textContent);
-    expect(buttons).toEqual(["Don't Save", "Save", "Cancel"]);
+    expect(buttons).toEqual(["Save", "Don't Save", "Cancel"]);
   });
 
-  it("reverses multiple actions, with Cancel leading, on iOS — the action nearest Cancel stays the same", () => {
+  it("keeps multiple actions in order, with Cancel leading and the primary (last) action trailing, on iOS", () => {
     vi.spyOn(navigator, "userAgent", "get").mockReturnValue(
       "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15",
     );
@@ -60,6 +60,6 @@ describe("DialogActions", () => {
     );
 
     const buttons = screen.getAllByRole("button").map((button) => button.textContent);
-    expect(buttons).toEqual(["Cancel", "Save", "Don't Save"]);
+    expect(buttons).toEqual(["Cancel", "Don't Save", "Save"]);
   });
 });
