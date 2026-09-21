@@ -316,6 +316,45 @@ logic above, which already had its own extraction). Structure:
     to avoid fighting Radix `ScrollArea`'s nested viewport — `SidebarNav`
     uses a plain `overflow-y-auto` div instead, matching what both source
     apps already did.
+  - `ai/` — `AiButton`, `AiExplainButton`, `VoiceInputButton`,
+    `VoiceTranscript` (v0.16.0) and the `useSpeechRecognition` hook behind
+    the last two. The "do something with AI" affordances several apps were
+    about to hand-roll separately: a sparkle-accented button with a built-in
+    in-flight state (`AiButton`, a `forwardRef` wrapper over `Button`'s
+    `ai`/`ai-subtle`/`ai-ghost` variants), a lazily
+    loading explain-this popover (`AiExplainButton` — `onExplain` fires on
+    first open, not mount, and a rejection renders inline with a retry),
+    and dictation. Dictation defaults to the browser's own
+    `SpeechRecognition` (`window.SpeechRecognition ?? window.webkitSpeechRecognition`),
+    not a dependency or a server round-trip — so it's Chromium/Safari-only by
+    default, and `VoiceInputButton` deliberately renders *disabled* with a
+    crossed-out mic where the API is missing (Firefox, most mobile) rather
+    than hiding itself, to keep layouts stable across browsers; `supported`
+    is exposed on the hook for callers that want to branch themselves.
+    `useSpeechRecognition`'s `engine` option (also on `VoiceInputButton` and
+    `VoiceTranscript`, which just forward it down) swaps that default for
+    any factory satisfying `SpeechRecognitionEngine` — e.g. one piping audio
+    to a server-side transcription API — and passing it makes `supported`
+    unconditionally `true`, since browser-API presence is no longer what
+    "supported" means. `start()` calls the factory fresh each session rather
+    than reusing an instance, matching how `new Ctor()` already worked for
+    the browser engine. The Web Speech API isn't in TypeScript's DOM lib, so
+    `useSpeechRecognition.ts` declares the minimal shape it touches rather
+    than pulling in `@types/dom-speech-recognition` — `SpeechRecognitionEngine`
+    is that same shape, exported so a custom engine can implement it.
+    `VoiceTranscript` composes mic +
+    editable transcript + a caller-supplied `onTransform(text)` model call,
+    keeping the pre-transform text for a one-click undo; transform and
+    mic errors render as an `AlertBox` (mic codes via `describeSpeechError`,
+    which maps `not-allowed` etc. to a sentence and drops `aborted`).
+    The violet accent lives in `buttonVariants` itself, not in the pattern,
+    and is a fixed Tailwind palette for the same reason `Badge`'s `warning`
+    and AlertBox/StatusBadge's warning/info/success tones are: the shared
+    theme has no such token, and unlike `swiss-primary` these must work in
+    a consuming app with zero setup. `VoiceInputButton`'s listening state
+    reuses AlertBox's `destructive` error tint and pulses only the mic
+    icon (stock `animate-pulse` + `motion-reduce:animate-none`, no
+    `tailwindcss-animate`).
   - `stepper/` — `Stepper` (v0.13.0), a numbered-chip wizard progress
     indicator: a horizontally-scrolling row of step chips (done/active/
     upcoming, connected by a line that fills in as steps complete), plus an

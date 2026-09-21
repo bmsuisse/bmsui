@@ -154,6 +154,21 @@ export type { SidebarNavProps, SidebarProps } from "./patterns/sidebar/Sidebar";
 export { Sidebar, SidebarNav } from "./patterns/sidebar/Sidebar";
 export { useSidebarCollapsed } from "./patterns/sidebar/context";
 
+export type { AiButtonProps, AiButtonVariant } from "./patterns/ai/AiButton";
+export { AiButton } from "./patterns/ai/AiButton";
+export type { AiExplainButtonProps } from "./patterns/ai/AiExplainButton";
+export { AiExplainButton } from "./patterns/ai/AiExplainButton";
+export type { VoiceInputButtonProps } from "./patterns/ai/VoiceInputButton";
+export { VoiceInputButton } from "./patterns/ai/VoiceInputButton";
+export type { VoiceTranscriptProps } from "./patterns/ai/VoiceTranscript";
+export { VoiceTranscript } from "./patterns/ai/VoiceTranscript";
+export type {
+  SpeechRecognitionEngine,
+  SpeechRecognitionEngineFactory,
+  SpeechRecognitionState,
+  UseSpeechRecognitionOptions,
+} from "./patterns/ai/useSpeechRecognition";
+export { describeSpeechError, useSpeechRecognition } from "./patterns/ai/useSpeechRecognition";
 export type { StepperProps, StepperStep } from "./patterns/stepper/Stepper";
 export { Stepper } from "./patterns/stepper/Stepper";
 

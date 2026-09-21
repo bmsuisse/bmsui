@@ -67,6 +67,16 @@ async function captureUiDemo(browser: Browser, url: string): Promise<void> {
   await page.goto(url, { waitUntil: "networkidle" });
   await page.screenshot({ path: path.join(OUT_DIR, "ui-light.png"), fullPage: true });
 
+  // The AI/voice section on its own -- the full-page shots above are far too
+  // tall for these to be legible in the docs' screenshot gallery.
+  const aiSection = page.locator("section").filter({ hasText: "AI actions" }).first();
+  await aiSection.scrollIntoViewIfNeeded();
+  await aiSection.screenshot({ path: path.join(OUT_DIR, "ui-ai.png") });
+
+  const voiceSection = page.locator("section").filter({ hasText: "Voice input & transcript" }).first();
+  await voiceSection.scrollIntoViewIfNeeded();
+  await voiceSection.screenshot({ path: path.join(OUT_DIR, "ui-voice.png") });
+
   await page.getByRole("button", { name: /dark mode/i }).click();
   await page.waitForTimeout(150); // let the dark-mode class toggle repaint settle
   await page.screenshot({ path: path.join(OUT_DIR, "ui-dark.png"), fullPage: true });
