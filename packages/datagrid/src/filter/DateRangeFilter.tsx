@@ -142,7 +142,7 @@ export function DateRangeFilter<TRow>({
           Custom
         </Button>
       </div>
-      <Calendar mode="range" selected={range} onSelect={emit} numberOfMonths={1} />
+      <Calendar mode="range" selected={range} onSelect={emit} numberOfMonths={2} />
     </div>
   );
 
