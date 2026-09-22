@@ -1677,7 +1677,7 @@ export function DataGrid<TRow extends RowData>({
                             />
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent>{renderFilterWidget(column)}</PopoverContent>
+                        <PopoverContent className="w-auto">{renderFilterWidget(column)}</PopoverContent>
                       </Popover>
                     )}
                   </div>
