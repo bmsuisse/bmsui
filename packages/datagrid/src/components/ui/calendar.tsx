@@ -22,6 +22,7 @@ export function Calendar({ className, classNames, ...props }: CalendarProps) {
     <DayPicker
       className={cn("w-fit", className)}
       classNames={{
+        root: cn("relative", defaultClassNames.root),
         months: cn("flex flex-col gap-4 sm:flex-row", defaultClassNames.months),
         month: cn("flex flex-col gap-3", defaultClassNames.month),
         month_caption: cn("flex items-center justify-center px-8 h-8", defaultClassNames.month_caption),
