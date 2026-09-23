@@ -75,6 +75,7 @@ export {
 export type { SheetContentProps } from "./primitives/sheet";
 export {
   Sheet,
+  SheetBody,
   SheetClose,
   SheetContent,
   SheetDescription,

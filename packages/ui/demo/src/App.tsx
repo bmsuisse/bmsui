@@ -65,6 +65,7 @@ import {
   SelectValue,
   Separator,
   Sheet,
+  SheetBody,
   SheetClose,
   SheetContent,
   SheetDescription,
@@ -811,7 +812,9 @@ export function App(): ReactElement {
                   <SheetTitle>Order details</SheetTitle>
                   <SheetDescription>Slides in from the right by default.</SheetDescription>
                 </SheetHeader>
-                <p className="mt-4 text-sm">Sheet body content goes here.</p>
+                <SheetBody>
+                  <p className="text-sm">Sheet body content goes here.</p>
+                </SheetBody>
                 <SheetFooter>
                   <SheetClose asChild>
                     <Button variant="outline">Cancel</Button>

@@ -13,6 +13,7 @@ import {
 } from "../../primitives/dialog";
 import {
   Sheet,
+  SheetBody,
   SheetContent,
   SheetDescription,
   SheetFooter,
@@ -323,17 +324,13 @@ export const ResponsivePanel = ({
         side="bottom"
         resizable={resizable}
         onInteractOutside={onInteractOutside}
-        className={cn(
-          "flex flex-col overflow-y-auto rounded-t-2xl",
-          drawerSizeClasses[size],
-          className,
-        )}
+        className={cn("rounded-t-2xl", drawerSizeClasses[size], className)}
       >
         <SheetHeader>
           <SheetTitle>{title}</SheetTitle>
           {description ? <SheetDescription>{description}</SheetDescription> : null}
         </SheetHeader>
-        {children}
+        <SheetBody>{children}</SheetBody>
         {footer ? <SheetFooter>{footer}</SheetFooter> : null}
       </SheetContent>
     </Sheet>
