@@ -20,6 +20,7 @@ export type { BadgeProps } from "./primitives/badge";
 export { Badge, badgeVariants } from "./primitives/badge";
 export {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -74,6 +75,7 @@ export {
 export type { SheetContentProps } from "./primitives/sheet";
 export {
   Sheet,
+  SheetBody,
   SheetClose,
   SheetContent,
   SheetDescription,

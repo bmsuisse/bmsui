@@ -4,6 +4,7 @@ import { useMediaQuery } from "../../lib/useMediaQuery";
 import { cn } from "../../lib/utils";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -12,6 +13,7 @@ import {
 } from "../../primitives/dialog";
 import {
   Sheet,
+  SheetBody,
   SheetContent,
   SheetDescription,
   SheetFooter,
@@ -270,7 +272,7 @@ export const ResponsivePanel = ({
           onInteractOutside={onInteractOutside}
           style={resizable || draggable ? geometry.style : undefined}
           className={cn(
-            "max-h-[85vh] overflow-y-auto transition-shadow duration-150 ease-out",
+            "max-h-[85vh] transition-shadow duration-150 ease-out",
             geometry.isDragging && "shadow-2xl ring-2 ring-primary/30",
             desktopSizeClasses[size],
             className,
@@ -309,7 +311,7 @@ export const ResponsivePanel = ({
             <DialogTitle>{title}</DialogTitle>
             {description ? <DialogDescription>{description}</DialogDescription> : null}
           </DialogHeader>
-          {children}
+          <DialogBody>{children}</DialogBody>
           {footer ? <DialogFooter>{footer}</DialogFooter> : null}
         </DialogContent>
       </Dialog>
@@ -322,17 +324,13 @@ export const ResponsivePanel = ({
         side="bottom"
         resizable={resizable}
         onInteractOutside={onInteractOutside}
-        className={cn(
-          "flex flex-col overflow-y-auto rounded-t-2xl",
-          drawerSizeClasses[size],
-          className,
-        )}
+        className={cn("rounded-t-2xl", drawerSizeClasses[size], className)}
       >
         <SheetHeader>
           <SheetTitle>{title}</SheetTitle>
           {description ? <SheetDescription>{description}</SheetDescription> : null}
         </SheetHeader>
-        {children}
+        <SheetBody>{children}</SheetBody>
         {footer ? <SheetFooter>{footer}</SheetFooter> : null}
       </SheetContent>
     </Sheet>

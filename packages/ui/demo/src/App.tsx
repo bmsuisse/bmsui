@@ -65,6 +65,7 @@ import {
   SelectValue,
   Separator,
   Sheet,
+  SheetBody,
   SheetClose,
   SheetContent,
   SheetDescription,
@@ -134,6 +135,10 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// Module-level, not recomputed on every App render (App holds ~10 unrelated
+// pieces of demo state, any of which re-renders it).
+const TALL_MODAL_LINES = Array.from({ length: 20 }, (_, i) => i + 1);
+
 const ALL_SUPPLIERS = [
   { value: "00611", label: "00611 RIGIPS AG" },
   { value: "01952", label: "01952 SWISSPOR ROMANDIE SA" },
@@ -162,6 +167,7 @@ export function App(): ReactElement {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [questionOpen, setQuestionOpen] = useState(false);
   const [formModalOpen, setFormModalOpen] = useState(false);
+  const [tallModalOpen, setTallModalOpen] = useState(false);
   const [responsivePanelOpen, setResponsivePanelOpen] = useState(false);
   const [responsivePanelSize, setResponsivePanelSize] = useState<"sm" | "md" | "lg" | "xl">("lg");
   const [resizablePanelOpen, setResizablePanelOpen] = useState(false);
@@ -409,6 +415,26 @@ export function App(): ReactElement {
                   />
                 </FormField>
               </FormModal>
+
+              <Button variant="outline" onClick={() => setTallModalOpen(true)}>
+                Open tall modal (fixed header/footer, scrolling body)
+              </Button>
+              <Modal
+                open={tallModalOpen}
+                onOpenChange={setTallModalOpen}
+                title="Tall modal demo"
+                description="Scroll the body -- the title and Close button stay put; only the body has a scrollbar."
+                footer={<Button onClick={() => setTallModalOpen(false)}>Close</Button>}
+              >
+                <div className="space-y-4">
+                  {TALL_MODAL_LINES.map((n) => (
+                    <p key={n} className="text-sm">
+                      Line {n} of tall body content, forcing DialogBody's own
+                      overflow-y-auto to scroll.
+                    </p>
+                  ))}
+                </div>
+              </Modal>
             </>
           </Section>
 
@@ -786,7 +812,9 @@ export function App(): ReactElement {
                   <SheetTitle>Order details</SheetTitle>
                   <SheetDescription>Slides in from the right by default.</SheetDescription>
                 </SheetHeader>
-                <p className="mt-4 text-sm">Sheet body content goes here.</p>
+                <SheetBody>
+                  <p className="text-sm">Sheet body content goes here.</p>
+                </SheetBody>
                 <SheetFooter>
                   <SheetClose asChild>
                     <Button variant="outline">Cancel</Button>
