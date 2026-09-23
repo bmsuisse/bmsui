@@ -162,6 +162,7 @@ export function App(): ReactElement {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [questionOpen, setQuestionOpen] = useState(false);
   const [formModalOpen, setFormModalOpen] = useState(false);
+  const [tallModalOpen, setTallModalOpen] = useState(false);
   const [responsivePanelOpen, setResponsivePanelOpen] = useState(false);
   const [responsivePanelSize, setResponsivePanelSize] = useState<"sm" | "md" | "lg" | "xl">("lg");
   const [resizablePanelOpen, setResizablePanelOpen] = useState(false);
@@ -409,6 +410,26 @@ export function App(): ReactElement {
                   />
                 </FormField>
               </FormModal>
+
+              <Button variant="outline" onClick={() => setTallModalOpen(true)}>
+                Open tall modal (sticky header/footer)
+              </Button>
+              <Modal
+                open={tallModalOpen}
+                onOpenChange={setTallModalOpen}
+                title="Sticky header/footer demo"
+                description="Scroll the body -- the title and Close button stay put."
+                footer={<Button onClick={() => setTallModalOpen(false)}>Close</Button>}
+              >
+                <div className="space-y-4">
+                  {Array.from({ length: 20 }, (_, i) => (
+                    <p key={i} className="text-sm">
+                      Line {i + 1} of tall body content, forcing DialogContent's
+                      max-h-[85vh] to scroll.
+                    </p>
+                  ))}
+                </div>
+              </Modal>
             </>
           </Section>
 

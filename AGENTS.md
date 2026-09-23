@@ -49,7 +49,27 @@ logic above, which already had its own extraction). Structure:
   previously had no built-in scroll handling at all for content taller than
   the viewport, discovered migrating the sales app's `ComposeMailDialog` (a
   tiptap editor + address-chip inputs that can genuinely overflow a short
-  viewport). `Button` gained
+  viewport). `DialogHeader`/`DialogFooter` gained `position: sticky` (v0.16.1)
+  — that v0.2.1 safety net let `DialogContent` scroll, but title/actions
+  scrolled away with the body, found migrating CCMT2's bonus-rule edit modal
+  once a new panel pushed it past 85vh for the first time. `-top-6`/`-bottom-6`
+  with `-mx-6 -m{t,b}-6` + matching `p{t,b}-6 px-6` bleeds each one out to
+  `DialogContent`'s own edge and re-applies its `p-6` as its own padding —
+  needed because a scroll container's padding isn't where a sticky child's
+  offset is measured from once scrolled (a well-known CSS quirk), so without
+  the bleed the header would stop 24px short of the real scroll boundary. Net
+  effect for the common case (content that fits without scrolling) is
+  pixel-identical to the plain non-sticky divs this replaced. The header's
+  close `X` button had the same problem one layer deeper: it was `absolute`
+  positioned *inside* the same scrolling `DialogContent`, so it scrolled away
+  too — moved to a `sticky top-4` zero-height (`h-0`, `overflow-visible` lets
+  the button escape its own collapsed box) wrapper rendered before `children`
+  (a `sticky` element must be first in source order at the position it sticks
+  from, unlike `absolute`). That wrapper needs `items-start`, not flexbox's
+  default `align-items: stretch` — stretch shrinks the button itself to the
+  wrapper's own zero height, a real clickable-area bug jsdom's
+  `getBoundingClientRect` can't catch (it never computes real layout) since it
+  only surfaced testing against an actual browser. `Button` gained
   `[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0` on its base
   classes (v0.4.5) — the contract-management app's own `Button` had this and
   relied on it everywhere a bare `lucide-react` icon is passed as a child
