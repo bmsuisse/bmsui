@@ -19,6 +19,17 @@ export const DialogOverlay = forwardRef<
 ));
 DialogOverlay.displayName = "DialogOverlay";
 
+// A `flex flex-col` column, not a single `overflow-y-auto` box (v0.16.1's
+// first attempt at this) -- DialogHeader/DialogFooter are `shrink-0` and
+// DialogBody is the one `flex-1 overflow-y-auto` region, so only the body
+// ever needs to scroll and its scrollbar only ever runs alongside the body,
+// not the whole dialog. `overflow-hidden` (not `-auto`) here since this
+// element itself no longer scrolls -- DialogBody does. `showCloseButton`'s
+// button goes back to plain `absolute right-4 top-4`: since this box doesn't
+// scroll anymore, an absolutely-positioned child of it stays visually put
+// with no extra work, unlike the sticky/zero-height wrapper v0.16.1 needed
+// (and got wrong -- see that version's own history) when this element itself
+// was the one scrolling.
 export const DialogContent = forwardRef<
   ElementRef<typeof DialogPrimitive.Content>,
   ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
@@ -32,58 +43,37 @@ export const DialogContent = forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-1/2 top-1/2 z-50 max-h-[85vh] w-full max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-lg border bg-background p-6 shadow-lg",
+        "fixed left-1/2 top-1/2 z-50 flex max-h-[85vh] w-full max-w-md -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-lg border bg-background shadow-lg",
         className,
       )}
       {...props}
     >
-      {showCloseButton ? (
-        // Was `absolute`, positioned relative to this scrolling DialogContent
-        // itself -- which meant it scrolled away with the body content on any
-        // dialog tall enough to need scrolling (the exact case DialogHeader/
-        // DialogFooter's own sticky treatment above targets). `sticky top-4`
-        // on a zero-height (`h-0`, `overflow-visible` lets the button escape
-        // its own collapsed box) full-width flex row keeps it pinned the same
-        // way, without adding any real height to the layout -- rendered
-        // *before* `children` since a `sticky` element needs to be in source
-        // order at the position it should stick from, unlike `absolute`.
-        <div className="sticky top-4 z-20 flex h-0 items-start justify-end overflow-visible">
-          <DialogPrimitive.Close
-            data-testid={closeButtonTestId}
-            className="mr-2 rounded-sm opacity-70 hover:opacity-100"
-          >
-            <X className="h-4 w-4" />
-            <span className="sr-only">Close</span>
-          </DialogPrimitive.Close>
-        </div>
-      ) : null}
       {children}
+      {showCloseButton ? (
+        <DialogPrimitive.Close
+          data-testid={closeButtonTestId}
+          className="absolute right-4 top-4 z-20 rounded-sm opacity-70 hover:opacity-100"
+        >
+          <X className="h-4 w-4" />
+          <span className="sr-only">Close</span>
+        </DialogPrimitive.Close>
+      ) : null}
     </DialogPrimitive.Content>
   </DialogPrimitive.Portal>
 ));
 DialogContent.displayName = "DialogContent";
 
-// `sticky -top-6`/`-mx-6 -mt-6` + `pt-6 px-6` bleeds this out to DialogContent's
-// own edge (canceling its `p-6`) and re-applies the same padding as its own,
-// so it sticks flush against the *actual* scroll boundary instead of stopping
-// 24px short of it (a well-known CSS quirk: a scroll container's own padding
-// isn't where a `position: sticky` child's offset is measured from once
-// scrolled). Net effect in the common case (content that fits without
-// scrolling) is visually identical to the plain, non-sticky div this replaced
-// -- only a DialogContent tall enough to scroll ever shows the difference.
-// `z-10` + the close button's own `z-20` (see above) keeps the button above
-// this once both are competing for the same top-right corner while stuck.
+// `shrink-0` -- never gives up space to DialogBody's `flex-1`. Only `pt-6`
+// (top + sides): DialogContent no longer supplies any padding of its own, and
+// unlike DialogFooter's `mt-4` below, the original DialogHeader had no
+// explicit bottom margin/padding at all, so there's nothing to preserve on
+// this edge -- DialogBody's own top edge butts directly against it, exactly
+// as before.
 export const DialogHeader = ({
   className,
   ...props
 }: HTMLAttributes<HTMLDivElement>): ReactElement => (
-  <div
-    className={cn(
-      "sticky -top-6 -mx-6 -mt-6 z-10 flex flex-col gap-1.5 bg-background px-6 pt-6",
-      className,
-    )}
-    {...props}
-  />
+  <div className={cn("flex shrink-0 flex-col gap-1.5 px-6 pt-6", className)} {...props} />
 );
 
 export const DialogTitle = forwardRef<
@@ -106,22 +96,39 @@ export const DialogDescription = forwardRef<
 ));
 DialogDescription.displayName = "DialogDescription";
 
-// Same bleed-and-restore trick as DialogHeader, mirrored to the bottom edge
-// (-bottom-6/-mb-6/pb-6, matching @bmsuisse/datagrid's own sticky grand-total
-// row, which sticks to the bottom of ITS scroll container the same way). The
-// original `mt-4` (margin, for the gap above the footer) becomes `pt-4`
-// (padding) -- margin would collapse into whatever's above it once bled to
-// the edge, padding won't, and it needs to be part of this element's own box
-// for the sticky background to cover it once docked.
+// The one scrolling region. `min-h-0` overrides flexbox's default
+// `min-height: auto` on a flex item, which otherwise refuses to shrink below
+// its content's natural height and silently defeats `overflow-y-auto` --
+// content would just keep growing DialogContent past `max-h-[85vh]` instead
+// of ever scrolling. `pb-6` is this element's own fallback bottom padding for
+// when there's no DialogFooter (Modal/ResponsivePanel's `footer` prop is
+// optional); when a DialogFooter *is* present, its `-mt-6` exactly cancels
+// this padding (both are the same "6" = 1.5rem Tailwind step) and replaces it
+// with its own `pt-4`, matching the original `DialogFooter`'s `mt-4` gap
+// above the buttons -- see DialogFooter below. No top padding here: nothing
+// to preserve on that edge either (see DialogHeader above), and a bare
+// `DialogContent`/`DialogBody` used with no `DialogHeader` needs its own
+// top padding via `className`, same as it always needed *some* padding
+// contributor on that edge.
+export const DialogBody = ({
+  className,
+  ...props
+}: HTMLAttributes<HTMLDivElement>): ReactElement => (
+  <div className={cn("min-h-0 flex-1 overflow-y-auto px-6 pb-6", className)} {...props} />
+);
+
+// `-mt-6` cancels DialogBody's own `pb-6` (see above) so the two combined act
+// as one continuous box with a single `pt-4` gap between the body's last
+// content and the footer's buttons -- exactly the original `DialogFooter`'s
+// plain `mt-4` margin, just relocated since a margin can't span two
+// separately-padded flex siblings the way it could span one old undivided
+// box. `shrink-0`, like DialogHeader.
 export const DialogFooter = ({
   className,
   ...props
 }: HTMLAttributes<HTMLDivElement>): ReactElement => (
   <div
-    className={cn(
-      "sticky -bottom-6 -mx-6 -mb-6 z-10 flex justify-end gap-2 bg-background px-6 pb-6 pt-4",
-      className,
-    )}
+    className={cn("-mt-6 flex shrink-0 justify-end gap-2 px-6 pb-6 pt-4", className)}
     {...props}
   />
 );

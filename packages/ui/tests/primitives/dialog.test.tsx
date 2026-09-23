@@ -2,36 +2,58 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "../../src/primitives/dialog";
 
-describe("DialogHeader / DialogFooter sticky positioning", () => {
-  it("DialogHeader sticks to the top of DialogContent's scroll area", () => {
+describe("DialogContent / DialogBody layout", () => {
+  it("DialogContent is a flex column, not a single scrolling box", () => {
+    render(
+      <Dialog open onOpenChange={() => {}}>
+        <DialogContent data-testid="content">
+          <DialogHeader>
+            <DialogTitle>Title</DialogTitle>
+          </DialogHeader>
+          <DialogBody data-testid="body">Body</DialogBody>
+        </DialogContent>
+      </Dialog>,
+    );
+
+    const content = screen.getByTestId("content");
+    expect(content.className).toContain("flex");
+    expect(content.className).toContain("flex-col");
+    expect(content.className).not.toContain("overflow-y-auto");
+  });
+
+  it("DialogBody, not DialogContent, is the one scrolling region", () => {
+    render(
+      <Dialog open onOpenChange={() => {}}>
+        <DialogContent>
+          <DialogBody data-testid="body">Body</DialogBody>
+        </DialogContent>
+      </Dialog>,
+    );
+
+    const body = screen.getByTestId("body");
+    expect(body.className).toContain("overflow-y-auto");
+    expect(body.className).toContain("flex-1");
+    // min-h-0 overrides flexbox's default `min-height: auto`, which would
+    // otherwise refuse to shrink DialogBody below its content's natural
+    // height and silently defeat overflow-y-auto.
+    expect(body.className).toContain("min-h-0");
+  });
+
+  it("DialogHeader and DialogFooter don't grow/shrink -- only DialogBody does", () => {
     render(
       <Dialog open onOpenChange={() => {}}>
         <DialogContent>
           <DialogHeader data-testid="header">
             <DialogTitle>Title</DialogTitle>
           </DialogHeader>
-          <p>Body</p>
-        </DialogContent>
-      </Dialog>,
-    );
-
-    const header = screen.getByTestId("header");
-    expect(header.className).toContain("sticky");
-    expect(header.className).toContain("-top-6");
-    expect(header.className).toContain("bg-background");
-  });
-
-  it("DialogFooter sticks to the bottom of DialogContent's scroll area", () => {
-    render(
-      <Dialog open onOpenChange={() => {}}>
-        <DialogContent>
-          <p>Body</p>
+          <DialogBody>Body</DialogBody>
           <DialogFooter data-testid="footer">
             <button type="button">OK</button>
           </DialogFooter>
@@ -39,46 +61,37 @@ describe("DialogHeader / DialogFooter sticky positioning", () => {
       </Dialog>,
     );
 
-    const footer = screen.getByTestId("footer");
-    expect(footer.className).toContain("sticky");
-    expect(footer.className).toContain("-bottom-6");
-    expect(footer.className).toContain("bg-background");
+    expect(screen.getByTestId("header").className).toContain("shrink-0");
+    expect(screen.getByTestId("footer").className).toContain("shrink-0");
   });
 
-  it("a caller's own className still merges onto the sticky base classes", () => {
+  it("a caller's own className still merges onto DialogBody's base classes", () => {
     render(
       <Dialog open onOpenChange={() => {}}>
         <DialogContent>
-          <DialogHeader data-testid="header" className="border-b">
-            <DialogTitle>Title</DialogTitle>
-          </DialogHeader>
+          <DialogBody data-testid="body" className="bg-muted">
+            Body
+          </DialogBody>
         </DialogContent>
       </Dialog>,
     );
 
-    const header = screen.getByTestId("header");
-    expect(header.className).toContain("sticky");
-    expect(header.className).toContain("border-b");
+    const body = screen.getByTestId("body");
+    expect(body.className).toContain("overflow-y-auto");
+    expect(body.className).toContain("bg-muted");
   });
 
-  it("the sticky close button wrapper doesn't stretch the close button to its own zero height", () => {
+  it("renders the close button as a plain absolute child again (no sticky wrapper)", () => {
     render(
       <Dialog open onOpenChange={() => {}}>
         <DialogContent closeButtonTestId="close">
-          <p>Body</p>
+          <DialogBody>Body</DialogBody>
         </DialogContent>
       </Dialog>,
     );
 
     const closeButton = screen.getByTestId("close");
-    // The wrapper is `h-0` (zero footprint, so it doesn't push content down) --
-    // it must also set `items-start` so flexbox's default `align-items: stretch`
-    // doesn't shrink the button itself to that same zero height (a real
-    // clickable-area regression jsdom's own getBoundingClientRect can't catch,
-    // since jsdom never computes real layout -- this only guards the class).
-    const wrapper = closeButton.parentElement;
-    expect(wrapper?.className).toContain("h-0");
-    expect(wrapper?.className).toContain("items-start");
-    expect(wrapper?.className).toContain("sticky");
+    expect(closeButton.className).toContain("absolute");
+    expect(closeButton.parentElement).toHaveAttribute("role", "dialog");
   });
 });

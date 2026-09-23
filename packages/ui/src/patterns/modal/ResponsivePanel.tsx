@@ -4,6 +4,7 @@ import { useMediaQuery } from "../../lib/useMediaQuery";
 import { cn } from "../../lib/utils";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -270,7 +271,7 @@ export const ResponsivePanel = ({
           onInteractOutside={onInteractOutside}
           style={resizable || draggable ? geometry.style : undefined}
           className={cn(
-            "max-h-[85vh] overflow-y-auto transition-shadow duration-150 ease-out",
+            "max-h-[85vh] transition-shadow duration-150 ease-out",
             geometry.isDragging && "shadow-2xl ring-2 ring-primary/30",
             desktopSizeClasses[size],
             className,
@@ -309,7 +310,7 @@ export const ResponsivePanel = ({
             <DialogTitle>{title}</DialogTitle>
             {description ? <DialogDescription>{description}</DialogDescription> : null}
           </DialogHeader>
-          {children}
+          <DialogBody>{children}</DialogBody>
           {footer ? <DialogFooter>{footer}</DialogFooter> : null}
         </DialogContent>
       </Dialog>

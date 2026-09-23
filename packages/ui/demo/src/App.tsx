@@ -134,6 +134,10 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// Module-level, not recomputed on every App render (App holds ~10 unrelated
+// pieces of demo state, any of which re-renders it).
+const TALL_MODAL_LINES = Array.from({ length: 20 }, (_, i) => i + 1);
+
 const ALL_SUPPLIERS = [
   { value: "00611", label: "00611 RIGIPS AG" },
   { value: "01952", label: "01952 SWISSPOR ROMANDIE SA" },
@@ -412,20 +416,20 @@ export function App(): ReactElement {
               </FormModal>
 
               <Button variant="outline" onClick={() => setTallModalOpen(true)}>
-                Open tall modal (sticky header/footer)
+                Open tall modal (fixed header/footer, scrolling body)
               </Button>
               <Modal
                 open={tallModalOpen}
                 onOpenChange={setTallModalOpen}
-                title="Sticky header/footer demo"
-                description="Scroll the body -- the title and Close button stay put."
+                title="Tall modal demo"
+                description="Scroll the body -- the title and Close button stay put; only the body has a scrollbar."
                 footer={<Button onClick={() => setTallModalOpen(false)}>Close</Button>}
               >
                 <div className="space-y-4">
-                  {Array.from({ length: 20 }, (_, i) => (
-                    <p key={i} className="text-sm">
-                      Line {i + 1} of tall body content, forcing DialogContent's
-                      max-h-[85vh] to scroll.
+                  {TALL_MODAL_LINES.map((n) => (
+                    <p key={n} className="text-sm">
+                      Line {n} of tall body content, forcing DialogBody's own
+                      overflow-y-auto to scroll.
                     </p>
                   ))}
                 </div>

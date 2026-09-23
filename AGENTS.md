@@ -49,27 +49,44 @@ logic above, which already had its own extraction). Structure:
   previously had no built-in scroll handling at all for content taller than
   the viewport, discovered migrating the sales app's `ComposeMailDialog` (a
   tiptap editor + address-chip inputs that can genuinely overflow a short
-  viewport). `DialogHeader`/`DialogFooter` gained `position: sticky` (v0.16.1)
-  — that v0.2.1 safety net let `DialogContent` scroll, but title/actions
-  scrolled away with the body, found migrating CCMT2's bonus-rule edit modal
-  once a new panel pushed it past 85vh for the first time. `-top-6`/`-bottom-6`
-  with `-mx-6 -m{t,b}-6` + matching `p{t,b}-6 px-6` bleeds each one out to
-  `DialogContent`'s own edge and re-applies its `p-6` as its own padding —
-  needed because a scroll container's padding isn't where a sticky child's
-  offset is measured from once scrolled (a well-known CSS quirk), so without
-  the bleed the header would stop 24px short of the real scroll boundary. Net
-  effect for the common case (content that fits without scrolling) is
-  pixel-identical to the plain non-sticky divs this replaced. The header's
-  close `X` button had the same problem one layer deeper: it was `absolute`
-  positioned *inside* the same scrolling `DialogContent`, so it scrolled away
-  too — moved to a `sticky top-4` zero-height (`h-0`, `overflow-visible` lets
-  the button escape its own collapsed box) wrapper rendered before `children`
-  (a `sticky` element must be first in source order at the position it sticks
-  from, unlike `absolute`). That wrapper needs `items-start`, not flexbox's
-  default `align-items: stretch` — stretch shrinks the button itself to the
-  wrapper's own zero height, a real clickable-area bug jsdom's
-  `getBoundingClientRect` can't catch (it never computes real layout) since it
-  only surfaced testing against an actual browser. `Button` gained
+  viewport). `DialogContent` became a real `flex flex-col` layout with a new
+  `DialogBody` (v0.16.1) — that v0.2.1 safety net let `DialogContent` scroll
+  as one single box, but that meant `DialogHeader`/`DialogFooter` scrolled
+  away with the body too, *and* the scrollbar it grew ran the full height of
+  the dialog even though only the body content between them ever needed one
+  — both found migrating CCMT2's bonus-rule edit modal once a new panel
+  pushed it past 85vh for the first time, the second only after trying (and
+  discarding) a `position: sticky` header/footer as this version's first fix,
+  which kept title/actions in place but didn't move the scrollbar off
+  `DialogContent`. `DialogHeader`/`DialogFooter` are now `shrink-0` and own
+  their own padding directly (`DialogContent` itself carries none anymore);
+  `DialogBody` is the one `flex-1 overflow-y-auto` region, so its scrollbar
+  only ever runs alongside the body, and the close `X` button goes back to
+  plain `absolute right-4 top-4` (`DialogContent` no longer scrolls, so an
+  absolute child of it just stays put with no extra work). `min-h-0` on
+  `DialogBody` is load-bearing, not decorative — flexbox's default
+  `min-height: auto` on a flex item refuses to shrink below its content's
+  natural height, which silently defeats `overflow-y-auto` and lets
+  `DialogContent` grow past `max-h-[85vh]` instead of ever scrolling.
+  `DialogFooter`'s original plain `mt-4` (a single margin, back when
+  `DialogContent` was one undivided box) becomes `-mt-6 ... pt-4`: `DialogBody`
+  carries its own `pb-6` fallback for when there's no footer at all (`Modal`'s
+  and `ResponsivePanel`'s `footer` prop is optional), and `DialogFooter`'s
+  `-mt-6` exactly cancels that (same `6` = 1.5rem Tailwind step) so the two
+  together read as one continuous box with a single `pt-4` gap above the
+  buttons — pixel-identical to the original for the common case (content that
+  fits without scrolling). One accepted, permanent behavior change from
+  before *any* of this: `DialogFooter`'s gap above it can no longer
+  margin-collapse with a trailing body element's own bottom margin the way a
+  plain `mt-4` on a non-flex `DialogContent` could — margins never collapse
+  across flex-item boundaries at all, which is inherent to `DialogContent`
+  being flex-based now, not a further choice made on top of it. `Modal`/
+  `FormModal`/`ResponsivePanel` all wrap their `children` in the new
+  `DialogBody`; `FormModal`'s `<form>` additionally needs its own
+  `flex min-h-0 flex-1 flex-col` — it's `DialogContent`'s only direct child
+  (wrapping `DialogHeader`+`DialogBody`+`DialogFooter` together), so without
+  making the form itself a flex column too, `DialogBody` inside it isn't a
+  flex item at all and its `flex-1`/`min-h-0` do nothing. `Button` gained
   `[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0` on its base
   classes (v0.4.5) — the contract-management app's own `Button` had this and
   relied on it everywhere a bare `lucide-react` icon is passed as a child

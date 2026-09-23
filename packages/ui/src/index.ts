@@ -20,6 +20,7 @@ export type { BadgeProps } from "./primitives/badge";
 export { Badge, badgeVariants } from "./primitives/badge";
 export {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,

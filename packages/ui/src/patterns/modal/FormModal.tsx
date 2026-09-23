@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Button } from "../../primitives/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -81,12 +82,18 @@ export const FormModal = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={className}>
-        <form onSubmit={handleSubmit}>
+        {/* `flex min-h-0 flex-1 flex-col`: DialogContent's own flex-column
+            layout only reaches its direct children, and this form (not
+            DialogHeader/DialogBody/DialogFooter) is the only one -- without
+            this, DialogBody's `flex-1`/`min-h-0` would have nothing to
+            negotiate against (a plain block isn't a flex context), and it
+            would render at its full natural height with no scrolling. */}
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
             {description ? <DialogDescription>{description}</DialogDescription> : null}
           </DialogHeader>
-          {children}
+          <DialogBody>{children}</DialogBody>
           <DialogFooter>
             <Button
               type="button"
