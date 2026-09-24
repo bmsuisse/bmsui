@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { LayoutGrid } from "lucide-react";
+import { Squares2X2Icon } from "@heroicons/react/24/outline";
 import { describe, expect, it } from "vitest";
 import { NavItem } from "../../../src/patterns/sidebar/NavItem";
 import { SidebarContextProvider } from "../../../src/patterns/sidebar/context";
@@ -7,7 +7,7 @@ import { TooltipProvider } from "../../../src/primitives/tooltip";
 
 describe("NavItem", () => {
   it("renders as an anchor by default and forwards href", () => {
-    render(<NavItem href="/overview" icon={LayoutGrid} label="Overview" />);
+    render(<NavItem href="/overview" icon={Squares2X2Icon} label="Overview" />);
     const link = screen.getByRole("link", { name: "Overview" });
     expect(link).toHaveAttribute("href", "/overview");
   });

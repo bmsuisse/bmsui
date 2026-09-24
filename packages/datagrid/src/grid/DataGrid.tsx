@@ -1,4 +1,10 @@
-import { BarsArrowDownIcon, BarsArrowUpIcon, FunnelIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowPathIcon,
+  BarsArrowDownIcon,
+  BarsArrowUpIcon,
+  ChevronRightIcon,
+  FunnelIcon,
+} from "@heroicons/react/24/outline";
 import type {
   CellContext,
   ColumnDef as TanstackColumnDef,
@@ -8,7 +14,6 @@ import type {
 } from "@tanstack/react-table";
 import { columnResizingFeature, columnSizingFeature, flexRender, tableFeatures, useTable } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { ChevronRight, Loader2 } from "lucide-react";
 import type {
   ClipboardEvent as ReactClipboardEvent,
   CSSProperties,
@@ -1292,7 +1297,7 @@ export function DataGrid<TRow extends RowData>({
                   toggleRowExpanded(row.id);
                 }}
               >
-                <ChevronRight
+                <ChevronRightIcon
                   className={`h-4 w-4 transition-transform${isExpanded ? " rotate-90" : ""}`}
                   aria-hidden
                 />
@@ -1474,7 +1479,7 @@ export function DataGrid<TRow extends RowData>({
               onClick={() => toggleGroupExpanded(key)}
               aria-expanded={expanded}
             >
-              <ChevronRight
+              <ChevronRightIcon
                 className={`h-4 w-4 shrink-0 transition-transform${expanded ? " rotate-90" : ""}`}
                 aria-hidden
               />
@@ -1557,7 +1562,7 @@ export function DataGrid<TRow extends RowData>({
             data-testid="datagrid-loading-overlay"
             className="absolute inset-0 z-30 flex items-center justify-center bg-background/60"
           >
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden />
+            <ArrowPathIcon className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden />
           </div>
         )}
         <div

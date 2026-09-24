@@ -1,4 +1,9 @@
-import { AlertCircle, AlertTriangle, CheckCircle2, Info } from "lucide-react";
+import {
+  CheckCircleIcon,
+  ExclamationCircleIcon,
+  ExclamationTriangleIcon,
+  InformationCircleIcon,
+} from "@heroicons/react/24/outline";
 import type { ReactElement, ReactNode } from "react";
 import { cn } from "../../lib/utils";
 
@@ -14,7 +19,7 @@ export interface AlertBoxProps {
   className?: string;
   /**
    * Overrides the default variant icon entirely. Pass `null` to hide the
-   * icon. Defaults to a variant-specific lucide-react icon.
+   * icon. Defaults to a variant-specific heroicons icon.
    */
   icon?: ReactNode;
 }
@@ -35,10 +40,10 @@ const variantStyles: Record<AlertBoxVariant, string> = {
 };
 
 const defaultIcons: Record<AlertBoxVariant, ReactElement> = {
-  error: <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />,
-  warning: <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />,
-  info: <Info className="h-4 w-4 shrink-0" aria-hidden="true" />,
-  success: <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />,
+  error: <ExclamationCircleIcon className="h-4 w-4 shrink-0" aria-hidden="true" />,
+  warning: <ExclamationTriangleIcon className="h-4 w-4 shrink-0" aria-hidden="true" />,
+  info: <InformationCircleIcon className="h-4 w-4 shrink-0" aria-hidden="true" />,
+  success: <CheckCircleIcon className="h-4 w-4 shrink-0" aria-hidden="true" />,
 };
 
 export const AlertBox = ({ variant, title, children, className, icon }: AlertBoxProps): ReactElement => {

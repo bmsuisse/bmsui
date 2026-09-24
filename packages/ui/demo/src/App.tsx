@@ -64,18 +64,18 @@ import {
   TooltipTrigger,
 } from "@bmsuisse/ui";
 import {
-  ClipboardCheck,
-  Cog,
-  DollarSign,
-  Info,
-  LayoutGrid,
-  ListFilter,
-  Percent,
-  Search,
-  ShoppingCart,
-  Sparkles,
-  Users,
-} from "lucide-react";
+  ClipboardDocumentCheckIcon,
+  Cog6ToothIcon,
+  CurrencyDollarIcon,
+  FunnelIcon,
+  InformationCircleIcon,
+  MagnifyingGlassIcon,
+  ReceiptPercentIcon,
+  ShoppingCartIcon,
+  SparklesIcon,
+  Squares2X2Icon,
+  UsersIcon,
+} from "@heroicons/react/24/outline";
 import type { ReactElement } from "react";
 import { useEffect, useState } from "react";
 
@@ -706,12 +706,12 @@ function SearchDemo(): ReactElement {
                 shortcutHint="⌘K"
                 trailingSlot={
                   <button type="button" className="text-muted-foreground hover:text-foreground" aria-label="Voice search">
-                    <Search className="h-4 w-4" aria-hidden="true" />
+                    <MagnifyingGlassIcon className="h-4 w-4" aria-hidden="true" />
                   </button>
                 }
                 modes={[
-                  { key: "search", label: "Search", icon: Search },
-                  { key: "ask", label: "Ask AI", icon: Sparkles },
+                  { key: "search", label: "Search", icon: MagnifyingGlassIcon },
+                  { key: "ask", label: "Ask AI", icon: SparklesIcon },
                 ]}
                 activeMode={mode}
                 onModeChange={setMode}
@@ -736,7 +736,7 @@ function KpiCardDemo(): ReactElement {
           label="Revenue"
           value="1.2M"
           variant="hero"
-          icon={DollarSign}
+          icon={CurrencyDollarIcon}
           badge={{ text: "+12%", positive: true }}
           sub="vs. 1.07M last year"
           progress={72}
@@ -747,7 +747,7 @@ function KpiCardDemo(): ReactElement {
           <KpiCard
             label="New customers"
             value="248"
-            icon={Users}
+            icon={UsersIcon}
             badge={{ text: "+8%", positive: true }}
             sparkline={[3, 4, 3, 5, 6, 5, 7]}
           />
@@ -756,7 +756,7 @@ function KpiCardDemo(): ReactElement {
           <KpiCard
             label="Orders"
             value="1'042"
-            icon={ShoppingCart}
+            icon={ShoppingCartIcon}
             sub="12 kunden warten"
             subTone="warn"
             sparkline={[9, 7, 8, 6, 7, 5, 6]}
@@ -768,7 +768,7 @@ function KpiCardDemo(): ReactElement {
       </div>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <KpiCard label="Open tasks" value="5" variant="mini" icon={ClipboardCheck} href="#tasks" />
+        <KpiCard label="Open tasks" value="5" variant="mini" icon={ClipboardDocumentCheckIcon} href="#tasks" />
         <KpiCard
           label="Overdue"
           value="2"
@@ -818,7 +818,7 @@ function SidebarDemo(): ReactElement {
   const [collapsed, setCollapsed] = useState(false);
   const [active, setActive] = useState("overview");
 
-  const item = (key: string, icon: typeof LayoutGrid, label: string) => (
+  const item = (key: string, icon: typeof Squares2X2Icon, label: string) => (
     <NavItem
       as="button"
       type="button"
@@ -841,16 +841,16 @@ function SidebarDemo(): ReactElement {
         footer="v0.7.0"
       >
         <NavGroup label="Work">
-          {item("overview", LayoutGrid, "Overview")}
-          {item("approvals", ClipboardCheck, "Approvals")}
+          {item("overview", Squares2X2Icon, "Overview")}
+          {item("approvals", ClipboardDocumentCheckIcon, "Approvals")}
         </NavGroup>
         <NavGroup label="Bonus rules" defaultCollapsed>
-          {item("rules", Percent, "Bonus Rules")}
-          {item("templates", ListFilter, "Filter Templates")}
+          {item("rules", ReceiptPercentIcon, "Bonus Rules")}
+          {item("templates", FunnelIcon, "Filter Templates")}
         </NavGroup>
         <NavGroup label="Info">
-          {item("info", Info, "Info")}
-          {item("settings", Cog, "Settings")}
+          {item("info", InformationCircleIcon, "Info")}
+          {item("settings", Cog6ToothIcon, "Settings")}
         </NavGroup>
       </Sidebar>
       <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">

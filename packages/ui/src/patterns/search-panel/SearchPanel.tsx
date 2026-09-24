@@ -1,4 +1,4 @@
-import { Search } from "lucide-react";
+import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import type { ComponentType, InputHTMLAttributes, ReactElement, ReactNode, Ref } from "react";
 import { cn } from "../../lib/utils";
 import { LoadingSpinner } from "../loading-spinner/LoadingSpinner";
@@ -61,7 +61,7 @@ export function SearchPanel({
         {isLoading ? (
           <LoadingSpinner size="sm" />
         ) : (
-          <Search className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+          <MagnifyingGlassIcon className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
         )}
         <input
           ref={inputRef}

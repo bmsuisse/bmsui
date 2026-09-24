@@ -1,5 +1,10 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { AlertCircle, ChevronDown, ChevronRight, Loader2 } from "lucide-react";
+import {
+  ArrowPathIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  ExclamationCircleIcon,
+} from "@heroicons/react/24/outline";
 import type { ReactElement, ReactNode } from "react";
 import { Fragment, useEffect, useMemo, useRef } from "react";
 import { alignClassName } from "../column/format";
@@ -71,11 +76,11 @@ function TreeCell<TRow>({
           className="flex h-4 w-4 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-50"
         >
           {isLoading ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+            <ArrowPathIcon className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
           ) : flatRow.isExpanded ? (
-            <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
+            <ChevronDownIcon className="h-3.5 w-3.5" aria-hidden="true" />
           ) : (
-            <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+            <ChevronRightIcon className="h-3.5 w-3.5" aria-hidden="true" />
           )}
         </button>
       ) : (
@@ -94,7 +99,7 @@ function TreeCell<TRow>({
           why a failed fetch surfaces via errorIds instead of throwing. */}
       {flatRow.isExpanded && error ? (
         <span className="ml-1 flex shrink-0 items-center gap-1 text-xs text-destructive">
-          <AlertCircle className="h-3 w-3" aria-hidden="true" />
+          <ExclamationCircleIcon className="h-3 w-3" aria-hidden="true" />
           Failed to load.
           <button type="button" className="underline underline-offset-2" onClick={onRetry}>
             Retry
@@ -521,7 +526,7 @@ export function TreeDataGrid<TRow>({
                 <td colSpan={totalColumnCount} className="p-4 text-center text-muted-foreground">
                   {loading ? (
                     <span className="inline-flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                      <ArrowPathIcon className="h-4 w-4 animate-spin" aria-hidden="true" />
                       Loading...
                     </span>
                   ) : (
@@ -549,7 +554,7 @@ export function TreeDataGrid<TRow>({
                           onClick={() => toggleGroupExpanded(bucket.key)}
                           aria-expanded={groupExpanded}
                         >
-                          <ChevronRight
+                          <ChevronRightIcon
                             className={`h-4 w-4 shrink-0 transition-transform${groupExpanded ? " rotate-90" : ""}`}
                             aria-hidden
                           />
