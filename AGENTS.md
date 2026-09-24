@@ -79,11 +79,14 @@ logic above, which already had its own extraction). Structure:
   scroll container: header `pb-3` + body `pt-1`, body `pb-1` + footer `pt-3`
   (16px each); body `pb-6` when no footer follows (`:has(+[data-slot=
   dialog-footer])`), footer `pt-1` directly after a header or an empty body,
-  and an empty body (`ConfirmDialog`/`QuestionDialog`) is `empty:hidden` so
-  their description-to-buttons gap stays 16px. `DialogBody` (now
+  an empty body before a footer (`ConfirmDialog`/`QuestionDialog`) is hidden
+  so their description-to-buttons gap stays 16px, and without a footer it
+  tops the header's `pb-3` up to the 24px bottom inset. `DialogBody` (now
   `forwardRef`) toggles `data-overflow-top`/`data-overflow-bottom` on itself
   from a scroll listener + Resize/MutationObserver (set on the DOM node, no
-  re-render); the header/footer show an inset `--color-border` hairline only
+  re-render); the header/footer show an inset `--dialog-divider` hairline
+  (12% foreground in light, since `--color-border` is near-invisible on the
+  light surface; `--color-border` in dark) only
   while content is actually hidden behind them. The layout relies on `:has()`
   and data-slot sibling selectors, fine for Tailwind v4's browser baseline.
   One accepted, permanent behavior change from before *any* of this:

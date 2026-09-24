@@ -49,7 +49,7 @@ export const DialogContent = forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-1/2 top-1/2 z-50 flex max-h-[85vh] w-full max-w-md -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-lg border bg-background shadow-lg",
+        "fixed left-1/2 top-1/2 z-50 flex max-h-[85vh] [--dialog-divider:color-mix(in_oklab,var(--color-foreground)_12%,transparent)] dark:[--dialog-divider:var(--color-border)] w-full max-w-md -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-lg border bg-background shadow-lg",
         className,
       )}
       {...props}
@@ -70,7 +70,9 @@ export const DialogContent = forwardRef<
 DialogContent.displayName = "DialogContent";
 
 // `shrink-0` -- never gives up space to DialogBody's `flex-1`. Opaque
-// `bg-background` (DialogContent's own surface) plus an inset hairline that
+// `bg-background` (DialogContent's own surface) plus an inset hairline
+// (`--dialog-divider`, set on DialogContent: `--color-border` is too faint on
+// the light surface, so light mode uses 12% foreground instead) that
 // only shows while DialogBody is scrolled away from its top (see
 // useScrollEdges below). `pb-3` + DialogBody's `pt-1` = 16px between the
 // title and the first field (https://github.com/bmsuisse/bmsui/issues/71).
@@ -83,7 +85,7 @@ export const DialogHeader = ({
   <div
     data-slot="dialog-header"
     className={cn(
-      "flex shrink-0 flex-col gap-1.5 bg-background px-6 pb-3 pt-6 transition-shadow [&:has(+[data-overflow-top])]:shadow-[inset_0_-1px_0_var(--color-border)]",
+      "flex shrink-0 flex-col gap-1.5 bg-background px-6 pb-3 pt-6 transition-shadow [&:has(+[data-overflow-top])]:shadow-[inset_0_-1px_0_var(--dialog-divider)]",
       className,
     )}
     {...props}
@@ -160,8 +162,10 @@ function useScrollEdges(ref: RefObject<HTMLElement | null>): void {
 // is never clipped): `pt-1` under DialogHeader's `pb-3`, and `pb-1` above a
 // following DialogFooter's `pt-3` -- 16px either way -- or the dialog's own
 // `pb-6` bottom inset when there's no footer. No negative margins: nothing
-// overlaps DialogBody, so nothing can show through (#70). An empty body
-// (ConfirmDialog/QuestionDialog) is `hidden` rather than adding a gap.
+// overlaps DialogBody, so nothing can show through (#70). An empty body is
+// `hidden` before a footer (ConfirmDialog/QuestionDialog keep their 16px
+// description-to-buttons gap) and otherwise just tops the header's `pb-3` up
+// to the dialog's 24px bottom inset.
 export const DialogBody = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, forwardedRef) => {
     const ref = useRef<HTMLDivElement | null>(null);
@@ -179,7 +183,7 @@ export const DialogBody = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivEleme
         ref={setRefs}
         data-slot="dialog-body"
         className={cn(
-          "min-h-0 flex-1 overflow-y-auto px-6 pb-6 pt-1 empty:hidden [&:has(+[data-slot=dialog-footer])]:pb-1",
+          "min-h-0 flex-1 overflow-y-auto px-6 pb-6 pt-1 empty:pb-3 empty:pt-0 [&:empty:has(+[data-slot=dialog-footer])]:hidden [&:has(+[data-slot=dialog-footer])]:pb-1",
           className,
         )}
         {...props}
@@ -202,7 +206,7 @@ export const DialogFooter = ({
   <div
     data-slot="dialog-footer"
     className={cn(
-      "flex shrink-0 justify-end gap-2 bg-background px-6 pb-6 pt-3 transition-shadow [[data-overflow-bottom]+&]:shadow-[inset_0_1px_0_var(--color-border)] [[data-slot=dialog-body]:empty+&]:pt-1 [[data-slot=dialog-header]+&]:pt-1",
+      "flex shrink-0 justify-end gap-2 bg-background px-6 pb-6 pt-3 transition-shadow [[data-overflow-bottom]+&]:shadow-[inset_0_1px_0_var(--dialog-divider)] [[data-slot=dialog-body]:empty+&]:pt-1 [[data-slot=dialog-header]+&]:pt-1",
       className,
     )}
     {...props}

@@ -145,14 +145,16 @@ describe("DialogContent / DialogBody layout", () => {
     expect(body).toContain("[&:has(+[data-slot=dialog-footer])]:pb-1");
   });
 
-  it("an empty DialogBody (ConfirmDialog) is hidden instead of adding a gap", () => {
+  it("an empty DialogBody before a footer (ConfirmDialog) is hidden instead of adding a gap", () => {
     render(
       <ConfirmDialog open onOpenChange={() => {}} title="Delete?" onConfirm={() => {}} />,
     );
 
     const body = document.querySelector('[data-slot="dialog-body"]');
     expect(body).toBeEmptyDOMElement();
-    expect(body?.className).toContain("empty:hidden");
+    expect(body?.className).toContain("[&:empty:has(+[data-slot=dialog-footer])]:hidden");
+    // Without a footer it stays, topping the header's pb-3 up to the 24px bottom inset.
+    expect(body?.className).toContain("empty:pb-3");
   });
 
   it("forwards a ref to DialogBody's div", () => {
