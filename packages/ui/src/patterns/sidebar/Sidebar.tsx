@@ -1,4 +1,4 @@
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { ChevronDoubleLeftIcon, ChevronDoubleRightIcon } from "@heroicons/react/24/outline";
 import {
   useCallback,
   useEffect,
@@ -129,7 +129,7 @@ export function Sidebar({
                       {resolve(header, collapsed)}
                     </span>
                   )}
-                  <PanelLeftOpen
+                  <ChevronDoubleRightIcon
                     className="absolute h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
                     aria-hidden
                   />
@@ -144,7 +144,7 @@ export function Sidebar({
                       aria-label="Collapse sidebar"
                       className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
                     >
-                      <PanelLeftClose className="h-4 w-4" aria-hidden />
+                      <ChevronDoubleLeftIcon className="h-4 w-4" aria-hidden />
                     </button>
                   )}
                 </>

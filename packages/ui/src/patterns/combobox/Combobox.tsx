@@ -1,4 +1,4 @@
-import { Check, ChevronsUpDown, X } from "lucide-react";
+import { CheckIcon, ChevronUpDownIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import type { ComponentProps, KeyboardEvent, ReactElement, ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "../../lib/utils";
@@ -302,7 +302,7 @@ export function Combobox(props: ComboboxProps): ReactElement {
             className="pointer-events-none h-3.5 w-3.5 shrink-0 accent-primary"
           />
         ) : (
-          <Check className={cn("h-4 w-4 shrink-0", isSelected ? "opacity-100" : "opacity-0")} />
+          <CheckIcon className={cn("h-4 w-4 shrink-0", isSelected ? "opacity-100" : "opacity-0")} />
         )}
         <span className="truncate">{option.label}</span>
       </button>
@@ -343,10 +343,10 @@ export function Combobox(props: ComboboxProps): ReactElement {
                   }
                 }}
               >
-                <X className="h-3.5 w-3.5" />
+                <XMarkIcon className="h-3.5 w-3.5" />
               </span>
             ) : null}
-            <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" aria-hidden="true" />
+            <ChevronUpDownIcon className="h-4 w-4 shrink-0 opacity-50" aria-hidden="true" />
           </span>
         </Button>
       </PopoverTrigger>

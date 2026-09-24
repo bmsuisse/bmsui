@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { Check, Plus } from "lucide-react";
+import { CheckIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { cn } from "../../lib/utils";
 
 /** The minimal shape this component needs to render one chip in the stepper. */
@@ -108,7 +108,7 @@ export function Stepper({
                             : "bg-muted text-muted-foreground",
                       )}
                     >
-                      {done ? <Check className="h-3 w-3" /> : n}
+                      {done ? <CheckIcon className="h-3 w-3" /> : n}
                     </div>
                     <span
                       className={cn(
@@ -147,7 +147,7 @@ export function Stepper({
           title={newLabel}
           className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-[12px] font-semibold text-foreground transition-colors hover:bg-muted/50"
         >
-          <Plus className="h-3.5 w-3.5" />
+          <PlusIcon className="h-3.5 w-3.5" />
           {newLabel}
         </button>
       )}

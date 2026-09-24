@@ -1,5 +1,5 @@
 import { type VariantProps, cva } from "class-variance-authority";
-import { Loader2 } from "lucide-react";
+import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import type { HTMLAttributes, ReactElement } from "react";
 import { cn } from "../../lib/utils";
 
@@ -31,7 +31,7 @@ export const LoadingSpinner = ({
   ...props
 }: LoadingSpinnerProps): ReactElement => (
   <span role="status" className={cn("inline-flex items-center gap-2", className)} {...props}>
-    <Loader2 className={cn(loadingSpinnerIconVariants({ size }))} aria-hidden="true" />
+    <ArrowPathIcon className={cn(loadingSpinnerIconVariants({ size }))} aria-hidden="true" />
     {label ? <span>{label}</span> : null}
   </span>
 );

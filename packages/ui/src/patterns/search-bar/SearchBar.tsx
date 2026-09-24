@@ -1,4 +1,4 @@
-import { Search, X } from "lucide-react";
+import { MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import type { InputHTMLAttributes, ReactElement, Ref } from "react";
 import { cn } from "../../lib/utils";
 import { LoadingSpinner } from "../loading-spinner/LoadingSpinner";
@@ -42,7 +42,7 @@ export function SearchBar({
         {isLoading ? (
           <LoadingSpinner size="sm" />
         ) : (
-          <Search className="h-4 w-4" aria-hidden="true" />
+          <MagnifyingGlassIcon className="h-4 w-4" aria-hidden="true" />
         )}
       </span>
       <input
@@ -68,7 +68,7 @@ export function SearchBar({
           aria-label={clearLabel}
           className="absolute top-1/2 right-2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
         >
-          <X className="h-4 w-4" aria-hidden="true" />
+          <XMarkIcon className="h-4 w-4" aria-hidden="true" />
         </button>
       )}
     </div>

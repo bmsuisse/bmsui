@@ -1,4 +1,4 @@
-import { Columns3, GripVertical } from "lucide-react";
+import { Bars2Icon, ViewColumnsIcon } from "@heroicons/react/24/outline";
 import type { ReactElement, ReactNode } from "react";
 import { useEffect, useState } from "react";
 import type { ColumnDef } from "../column/types";
@@ -157,7 +157,7 @@ export function ColumnSelector<TRow>({
       <DialogTrigger asChild>
         {trigger ?? (
           <Button variant="outline" size="icon" aria-label="Choose columns">
-            <Columns3 className="h-4 w-4" aria-hidden />
+            <ViewColumnsIcon className="h-4 w-4" aria-hidden />
           </Button>
         )}
       </DialogTrigger>
@@ -226,8 +226,8 @@ export function ColumnSelector<TRow>({
                     )}
                   >
                     {canReorder && (
-                      <GripVertical
-                        className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50"
+                      <Bars2Icon
+                        className="h-3.5 w-3.5 shrink-0 rotate-90 text-muted-foreground/50"
                         aria-hidden
                       />
                     )}

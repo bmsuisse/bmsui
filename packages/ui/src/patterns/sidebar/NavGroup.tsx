@@ -1,4 +1,4 @@
-import { ChevronDown } from "lucide-react";
+import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import { useState, type ReactElement, type ReactNode } from "react";
 import { cn } from "../../lib/utils";
 import { useSidebarCollapsed } from "./context";
@@ -53,7 +53,7 @@ export function NavGroup({
             className="group flex w-full items-center justify-between px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground/80 hover:text-foreground"
           >
             <span>{label}</span>
-            <ChevronDown
+            <ChevronDownIcon
               className={cn(
                 "h-4 w-4 opacity-40 transition-transform group-hover:opacity-100",
                 groupCollapsed && "-rotate-90",

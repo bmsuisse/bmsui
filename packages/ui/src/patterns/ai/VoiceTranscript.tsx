@@ -1,4 +1,4 @@
-import { Undo2, Wand2 } from "lucide-react";
+import { ArrowUturnLeftIcon, SparklesIcon } from "@heroicons/react/24/outline";
 import type { HTMLAttributes, ReactElement } from "react";
 import { useState } from "react";
 import { Textarea } from "../../primitives/textarea";
@@ -112,7 +112,7 @@ export function VoiceTranscript({
           <AiButton
             variant="ai"
             size="sm"
-            icon={Wand2}
+            icon={SparklesIcon}
             loading={loading}
             disabled={disabled || value.trim().length === 0}
             onClick={() => void transform()}
@@ -122,7 +122,7 @@ export function VoiceTranscript({
         ) : null}
         {previous !== null && !loading ? (
           <Button type="button" variant="ghost" size="sm" onClick={undo}>
-            <Undo2 className="h-4 w-4" aria-hidden="true" />
+            <ArrowUturnLeftIcon className="h-4 w-4" aria-hidden="true" />
             Undo
           </Button>
         ) : null}

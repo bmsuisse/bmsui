@@ -105,20 +105,19 @@ import {
   useSidebarCollapsed,
 } from "@bmsuisse/ui";
 import {
-  BookOpen,
-  ClipboardCheck,
-  Cog,
-  DollarSign,
-  Info,
-  LayoutGrid,
-  ListFilter,
-  Percent,
-  Search,
-  ShoppingCart,
-  Sparkles,
-  Users,
-  Wand2,
-} from "lucide-react";
+  BookOpenIcon,
+  ClipboardDocumentCheckIcon,
+  Cog6ToothIcon,
+  CurrencyDollarIcon,
+  FunnelIcon,
+  InformationCircleIcon,
+  MagnifyingGlassIcon,
+  ReceiptPercentIcon,
+  ShoppingCartIcon,
+  SparklesIcon,
+  Squares2X2Icon,
+  UsersIcon,
+} from "@heroicons/react/24/outline";
 import type { ReactElement } from "react";
 import { useEffect, useState } from "react";
 
@@ -1049,12 +1048,12 @@ function SearchDemo(): ReactElement {
                 shortcutHint="⌘K"
                 trailingSlot={
                   <button type="button" className="text-muted-foreground hover:text-foreground" aria-label="Voice search">
-                    <Search className="h-4 w-4" aria-hidden="true" />
+                    <MagnifyingGlassIcon className="h-4 w-4" aria-hidden="true" />
                   </button>
                 }
                 modes={[
-                  { key: "search", label: "Search", icon: Search },
-                  { key: "ask", label: "Ask AI", icon: Sparkles },
+                  { key: "search", label: "Search", icon: MagnifyingGlassIcon },
+                  { key: "ask", label: "Ask AI", icon: SparklesIcon },
                 ]}
                 activeMode={mode}
                 onModeChange={setMode}
@@ -1079,7 +1078,7 @@ function KpiCardDemo(): ReactElement {
           label="Revenue"
           value="1.2M"
           variant="hero"
-          icon={DollarSign}
+          icon={CurrencyDollarIcon}
           badge={{ text: "+12%", positive: true }}
           sub="vs. 1.07M last year"
           progress={72}
@@ -1090,7 +1089,7 @@ function KpiCardDemo(): ReactElement {
           <KpiCard
             label="New customers"
             value="248"
-            icon={Users}
+            icon={UsersIcon}
             badge={{ text: "+8%", positive: true }}
             sparkline={[3, 4, 3, 5, 6, 5, 7]}
           />
@@ -1099,7 +1098,7 @@ function KpiCardDemo(): ReactElement {
           <KpiCard
             label="Orders"
             value="1'042"
-            icon={ShoppingCart}
+            icon={ShoppingCartIcon}
             sub="12 kunden warten"
             subTone="warn"
             sparkline={[9, 7, 8, 6, 7, 5, 6]}
@@ -1111,7 +1110,7 @@ function KpiCardDemo(): ReactElement {
       </div>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <KpiCard label="Open tasks" value="5" variant="mini" icon={ClipboardCheck} href="#tasks" />
+        <KpiCard label="Open tasks" value="5" variant="mini" icon={ClipboardDocumentCheckIcon} href="#tasks" />
         <KpiCard
           label="Overdue"
           value="2"
@@ -1161,7 +1160,7 @@ function SidebarDemo(): ReactElement {
   const [collapsed, setCollapsed] = useState(false);
   const [active, setActive] = useState("overview");
 
-  const item = (key: string, icon: typeof LayoutGrid, label: string) => (
+  const item = (key: string, icon: typeof Squares2X2Icon, label: string) => (
     <NavItem
       as="button"
       type="button"
@@ -1184,16 +1183,16 @@ function SidebarDemo(): ReactElement {
         footer="v0.7.0"
       >
         <NavGroup label="Work">
-          {item("overview", LayoutGrid, "Overview")}
-          {item("approvals", ClipboardCheck, "Approvals")}
+          {item("overview", Squares2X2Icon, "Overview")}
+          {item("approvals", ClipboardDocumentCheckIcon, "Approvals")}
         </NavGroup>
         <NavGroup label="Bonus rules" defaultCollapsed>
-          {item("rules", Percent, "Bonus Rules")}
-          {item("templates", ListFilter, "Filter Templates")}
+          {item("rules", ReceiptPercentIcon, "Bonus Rules")}
+          {item("templates", FunnelIcon, "Filter Templates")}
         </NavGroup>
         <NavGroup label="Info">
-          {item("info", Info, "Info")}
-          {item("settings", Cog, "Settings")}
+          {item("info", InformationCircleIcon, "Info")}
+          {item("settings", Cog6ToothIcon, "Settings")}
         </NavGroup>
       </Sidebar>
       <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
@@ -1266,8 +1265,8 @@ function AiActionsDemo(): ReactElement {
         </p>
         <div className="flex flex-wrap items-center gap-3">
           <AiButton variant="ai">Generate description</AiButton>
-          <AiButton icon={Wand2}>Rewrite</AiButton>
-          <AiButton variant="ai-ghost" icon={BookOpen}>
+          <AiButton icon={SparklesIcon}>Rewrite</AiButton>
+          <AiButton variant="ai-ghost" icon={BookOpenIcon}>
             Suggest tags
           </AiButton>
           <AiButton
@@ -1386,12 +1385,12 @@ function SidebarNavDemo(): ReactElement {
       <div className="h-40 w-56 overflow-hidden rounded-lg border border-border">
         <SidebarNav>
           <NavGroup label="Work">
-            <NavItem icon={LayoutGrid} label="Overview" active />
-            <NavItem icon={ClipboardCheck} label="Approvals" />
-            <NavItem icon={Users} label="Customers" />
-            <NavItem icon={ShoppingCart} label="Orders" />
-            <NavItem icon={DollarSign} label="Invoices" />
-            <NavItem icon={Cog} label="Settings" />
+            <NavItem icon={Squares2X2Icon} label="Overview" active />
+            <NavItem icon={ClipboardDocumentCheckIcon} label="Approvals" />
+            <NavItem icon={UsersIcon} label="Customers" />
+            <NavItem icon={ShoppingCartIcon} label="Orders" />
+            <NavItem icon={CurrencyDollarIcon} label="Invoices" />
+            <NavItem icon={Cog6ToothIcon} label="Settings" />
           </NavGroup>
         </SidebarNav>
       </div>

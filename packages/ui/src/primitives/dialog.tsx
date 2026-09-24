@@ -1,5 +1,5 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { X } from "lucide-react";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 import type {
   ComponentPropsWithoutRef,
   ElementRef,
@@ -60,7 +60,7 @@ export const DialogContent = forwardRef<
           data-testid={closeButtonTestId}
           className="absolute right-4 top-4 z-20 rounded-sm opacity-70 hover:opacity-100"
         >
-          <X className="h-4 w-4" />
+          <XMarkIcon className="h-4 w-4" />
           <span className="sr-only">Close</span>
         </DialogPrimitive.Close>
       ) : null}

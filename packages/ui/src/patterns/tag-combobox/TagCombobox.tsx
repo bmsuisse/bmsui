@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 import type { ComponentProps, KeyboardEvent, ReactElement, ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "../../lib/utils";
@@ -272,7 +272,7 @@ export function TagCombobox({
                     removeValue(option.value);
                   }}
                 >
-                  <X className="h-3 w-3" />
+                  <XMarkIcon className="h-3 w-3" />
                 </button>
               )}
             </span>

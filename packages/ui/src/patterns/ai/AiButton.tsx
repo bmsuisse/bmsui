@@ -1,4 +1,4 @@
-import { Sparkles } from "lucide-react";
+import { SparklesIcon } from "@heroicons/react/24/outline";
 import type { ElementType } from "react";
 import { forwardRef } from "react";
 import { Button, type ButtonProps } from "../../primitives/button";
@@ -13,7 +13,7 @@ export interface AiButtonProps extends Omit<ButtonProps, "variant"> {
   variant?: AiButtonVariant;
   /** Swaps the leading icon for a spinner and disables the button while an AI call is in flight. */
   loading?: boolean;
-  /** Leading icon. @default Sparkles */
+  /** Leading icon. @default SparklesIcon */
   icon?: ElementType<NavIconProps>;
 }
 
@@ -24,7 +24,7 @@ export interface AiButtonProps extends Omit<ButtonProps, "variant"> {
  * inside `PopoverTrigger`, which needs the DOM node to anchor the popover.
  */
 export const AiButton = forwardRef<HTMLButtonElement, AiButtonProps>(
-  ({ variant = "ai-subtle", loading = false, icon: Icon = Sparkles, disabled, children, ...props }, ref) => (
+  ({ variant = "ai-subtle", loading = false, icon: Icon = SparklesIcon, disabled, children, ...props }, ref) => (
     <Button
       ref={ref}
       variant={variant}

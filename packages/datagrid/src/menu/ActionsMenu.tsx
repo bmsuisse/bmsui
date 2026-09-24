@@ -1,4 +1,4 @@
-import { MoreVertical } from "lucide-react";
+import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
 import type { ReactElement } from "react";
 import { useMemo } from "react";
 import { Button } from "../components/ui/button";
@@ -44,7 +44,7 @@ export function ActionsMenu<TRow>({ items, ctx, triggerLabel }: ActionsMenuProps
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" aria-label={triggerLabel} onClick={stopRowClick}>
-          <MoreVertical className="h-4 w-4" aria-hidden />
+          <EllipsisVerticalIcon className="h-4 w-4" aria-hidden />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

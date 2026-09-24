@@ -1,4 +1,4 @@
-import { Search } from "lucide-react";
+import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import type { ButtonHTMLAttributes, ReactElement } from "react";
 import { Button } from "../../primitives/button";
 
@@ -15,7 +15,7 @@ export interface SearchTriggerProps extends Omit<ButtonHTMLAttributes<HTMLButton
 export function SearchTrigger({ label = "Search", ...props }: SearchTriggerProps): ReactElement {
   return (
     <Button type="button" variant="ghost" size="icon" aria-label={label} {...props}>
-      <Search className="h-[18px] w-[18px]" aria-hidden="true" />
+      <MagnifyingGlassIcon className="h-[18px] w-[18px]" aria-hidden="true" />
     </Button>
   );
 }

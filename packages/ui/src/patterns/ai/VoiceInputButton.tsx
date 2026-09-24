@@ -1,4 +1,4 @@
-import { Mic, MicOff } from "lucide-react";
+import { MicrophoneIcon, SlashIcon } from "@heroicons/react/24/outline";
 import { forwardRef } from "react";
 import { Button, type ButtonProps } from "../../primitives/button";
 import { cn } from "../../lib/utils";
@@ -89,9 +89,17 @@ export const VoiceInputButton = forwardRef<HTMLButtonElement, VoiceInputButtonPr
           {...props}
         >
           {supported ? (
-            <Mic className={cn("h-4 w-4", listening && "animate-pulse motion-reduce:animate-none")} aria-hidden="true" />
+            <MicrophoneIcon
+              className={cn("h-4 w-4", listening && "animate-pulse motion-reduce:animate-none")}
+              aria-hidden="true"
+            />
           ) : (
-            <MicOff className="h-4 w-4" aria-hidden="true" />
+            // heroicons has no muted-mic glyph -- MicrophoneIcon plus SlashIcon
+            // (same 24x24 viewBox/stroke) layered on top approximates one.
+            <span className="relative inline-flex h-4 w-4" aria-hidden="true">
+              <MicrophoneIcon className="h-4 w-4" />
+              <SlashIcon className="absolute inset-0 h-4 w-4" />
+            </span>
           )}
           {label}
         </Button>

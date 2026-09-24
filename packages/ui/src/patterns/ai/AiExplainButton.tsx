@@ -1,4 +1,4 @@
-import { RefreshCw, Sparkles } from "lucide-react";
+import { ArrowPathIcon, SparklesIcon } from "@heroicons/react/24/outline";
 import type { ReactElement, ReactNode } from "react";
 import { useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "../../primitives/popover";
@@ -74,7 +74,7 @@ export function AiExplainButton({
       </PopoverTrigger>
       <PopoverContent align={align} className={contentClassName}>
         <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
-          <Sparkles className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+          <SparklesIcon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
           {title ?? label}
         </p>
         {loading ? (
@@ -85,7 +85,7 @@ export function AiExplainButton({
               <AlertBox variant="error">{error}</AlertBox>
             </div>
             <Button type="button" variant="outline" size="sm" onClick={() => void load()}>
-              <RefreshCw className="h-4 w-4" aria-hidden="true" />
+              <ArrowPathIcon className="h-4 w-4" aria-hidden="true" />
               Try again
             </Button>
           </div>

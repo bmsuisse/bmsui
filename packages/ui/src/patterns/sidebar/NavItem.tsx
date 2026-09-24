@@ -3,7 +3,7 @@ import { cn } from "../../lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../primitives/tooltip";
 import { useSidebarCollapsed } from "./context";
 
-/** Shape a `lucide-react` icon component satisfies — `NavItem` sizes and colors it itself. */
+/** Shape a `@heroicons/react` icon component satisfies — `NavItem` sizes and colors it itself. */
 export interface NavIconProps {
   className?: string;
   strokeWidth?: string | number;

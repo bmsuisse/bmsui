@@ -1,4 +1,9 @@
-import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, ChevronUpIcon } from "lucide-react";
+import {
+  ChevronDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ChevronUpIcon,
+} from "@heroicons/react/24/outline";
 import type { ComponentProps } from "react";
 import { useEffect, useRef } from "react";
 import { DayPicker, getDefaultClassNames } from "react-day-picker";
