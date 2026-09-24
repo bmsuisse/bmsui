@@ -168,7 +168,7 @@ export function DateRangeFilter<TRow>({
           {isFiltered && <span className="truncate">{summary}</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto">{panel}</PopoverContent>
+      <PopoverContent className="w-auto max-w-[var(--radix-popover-content-available-width)]">{panel}</PopoverContent>
     </Popover>
   );
 }
