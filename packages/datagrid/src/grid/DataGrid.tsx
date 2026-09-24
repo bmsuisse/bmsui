@@ -43,6 +43,7 @@ import { EditingBar } from "../edit/EditingBar";
 import type { EditingCellContext } from "../edit/editingState";
 import { useEditingState } from "../edit/editingState";
 import { renderEditableCell } from "../edit/renderEditableCell";
+import { FilterLabelsProvider, useFilterLabels } from "../filter/labels";
 import { renderDefaultFilterWidget } from "../filter/registry";
 import type { FilterDescriptor } from "../filter/types";
 import { useGroupExpansion } from "../hooks/useGroupExpansion";
@@ -131,8 +132,8 @@ function isNativeTextFieldTarget(event: { target: EventTarget | null }): boolean
 }
 
 // Opaque equivalent of the body row's translucent `bg-foreground/5` zebra
-// tint, for the structural expand/selection/row-actions columns' `sticky`
-// cells — a translucent background there would let horizontally-scrolled
+// tint, for the structural expand/selection/row-actions columns' and pinned
+// data columns' `sticky` cells — a translucent background there would let horizontally-scrolled
 // column content show through underneath on odd rows.
 const STRUCTURAL_ZEBRA_BG_CLASS = "bg-[color-mix(in_srgb,var(--color-foreground)_5%,var(--color-background))]";
 
@@ -298,7 +299,9 @@ export function DataGrid<TRow extends RowData>({
   showTotals = false,
   editing,
   cellEditing,
+  filterLabels,
 }: DataGridProps<TRow>): ReactElement {
+  const resolvedFilterLabels = useFilterLabels(filterLabels);
   // Not supported together with `groupBy` yet — `cellEditingRowIds` below is
   // built from the flat `tableRows` list, but rendering only shows expanded-
   // group rows via `groupedBuckets`'s own bucketed order, so a keyboard-
@@ -542,7 +545,7 @@ export function DataGrid<TRow extends RowData>({
   function pinnedCellProps(
     column: ColumnDef<TRow>,
     area: "header" | "body" = "body",
-  ): { className?: string; style?: CSSProperties } {
+  ): { className?: string; classNameOdd?: string; style?: CSSProperties } {
     // Pinned cells need an opaque background of their own so body/header
     // content scrolling underneath a sticky column doesn't show through —
     // matched to whichever section (header vs. body) they sit in, since the
@@ -554,13 +557,18 @@ export function DataGrid<TRow extends RowData>({
     // Tailwind conflict for `cn()`'s clsx+twMerge machinery to resolve —
     // called from the memoized per-column maps below, so it already runs
     // once per column per relevant state change, not once per cell.
+    // Odd (zebra-striped) body rows get the same opaque zebra mix as the
+    // structural columns (`structuralCellProps` below) — a plain
+    // `bg-background` there would read as a lighter block against the
+    // row's `bg-foreground/5` tint.
     const bg = area === "header" ? "bg-muted" : "bg-background";
+    const bgOdd = area === "header" ? "bg-muted" : STRUCTURAL_ZEBRA_BG_CLASS;
     // Auto-layout must not shrink columns below the space reserved by sticky offsets.
     if (column.pinned === "left") {
-      return { className: `sticky z-10 ${bg}`, style: { left: leftPinnedOffsets.get(column.id), width: columnSize(column.id), minWidth: columnSize(column.id) } };
+      return { className: `sticky z-10 ${bg}`, classNameOdd: `sticky z-10 ${bgOdd}`, style: { left: leftPinnedOffsets.get(column.id), width: columnSize(column.id), minWidth: columnSize(column.id) } };
     }
     if (column.pinned === "right") {
-      return { className: `sticky z-10 ${bg}`, style: { right: rightPinnedOffsets.get(column.id), width: columnSize(column.id), minWidth: columnSize(column.id) } };
+      return { className: `sticky z-10 ${bg}`, classNameOdd: `sticky z-10 ${bgOdd}`, style: { right: rightPinnedOffsets.get(column.id), width: columnSize(column.id), minWidth: columnSize(column.id) } };
     }
     if (enableColumnResizing) return { style: { width: columnSize(column.id) } };
     return { style: column.width ? { width: column.width } : undefined };
@@ -627,16 +635,17 @@ export function DataGrid<TRow extends RowData>({
   // a pinned-or-resizing column needs a props object at all in the body;
   // every other column's `<td>` falls back to the plain base class below.
   const BODY_TD_BASE_CLASS = "border-b border-border p-2";
-  function bodyCellClassAndStyle(column: ColumnDef<TRow>): { className: string; style?: CSSProperties } {
+  function bodyCellClassAndStyle(column: ColumnDef<TRow>): { className: string; classNameOdd: string; style?: CSSProperties } {
     const pinnedProps = column.pinned || enableColumnResizing ? pinnedCellProps(column) : undefined;
     return {
       className: pinnedProps?.className ? `${BODY_TD_BASE_CLASS} ${pinnedProps.className}` : BODY_TD_BASE_CLASS,
+      classNameOdd: pinnedProps?.classNameOdd ? `${BODY_TD_BASE_CLASS} ${pinnedProps.classNameOdd}` : BODY_TD_BASE_CLASS,
       style: pinnedProps?.style,
     };
   }
   // eslint-disable-next-line react-hooks/exhaustive-deps -- `bodyCellClassAndStyle` closes over `enableColumnResizing`/`leftPinnedOffsets`/`rightPinnedOffsets`/`columnSizing`, all listed explicitly below.
   const bodyCellPropsByColumn = useMemo(() => {
-    const map = new Map<string, { className: string; style?: CSSProperties }>();
+    const map = new Map<string, { className: string; classNameOdd: string; style?: CSSProperties }>();
     for (const column of visibleColumns) map.set(column.id, bodyCellClassAndStyle(column));
     return map;
   }, [visibleColumns, enableColumnResizing, leftPinnedOffsets, rightPinnedOffsets, columnSizing]);
@@ -1329,7 +1338,7 @@ export function DataGrid<TRow extends RowData>({
               <td
                 key={cell.id}
                 style={cellProps?.style}
-                className={cellProps?.className ?? BODY_TD_BASE_CLASS}
+                className={(isOddRow ? cellProps?.classNameOdd : cellProps?.className) ?? BODY_TD_BASE_CLASS}
                 // Only present under `cellEditing` — the anchor `handleCellMouseDown`/
                 // the window drag listener/`SelectionOverlay` all look these up by
                 // attribute selector; see `useCellSelection`'s own doc for why
@@ -1527,7 +1536,7 @@ export function DataGrid<TRow extends RowData>({
     return renderRow(item.row, measureRef, index);
   }
 
-  return (
+  const grid = (
     // `h-full`/`min-h-0` here and on the two wrappers below are no-ops unless
     // a consumer itself gives <DataGrid> a bounded height (e.g. wraps it in
     // its own `flex-1 min-h-0` container) -- percentage heights fall back to
@@ -1669,7 +1678,7 @@ export function DataGrid<TRow extends RowData>({
                             variant="ghost"
                             size="icon"
                             data-testid={`filter-trigger-${column.id}`}
-                            aria-label={`Filter ${column.header}`}
+                            aria-label={resolvedFilterLabels.filterAriaLabel(column.header)}
                           >
                             <FunnelIcon
                               className={cn(
@@ -1682,7 +1691,9 @@ export function DataGrid<TRow extends RowData>({
                             />
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent>{renderFilterWidget(column)}</PopoverContent>
+                        <PopoverContent className="w-auto max-w-[var(--radix-popover-content-available-width)]">
+                          {renderFilterWidget(column)}
+                        </PopoverContent>
                       </Popover>
                     )}
                   </div>
@@ -1905,4 +1916,7 @@ export function DataGrid<TRow extends RowData>({
       )}
     </div>
   );
+
+  // Context (not props) so custom `renderFilter` widgets and portaled popovers pick these up too.
+  return <FilterLabelsProvider labels={filterLabels}>{grid}</FilterLabelsProvider>;
 }

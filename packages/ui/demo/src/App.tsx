@@ -1,4 +1,6 @@
 import {
+  AiButton,
+  AiExplainButton,
   AlertBox,
   Badge,
   Button,
@@ -9,6 +11,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
+  Checkbox,
   Combobox,
   ConfirmDialog,
   Dialog,
@@ -18,12 +21,21 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DonutChart,
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuPortal,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
   FormField,
   FormModal,
@@ -36,34 +48,64 @@ import {
   NavGroup,
   NavItem,
   Popover,
+  PopoverAnchor,
   PopoverContent,
   PopoverTrigger,
+  QuestionDialog,
   ResponsivePanel,
+  ScrollArea,
   SearchBar,
   SearchPanel,
   SearchTrigger,
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Separator,
   Sheet,
+  SheetBody,
+  SheetClose,
   SheetContent,
   SheetDescription,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
   Sidebar,
+  SidebarNav,
   Skeleton,
+  Sparkline,
   StatusBadge,
+  Stepper,
+  Switch,
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
   TagCombobox,
   Textarea,
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
+  VoiceInputButton,
+  VoiceTranscript,
+  cn,
+  useMediaQuery,
+  useSidebarCollapsed,
 } from "@bmsuisse/ui";
 import {
+  BookOpenIcon,
   ClipboardDocumentCheckIcon,
   Cog6ToothIcon,
   CurrencyDollarIcon,
@@ -92,6 +134,24 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// Module-level, not recomputed on every App render (App holds ~10 unrelated
+// pieces of demo state, any of which re-renders it).
+const TALL_MODAL_LINES = Array.from({ length: 20 }, (_, i) => i + 1);
+const TALL_FORM_FIELDS = [
+  "Name",
+  "Customer",
+  "Supplier",
+  "Valid from",
+  "Valid to",
+  "Threshold",
+  "Bonus %",
+  "Unit",
+  "Comment",
+  "Reference",
+  "Contact",
+  "Notes",
+];
+
 const ALL_SUPPLIERS = [
   { value: "00611", label: "00611 RIGIPS AG" },
   { value: "01952", label: "01952 SWISSPOR ROMANDIE SA" },
@@ -118,7 +178,10 @@ export function App(): ReactElement {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [questionOpen, setQuestionOpen] = useState(false);
   const [formModalOpen, setFormModalOpen] = useState(false);
+  const [tallModalOpen, setTallModalOpen] = useState(false);
+  const [tallFormOpen, setTallFormOpen] = useState(false);
   const [responsivePanelOpen, setResponsivePanelOpen] = useState(false);
   const [responsivePanelSize, setResponsivePanelSize] = useState<"sm" | "md" | "lg" | "xl">("lg");
   const [resizablePanelOpen, setResizablePanelOpen] = useState(false);
@@ -127,6 +190,8 @@ export function App(): ReactElement {
   const [customerName, setCustomerName] = useState("");
   const [fieldError, setFieldError] = useState<string | undefined>(undefined);
   const [country, setCountry] = useState<string | null>("ch");
+  const [gridCountry, setGridCountry] = useState<string | null>(null);
+  const [gridTeamMembers, setGridTeamMembers] = useState<string[]>([]);
   const [teamMembers, setTeamMembers] = useState<string[]>([]);
   const [colors, setColors] = useState<string[]>(["red", "blue"]);
   const [tagTeamMembers, setTagTeamMembers] = useState<string[]>(["alice"]);
@@ -270,6 +335,24 @@ export function App(): ReactElement {
             </Popover>
           </Section>
 
+          <Section title="Popover (anchored)">
+            <Popover>
+              <PopoverAnchor asChild>
+                <span className="rounded-md border border-dashed border-border px-3 py-2 text-sm text-muted-foreground">
+                  Anchor element — the popover aligns to this box, not the trigger
+                </span>
+              </PopoverAnchor>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm">
+                  Open anchored
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 text-sm">
+                Positioned against the dashed anchor above.
+              </PopoverContent>
+            </Popover>
+          </Section>
+
           <Section title="Skeleton">
             <div className="flex w-full max-w-sm flex-col gap-2">
               <Skeleton className="h-4 w-3/4" />
@@ -306,6 +389,20 @@ export function App(): ReactElement {
                 onConfirm={() => sleep(800)}
               />
 
+              <Button variant="outline" onClick={() => setQuestionOpen(true)}>
+                Close tab…
+              </Button>
+              <QuestionDialog
+                open={questionOpen}
+                onOpenChange={setQuestionOpen}
+                title="Save changes before closing?"
+                description="Your edits haven't been saved yet."
+                actions={[
+                  { label: "Don't Save", variant: "outline", onClick: () => sleep(400) },
+                  { label: "Save", onClick: () => sleep(800) },
+                ]}
+              />
+
               <Button variant="outline" onClick={() => setFormModalOpen(true)}>
                 Edit customer…
               </Button>
@@ -331,6 +428,45 @@ export function App(): ReactElement {
                     placeholder="Jane Doe"
                   />
                 </FormField>
+              </FormModal>
+
+              <Button variant="outline" onClick={() => setTallModalOpen(true)}>
+                Open tall modal (fixed header/footer, scrolling body)
+              </Button>
+              <Modal
+                open={tallModalOpen}
+                onOpenChange={setTallModalOpen}
+                title="Tall modal demo"
+                description="Scroll the body -- the title and Close button stay put; only the body has a scrollbar."
+                footer={<Button onClick={() => setTallModalOpen(false)}>Close</Button>}
+              >
+                <div className="space-y-4">
+                  {TALL_MODAL_LINES.map((n) => (
+                    <p key={n} className="text-sm">
+                      Line {n} of tall body content, forcing DialogBody's own
+                      overflow-y-auto to scroll.
+                    </p>
+                  ))}
+                </div>
+              </Modal>
+
+              <Button variant="outline" onClick={() => setTallFormOpen(true)}>
+                Open tall form (opaque footer over scrolled fields)
+              </Button>
+              <FormModal
+                open={tallFormOpen}
+                onOpenChange={setTallFormOpen}
+                title="Tall form demo"
+                submitLabel="Create"
+                onSubmit={() => setTallFormOpen(false)}
+              >
+                <div className="space-y-4">
+                  {TALL_FORM_FIELDS.map((label) => (
+                    <FormField key={label} label={label}>
+                      <Input placeholder={label} />
+                    </FormField>
+                  ))}
+                </div>
               </FormModal>
             </>
           </Section>
@@ -502,6 +638,27 @@ export function App(): ReactElement {
                 <DropdownMenuCheckboxItem checked={showArchived} onCheckedChange={setShowArchived}>
                   Show archived
                 </DropdownMenuCheckboxItem>
+                <DropdownMenuGroup>
+                  <DropdownMenuItem>
+                    Copy link
+                    <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>Move to…</DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      <DropdownMenuRadioGroup
+                        value={syncAction}
+                        onValueChange={(value) => setSyncAction(value as typeof syncAction)}
+                      >
+                        <DropdownMenuRadioItem value="ignore">Backlog</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="create">In progress</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="update">Done</DropdownMenuRadioItem>
+                      </DropdownMenuRadioGroup>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem danger>Delete</DropdownMenuItem>
               </DropdownMenuContent>
@@ -552,6 +709,51 @@ export function App(): ReactElement {
                 onChange={setTeamMembers}
                 placeholder="Select team members"
                 searchPlaceholder="Search…"
+              />
+            </div>
+          </Section>
+
+          <Section title="Combobox (grid columns)">
+            <div className="w-64">
+              <Combobox
+                data-testid="employee-grid-combobox"
+                columns={[
+                  { key: "label", header: "Name" },
+                  { key: "role", header: "Role" },
+                  { key: "location", header: "Location" },
+                ]}
+                options={[
+                  { value: "e1", label: "Alice Meier", data: { role: "Engineer", location: "Zurich" } },
+                  { value: "e2", label: "Bruno Keller", data: { role: "Designer", location: "Bern" } },
+                  { value: "e3", label: "Chiara Rossi", data: { role: "Product Manager", location: "Lugano" } },
+                  { value: "e4", label: "David Wyss", data: { role: "Engineer", location: "Basel" } },
+                ]}
+                value={gridCountry}
+                onChange={setGridCountry}
+                placeholder="Select an employee"
+                searchPlaceholder="Search employees…"
+              />
+            </div>
+          </Section>
+
+          <Section title="TagCombobox (grid columns)">
+            <div className="w-80">
+              <TagCombobox
+                data-testid="employee-grid-tag-combobox"
+                columns={[
+                  { key: "label", header: "Name" },
+                  { key: "role", header: "Role" },
+                  { key: "location", header: "Location" },
+                ]}
+                options={[
+                  { value: "e1", label: "Alice Meier", data: { role: "Engineer", location: "Zurich" } },
+                  { value: "e2", label: "Bruno Keller", data: { role: "Designer", location: "Bern" } },
+                  { value: "e3", label: "Chiara Rossi", data: { role: "Product Manager", location: "Lugano" } },
+                  { value: "e4", label: "David Wyss", data: { role: "Engineer", location: "Basel" } },
+                ]}
+                value={gridTeamMembers}
+                onChange={setGridTeamMembers}
+                placeholder="Select employees"
               />
             </div>
           </Section>
@@ -643,7 +845,17 @@ export function App(): ReactElement {
                   <SheetTitle>Order details</SheetTitle>
                   <SheetDescription>Slides in from the right by default.</SheetDescription>
                 </SheetHeader>
-                <p className="mt-4 text-sm">Sheet body content goes here.</p>
+                <SheetBody>
+                  <p className="text-sm">Sheet body content goes here.</p>
+                </SheetBody>
+                <SheetFooter>
+                  <SheetClose asChild>
+                    <Button variant="outline">Cancel</Button>
+                  </SheetClose>
+                  <SheetClose asChild>
+                    <Button>Save</Button>
+                  </SheetClose>
+                </SheetFooter>
               </SheetContent>
             </Sheet>
           </Section>
@@ -663,12 +875,142 @@ export function App(): ReactElement {
             <SidebarDemo />
           </Section>
 
+          <Section title="Stepper">
+            <StepperDemo />
+          </Section>
+
           <Section title="KpiCard">
             <KpiCardDemo />
           </Section>
 
           <Section title="SearchBar / SearchPanel / SearchTrigger">
             <SearchDemo />
+          </Section>
+
+          <Section title="AI actions">
+            <AiActionsDemo />
+          </Section>
+
+          <Section title="Voice input & transcript">
+            <VoiceDemo />
+          </Section>
+
+          <Section title="Checkbox / Switch">
+            <CheckboxSwitchDemo />
+          </Section>
+
+          <Section title="Tabs">
+            <Tabs defaultValue="overview" className="w-full max-w-md">
+              <TabsList>
+                <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="activity">Activity</TabsTrigger>
+                <TabsTrigger value="settings">Settings</TabsTrigger>
+              </TabsList>
+              <TabsContent value="overview" className="pt-3 text-sm text-muted-foreground">
+                Summary of the selected order.
+              </TabsContent>
+              <TabsContent value="activity" className="pt-3 text-sm text-muted-foreground">
+                Who changed what, and when.
+              </TabsContent>
+              <TabsContent value="settings" className="pt-3 text-sm text-muted-foreground">
+                Per-order preferences.
+              </TabsContent>
+            </Tabs>
+          </Section>
+
+          <Section title="Table">
+            <Table>
+              <TableCaption>Recent orders</TableCaption>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Order</TableHead>
+                  <TableHead>Customer</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell>#4821</TableCell>
+                  <TableCell>Rigips AG</TableCell>
+                  <TableCell className="text-right">CHF 1'240</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>#4822</TableCell>
+                  <TableCell>Swisspor AG</TableCell>
+                  <TableCell className="text-right">CHF 880</TableCell>
+                </TableRow>
+              </TableBody>
+              <TableFooter>
+                <TableRow>
+                  <TableCell colSpan={2}>Total</TableCell>
+                  <TableCell className="text-right">CHF 2'120</TableCell>
+                </TableRow>
+              </TableFooter>
+            </Table>
+          </Section>
+
+          <Section title="Separator / ScrollArea">
+            <div className="flex w-full max-w-md flex-col gap-3">
+              <div className="flex h-5 items-center gap-3 text-sm">
+                <span>Docs</span>
+                <Separator orientation="vertical" />
+                <span>Source</span>
+                <Separator orientation="vertical" />
+                <span>Issues</span>
+              </div>
+              <Separator />
+              <ScrollArea className="h-32 rounded-md border border-border p-3">
+                <ul className="flex flex-col gap-2 text-sm">
+                  {ALL_SUPPLIERS.concat(ALL_SUPPLIERS).map((supplier, index) => (
+                    <li key={`${supplier.value}-${index}`} className={cn(index === 0 && "font-medium")}>
+                      {supplier.label}
+                    </li>
+                  ))}
+                </ul>
+              </ScrollArea>
+            </div>
+          </Section>
+
+          <Section title="Select (grouped)">
+            <div className="w-64">
+              <Select value={country ?? undefined} onValueChange={setCountry}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Pick a country" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="ch">Switzerland</SelectItem>
+                    <SelectItem value="at">Austria</SelectItem>
+                  </SelectGroup>
+                  <SelectGroup>
+                    <SelectItem value="fr">France</SelectItem>
+                    <SelectItem value="it">Italy</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+          </Section>
+
+          <Section title="Sparkline / DonutChart (standalone)">
+            <div className="flex flex-wrap items-center gap-8">
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-muted-foreground">Sparkline</span>
+                <Sparkline data={[4, 9, 6, 12, 10, 16, 14, 21]} color="#8b5cf6" />
+              </div>
+              <DonutChart
+                data={[
+                  { label: "Open", value: 42 },
+                  { label: "In progress", value: 23 },
+                  { label: "Done", value: 35 },
+                ]}
+                centerValue="100"
+                centerLabel="orders"
+              />
+            </div>
+          </Section>
+
+          <Section title="SidebarNav (standalone) / useSidebarCollapsed / useMediaQuery">
+            <SidebarNavDemo />
           </Section>
         </div>
       </div>
@@ -857,5 +1199,212 @@ function SidebarDemo(): ReactElement {
         Drag the sidebar's right edge to resize, or use the header button to rail-collapse it.
       </div>
     </div>
+  );
+}
+
+
+const stepperSteps = [
+  { n: 1, label: "Type", phase: "Setup" },
+  { n: 2, label: "Details", phase: "Setup" },
+  { n: 3, label: "Pricing", phase: "Review" },
+  { n: 4, label: "Confirm", phase: "Review" },
+  { n: 5, label: "Done", phase: "Finish" },
+];
+
+function StepperDemo(): ReactElement {
+  const [step, setStep] = useState(1);
+  const [maxStep, setMaxStep] = useState(1);
+
+  return (
+    <div className="flex w-full flex-col gap-4">
+      <Stepper
+        step={step}
+        maxStep={maxStep}
+        onNavigate={setStep}
+        onNew={() => {
+          setStep(1);
+          setMaxStep(1);
+        }}
+        newLabel="Start over"
+        steps={stepperSteps}
+      />
+      <div>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={step >= stepperSteps.length}
+          onClick={() => {
+            const next = Math.min(step + 1, stepperSteps.length);
+            setStep(next);
+            setMaxStep((m) => Math.max(m, next));
+          }}
+        >
+          Next
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// Fake "model" call: the components take a promise, so a consuming app can
+// wire any backend behind them -- this demo just delays and rewrites locally.
+async function fakeModel(text: string): Promise<string> {
+  await sleep(900);
+  const cleaned = text.trim().replace(/\s+/g, " ");
+  return `${cleaned.charAt(0).toUpperCase()}${cleaned.slice(1)}${/[.!?]$/.test(cleaned) ? "" : "."}`;
+}
+
+function AiActionsDemo(): ReactElement {
+  const [summarizing, setSummarizing] = useState(false);
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div>
+        <p className="mb-2 text-xs font-medium text-muted-foreground">
+          AiButton — Button's three ai variants plus a built-in in-flight state (click Summarize).
+        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <AiButton variant="ai">Generate description</AiButton>
+          <AiButton icon={SparklesIcon}>Rewrite</AiButton>
+          <AiButton variant="ai-ghost" icon={BookOpenIcon}>
+            Suggest tags
+          </AiButton>
+          <AiButton
+            variant="ai"
+            loading={summarizing}
+            onClick={() => {
+              setSummarizing(true);
+              void sleep(1200).then(() => setSummarizing(false));
+            }}
+          >
+            Summarize
+          </AiButton>
+        </div>
+      </div>
+
+      <div>
+        <p className="mb-2 text-xs font-medium text-muted-foreground">
+          AiExplainButton — a "why?" affordance next to a metric; the explanation loads on first open, not on mount.
+        </p>
+        <div className="flex items-center gap-4 rounded-xl border border-border bg-card p-4">
+          <div>
+            <p className="text-2xl font-semibold tabular-nums">CHF 2.4M</p>
+            <p className="text-xs text-muted-foreground">Revenue, last 30 days</p>
+          </div>
+          <AiExplainButton
+            title="Why is revenue up?"
+            onExplain={async () => {
+              await sleep(800);
+              return (
+                <>
+                  <p>Revenue is 18% above the previous 30 days, driven by:</p>
+                  <ul className="mt-2 list-disc pl-4">
+                    <li>Two Q4 framework renewals (CHF 310k combined)</li>
+                    <li>Higher average order value in the insulation category</li>
+                  </ul>
+                </>
+              );
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function VoiceDemo(): ReactElement {
+  const [note, setNote] = useState(
+    "customer called about the insulation order they want two extra pallets delivered to the sion site before friday",
+  );
+  const [quick, setQuick] = useState("");
+
+  return (
+    <div className="flex w-full max-w-xl flex-col gap-6">
+      <div>
+        <p className="mb-2 text-xs font-medium text-muted-foreground">
+          VoiceInputButton — dictation next to any field via the browser's own speech recognition; disabled (not hidden) where there is none.
+        </p>
+        <div className="flex items-center gap-2">
+          <Input
+            value={quick}
+            onChange={(event) => setQuick(event.target.value)}
+            placeholder="Customer note…"
+          />
+          <VoiceInputButton onTranscript={(text) => setQuick((v) => (v ? `${v} ${text}` : text))} />
+        </div>
+      </div>
+
+      <div>
+        <p className="mb-2 text-xs font-medium text-muted-foreground">
+          VoiceTranscript — dictate, edit, then hand the text to a model; Undo if the rewrite isn't better.
+        </p>
+        <VoiceTranscript value={note} onChange={setNote} onTransform={fakeModel} />
+      </div>
+    </div>
+  );
+}
+
+function CheckboxSwitchDemo(): ReactElement {
+  const [terms, setTerms] = useState(true);
+  const [notifications, setNotifications] = useState(false);
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-2">
+        <Checkbox
+          id="terms"
+          checked={terms}
+          onCheckedChange={(checked) => setTerms(checked === true)}
+        />
+        <Label htmlFor="terms">Include archived orders</Label>
+      </div>
+      <div className="flex items-center gap-2">
+        <Checkbox id="terms-disabled" disabled />
+        <Label htmlFor="terms-disabled" className="text-muted-foreground">
+          Disabled
+        </Label>
+      </div>
+      <div className="flex items-center gap-2">
+        <Switch id="notify" checked={notifications} onCheckedChange={setNotifications} />
+        <Label htmlFor="notify">Email me when a sync fails</Label>
+      </div>
+    </div>
+  );
+}
+
+// `SidebarNav` on its own -- the same scroll-fade nav area `Sidebar` uses
+// internally, for a mobile drawer that doesn't want the rest of the chrome.
+function SidebarNavDemo(): ReactElement {
+  const isWide = useMediaQuery("(min-width: 768px)");
+
+  return (
+    <div className="flex w-full flex-col gap-2">
+      <p className="text-xs text-muted-foreground">
+        useMediaQuery(&quot;(min-width: 768px)&quot;) → {String(isWide)}
+      </p>
+      <div className="h-40 w-56 overflow-hidden rounded-lg border border-border">
+        <SidebarNav>
+          <NavGroup label="Work">
+            <NavItem icon={LayoutGrid} label="Overview" active />
+            <NavItem icon={ClipboardCheck} label="Approvals" />
+            <NavItem icon={Users} label="Customers" />
+            <NavItem icon={ShoppingCart} label="Orders" />
+            <NavItem icon={DollarSign} label="Invoices" />
+            <NavItem icon={Cog} label="Settings" />
+          </NavGroup>
+        </SidebarNav>
+      </div>
+      <CollapsedStateReadout />
+    </div>
+  );
+}
+
+// Outside any <Sidebar>, the context falls back to its default -- which is
+// exactly what a consuming app's own nav row sees when it's rendered in a
+// drawer rather than the rail.
+function CollapsedStateReadout(): ReactElement {
+  const collapsed = useSidebarCollapsed();
+  return (
+    <p className="text-xs text-muted-foreground">useSidebarCollapsed() → {String(collapsed)}</p>
   );
 }

@@ -49,7 +49,58 @@ logic above, which already had its own extraction). Structure:
   previously had no built-in scroll handling at all for content taller than
   the viewport, discovered migrating the sales app's `ComposeMailDialog` (a
   tiptap editor + address-chip inputs that can genuinely overflow a short
-  viewport). `Button` gained
+  viewport). `DialogContent` became a real `flex flex-col` layout with a new
+  `DialogBody` (v0.16.1) — that v0.2.1 safety net let `DialogContent` scroll
+  as one single box, but that meant `DialogHeader`/`DialogFooter` scrolled
+  away with the body too, *and* the scrollbar it grew ran the full height of
+  the dialog even though only the body content between them ever needed one
+  — both found migrating CCMT2's bonus-rule edit modal once a new panel
+  pushed it past 85vh for the first time, the second only after trying (and
+  discarding) a `position: sticky` header/footer as this version's first fix,
+  which kept title/actions in place but didn't move the scrollbar off
+  `DialogContent`. `DialogHeader`/`DialogFooter` are now `shrink-0` and own
+  their own padding directly (`DialogContent` itself carries none anymore);
+  `DialogBody` is the one `flex-1 overflow-y-auto` region, so its scrollbar
+  only ever runs alongside the body, and the close `X` button goes back to
+  plain `absolute right-4 top-4` (`DialogContent` no longer scrolls, so an
+  absolute child of it just stays put with no extra work). `min-h-0` on
+  `DialogBody` is load-bearing, not decorative — flexbox's default
+  `min-height: auto` on a flex item refuses to shrink below its content's
+  natural height, which silently defeats `overflow-y-auto` and lets
+  `DialogContent` grow past `max-h-[85vh]` instead of ever scrolling.
+  v0.16.2 removed v0.16.1's `DialogFooter` `-mt-6` overlap: the footer
+  pulled itself up over the scrolling body's `pb-6` with no background, so
+  scrolled content showed through under the buttons (bmsui#70, CCMT2
+  #29642), and the header had no gap to the first field (bmsui#71, CCMT2
+  #29632). Now nothing overlaps: `DialogHeader`/`DialogFooter` are opaque
+  `bg-background` and deliberately *not* positioned (ResponsivePanel's
+  absolute corner resize handles must stay on top of them). Spacing is split
+  so the 1px focus ring of the first/last field is never clipped by the
+  scroll container: header `pb-3` + body `pt-1`, body `pb-1` + footer `pt-3`
+  (16px each); body `pb-6` when no footer follows (`:has(+[data-slot=
+  dialog-footer])`), footer `pt-1` directly after a header or an empty body,
+  an empty body before a footer (`ConfirmDialog`/`QuestionDialog`) is hidden
+  so their description-to-buttons gap stays 16px, and without a footer it
+  tops the header's `pb-3` up to the 24px bottom inset. `DialogBody` (now
+  `forwardRef`) toggles `data-overflow-top`/`data-overflow-bottom` on itself
+  from a scroll listener + Resize/MutationObserver (set on the DOM node, no
+  re-render); the header/footer show an inset `--dialog-divider` hairline
+  (12% foreground in light, since `--color-border` is near-invisible on the
+  light surface; `--color-border` in dark) only
+  while content is actually hidden behind them. The layout relies on `:has()`
+  and data-slot sibling selectors, fine for Tailwind v4's browser baseline.
+  One accepted, permanent behavior change from before *any* of this:
+  `DialogFooter`'s gap above it can no longer margin-collapse with a
+  trailing body element's own bottom margin the way a plain `mt-4` on a
+  non-flex `DialogContent` could — margins never collapse across flex-item
+  boundaries at all, which is inherent to `DialogContent`
+  being flex-based now, not a further choice made on top of it. `Modal`/
+  `FormModal`/`ResponsivePanel` all wrap their `children` in the new
+  `DialogBody`; `FormModal`'s `<form>` additionally needs its own
+  `flex min-h-0 flex-1 flex-col` — it's `DialogContent`'s only direct child
+  (wrapping `DialogHeader`+`DialogBody`+`DialogFooter` together), so without
+  making the form itself a flex column too, `DialogBody` inside it isn't a
+  flex item at all and its `flex-1`/`min-h-0` do nothing. `Button` gained
   `[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0` on its base
   classes (v0.4.5) — the contract-management app's own `Button` had this and
   relied on it everywhere a bare `lucide-react` icon is passed as a child
@@ -316,6 +367,66 @@ logic above, which already had its own extraction). Structure:
     to avoid fighting Radix `ScrollArea`'s nested viewport — `SidebarNav`
     uses a plain `overflow-y-auto` div instead, matching what both source
     apps already did.
+  - `ai/` — `AiButton`, `AiExplainButton`, `VoiceInputButton`,
+    `VoiceTranscript` (v0.16.0) and the `useSpeechRecognition` hook behind
+    the last two. The "do something with AI" affordances several apps were
+    about to hand-roll separately: a sparkle-accented button with a built-in
+    in-flight state (`AiButton`, a `forwardRef` wrapper over `Button`'s
+    `ai`/`ai-subtle`/`ai-ghost` variants), a lazily
+    loading explain-this popover (`AiExplainButton` — `onExplain` fires on
+    first open, not mount, and a rejection renders inline with a retry),
+    and dictation. Dictation defaults to the browser's own
+    `SpeechRecognition` (`window.SpeechRecognition ?? window.webkitSpeechRecognition`),
+    not a dependency or a server round-trip — so it's Chromium/Safari-only by
+    default, and `VoiceInputButton` deliberately renders *disabled* with a
+    crossed-out mic where the API is missing (Firefox, most mobile) rather
+    than hiding itself, to keep layouts stable across browsers; `supported`
+    is exposed on the hook for callers that want to branch themselves.
+    `useSpeechRecognition`'s `engine` option (also on `VoiceInputButton` and
+    `VoiceTranscript`, which just forward it down) swaps that default for
+    any factory satisfying `SpeechRecognitionEngine` — e.g. one piping audio
+    to a server-side transcription API — and passing it makes `supported`
+    unconditionally `true`, since browser-API presence is no longer what
+    "supported" means. `start()` calls the factory fresh each session rather
+    than reusing an instance, matching how `new Ctor()` already worked for
+    the browser engine. The Web Speech API isn't in TypeScript's DOM lib, so
+    `useSpeechRecognition.ts` declares the minimal shape it touches rather
+    than pulling in `@types/dom-speech-recognition` — `SpeechRecognitionEngine`
+    is that same shape, exported so a custom engine can implement it.
+    `VoiceTranscript` composes mic +
+    editable transcript + a caller-supplied `onTransform(text)` model call,
+    keeping the pre-transform text for a one-click undo; transform and
+    mic errors render as an `AlertBox` (mic codes via `describeSpeechError`,
+    which maps `not-allowed` etc. to a sentence and drops `aborted`).
+    The violet accent lives in `buttonVariants` itself, not in the pattern,
+    and is a fixed Tailwind palette for the same reason `Badge`'s `warning`
+    and AlertBox/StatusBadge's warning/info/success tones are: the shared
+    theme has no such token, and unlike `swiss-primary` these must work in
+    a consuming app with zero setup. `VoiceInputButton`'s listening state
+    reuses AlertBox's `destructive` error tint and pulses only the mic
+    icon (stock `animate-pulse` + `motion-reduce:animate-none`, no
+    `tailwindcss-animate`).
+  - `stepper/` — `Stepper` (v0.13.0), a numbered-chip wizard progress
+    indicator: a horizontally-scrolling row of step chips (done/active/
+    upcoming, connected by a line that fills in as steps complete), plus an
+    optional trailing "start over" button (`onNew`/`newLabel`/`newTestId`)
+    pinned as a sibling of the scrolling region rather than inside it, so it
+    doesn't scroll off-screen at narrower widths. Ported from OneSales's
+    OfferParser wizard, which had this hand-rolled locally — its newer
+    ProspectWizard/CustomerWizard flow already reuses that same local
+    component today, so this replaces one duplication with a second consumer
+    already lined up rather than a hypothetical one. `navLabel`/`newLabel`
+    are plain string props with English defaults (`"Steps"`/`"New"`) instead
+    of the original's `useTranslation()` calls, matching `SearchBar`'s
+    `clearLabel` convention, since this package has no i18n dependency of
+    its own. Deliberately does **not** port the original's `tinderSubStep`
+    prop, which injected a one-off "matcher" chip with a sparkle icon
+    between two specific steps for OfferParser's own tinder-swipe matching
+    sub-screen — too bespoke to generalize, and both current consumers work
+    fine without it. This was a conscious scope decision made when
+    extracting the component, not an oversight; don't reintroduce full
+    `tinderSubStep` support here by copying it back from the old OneSales
+    file.
 - `packages/ui/demo/` — same pattern as `packages/datagrid/demo`: a Vite
   app aliasing `@bmsuisse/ui` straight to `src/index.ts`, using the same
   reference-app-derived Tailwind v4 tokens, for visual QA.
@@ -519,6 +630,32 @@ reflects "what could I select if I changed just this filter," and stays
 affected by every other filter as expected. See
 `packages/datagrid/demo/src/App.tsx`'s `FacetedNumberFilterDemo` for a full
 working `<DataGrid>` example with two interacting numeric columns.
+
+### `filterLabels` — translating the filter UI (#72)
+
+Every user-facing string of the column-filter UI (header funnel
+`aria-label`, EnumFilter "Select all"/search placeholder, StringFilter and
+NumberComparisonFilter operator labels, BooleanFilter All/Yes/No, Min/Max/
+Value placeholders, DateRangeFilter presets, …) is a key of the exported
+`FilterLabels` interface; templated ones are functions (`searchPlaceholder:
+(header) => string`). `defaultFilterLabels` holds today's exact English
+strings, so nothing changes unless you override. Same no-i18n-layer
+convention as `EditingOptions.saveLabel`: pass already-translated strings.
+
+- `<DataGrid filterLabels={{ selectAll: t("…"), … }}>` — a `Partial`,
+  merged over the defaults.
+- Delivered via React context (`FilterLabelsProvider` / `useFilterLabels`),
+  so a column's own `renderFilter` widget picks them up too. Wrap
+  standalone widgets in `<FilterLabelsProvider labels={…}>`, or pass a
+  single widget's `labels` prop (on `FilterWidgetProps`); innermost wins,
+  `undefined` values never blank a default.
+- `dateLocale` (a date-fns `Locale`, e.g. `de` from `date-fns/locale`) is
+  the one non-string key: it localizes DateRangeFilter's calendar and
+  trigger summary.
+- `<TreeDataGrid>` renders no filter UI, so it has no such prop.
+
+The demo's EN/DE toggle (`GERMAN_FILTER_LABELS` in
+`packages/datagrid/demo/src/App.tsx`) shows a full German set.
 
 ### `sortable` / `filterable` default to **false** — opt-in, not opt-out
 

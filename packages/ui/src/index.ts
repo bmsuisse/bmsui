@@ -20,6 +20,7 @@ export type { BadgeProps } from "./primitives/badge";
 export { Badge, badgeVariants } from "./primitives/badge";
 export {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -74,6 +75,7 @@ export {
 export type { SheetContentProps } from "./primitives/sheet";
 export {
   Sheet,
+  SheetBody,
   SheetClose,
   SheetContent,
   SheetDescription,
@@ -91,13 +93,19 @@ export type { ModalProps } from "./patterns/modal/Modal";
 export { Modal } from "./patterns/modal/Modal";
 export type { ConfirmDialogProps } from "./patterns/modal/ConfirmDialog";
 export { ConfirmDialog } from "./patterns/modal/ConfirmDialog";
+export type { DialogActionsProps } from "./patterns/modal/DialogActions";
+export { DialogActions } from "./patterns/modal/DialogActions";
 export type { FormModalProps } from "./patterns/modal/FormModal";
 export { FormModal } from "./patterns/modal/FormModal";
 export type { ResponsivePanelProps, ResponsivePanelSize } from "./patterns/modal/ResponsivePanel";
 export { ResponsivePanel } from "./patterns/modal/ResponsivePanel";
+export type { QuestionDialogAction, QuestionDialogProps } from "./patterns/modal/QuestionDialog";
+export { QuestionDialog } from "./patterns/modal/QuestionDialog";
 
 export type { FormFieldProps } from "./patterns/form-field/FormField";
 export { FormField } from "./patterns/form-field/FormField";
+
+export type { GridColumn as ComboboxColumn } from "./lib/optionGrid";
 
 export type {
   ComboboxMultiProps,
@@ -148,6 +156,26 @@ export type { SidebarNavProps, SidebarProps } from "./patterns/sidebar/Sidebar";
 export { Sidebar, SidebarNav } from "./patterns/sidebar/Sidebar";
 export { useSidebarCollapsed } from "./patterns/sidebar/context";
 
+export type { AiButtonProps, AiButtonVariant } from "./patterns/ai/AiButton";
+export { AiButton } from "./patterns/ai/AiButton";
+export type { AiExplainButtonProps } from "./patterns/ai/AiExplainButton";
+export { AiExplainButton } from "./patterns/ai/AiExplainButton";
+export type { VoiceInputButtonProps } from "./patterns/ai/VoiceInputButton";
+export { VoiceInputButton } from "./patterns/ai/VoiceInputButton";
+export type { VoiceTranscriptProps } from "./patterns/ai/VoiceTranscript";
+export { VoiceTranscript } from "./patterns/ai/VoiceTranscript";
+export type {
+  SpeechRecognitionEngine,
+  SpeechRecognitionEngineFactory,
+  SpeechRecognitionState,
+  UseSpeechRecognitionOptions,
+} from "./patterns/ai/useSpeechRecognition";
+export { describeSpeechError, useSpeechRecognition } from "./patterns/ai/useSpeechRecognition";
+export type { StepperProps, StepperStep } from "./patterns/stepper/Stepper";
+export { Stepper } from "./patterns/stepper/Stepper";
+
 // --- shared utility -----------------------------------------------------------
 export { cn } from "./lib/utils";
 export { useMediaQuery } from "./lib/useMediaQuery";
+export type { ConfirmButtonPlacement } from "./lib/platform";
+export { getConfirmButtonPlacement, isWindowsPlatform } from "./lib/platform";

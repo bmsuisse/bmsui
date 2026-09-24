@@ -15,6 +15,8 @@ export { evaluateFilter } from "./filter/evaluate";
 
 // --- filter widgets ---------------------------------------------------------
 export type { FilterWidgetProps } from "./filter/widget-types";
+export type { FilterLabels } from "./filter/labels";
+export { FilterLabelsProvider, defaultFilterLabels, mergeFilterLabels, useFilterLabels } from "./filter/labels";
 export { BooleanFilter } from "./filter/BooleanFilter";
 export { DateRangeFilter } from "./filter/DateRangeFilter";
 export { EnumFilter } from "./filter/EnumFilter";

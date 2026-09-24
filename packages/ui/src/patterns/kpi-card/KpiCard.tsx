@@ -26,6 +26,8 @@ export interface KpiCardProps {
   segments?: DonutSegment[];
   /** Donut variant only: big label centered in the ring. Defaults to the sum of `segments`' values. */
   centerValue?: string;
+  /** Any CSS color/gradient, overriding the variant's default surface (`--color-primary` for `hero`, `bg-card` for the rest). */
+  background?: string;
   /** For E2E tests to target a specific tile unambiguously when `label` also appears elsewhere on the page (e.g. a chart legend). */
   testId?: string;
 }
@@ -173,16 +175,19 @@ export const KpiCard = memo(function KpiCard({
   progressLabel,
   segments,
   centerValue,
+  background,
   testId,
 }: KpiCardProps): ReactElement {
+  // Inline style, so it wins over the variants' own `bg-card` class.
+  const bgStyle = background ? { background } : undefined;
   if (variant === "hero") {
     return (
       <div
         data-testid={testId}
         className="relative col-span-2 flex min-w-0 flex-1 flex-col gap-1.5 overflow-hidden rounded-2xl p-4 md:p-3 lg:col-span-1 lg:max-w-[340px] lg:min-w-[260px]"
         style={{
-          background: "var(--color-primary)",
-          boxShadow: "0 2px 10px color-mix(in oklch, var(--color-primary) 18%, transparent)",
+          background: background ?? "var(--color-primary)",
+          boxShadow: `0 2px 10px color-mix(in oklch, ${background ?? "var(--color-primary)"} 18%, transparent)`,
         }}
       >
         <div className="relative flex items-start justify-between">
@@ -264,6 +269,7 @@ export const KpiCard = memo(function KpiCard({
     return (
       <div
         data-testid={testId}
+        style={bgStyle}
         className={cn(
           "flex h-full min-w-0 flex-1 flex-col gap-1.5 overflow-hidden rounded-2xl border border-border bg-card p-3 transition-shadow md:p-2.5",
           href && "hover:border-primary/20 hover:shadow-md",
@@ -325,7 +331,7 @@ export const KpiCard = memo(function KpiCard({
     const total = segments?.reduce((sum, s) => sum + s.value, 0) ?? 0;
 
     return (
-      <div data-testid={testId} className="rounded-xl border border-border bg-card p-5">
+      <div data-testid={testId} style={bgStyle} className="rounded-xl border border-border bg-card p-5">
         <div className={rowBetween}>
           <p className="text-[11px] font-bold tracking-[0.12em] text-muted-foreground uppercase">{label}</p>
           {Icon && (
@@ -383,7 +389,7 @@ export const KpiCard = memo(function KpiCard({
   const suffix = isSuffix ? parts![1] : null;
 
   return (
-    <div data-testid={testId} className="rounded-xl border border-border bg-card p-5">
+    <div data-testid={testId} style={bgStyle} className="rounded-xl border border-border bg-card p-5">
       <div className={rowBetween}>
         <p className="text-[11px] font-bold tracking-[0.12em] text-muted-foreground uppercase">{label}</p>
         {Icon && (

@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { ConfirmDialog } from "../../../src/patterns/modal/ConfirmDialog";
 
 interface Deferred<T> {
@@ -141,5 +141,35 @@ describe("ConfirmDialog", () => {
 
     expect(screen.getByTestId("confirm-delete")).toHaveTextContent("Confirm");
     expect(screen.getByTestId("cancel-delete")).toHaveTextContent("Cancel");
+  });
+
+  describe("button order matches the platform's system convention", () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it("puts Confirm before Cancel on Windows", () => {
+      vi.spyOn(navigator, "userAgent", "get").mockReturnValue(
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+      );
+      render(<ConfirmDialog open onOpenChange={vi.fn()} title="Delete" onConfirm={vi.fn()} />);
+
+      const buttons = screen
+        .getAllByRole("button", { name: /^(Confirm|Cancel)$/ })
+        .map((button) => button.textContent);
+      expect(buttons).toEqual(["Confirm", "Cancel"]);
+    });
+
+    it("puts Cancel before Confirm on iOS, matching the system default", () => {
+      vi.spyOn(navigator, "userAgent", "get").mockReturnValue(
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15",
+      );
+      render(<ConfirmDialog open onOpenChange={vi.fn()} title="Delete" onConfirm={vi.fn()} />);
+
+      const buttons = screen
+        .getAllByRole("button", { name: /^(Confirm|Cancel)$/ })
+        .map((button) => button.textContent);
+      expect(buttons).toEqual(["Cancel", "Confirm"]);
+    });
   });
 });

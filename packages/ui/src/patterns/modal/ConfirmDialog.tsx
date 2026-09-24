@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 import { useState } from "react";
 import { Button } from "../../primitives/button";
+import { DialogActions } from "./DialogActions";
 import { Modal } from "./Modal";
 
 export interface ConfirmDialogProps {
@@ -68,27 +69,29 @@ export const ConfirmDialog = ({
     }
   };
 
+  const cancelButton = (
+    <Button variant="outline" onClick={handleCancel} disabled={pending} data-testid={cancelTestId}>
+      {cancelLabel}
+    </Button>
+  );
+  const confirmButton = (
+    <Button
+      variant={variant === "destructive" ? "destructive" : "default"}
+      onClick={handleConfirm}
+      disabled={pending}
+      data-testid={confirmTestId}
+    >
+      {pending ? `${confirmLabel}…` : confirmLabel}
+    </Button>
+  );
+
   return (
     <Modal
       open={open}
       onOpenChange={onOpenChange}
       title={title}
       description={description}
-      footer={
-        <>
-          <Button variant="outline" onClick={handleCancel} disabled={pending} data-testid={cancelTestId}>
-            {cancelLabel}
-          </Button>
-          <Button
-            variant={variant === "destructive" ? "destructive" : "default"}
-            onClick={handleConfirm}
-            disabled={pending}
-            data-testid={confirmTestId}
-          >
-            {pending ? `${confirmLabel}…` : confirmLabel}
-          </Button>
-        </>
-      }
+      footer={<DialogActions actions={[confirmButton]} cancel={cancelButton} />}
     >
       {null}
     </Modal>

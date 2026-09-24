@@ -10,23 +10,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { cn } from "../lib/utils";
 import { isNumberPair } from "./numberRangeShared";
 import type { FilterDescriptor, FilterOperator } from "./types";
+import type { FilterLabels } from "./labels";
+import { useFilterLabels } from "./labels";
 import type { FilterWidgetProps } from "./widget-types";
 
 type NumberOperator = "eq" | "neq" | "gt" | "gte" | "lt" | "lte" | "between";
 
 interface NumberOperatorOption {
   value: NumberOperator;
-  label: string;
+  labelKey: Extract<keyof FilterLabels, `number${string}`>;
 }
 
 const NUMBER_OPERATORS: readonly NumberOperatorOption[] = [
-  { value: "gt", label: "Greater than" },
-  { value: "gte", label: "Greater than or equal to" },
-  { value: "lt", label: "Less than" },
-  { value: "lte", label: "Less than or equal to" },
-  { value: "eq", label: "Equals" },
-  { value: "neq", label: "Does not equal" },
-  { value: "between", label: "Between" },
+  { value: "gt", labelKey: "numberGreaterThan" },
+  { value: "gte", labelKey: "numberGreaterThanOrEqual" },
+  { value: "lt", labelKey: "numberLessThan" },
+  { value: "lte", labelKey: "numberLessThanOrEqual" },
+  { value: "eq", labelKey: "numberEquals" },
+  { value: "neq", labelKey: "numberNotEquals" },
+  { value: "between", labelKey: "numberBetween" },
 ];
 
 const OPERATOR_SYMBOL: Record<Exclude<NumberOperator, "between">, string> = {
@@ -104,7 +106,9 @@ export function NumberComparisonFilter<TRow>({
   value,
   onChange,
   bare = true,
+  labels: labelOverrides,
 }: FilterWidgetProps<NumberColumn<TRow>> & { bare?: boolean }): ReactElement {
+  const labels = useFilterLabels(labelOverrides);
   const initial = stateFromValue(value);
   const [operator, setOperator] = useState<NumberOperator>(initial.operator);
   const [text, setText] = useState(initial.text);
@@ -162,13 +166,13 @@ export function NumberComparisonFilter<TRow>({
           emit(nextOperator, text, text2);
         }}
       >
-        <SelectTrigger id={operatorId} aria-label={`${column.header} filter operator`}>
+        <SelectTrigger id={operatorId} aria-label={labels.operatorAriaLabel(column.header)}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
           {NUMBER_OPERATORS.map((option) => (
             <SelectItem key={option.value} value={option.value}>
-              {option.label}
+              {labels[option.labelKey]}
             </SelectItem>
           ))}
         </SelectContent>
@@ -178,8 +182,8 @@ export function NumberComparisonFilter<TRow>({
           id={valueId}
           type="number"
           className="min-w-0"
-          aria-label={isBetween ? `${column.header} minimum` : column.header}
-          placeholder={isBetween ? "Min" : "Value"}
+          aria-label={isBetween ? labels.minimumAriaLabel(column.header) : column.header}
+          placeholder={isBetween ? labels.minPlaceholder : labels.valuePlaceholder}
           value={text}
           onChange={(event) => {
             setText(event.target.value);
@@ -188,12 +192,12 @@ export function NumberComparisonFilter<TRow>({
         />
         {isBetween && (
           <>
-            <span className="shrink-0 text-xs text-muted-foreground">to</span>
+            <span className="shrink-0 text-xs text-muted-foreground">{labels.rangeSeparator}</span>
             <Input
               type="number"
               className="min-w-0"
-              aria-label={`${column.header} maximum`}
-              placeholder="Max"
+              aria-label={labels.maximumAriaLabel(column.header)}
+              placeholder={labels.maxPlaceholder}
               value={text2}
               onChange={(event) => {
                 setText2(event.target.value);
@@ -217,7 +221,7 @@ export function NumberComparisonFilter<TRow>({
           variant="outline"
           size="sm"
           className={cn("gap-1", isFiltered ? "max-w-[180px] px-2" : "w-8 justify-center px-0")}
-          aria-label={`Filter ${column.header}`}
+          aria-label={labels.filterAriaLabel(column.header)}
           data-testid={`filter-${column.id}`}
         >
           <FunnelIcon

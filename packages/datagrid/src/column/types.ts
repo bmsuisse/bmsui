@@ -194,6 +194,16 @@ export type BooleanColumn<TRow> = BaseColumn<TRow> & { type: "boolean" };
 export interface EnumOption {
   value: string;
   label: string;
+  /**
+   * Groups this option under a sticky header in `EnumFilter`'s dropdown,
+   * with a tri-state checkbox that selects/deselects the whole group at
+   * once — mirrors `@bmsuisse/ui`'s `ComboboxOption.group`/
+   * `TagComboboxOption.group`. Options sharing a `group` must be adjacent in
+   * `options`: a header renders the first time a group key is seen, so
+   * interleaved groups would render more than one header for the same key.
+   * Options with no `group` render individually, with no header.
+   */
+  group?: string;
 }
 
 export type EnumColumn<TRow> = BaseColumn<TRow> & {

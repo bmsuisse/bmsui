@@ -1,6 +1,7 @@
 import type { ReactElement, ReactNode } from "react";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -46,7 +47,7 @@ export const Modal = ({
         <DialogTitle>{title}</DialogTitle>
         {description ? <DialogDescription>{description}</DialogDescription> : null}
       </DialogHeader>
-      {children}
+      <DialogBody>{children}</DialogBody>
       {footer ? <DialogFooter>{footer}</DialogFooter> : null}
     </DialogContent>
   </Dialog>

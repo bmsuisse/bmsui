@@ -37,8 +37,20 @@ SheetOverlay.displayName = "SheetOverlay";
 // installed, the slide transition here is done with Tailwind's built-in
 // `transition-transform` plus a `translate-x`/`translate-y` toggle driven off
 // Radix's own `data-[state=open]`/`data-[state=closed]` attributes.
+// `flex flex-col overflow-hidden` (added alongside DialogContent's identical
+// fix, same bug): a consumer combining SheetHeader/children/SheetFooter with
+// its own `overflow-y-auto` on THIS element (the only way to scroll tall
+// content before SheetBody existed, e.g. ResponsivePanel's bottom-drawer
+// branch) made the whole sheet scroll as one box -- title/footer scrolled
+// away, and the scrollbar ran the full sheet height instead of just the
+// content between them. `p-6`/`gap-4` deliberately kept as this element's own
+// padding/inter-child spacing (unlike DialogContent, which moved padding onto
+// each section) -- SheetHeader/SheetBody/SheetFooter don't need their own
+// padding this way, they just inherit the inset that `p-6` already gives
+// every flex child, and SheetBody's scrollbar renders nicely inset from the
+// sheet's own edge as a side effect, rather than flush against it.
 export const sheetVariants = cva(
-  "fixed z-50 gap-4 bg-background p-6 shadow-lg transition-[transform,box-shadow] duration-300 ease-in-out",
+  "fixed z-50 flex flex-col gap-4 overflow-hidden bg-background p-6 shadow-lg transition-[transform,box-shadow] duration-300 ease-in-out",
   {
     variants: {
       side: {
@@ -168,18 +180,32 @@ export const SheetContent = forwardRef<ElementRef<typeof DialogPrimitive.Content
 );
 SheetContent.displayName = "SheetContent";
 
+// `shrink-0`: without it, flexbox's default `flex-shrink: 1` would let this
+// shrink (squishing/clipping the title) instead of SheetBody giving up its
+// own space first, once combined content doesn't fit SheetContent's height.
 export const SheetHeader = ({
   className,
   ...props
 }: HTMLAttributes<HTMLDivElement>): ReactElement => (
-  <div className={cn("flex flex-col gap-1.5", className)} {...props} />
+  <div className={cn("flex shrink-0 flex-col gap-1.5", className)} {...props} />
+);
+
+// The one scrolling region -- see sheetVariants' own comment above for why.
+// `min-h-0` overrides flexbox's default `min-height: auto`, which otherwise
+// refuses to shrink a flex item below its content's natural height and
+// silently defeats `overflow-y-auto` (same DialogBody needs this for).
+export const SheetBody = ({
+  className,
+  ...props
+}: HTMLAttributes<HTMLDivElement>): ReactElement => (
+  <div className={cn("min-h-0 flex-1 overflow-y-auto", className)} {...props} />
 );
 
 export const SheetFooter = ({
   className,
   ...props
 }: HTMLAttributes<HTMLDivElement>): ReactElement => (
-  <div className={cn("flex justify-end gap-2", className)} {...props} />
+  <div className={cn("flex shrink-0 justify-end gap-2", className)} {...props} />
 );
 
 export const SheetTitle = forwardRef<
