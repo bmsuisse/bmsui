@@ -1,7 +1,13 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
-import type { ComponentPropsWithoutRef, ElementRef, HTMLAttributes, ReactElement } from "react";
-import { forwardRef } from "react";
+import type {
+  ComponentPropsWithoutRef,
+  ElementRef,
+  HTMLAttributes,
+  ReactElement,
+  RefObject,
+} from "react";
+import { forwardRef, useCallback, useLayoutEffect, useRef } from "react";
 import { cn } from "../lib/utils";
 
 export const Dialog = DialogPrimitive.Root;
@@ -63,17 +69,25 @@ export const DialogContent = forwardRef<
 ));
 DialogContent.displayName = "DialogContent";
 
-// `shrink-0` -- never gives up space to DialogBody's `flex-1`. Only `pt-6`
-// (top + sides): DialogContent no longer supplies any padding of its own, and
-// unlike DialogFooter's `mt-4` below, the original DialogHeader had no
-// explicit bottom margin/padding at all, so there's nothing to preserve on
-// this edge -- DialogBody's own top edge butts directly against it, exactly
-// as before.
+// `shrink-0` -- never gives up space to DialogBody's `flex-1`. Opaque
+// `bg-background` (DialogContent's own surface) plus an inset hairline that
+// only shows while DialogBody is scrolled away from its top (see
+// useScrollEdges below). `pb-3` + DialogBody's `pt-1` = 16px between the
+// title and the first field (https://github.com/bmsuisse/bmsui/issues/71).
+// Deliberately not `position: relative`/z-indexed: ResponsivePanel's
+// absolute corner resize handles must keep painting above it.
 export const DialogHeader = ({
   className,
   ...props
 }: HTMLAttributes<HTMLDivElement>): ReactElement => (
-  <div className={cn("flex shrink-0 flex-col gap-1.5 px-6 pt-6", className)} {...props} />
+  <div
+    data-slot="dialog-header"
+    className={cn(
+      "flex shrink-0 flex-col gap-1.5 bg-background px-6 pb-3 pt-6 transition-shadow [&:has(+[data-overflow-top])]:shadow-[inset_0_-1px_0_var(--color-border)]",
+      className,
+    )}
+    {...props}
+  />
 );
 
 export const DialogTitle = forwardRef<
@@ -96,39 +110,101 @@ export const DialogDescription = forwardRef<
 ));
 DialogDescription.displayName = "DialogDescription";
 
+// Toggles `data-overflow-top`/`data-overflow-bottom` on a scroll container
+// while content is hidden above/below, so DialogHeader/DialogFooter can show a
+// divider only when content actually scrolls under them. Set directly on the
+// DOM node (no React state), so scrolling never re-renders the dialog.
+function useScrollEdges(ref: RefObject<HTMLElement | null>): void {
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return undefined;
+    const update = (): void => {
+      el.toggleAttribute("data-overflow-top", el.scrollTop > 0.5);
+      el.toggleAttribute(
+        "data-overflow-bottom",
+        el.scrollTop + el.clientHeight < el.scrollHeight - 0.5,
+      );
+    };
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    // Observe the children too: content growing inside a DialogBody that is
+    // already at its max height doesn't resize the body itself.
+    const resizeObserver = typeof ResizeObserver === "undefined" ? undefined : new ResizeObserver(update);
+    const observeChildren = (): void => {
+      if (!resizeObserver) return;
+      resizeObserver.disconnect();
+      resizeObserver.observe(el);
+      for (const child of Array.from(el.children)) resizeObserver.observe(child);
+    };
+    observeChildren();
+    const mutationObserver =
+      typeof MutationObserver === "undefined"
+        ? undefined
+        : new MutationObserver(() => {
+            observeChildren();
+            update();
+          });
+    mutationObserver?.observe(el, { childList: true });
+    return () => {
+      el.removeEventListener("scroll", update);
+      resizeObserver?.disconnect();
+      mutationObserver?.disconnect();
+    };
+  }, [ref]);
+}
+
 // The one scrolling region. `min-h-0` overrides flexbox's default
 // `min-height: auto` on a flex item, which otherwise refuses to shrink below
-// its content's natural height and silently defeats `overflow-y-auto` --
-// content would just keep growing DialogContent past `max-h-[85vh]` instead
-// of ever scrolling. `pb-6` is this element's own fallback bottom padding for
-// when there's no DialogFooter (Modal/ResponsivePanel's `footer` prop is
-// optional); when a DialogFooter *is* present, its `-mt-6` exactly cancels
-// this padding (both are the same "6" = 1.5rem Tailwind step) and replaces it
-// with its own `pt-4`, matching the original `DialogFooter`'s `mt-4` gap
-// above the buttons -- see DialogFooter below. No top padding here: nothing
-// to preserve on that edge either (see DialogHeader above), and a bare
-// `DialogContent`/`DialogBody` used with no `DialogHeader` needs its own
-// top padding via `className`, same as it always needed *some* padding
-// contributor on that edge.
-export const DialogBody = ({
-  className,
-  ...props
-}: HTMLAttributes<HTMLDivElement>): ReactElement => (
-  <div className={cn("min-h-0 flex-1 overflow-y-auto px-6 pb-6", className)} {...props} />
+// its content's natural height and silently defeats `overflow-y-auto`.
+// Padding lives inside the scroll area (so the first/last field's focus ring
+// is never clipped): `pt-1` under DialogHeader's `pb-3`, and `pb-1` above a
+// following DialogFooter's `pt-3` -- 16px either way -- or the dialog's own
+// `pb-6` bottom inset when there's no footer. No negative margins: nothing
+// overlaps DialogBody, so nothing can show through (#70). An empty body
+// (ConfirmDialog/QuestionDialog) is `hidden` rather than adding a gap.
+export const DialogBody = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, forwardedRef) => {
+    const ref = useRef<HTMLDivElement | null>(null);
+    useScrollEdges(ref);
+    const setRefs = useCallback(
+      (node: HTMLDivElement | null) => {
+        ref.current = node;
+        if (typeof forwardedRef === "function") forwardedRef(node);
+        else if (forwardedRef) forwardedRef.current = node;
+      },
+      [forwardedRef],
+    );
+    return (
+      <div
+        ref={setRefs}
+        data-slot="dialog-body"
+        className={cn(
+          "min-h-0 flex-1 overflow-y-auto px-6 pb-6 pt-1 empty:hidden [&:has(+[data-slot=dialog-footer])]:pb-1",
+          className,
+        )}
+        {...props}
+      />
+    );
+  },
 );
+DialogBody.displayName = "DialogBody";
 
-// `-mt-6` cancels DialogBody's own `pb-6` (see above) so the two combined act
-// as one continuous box with a single `pt-4` gap between the body's last
-// content and the footer's buttons -- exactly the original `DialogFooter`'s
-// plain `mt-4` margin, just relocated since a margin can't span two
-// separately-padded flex siblings the way it could span one old undivided
-// box. `shrink-0`, like DialogHeader.
+// `shrink-0`, like DialogHeader, with the same opaque `bg-background` and a
+// hairline divider only while DialogBody has content hidden below it (#70).
+// `pt-3` + DialogBody's `pb-1` = the original 16px gap above the buttons;
+// `pt-1` when directly after DialogHeader (or an empty DialogBody), so
+// ConfirmDialog keeps its 16px (header `pb-3` + `pt-1`) between description
+// and buttons. Not positioned, same reason as DialogHeader.
 export const DialogFooter = ({
   className,
   ...props
 }: HTMLAttributes<HTMLDivElement>): ReactElement => (
   <div
-    className={cn("-mt-6 flex shrink-0 justify-end gap-2 px-6 pb-6 pt-4", className)}
+    data-slot="dialog-footer"
+    className={cn(
+      "flex shrink-0 justify-end gap-2 bg-background px-6 pb-6 pt-3 transition-shadow [[data-overflow-bottom]+&]:shadow-[inset_0_1px_0_var(--color-border)] [[data-slot=dialog-body]:empty+&]:pt-1 [[data-slot=dialog-header]+&]:pt-1",
+      className,
+    )}
     {...props}
   />
 );

@@ -138,6 +138,20 @@ function sleep(ms: number): Promise<void> {
 // Module-level, not recomputed on every App render (App holds ~10 unrelated
 // pieces of demo state, any of which re-renders it).
 const TALL_MODAL_LINES = Array.from({ length: 20 }, (_, i) => i + 1);
+const TALL_FORM_FIELDS = [
+  "Name",
+  "Customer",
+  "Supplier",
+  "Valid from",
+  "Valid to",
+  "Threshold",
+  "Bonus %",
+  "Unit",
+  "Comment",
+  "Reference",
+  "Contact",
+  "Notes",
+];
 
 const ALL_SUPPLIERS = [
   { value: "00611", label: "00611 RIGIPS AG" },
@@ -168,6 +182,7 @@ export function App(): ReactElement {
   const [questionOpen, setQuestionOpen] = useState(false);
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [tallModalOpen, setTallModalOpen] = useState(false);
+  const [tallFormOpen, setTallFormOpen] = useState(false);
   const [responsivePanelOpen, setResponsivePanelOpen] = useState(false);
   const [responsivePanelSize, setResponsivePanelSize] = useState<"sm" | "md" | "lg" | "xl">("lg");
   const [resizablePanelOpen, setResizablePanelOpen] = useState(false);
@@ -435,6 +450,25 @@ export function App(): ReactElement {
                   ))}
                 </div>
               </Modal>
+
+              <Button variant="outline" onClick={() => setTallFormOpen(true)}>
+                Open tall form (opaque footer over scrolled fields)
+              </Button>
+              <FormModal
+                open={tallFormOpen}
+                onOpenChange={setTallFormOpen}
+                title="Tall form demo"
+                submitLabel="Create"
+                onSubmit={() => setTallFormOpen(false)}
+              >
+                <div className="space-y-4">
+                  {TALL_FORM_FIELDS.map((label) => (
+                    <FormField key={label} label={label}>
+                      <Input placeholder={label} />
+                    </FormField>
+                  ))}
+                </div>
+              </FormModal>
             </>
           </Section>
 
