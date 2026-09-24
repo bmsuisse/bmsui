@@ -4,6 +4,7 @@ import type { CellEditingOptions } from "../cell-editing/types";
 import type { ColumnDef } from "../column/types";
 import type { ColumnVisibility } from "../column-selector/types";
 import type { EditingOptions } from "../edit/types";
+import type { FilterLabels } from "../filter/labels";
 import type { GridState } from "../filter/types";
 import type { MenuItem } from "../menu/types";
 
@@ -307,4 +308,13 @@ export interface DataGridProps<TRow> {
    * See `CellEditingOptions` for the full contract.
    */
   cellEditing?: CellEditingOptions<TRow>;
+  /**
+   * Overrides the user-facing strings of every column-filter UI this grid
+   * renders — the header filter trigger's accessible name and every
+   * built-in filter widget (including ones a column's own `renderFilter`
+   * renders, via context). Anything omitted keeps its English default from
+   * `defaultFilterLabels`, so leaving this unset changes nothing. See
+   * `FilterLabels` for every key (#72).
+   */
+  filterLabels?: Partial<FilterLabels>;
 }

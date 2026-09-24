@@ -7,6 +7,7 @@ import { Input } from "../components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
 import { cn } from "../lib/utils";
 import { descriptorFor, rangeOf } from "./numberRangeShared";
+import { useFilterLabels } from "./labels";
 import type { FilterWidgetProps } from "./widget-types";
 
 const BAR_HEIGHT_PX = 56;
@@ -112,7 +113,9 @@ export function NumberHistogramFilter<TRow>({
   format = (v) => v.toLocaleString(),
   buckets = DEFAULT_BUCKETS,
   bare = true,
+  labels: labelOverrides,
 }: NumberHistogramFilterProps<TRow>): ReactElement {
+  const labels = useFilterLabels(labelOverrides);
   const [openState, setOpen] = useState(false);
   // In bare mode there's no trigger of our own to toggle this -- the caller's
   // own popover controls whether this component is even mounted, so treat it
@@ -250,7 +253,7 @@ export function NumberHistogramFilter<TRow>({
     <div className={bare ? "flex w-full flex-col gap-3" : "flex w-80 flex-col gap-3"}>
       {loading && (
         <p className="text-xs text-muted-foreground" data-testid={`filter-${column.id}-loading`}>
-          Loading…
+          {labels.loading}
         </p>
       )}
       <div className="flex items-end gap-px" style={{ height: BAR_HEIGHT_PX }} data-testid={`filter-${column.id}-histogram`}>
@@ -266,7 +269,7 @@ export function NumberHistogramFilter<TRow>({
       <div ref={trackRef} className="relative h-5" onMouseMove={handleTrackHover}>
         <input
           type="range"
-          aria-label={`${column.header} minimum (slider)`}
+          aria-label={labels.minimumSliderAriaLabel(column.header)}
           min={logDataMin}
           max={logDataMax}
           step={logStep}
@@ -277,7 +280,7 @@ export function NumberHistogramFilter<TRow>({
         />
         <input
           type="range"
-          aria-label={`${column.header} maximum (slider)`}
+          aria-label={labels.maximumSliderAriaLabel(column.header)}
           min={logDataMin}
           max={logDataMax}
           step={logStep}
@@ -305,7 +308,7 @@ export function NumberHistogramFilter<TRow>({
         <Input
           type="text"
           inputMode="numeric"
-          aria-label={`${column.header} minimum`}
+          aria-label={labels.minimumAriaLabel(column.header)}
           value={minText}
           onChange={(event) => {
             setMinText(event.target.value);
@@ -313,11 +316,11 @@ export function NumberHistogramFilter<TRow>({
             if (!Number.isNaN(parsed)) handleMinChange(parsed);
           }}
         />
-        <span className="shrink-0 text-xs text-muted-foreground">to</span>
+        <span className="shrink-0 text-xs text-muted-foreground">{labels.rangeSeparator}</span>
         <Input
           type="text"
           inputMode="numeric"
-          aria-label={`${column.header} maximum`}
+          aria-label={labels.maximumAriaLabel(column.header)}
           value={maxText}
           onChange={(event) => {
             setMaxText(event.target.value);
@@ -329,7 +332,7 @@ export function NumberHistogramFilter<TRow>({
 
       {isFiltered && (
         <Button type="button" variant="ghost" size="sm" onClick={() => onChange(undefined)}>
-          Clear
+          {labels.clear}
         </Button>
       )}
     </div>
@@ -346,7 +349,7 @@ export function NumberHistogramFilter<TRow>({
           variant="outline"
           size="sm"
           className={cn("gap-1", isFiltered ? "max-w-[200px] px-2" : "w-8 justify-center px-0")}
-          aria-label={`Filter ${column.header}`}
+          aria-label={labels.filterAriaLabel(column.header)}
           data-testid={`filter-${column.id}`}
         >
           <FunnelIcon

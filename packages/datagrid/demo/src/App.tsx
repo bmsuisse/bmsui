@@ -1,4 +1,12 @@
-import type { ColumnDef, ColumnVisibility, DataSource, EditedRow, GridState, NumberColumn } from "@bmsuisse/datagrid";
+import type {
+  ColumnDef,
+  ColumnVisibility,
+  DataSource,
+  EditedRow,
+  FilterLabels,
+  GridState,
+  NumberColumn,
+} from "@bmsuisse/datagrid";
 import {
   ColumnSelector,
   DataGrid,
@@ -7,6 +15,7 @@ import {
   NumberHistogramFilter,
   TreeDataGrid,
 } from "@bmsuisse/datagrid";
+import { de } from "date-fns/locale";
 import type { ReactElement } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PinnedAutoLayoutDemo } from "./PinnedAutoLayoutDemo";
@@ -84,6 +93,52 @@ const columns: ColumnDef<Order>[] = [
 ];
 
 type Engine = "sql" | "meili";
+
+type Language = "en" | "de";
+
+// What a consumer app would build from its own i18n `t()` — <DataGrid
+// filterLabels> takes already-translated strings; anything omitted keeps
+// its English default (see FilterLabels / #72).
+const GERMAN_FILTER_LABELS: Partial<FilterLabels> = {
+  filterAriaLabel: (header) => `${header} filtern`,
+  searchPlaceholder: (header) => `${header} suchen…`,
+  selectAll: "Alle auswählen",
+  selectAllOfGroup: (group) => `Alle in ${group} auswählen`,
+  noMatches: "Keine Treffer.",
+  selectedCount: (count) => `${count} ausgewählt`,
+  stringPlaceholder: (header) => `${header} filtern…`,
+  stringContains: "Enthält",
+  stringIs: "Ist",
+  stringStartsWith: "Beginnt mit",
+  stringEndsWith: "Endet mit",
+  operatorAriaLabel: (header) => `${header}: Filteroperator`,
+  booleanAll: "Alle",
+  booleanYes: "Ja",
+  booleanNo: "Nein",
+  booleanAriaLabel: (header) => `${header}: Filter`,
+  minPlaceholder: "Min.",
+  maxPlaceholder: "Max.",
+  valuePlaceholder: "Wert",
+  rangeSeparator: "bis",
+  minimumAriaLabel: (header) => `${header} Minimum`,
+  maximumAriaLabel: (header) => `${header} Maximum`,
+  minimumSliderAriaLabel: (header) => `${header} Minimum (Regler)`,
+  maximumSliderAriaLabel: (header) => `${header} Maximum (Regler)`,
+  numberGreaterThan: "Grösser als",
+  numberGreaterThanOrEqual: "Grösser als oder gleich",
+  numberLessThan: "Kleiner als",
+  numberLessThanOrEqual: "Kleiner als oder gleich",
+  numberEquals: "Gleich",
+  numberNotEquals: "Ungleich",
+  numberBetween: "Zwischen",
+  clear: "Zurücksetzen",
+  loading: "Wird geladen…",
+  dateToday: "Heute",
+  dateLast7Days: "Letzte 7 Tage",
+  dateThisMonth: "Dieser Monat",
+  dateCustom: "Benutzerdefiniert",
+  dateLocale: de,
+};
 
 const DEFAULT_GRID_STATE: GridState = { filter: null, sort: [], page: 0, pageSize: 20 };
 
@@ -1151,6 +1206,7 @@ export function App(): ReactElement {
   // defaulting to `false`, in case something upstream (a saved preference, a
   // parent app embedding this grid) already set the class before mount.
   const [darkMode, setDarkMode] = useState(() => document.documentElement.classList.contains("dark"));
+  const [language, setLanguage] = useState<Language>("en");
 
   function selectEngine(next: Engine): void {
     const params = new URLSearchParams(window.location.search);
@@ -1169,17 +1225,34 @@ export function App(): ReactElement {
 
   return (
     <div className="mx-auto max-w-5xl p-6">
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-xl font-semibold">@bmsuisse/datagrid demo — orders</h1>
-        <button
-          type="button"
-          data-testid="dark-mode-toggle"
-          aria-pressed={darkMode}
-          className="rounded-md border px-3 py-1 text-sm"
-          onClick={toggleDarkMode}
-        >
-          {darkMode ? "Light mode" : "Dark mode"}
-        </button>
+        <div className="flex shrink-0 items-center gap-2">
+          {/* Filter-UI language only (filterLabels) — the rest of the demo stays English. */}
+          <div className="flex overflow-hidden rounded-md border text-sm" role="group" aria-label="Filter language">
+            {(["en", "de"] as const).map((lang) => (
+              <button
+                key={lang}
+                type="button"
+                data-testid={`lang-${lang}`}
+                aria-pressed={language === lang}
+                className="px-2 py-1 uppercase aria-pressed:bg-accent aria-pressed:text-accent-foreground"
+                onClick={() => setLanguage(lang)}
+              >
+                {lang}
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            data-testid="dark-mode-toggle"
+            aria-pressed={darkMode}
+            className="rounded-md border px-3 py-1 text-sm"
+            onClick={toggleDarkMode}
+          >
+            {darkMode ? "Light mode" : "Dark mode"}
+          </button>
+        </div>
       </div>
       <div className="mb-4 flex items-center justify-between gap-2">
         {STATIC_DEMO ? (
@@ -1235,6 +1308,7 @@ export function App(): ReactElement {
         columnVisibility={visibility}
         onColumnVisibilityChange={setVisibility}
         enableMultiSort
+        filterLabels={language === "de" ? GERMAN_FILTER_LABELS : undefined}
         renderDetail={(row) => (
           <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm sm:grid-cols-4">
             <dt className="text-muted-foreground">Order ID</dt>

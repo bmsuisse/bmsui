@@ -68,18 +68,32 @@ logic above, which already had its own extraction). Structure:
   `min-height: auto` on a flex item refuses to shrink below its content's
   natural height, which silently defeats `overflow-y-auto` and lets
   `DialogContent` grow past `max-h-[85vh]` instead of ever scrolling.
-  `DialogFooter`'s original plain `mt-4` (a single margin, back when
-  `DialogContent` was one undivided box) becomes `-mt-6 ... pt-4`: `DialogBody`
-  carries its own `pb-6` fallback for when there's no footer at all (`Modal`'s
-  and `ResponsivePanel`'s `footer` prop is optional), and `DialogFooter`'s
-  `-mt-6` exactly cancels that (same `6` = 1.5rem Tailwind step) so the two
-  together read as one continuous box with a single `pt-4` gap above the
-  buttons — pixel-identical to the original for the common case (content that
-  fits without scrolling). One accepted, permanent behavior change from
-  before *any* of this: `DialogFooter`'s gap above it can no longer
-  margin-collapse with a trailing body element's own bottom margin the way a
-  plain `mt-4` on a non-flex `DialogContent` could — margins never collapse
-  across flex-item boundaries at all, which is inherent to `DialogContent`
+  v0.16.2 removed v0.16.1's `DialogFooter` `-mt-6` overlap: the footer
+  pulled itself up over the scrolling body's `pb-6` with no background, so
+  scrolled content showed through under the buttons (bmsui#70, CCMT2
+  #29642), and the header had no gap to the first field (bmsui#71, CCMT2
+  #29632). Now nothing overlaps: `DialogHeader`/`DialogFooter` are opaque
+  `bg-background` and deliberately *not* positioned (ResponsivePanel's
+  absolute corner resize handles must stay on top of them). Spacing is split
+  so the 1px focus ring of the first/last field is never clipped by the
+  scroll container: header `pb-3` + body `pt-1`, body `pb-1` + footer `pt-3`
+  (16px each); body `pb-6` when no footer follows (`:has(+[data-slot=
+  dialog-footer])`), footer `pt-1` directly after a header or an empty body,
+  an empty body before a footer (`ConfirmDialog`/`QuestionDialog`) is hidden
+  so their description-to-buttons gap stays 16px, and without a footer it
+  tops the header's `pb-3` up to the 24px bottom inset. `DialogBody` (now
+  `forwardRef`) toggles `data-overflow-top`/`data-overflow-bottom` on itself
+  from a scroll listener + Resize/MutationObserver (set on the DOM node, no
+  re-render); the header/footer show an inset `--dialog-divider` hairline
+  (12% foreground in light, since `--color-border` is near-invisible on the
+  light surface; `--color-border` in dark) only
+  while content is actually hidden behind them. The layout relies on `:has()`
+  and data-slot sibling selectors, fine for Tailwind v4's browser baseline.
+  One accepted, permanent behavior change from before *any* of this:
+  `DialogFooter`'s gap above it can no longer margin-collapse with a
+  trailing body element's own bottom margin the way a plain `mt-4` on a
+  non-flex `DialogContent` could — margins never collapse across flex-item
+  boundaries at all, which is inherent to `DialogContent`
   being flex-based now, not a further choice made on top of it. `Modal`/
   `FormModal`/`ResponsivePanel` all wrap their `children` in the new
   `DialogBody`; `FormModal`'s `<form>` additionally needs its own
@@ -616,6 +630,32 @@ reflects "what could I select if I changed just this filter," and stays
 affected by every other filter as expected. See
 `packages/datagrid/demo/src/App.tsx`'s `FacetedNumberFilterDemo` for a full
 working `<DataGrid>` example with two interacting numeric columns.
+
+### `filterLabels` — translating the filter UI (#72)
+
+Every user-facing string of the column-filter UI (header funnel
+`aria-label`, EnumFilter "Select all"/search placeholder, StringFilter and
+NumberComparisonFilter operator labels, BooleanFilter All/Yes/No, Min/Max/
+Value placeholders, DateRangeFilter presets, …) is a key of the exported
+`FilterLabels` interface; templated ones are functions (`searchPlaceholder:
+(header) => string`). `defaultFilterLabels` holds today's exact English
+strings, so nothing changes unless you override. Same no-i18n-layer
+convention as `EditingOptions.saveLabel`: pass already-translated strings.
+
+- `<DataGrid filterLabels={{ selectAll: t("…"), … }}>` — a `Partial`,
+  merged over the defaults.
+- Delivered via React context (`FilterLabelsProvider` / `useFilterLabels`),
+  so a column's own `renderFilter` widget picks them up too. Wrap
+  standalone widgets in `<FilterLabelsProvider labels={…}>`, or pass a
+  single widget's `labels` prop (on `FilterWidgetProps`); innermost wins,
+  `undefined` values never blank a default.
+- `dateLocale` (a date-fns `Locale`, e.g. `de` from `date-fns/locale`) is
+  the one non-string key: it localizes DateRangeFilter's calendar and
+  trigger summary.
+- `<TreeDataGrid>` renders no filter UI, so it has no such prop.
+
+The demo's EN/DE toggle (`GERMAN_FILTER_LABELS` in
+`packages/datagrid/demo/src/App.tsx`) shows a full German set.
 
 ### `sortable` / `filterable` default to **false** — opt-in, not opt-out
 
