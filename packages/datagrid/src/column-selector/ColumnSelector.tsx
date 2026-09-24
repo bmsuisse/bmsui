@@ -1,4 +1,4 @@
-import { EllipsisVerticalIcon, ViewColumnsIcon } from "@heroicons/react/24/outline";
+import { Bars2Icon, ViewColumnsIcon } from "@heroicons/react/24/outline";
 import type { ReactElement, ReactNode } from "react";
 import { useEffect, useState } from "react";
 import type { ColumnDef } from "../column/types";
@@ -226,8 +226,8 @@ export function ColumnSelector<TRow>({
                     )}
                   >
                     {canReorder && (
-                      <EllipsisVerticalIcon
-                        className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50"
+                      <Bars2Icon
+                        className="h-3.5 w-3.5 shrink-0 rotate-90 text-muted-foreground/50"
                         aria-hidden
                       />
                     )}
