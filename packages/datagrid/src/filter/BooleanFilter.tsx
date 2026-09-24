@@ -12,14 +12,15 @@ import {
 } from "../components/ui/select";
 import { cn } from "../lib/utils";
 import type { FilterDescriptor } from "./types";
+import { useFilterLabels } from "./labels";
 import type { FilterWidgetProps } from "./widget-types";
 
 type BooleanChoice = "all" | "yes" | "no";
 
-const BOOLEAN_CHOICES: readonly { value: BooleanChoice; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "yes", label: "Yes" },
-  { value: "no", label: "No" },
+const BOOLEAN_CHOICES: readonly { value: BooleanChoice; labelKey: "booleanAll" | "booleanYes" | "booleanNo" }[] = [
+  { value: "all", labelKey: "booleanAll" },
+  { value: "yes", labelKey: "booleanYes" },
+  { value: "no", labelKey: "booleanNo" },
 ];
 
 /**
@@ -68,10 +69,12 @@ export function BooleanFilter<TRow>({
   value,
   onChange,
   bare = false,
+  labels: labelOverrides,
 }: FilterWidgetProps<BooleanColumn<TRow>> & { bare?: boolean }): ReactElement {
+  const labels = useFilterLabels(labelOverrides);
   const choice = choiceOf(value);
   const isFiltered = choice !== "all";
-  const summary = choice === "yes" ? "Yes" : choice === "no" ? "No" : "";
+  const summary = choice === "yes" ? labels.booleanYes : choice === "no" ? labels.booleanNo : "";
 
   function emit(next: BooleanChoice): void {
     if (next === "all") {
@@ -89,13 +92,13 @@ export function BooleanFilter<TRow>({
         if (match) emit(match);
       }}
     >
-      <SelectTrigger aria-label={`${column.header} filter`}>
+      <SelectTrigger aria-label={labels.booleanAriaLabel(column.header)}>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
         {BOOLEAN_CHOICES.map((option) => (
           <SelectItem key={option.value} value={option.value}>
-            {option.label}
+            {labels[option.labelKey]}
           </SelectItem>
         ))}
       </SelectContent>
@@ -113,7 +116,7 @@ export function BooleanFilter<TRow>({
           variant="outline"
           size="sm"
           className={cn("gap-1", isFiltered ? "max-w-[140px] px-2" : "w-8 justify-center px-0")}
-          aria-label={`Filter ${column.header}`}
+          aria-label={labels.filterAriaLabel(column.header)}
           data-testid={`filter-${column.id}`}
         >
           <FunnelIcon

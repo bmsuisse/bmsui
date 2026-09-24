@@ -8,28 +8,29 @@ import { Calendar } from "../components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
 import { cn } from "../lib/utils";
 import type { FilterDescriptor } from "./types";
+import { useFilterLabels } from "./labels";
 import type { FilterWidgetProps } from "./widget-types";
 
 interface Preset {
   key: string;
-  label: string;
+  labelKey: "dateToday" | "dateLast7Days" | "dateThisMonth";
   range: (today: Date) => DateRange;
 }
 
 const PRESETS: readonly Preset[] = [
   {
     key: "today",
-    label: "Today",
+    labelKey: "dateToday",
     range: (today) => ({ from: startOfDay(today), to: endOfDay(today) }),
   },
   {
     key: "last7",
-    label: "Last 7 days",
+    labelKey: "dateLast7Days",
     range: (today) => ({ from: startOfDay(subDays(today, 6)), to: endOfDay(today) }),
   },
   {
     key: "thisMonth",
-    label: "This month",
+    labelKey: "dateThisMonth",
     range: (today) => ({ from: startOfMonth(today), to: endOfMonth(today) }),
   },
 ];
@@ -92,7 +93,10 @@ export function DateRangeFilter<TRow>({
   onChange,
   today = new Date(),
   bare = false,
+  labels: labelOverrides,
 }: FilterWidgetProps<DateColumn<TRow>> & { today?: Date; bare?: boolean }): ReactElement {
+  const labels = useFilterLabels(labelOverrides);
+  const locale = labels.dateLocale ? { locale: labels.dateLocale } : undefined;
   const range = rangeOf(value);
 
   function emit(next: DateRange | undefined): void {
@@ -120,8 +124,8 @@ export function DateRangeFilter<TRow>({
   const isFiltered = range?.from !== undefined;
   const summary = range?.from
     ? range.to
-      ? `${format(range.from, "PP")} - ${format(range.to, "PP")}`
-      : format(range.from, "PP")
+      ? `${format(range.from, "PP", locale)} - ${format(range.to, "PP", locale)}`
+      : format(range.from, "PP", locale)
     : "";
 
   const panel = (
@@ -135,14 +139,14 @@ export function DateRangeFilter<TRow>({
             size="sm"
             onClick={() => emit(preset.range(today))}
           >
-            {preset.label}
+            {labels[preset.labelKey]}
           </Button>
         ))}
         <Button type="button" variant="outline" size="sm" onClick={() => emit(undefined)}>
-          Custom
+          {labels.dateCustom}
         </Button>
       </div>
-      <Calendar mode="range" selected={range} onSelect={emit} numberOfMonths={2} />
+      <Calendar mode="range" selected={range} onSelect={emit} numberOfMonths={2} locale={labels.dateLocale} />
     </div>
   );
 
@@ -157,7 +161,7 @@ export function DateRangeFilter<TRow>({
           variant="outline"
           size="sm"
           className={cn("gap-1", isFiltered ? "max-w-[220px] px-2" : "w-8 justify-center px-0")}
-          aria-label={`Filter ${column.header}`}
+          aria-label={labels.filterAriaLabel(column.header)}
           data-testid={`filter-${column.id}`}
         >
           <CalendarDaysIcon className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />

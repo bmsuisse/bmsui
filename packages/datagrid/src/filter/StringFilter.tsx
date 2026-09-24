@@ -14,18 +14,19 @@ import {
 } from "../components/ui/select";
 import { cn } from "../lib/utils";
 import type { FilterOperator } from "./types";
+import { useFilterLabels } from "./labels";
 import type { FilterWidgetProps } from "./widget-types";
 
 interface StringOperatorOption {
   value: "contains" | "eq" | "startsWith" | "endsWith";
-  label: string;
+  labelKey: "stringContains" | "stringIs" | "stringStartsWith" | "stringEndsWith";
 }
 
 const STRING_OPERATORS: readonly StringOperatorOption[] = [
-  { value: "contains", label: "Contains" },
-  { value: "eq", label: "Is" },
-  { value: "startsWith", label: "Starts with" },
-  { value: "endsWith", label: "Ends with" },
+  { value: "contains", labelKey: "stringContains" },
+  { value: "eq", labelKey: "stringIs" },
+  { value: "startsWith", labelKey: "stringStartsWith" },
+  { value: "endsWith", labelKey: "stringEndsWith" },
 ];
 
 const DEFAULT_OPERATOR: FilterOperator = "contains";
@@ -44,7 +45,9 @@ export function StringFilter<TRow>({
   value,
   onChange,
   bare = false,
+  labels: labelOverrides,
 }: FilterWidgetProps<StringColumn<TRow>> & { bare?: boolean }): ReactElement {
+  const labels = useFilterLabels(labelOverrides);
   // Tracked as local state, not derived from `value?.operator` on every render: `emit`
   // below intentionally clears the filter entirely (`onChange(undefined)`) whenever
   // `nextText` is empty, since an operator with no value isn't a filter yet -- but that
@@ -85,13 +88,13 @@ export function StringFilter<TRow>({
           emit(nextOperator, text);
         }}
       >
-        <SelectTrigger aria-label={`${column.header} filter operator`}>
+        <SelectTrigger aria-label={labels.operatorAriaLabel(column.header)}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
           {STRING_OPERATORS.map((option) => (
             <SelectItem key={option.value} value={option.value}>
-              {option.label}
+              {labels[option.labelKey]}
             </SelectItem>
           ))}
         </SelectContent>
@@ -99,7 +102,7 @@ export function StringFilter<TRow>({
       <Input
         id={inputId}
         value={text}
-        placeholder={`Filter ${column.header.toLowerCase()}...`}
+        placeholder={labels.stringPlaceholder(column.header)}
         onChange={(event) => emit(operator, event.target.value)}
       />
     </div>
@@ -116,7 +119,7 @@ export function StringFilter<TRow>({
           variant="outline"
           size="sm"
           className={cn("gap-1", isFiltered ? "max-w-[160px] px-2" : "w-8 justify-center px-0")}
-          aria-label={`Filter ${column.header}`}
+          aria-label={labels.filterAriaLabel(column.header)}
           data-testid={`filter-${column.id}`}
         >
           <FunnelIcon

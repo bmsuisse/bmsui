@@ -27,6 +27,30 @@ const columns: ColumnDef<Row>[] = [
 <DataGrid columns={columns} dataSource={{ mode: "client", data: rows }} />;
 ```
 
+### Translating the filter UI
+
+Filter widgets ship with English strings. Pass `filterLabels` (a
+`Partial<FilterLabels>`; anything omitted keeps its default from
+`defaultFilterLabels`) to translate them:
+
+```tsx
+import { de } from "date-fns/locale";
+
+<DataGrid
+  columns={columns}
+  dataSource={{ mode: "client", data: rows }}
+  filterLabels={{
+    selectAll: "Alle auswählen",
+    searchPlaceholder: (header) => `${header} suchen…`,
+    filterAriaLabel: (header) => `${header} filtern`,
+    dateLocale: de,
+  }}
+/>;
+```
+
+Widgets rendered outside a `<DataGrid>` read the same labels from a
+`<FilterLabelsProvider labels={…}>`, or take a per-widget `labels` prop.
+
 See [AGENTS.md](../../AGENTS.md) for the full design rationale, and
 `packages/datagrid/demo` for a runnable example against both a SQL and a
 Meilisearch backend.

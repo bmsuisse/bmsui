@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popove
 import { cn } from "../lib/utils";
 import { descriptorFor, rangeOf } from "./numberRangeShared";
 import type { FilterDescriptor } from "./types";
+import { useFilterLabels } from "./labels";
 import type { FilterWidgetProps } from "./widget-types";
 
 function parseNumber(raw: string): number | undefined {
@@ -49,7 +50,9 @@ export function NumberRangeFilter<TRow>({
   value,
   onChange,
   bare = false,
+  labels: labelOverrides,
 }: FilterWidgetProps<NumberColumn<TRow>> & { bare?: boolean }): ReactElement {
+  const labels = useFilterLabels(labelOverrides);
   const initial = rangeOf(value);
   const [minText, setMinText] = useState(initial.min?.toString() ?? "");
   const [maxText, setMaxText] = useState(initial.max?.toString() ?? "");
@@ -99,8 +102,8 @@ export function NumberRangeFilter<TRow>({
       <Input
         id={minId}
         type="number"
-        aria-label={`${column.header} minimum`}
-        placeholder="Min"
+        aria-label={labels.minimumAriaLabel(column.header)}
+        placeholder={labels.minPlaceholder}
         className="min-w-0"
         value={minText}
         onChange={(event) => {
@@ -108,12 +111,12 @@ export function NumberRangeFilter<TRow>({
           emit(event.target.value, maxText);
         }}
       />
-      <span className="shrink-0 text-xs text-muted-foreground">to</span>
+      <span className="shrink-0 text-xs text-muted-foreground">{labels.rangeSeparator}</span>
       <Input
         id={maxId}
         type="number"
-        aria-label={`${column.header} maximum`}
-        placeholder="Max"
+        aria-label={labels.maximumAriaLabel(column.header)}
+        placeholder={labels.maxPlaceholder}
         className="min-w-0"
         value={maxText}
         onChange={(event) => {
@@ -135,7 +138,7 @@ export function NumberRangeFilter<TRow>({
           variant="outline"
           size="sm"
           className={cn("gap-1", isFiltered ? "max-w-[180px] px-2" : "w-8 justify-center px-0")}
-          aria-label={`Filter ${column.header}`}
+          aria-label={labels.filterAriaLabel(column.header)}
           data-testid={`filter-${column.id}`}
         >
           <FunnelIcon

@@ -8,6 +8,7 @@ import { Input } from "../components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
 import { cn } from "../lib/utils";
 import type { FilterDescriptor } from "./types";
+import { useFilterLabels } from "./labels";
 import type { FilterWidgetProps } from "./widget-types";
 
 function selectedValuesOf(value: FilterDescriptor | undefined): string[] {
@@ -112,7 +113,9 @@ export function EnumFilter<TRow>({
   value,
   onChange,
   bare = false,
+  labels: labelOverrides,
 }: FilterWidgetProps<EnumColumn<TRow>> & { bare?: boolean }): ReactElement {
+  const labels = useFilterLabels(labelOverrides);
   const [search, setSearch] = useState("");
   const selected = selectedValuesOf(value);
 
@@ -170,12 +173,12 @@ export function EnumFilter<TRow>({
   }
 
   const isFiltered = selected.length > 0;
-  const summary = `${selected.length} selected`;
+  const summary = labels.selectedCount(selected.length);
 
   const panel = (
     <div className={bare ? "flex w-full flex-col gap-2" : "flex w-64 flex-col gap-2 p-2"}>
       <Input
-        placeholder={`Search ${column.header.toLowerCase()}...`}
+        placeholder={labels.searchPlaceholder(column.header)}
         value={search}
         onChange={(event) => setSearch(event.target.value)}
       />
@@ -184,13 +187,13 @@ export function EnumFilter<TRow>({
           checked={someVisibleSelected ? "indeterminate" : allVisibleSelected}
           disabled={visibleValues.length === 0}
           onCheckedChange={toggleSelectAllVisible}
-          aria-label="Select all"
+          aria-label={labels.selectAll}
         />
-        Select all
+        {labels.selectAll}
       </label>
       <div className="flex max-h-60 flex-col gap-0.5 overflow-y-auto">
         {renderChunks.length === 0 ? (
-          <p className="py-2 text-center text-sm text-muted-foreground">No matches.</p>
+          <p className="py-2 text-center text-sm text-muted-foreground">{labels.noMatches}</p>
         ) : (
           renderChunks.map((chunk) => {
             if (chunk.kind === "single") return renderOption(chunk.row.option);
@@ -208,7 +211,7 @@ export function EnumFilter<TRow>({
                   <Checkbox
                     checked={headerState === "indeterminate" ? "indeterminate" : headerState === "checked"}
                     onCheckedChange={() => toggleGroup(chunk.group)}
-                    aria-label={`Select all of ${chunk.group}`}
+                    aria-label={labels.selectAllOfGroup(chunk.group)}
                   />
                   {chunk.group}
                 </label>
@@ -232,7 +235,7 @@ export function EnumFilter<TRow>({
           variant="outline"
           size="sm"
           className={cn("gap-1", isFiltered ? "max-w-[180px] px-2" : "w-8 justify-center px-0")}
-          aria-label={`Filter ${column.header}`}
+          aria-label={labels.filterAriaLabel(column.header)}
           data-testid={`filter-${column.id}`}
         >
           <FunnelIcon

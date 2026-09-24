@@ -38,6 +38,7 @@ import { EditingBar } from "../edit/EditingBar";
 import type { EditingCellContext } from "../edit/editingState";
 import { useEditingState } from "../edit/editingState";
 import { renderEditableCell } from "../edit/renderEditableCell";
+import { FilterLabelsProvider, useFilterLabels } from "../filter/labels";
 import { renderDefaultFilterWidget } from "../filter/registry";
 import type { FilterDescriptor } from "../filter/types";
 import { useGroupExpansion } from "../hooks/useGroupExpansion";
@@ -293,7 +294,9 @@ export function DataGrid<TRow extends RowData>({
   showTotals = false,
   editing,
   cellEditing,
+  filterLabels,
 }: DataGridProps<TRow>): ReactElement {
+  const resolvedFilterLabels = useFilterLabels(filterLabels);
   // Not supported together with `groupBy` yet — `cellEditingRowIds` below is
   // built from the flat `tableRows` list, but rendering only shows expanded-
   // group rows via `groupedBuckets`'s own bucketed order, so a keyboard-
@@ -1528,7 +1531,7 @@ export function DataGrid<TRow extends RowData>({
     return renderRow(item.row, measureRef, index);
   }
 
-  return (
+  const grid = (
     // `h-full`/`min-h-0` here and on the two wrappers below are no-ops unless
     // a consumer itself gives <DataGrid> a bounded height (e.g. wraps it in
     // its own `flex-1 min-h-0` container) -- percentage heights fall back to
@@ -1670,7 +1673,7 @@ export function DataGrid<TRow extends RowData>({
                             variant="ghost"
                             size="icon"
                             data-testid={`filter-trigger-${column.id}`}
-                            aria-label={`Filter ${column.header}`}
+                            aria-label={resolvedFilterLabels.filterAriaLabel(column.header)}
                           >
                             <FunnelIcon
                               className={cn(
@@ -1906,4 +1909,7 @@ export function DataGrid<TRow extends RowData>({
       )}
     </div>
   );
+
+  // Context (not props) so custom `renderFilter` widgets and portaled popovers pick these up too.
+  return <FilterLabelsProvider labels={filterLabels}>{grid}</FilterLabelsProvider>;
 }
