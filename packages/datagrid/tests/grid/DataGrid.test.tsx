@@ -718,6 +718,35 @@ describe("DataGrid (column pinning)", () => {
     expect(nameCell).toHaveStyle({ left: "0px" });
   });
 
+  it("gives a pinned body cell the opaque zebra background on odd rows, matching the structural columns", () => {
+    const pinned: ColumnDef<Row>[] = [
+      { ...columns[0]!, pinned: "left", width: 120 },
+      { ...columns[1]!, pinned: "right", width: 80 },
+    ];
+    render(
+      <DataGrid
+        columns={pinned}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        selectedIds={new Set()}
+      />,
+    );
+    const zebraBg = "bg-[color-mix(in_srgb,var(--color-foreground)_5%,var(--color-background))]";
+    const [evenRow, oddRow] = screen.getAllByTestId(/^row-/);
+    const evenCells = within(evenRow!).getAllByRole("cell");
+    const oddCells = within(oddRow!).getAllByRole("cell");
+    // [0] = selection (structural), [1] = left-pinned Name, [2] = right-pinned Age.
+    for (const cell of [evenCells[1]!, evenCells[2]!]) {
+      expect(cell).toHaveClass("bg-background");
+      expect(cell).not.toHaveClass(zebraBg);
+    }
+    for (const cell of [oddCells[1]!, oddCells[2]!]) {
+      expect(cell).toHaveClass(zebraBg);
+      expect(cell).not.toHaveClass("bg-background");
+    }
+    expect(oddCells[0]).toHaveClass(zebraBg);
+  });
+
   it("reserves space for the expand column so a pinned column doesn't stick at offset 0 over it", () => {
     const pinned: ColumnDef<Row>[] = [{ ...columns[0]!, pinned: "left", width: 120 }, columns[1]!];
     render(
