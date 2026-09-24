@@ -1385,12 +1385,12 @@ function SidebarNavDemo(): ReactElement {
       <div className="h-40 w-56 overflow-hidden rounded-lg border border-border">
         <SidebarNav>
           <NavGroup label="Work">
-            <NavItem icon={LayoutGrid} label="Overview" active />
-            <NavItem icon={ClipboardCheck} label="Approvals" />
-            <NavItem icon={Users} label="Customers" />
-            <NavItem icon={ShoppingCart} label="Orders" />
-            <NavItem icon={DollarSign} label="Invoices" />
-            <NavItem icon={Cog} label="Settings" />
+            <NavItem icon={Squares2X2Icon} label="Overview" active />
+            <NavItem icon={ClipboardDocumentCheckIcon} label="Approvals" />
+            <NavItem icon={UsersIcon} label="Customers" />
+            <NavItem icon={ShoppingCartIcon} label="Orders" />
+            <NavItem icon={CurrencyDollarIcon} label="Invoices" />
+            <NavItem icon={Cog6ToothIcon} label="Settings" />
           </NavGroup>
         </SidebarNav>
       </div>
