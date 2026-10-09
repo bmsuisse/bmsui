@@ -42,6 +42,10 @@ import {
   Input,
   KpiCard,
   Label,
+  AsyncBoundary,
+  ErrorState,
+  InlineError,
+  LoadingState,
   LoadingOverlay,
   LoadingSpinner,
   Modal,
@@ -358,6 +362,36 @@ export function App(): ReactElement {
               <Skeleton className="h-4 w-3/4" />
               <Skeleton className="h-4 w-1/2" />
               <Skeleton className="h-20 w-full" />
+            </div>
+          </Section>
+
+          <Section title="Loading & error states">
+            <div className="grid w-full gap-4 md:grid-cols-2" data-testid="status-demo">
+              <div className="rounded-md border p-3">
+                <p className="mb-2 text-xs font-semibold text-muted-foreground">LoadingState (skeleton)</p>
+                <LoadingState delayMs={0} />
+              </div>
+              <div className="rounded-md border p-3">
+                <p className="mb-2 text-xs font-semibold text-muted-foreground">ErrorState (block)</p>
+                <ErrorState
+                  error={{ title: "Couldn't load customers", message: "The server did not respond in time.", details: "GET /api/customers → 504 Gateway Timeout" }}
+                  onRetry={() => {}}
+                />
+              </div>
+              <div className="rounded-md border p-3">
+                <p className="mb-2 text-xs font-semibold text-muted-foreground">ErrorState (compact)</p>
+                <ErrorState variant="compact" error={new Error("Network request failed")} onRetry={() => {}} />
+              </div>
+              <div className="flex flex-col gap-3 rounded-md border p-3">
+                <p className="text-xs font-semibold text-muted-foreground">Refetch / stale data (AsyncBoundary)</p>
+                <AsyncBoundary loading>
+                  <p className="text-sm">Existing data stays visible while refreshing.</p>
+                </AsyncBoundary>
+                <AsyncBoundary error="Couldn't refresh" onRetry={() => {}}>
+                  <p className="text-sm">Stale data under an error banner.</p>
+                </AsyncBoundary>
+                <InlineError error="Search failed" onRetry={() => {}} />
+              </div>
             </div>
           </Section>
 
