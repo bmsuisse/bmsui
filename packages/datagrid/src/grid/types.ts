@@ -4,6 +4,7 @@ import type { CellEditingOptions } from "../cell-editing/types";
 import type { ColumnDef } from "../column/types";
 import type { ColumnVisibility } from "../column-selector/types";
 import type { EditingOptions } from "../edit/types";
+import type { ErrorInput, GridStatusLabels } from "../components/status";
 import type { FilterLabels } from "../filter/labels";
 import type { GridState } from "../filter/types";
 import type { MenuItem } from "../menu/types";
@@ -63,6 +64,17 @@ export interface DataGridProps<TRow> {
    * The two are OR'd together if both happen to be set. Defaults to `false`.
    */
   loading?: boolean;
+  /**
+   * The data fetch failed. With no rows to show, the body is replaced by an error
+   * state (title, message, collapsible details, Retry); with stale rows still shown,
+   * they stay and a slim error banner appears above them. Accepts a string, an
+   * `Error` (message + stack as details) or `{ title, message, details }`.
+   */
+  error?: ErrorInput;
+  /** Shows a Retry action in the error state/banner. */
+  onRetry?: () => void;
+  /** Overrides the grid's "Loading...", "No results." and error-state strings. */
+  statusLabels?: Partial<GridStatusLabels>;
   /** Per-row kebab menu. Evaluated with `ctx.row` set to that row. */
   rowActions?: MenuItem<TRow>[];
   /** Toolbar menu above the table. Evaluated with `ctx.selectedRows` set. */

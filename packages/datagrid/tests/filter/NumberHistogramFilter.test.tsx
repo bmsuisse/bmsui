@@ -266,3 +266,21 @@ describe("NumberHistogramFilter: bare={false} (own Popover/trigger — for filte
     });
   });
 });
+
+describe("NumberHistogramFilter: loadValues failure", () => {
+  it("shows an error with Retry instead of silently showing an empty histogram, and recovers on retry", async () => {
+    const loadValues = vi.fn().mockRejectedValueOnce(new Error("boom")).mockResolvedValueOnce(fullRange);
+    render(
+      <ControlledFilter<NumberColumn<Row>, { loadValues: () => Promise<(number | null | undefined)[]> }>
+        Widget={NumberHistogramFilter}
+        column={column}
+        extraProps={{ loadValues }}
+      />,
+    );
+    expect(await screen.findByText("Couldn't load values.")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(loadValues).toHaveBeenCalledTimes(2);
+    await waitFor(() => expect(screen.queryByText("Couldn't load values.")).not.toBeInTheDocument());
+    expect(screen.getByLabelText("Sales minimum")).toHaveValue("100");
+  });
+});

@@ -68,6 +68,10 @@ export interface FilterLabels {
   clear: string;
   /** NumberHistogramFilter's `loadValues` in-flight message. */
   loading: string;
+  /** NumberHistogramFilter: `loadValues` rejected. */
+  loadFailed: string;
+  /** NumberHistogramFilter: retry action next to `loadFailed`. */
+  retry: string;
 
   // --- DateRangeFilter ---
   dateToday: string;
@@ -121,6 +125,8 @@ export const defaultFilterLabels: FilterLabels = {
   numberBetween: "Between",
   clear: "Clear",
   loading: "Loading…",
+  loadFailed: "Couldn't load values.",
+  retry: "Retry",
 
   dateToday: "Today",
   dateLast7Days: "Last 7 days",

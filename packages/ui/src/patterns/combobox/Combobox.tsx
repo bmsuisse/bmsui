@@ -1,7 +1,9 @@
 import { CheckIcon, ChevronUpDownIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import type { ComponentProps, KeyboardEvent, ReactElement, ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { type ErrorInput, toErrorInfo } from "../../lib/errorState";
 import { cn } from "../../lib/utils";
+import { InlineError } from "../error-state/ErrorState";
 import {
   buildRenderChunks,
   groupCheckState,
@@ -47,6 +49,10 @@ interface ComboboxBaseProps {
   loading?: boolean;
   /** Trigger text shown while `loading` is true. Defaults to `"Loading…"`. */
   loadingMessage?: string;
+  /** The options fetch failed. The trigger stays openable and the list shows an `InlineError` (with Retry when `onRetry` is set) instead of the options. */
+  error?: ErrorInput;
+  /** Re-runs the failed options fetch. */
+  onRetry?: () => void;
   /** Shows a clear ("x") affordance on the trigger when a value is selected. Defaults to `true`. */
   clearable?: boolean;
   className?: string;
@@ -159,6 +165,8 @@ export function Combobox(props: ComboboxProps): ReactElement {
     disabled,
     loading = false,
     loadingMessage = "Loading…",
+    error,
+    onRetry,
     clearable = true,
     className,
     id,
@@ -169,6 +177,7 @@ export function Combobox(props: ComboboxProps): ReactElement {
     columns,
   } = props;
   const testId = props["data-testid"];
+  const hasError = toErrorInfo(error) !== undefined;
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
@@ -231,6 +240,8 @@ export function Combobox(props: ComboboxProps): ReactElement {
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>): void {
+    // The list is replaced by the error line, so any option under the cursor is hidden.
+    if (hasError) return;
     if (event.key === "ArrowDown") {
       event.preventDefault();
       setActiveIndex((i) => Math.min(i + 1, visibleOptions.length - 1));
@@ -319,9 +330,11 @@ export function Combobox(props: ComboboxProps): ReactElement {
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          aria-invalid={hasError || undefined}
           disabled={disabled || loading}
           className={cn(
             "w-full justify-between font-normal",
+            hasError && "border-destructive",
             (selectedOptions.length === 0 || loading) && "text-muted-foreground",
             className,
           )}
@@ -371,8 +384,12 @@ export function Combobox(props: ComboboxProps): ReactElement {
             placeholder={searchPlaceholder}
             aria-label={searchPlaceholder}
           />
-          <div role="listbox" className={cn("max-h-60 overflow-y-auto", !columns && "flex flex-col gap-0.5")}>
-            {visibleOptions.length === 0 ? (
+          <div role={hasError ? undefined : "listbox"} className={cn("max-h-60 overflow-y-auto", !columns && "flex flex-col gap-0.5")}>
+            {hasError ? (
+              <div className="flex justify-center py-2">
+                <InlineError error={error} onRetry={onRetry} />
+              </div>
+            ) : visibleOptions.length === 0 ? (
               <p className="py-2 text-center text-sm text-muted-foreground">{emptyMessage}</p>
             ) : columns ? (
               renderGridOptions({

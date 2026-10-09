@@ -198,6 +198,20 @@ logic above, which already had its own extraction). Structure:
     wrapper. Auto-generates an id via `useId()` unless the child already has
     one or `htmlFor` is passed; wires `aria-invalid`/`aria-describedby` onto
     the single child via `cloneElement`.
+  - `error-state/`, `async-boundary/`, `loading-spinner/LoadingState` (ui 0.17.0, #78) — the
+    shared loading/error vocabulary for server-fetched data. `ErrorState` (block/compact:
+    icon, title, message, collapsible `details`, Retry) and `InlineError` (one line, for
+    dropdowns/filters/banners) take `error: ErrorInput` = `string | Error | {title,message,details}`
+    (normalize with `toErrorInfo`), so a TanStack Query/SWR error can be passed straight
+    through. `LoadingState` is a skeleton (or spinner) that appears only after 150ms;
+    `RefreshBar` is the thin bar for a refetch over visible data; `AsyncBoundary` wires
+    loading → error → empty → content; pass `hasData={query.data !== undefined}` so a refetch keeps
+    the content (bar) and an error over stale data becomes a banner — without it children never render
+    during `loading`/`error`. `useDelayedFlag` is the 150ms hook behind `LoadingState`. Convention: first load = skeleton, refetch = keep data +
+    bar, error without data = `ErrorState`, error with stale data = data + `InlineError`
+    banner. `Combobox`, `TagCombobox`, `SearchBar`, `SearchPanel` and `KpiCard` take
+    `error`/`onRetry`; `SearchBar`/`SearchPanel` `isLoading` is now `loading` (old name
+    deprecated alias). New server-backed components should follow this, not invent props.
   - `alert-box/` — `AlertBox`, an error/warning/info/success banner.
     `error` reuses the shared `destructive` theme token; `warning`/`info`/
     `success` use fixed Tailwind palette colors (amber/sky/emerald) because
@@ -951,6 +965,20 @@ never changes which rows a given `GridState` matches. `evaluate.ts`'s own
 module docstring spells out the exact semantics; `sql.py`/`meili.py`'s test
 files were written to mirror the same case list. If you change one, check
 the others.
+
+### `error` / `onRetry` / `statusLabels` — loading and error states (#78)
+
+`<DataGrid>` and `<TreeDataGrid>` take `error` (`string | Error | {title,message,details}`),
+`onRetry` and `statusLabels` (`loading`, `noResults`, `errorTitle`, `retry`, `showDetails`,
+`nodeLoadFailed`). First load with no rows = skeleton rows (not "No results."); refetch
+with rows = thin `datagrid-loading-overlay` bar, rows dimmed and still interactive;
+`error` with no rows = block error state with Retry (never "No results."); `error` with
+stale rows = rows stay under a slim banner. `NumberHistogramFilter`'s `loadValues`
+rejection shows `filterLabels.loadFailed` + `retry` instead of an empty histogram. The
+datagrid package does not depend on `@bmsuisse/ui`, so these are small local copies
+(`src/components/status.tsx`) with the same `ErrorInput` shape — keep the two in sync when
+changing either. Error text uses `text-red-700 dark:text-red-300` (like `AlertBox`), not `text-destructive`,
+which fails WCAG AA as small text.
 
 ### `renderDetail` — expand a row to show more, without `<TreeDataGrid>`
 

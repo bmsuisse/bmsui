@@ -1,4 +1,6 @@
 import { memo, type ComponentType, type ReactElement } from "react";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import { type ErrorInput, toErrorInfo } from "../../lib/errorState";
 import { cn } from "../../lib/utils";
 import { Skeleton } from "../../primitives/skeleton";
 
@@ -11,6 +13,10 @@ export interface KpiCardProps {
   /** @default "default" */
   variant?: "hero" | "mini" | "default" | "donut";
   loading?: boolean;
+  /** The metric failed to load: replaces the value with "—" and a warning marker (message in its tooltip) in every variant. */
+  error?: ErrorInput;
+  /** Shows a Retry link under the error marker. */
+  onRetry?: () => void;
   sub?: string;
   /** Colors `sub` on the mini variant — "warn"/"danger" flag something worth acting on (overdue, at-risk), "default" stays muted. */
   subTone?: "default" | "warn" | "danger";
@@ -166,6 +172,8 @@ export const KpiCard = memo(function KpiCard({
   badgeLabel,
   variant = "default",
   loading = false,
+  error,
+  onRetry,
   sub,
   subTone = "default",
   href,
@@ -178,6 +186,34 @@ export const KpiCard = memo(function KpiCard({
   background,
   testId,
 }: KpiCardProps): ReactElement {
+  const errorInfo = loading ? undefined : toErrorInfo(error);
+  if (errorInfo) {
+    const hero = variant === "hero";
+    return (
+      <div
+        data-testid={testId}
+        role="status"
+        className={cn(
+          "flex min-w-0 flex-col gap-1 rounded-2xl border border-destructive/40 bg-card p-3",
+          hero && "col-span-2 flex-1 lg:col-span-1 lg:max-w-[340px] lg:min-w-[260px]",
+        )}
+      >
+        <p className="text-[11px] font-bold tracking-[0.14em] text-muted-foreground uppercase">{label}</p>
+        <p className="flex items-center gap-1.5 text-xl font-bold text-muted-foreground">
+          —
+          <ExclamationTriangleIcon className="h-4 w-4 text-destructive" aria-hidden="true" />
+        </p>
+        <p className="truncate text-xs text-red-700 dark:text-red-300">
+          {errorInfo.message ?? errorInfo.title ?? "Failed to load"}
+        </p>
+        {onRetry ? (
+          <button type="button" onClick={onRetry} className="self-start text-xs text-red-700 underline underline-offset-2 dark:text-red-300">
+            Retry
+          </button>
+        ) : null}
+      </div>
+    );
+  }
   // Inline style, so it wins over the variants' own `bg-card` class.
   const bgStyle = background ? { background } : undefined;
   if (variant === "hero") {
