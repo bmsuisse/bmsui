@@ -1,9 +1,8 @@
-import { ArrowPathIcon, SparklesIcon } from "@heroicons/react/24/outline";
+import { SparklesIcon } from "@heroicons/react/24/outline";
 import type { ReactElement, ReactNode } from "react";
 import { useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "../../primitives/popover";
-import { Button } from "../../primitives/button";
-import { AlertBox } from "../alert-box/AlertBox";
+import { ErrorState } from "../error-state/ErrorState";
 import { LoadingSpinner } from "../loading-spinner/LoadingSpinner";
 import { AiButton, type AiButtonProps } from "./AiButton";
 
@@ -80,15 +79,12 @@ export function AiExplainButton({
         {loading ? (
           <LoadingSpinner size="sm" label="Thinking…" className="text-sm text-muted-foreground" />
         ) : error ? (
-          <div className="flex flex-col items-start gap-2">
-            <div role="alert" className="w-full">
-              <AlertBox variant="error">{error}</AlertBox>
-            </div>
-            <Button type="button" variant="outline" size="sm" onClick={() => void load()}>
-              <ArrowPathIcon className="h-4 w-4" aria-hidden="true" />
-              Try again
-            </Button>
-          </div>
+          <ErrorState
+            variant="compact"
+            error={error}
+            onRetry={() => void load()}
+            labels={{ title: "Something went wrong", retry: "Try again" }}
+          />
         ) : (
           <div className="max-h-80 overflow-y-auto text-sm leading-relaxed">{content}</div>
         )}

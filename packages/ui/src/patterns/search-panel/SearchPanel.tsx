@@ -1,6 +1,8 @@
-import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { ExclamationTriangleIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import type { ComponentType, InputHTMLAttributes, ReactElement, ReactNode, Ref } from "react";
+import { type ErrorInput, toErrorInfo } from "../../lib/errorState";
 import { cn } from "../../lib/utils";
+import { InlineError } from "../error-state/ErrorState";
 import { LoadingSpinner } from "../loading-spinner/LoadingSpinner";
 
 export interface SearchPanelMode {
@@ -14,7 +16,13 @@ export interface SearchPanelProps
   value: string;
   onChange: (value: string) => void;
   /** Swaps the leading search icon for a spinner while a search request is in flight. */
+  loading?: boolean;
+  /** @deprecated Use `loading`. */
   isLoading?: boolean;
+  /** A failed search request. Shows an `InlineError` row below the input. */
+  error?: ErrorInput;
+  /** Shows a Retry action in the error row. */
+  onRetry?: () => void;
   /** Extra content after the input, e.g. a mic button. */
   trailingSlot?: ReactNode;
   /** Keyboard-shortcut hint rendered after `trailingSlot`, e.g. `"⌘K"`. Omit to hide it. */
@@ -38,7 +46,10 @@ export interface SearchPanelProps
 export function SearchPanel({
   value,
   onChange,
+  loading,
   isLoading,
+  error,
+  onRetry,
   trailingSlot,
   shortcutHint,
   modes,
@@ -49,6 +60,8 @@ export function SearchPanel({
   className,
   ...props
 }: SearchPanelProps): ReactElement {
+  const busy = loading ?? isLoading;
+  const hasError = toErrorInfo(error) !== undefined;
   return (
     <div
       className={cn(
@@ -58,8 +71,10 @@ export function SearchPanel({
       )}
     >
       <div className="flex h-14 items-center gap-3 px-4">
-        {isLoading ? (
+        {busy ? (
           <LoadingSpinner size="sm" />
+        ) : hasError ? (
+          <ExclamationTriangleIcon className="h-5 w-5 shrink-0 text-destructive" aria-hidden="true" />
         ) : (
           <MagnifyingGlassIcon className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
         )}
@@ -81,6 +96,12 @@ export function SearchPanel({
           </kbd>
         )}
       </div>
+
+      {hasError && (
+        <div className="px-4 pb-3">
+          <InlineError error={error} onRetry={onRetry} />
+        </div>
+      )}
 
       {modes && modes.length > 0 && (
         <div className="flex items-center gap-2 px-4 pb-3">

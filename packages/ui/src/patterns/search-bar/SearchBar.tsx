@@ -1,6 +1,8 @@
-import { MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { ExclamationTriangleIcon, MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import type { InputHTMLAttributes, ReactElement, Ref } from "react";
+import { type ErrorInput, toErrorInfo } from "../../lib/errorState";
 import { cn } from "../../lib/utils";
+import { InlineError } from "../error-state/ErrorState";
 import { LoadingSpinner } from "../loading-spinner/LoadingSpinner";
 
 export interface SearchBarProps
@@ -8,7 +10,13 @@ export interface SearchBarProps
   value: string;
   onChange: (value: string) => void;
   /** Swaps the leading search icon for a spinner while a search request is in flight. */
+  loading?: boolean;
+  /** @deprecated Use `loading`. */
   isLoading?: boolean;
+  /** A failed search request. Marks the input invalid and shows an `InlineError` below it. */
+  error?: ErrorInput;
+  /** Shows a Retry action in the error line. */
+  onRetry?: () => void;
   /** Called when the clear (×) button is pressed. Defaults to `onChange("")`. Pass `false` to hide the button entirely, even with a non-empty value. */
   onClear?: (() => void) | false;
   /** Accessible label for the clear button. @default "Clear search" */
@@ -28,19 +36,26 @@ export interface SearchBarProps
 export function SearchBar({
   value,
   onChange,
+  loading,
   isLoading,
+  error,
+  onRetry,
   onClear,
   clearLabel = "Clear search",
   inputRef,
   className,
   ...props
 }: SearchBarProps): ReactElement {
+  const busy = loading ?? isLoading;
+  const hasError = toErrorInfo(error) !== undefined;
   const showClear = onClear !== false && value.length > 0;
   return (
     <div className={cn("relative", className)}>
       <span className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-muted-foreground">
-        {isLoading ? (
+        {busy ? (
           <LoadingSpinner size="sm" />
+        ) : hasError ? (
+          <ExclamationTriangleIcon className="h-4 w-4 text-destructive" aria-hidden="true" />
         ) : (
           <MagnifyingGlassIcon className="h-4 w-4" aria-hidden="true" />
         )}
@@ -48,14 +63,16 @@ export function SearchBar({
       <input
         ref={inputRef}
         type="search"
+        aria-invalid={hasError || undefined}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         className={cn(
-          "h-11 w-full rounded-full border border-input bg-background text-[15px] text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none",
+          "h-11 w-full rounded-full border bg-background text-[15px] text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none",
           // Chromium/Safari render their own native clear (×) control on
           // type="search" inputs -- left alone, it stacks on top of our own
           // custom clear button below instead of replacing it.
           "[&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none",
+          hasError ? "border-destructive" : "border-input",
           showClear ? "pr-11" : "pr-4",
           "pl-11",
         )}
@@ -71,6 +88,7 @@ export function SearchBar({
           <XMarkIcon className="h-4 w-4" aria-hidden="true" />
         </button>
       )}
+      {hasError && <InlineError error={error} onRetry={onRetry} className="mt-1 ml-4" />}
     </div>
   );
 }

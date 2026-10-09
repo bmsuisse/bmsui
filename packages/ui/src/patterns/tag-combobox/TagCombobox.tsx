@@ -1,7 +1,9 @@
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import type { ComponentProps, KeyboardEvent, ReactElement, ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { type ErrorInput, toErrorInfo } from "../../lib/errorState";
 import { cn } from "../../lib/utils";
+import { InlineError } from "../error-state/ErrorState";
 import {
   buildRenderChunks,
   groupCheckState,
@@ -47,6 +49,10 @@ export interface TagComboboxProps {
   loading?: boolean;
   /** Message shown in the option list while `loading` is true. Defaults to `"Loading…"`. */
   loadingMessage?: string;
+  /** The options fetch failed. The list shows an `InlineError` (with Retry when `onRetry` is set) instead of the options. */
+  error?: ErrorInput;
+  /** Re-runs the failed options fetch. */
+  onRetry?: () => void;
   className?: string;
   id?: string;
   /** Forwarded to the field, for test targeting (e.g. Playwright/Testing Library). */
@@ -90,6 +96,8 @@ export function TagCombobox({
   disabled,
   loading = false,
   loadingMessage = "Loading…",
+  error,
+  onRetry,
   className,
   id,
   onSearchChange,
@@ -316,6 +324,10 @@ export function TagCombobox({
         <div role="listbox" className={cn("max-h-60 overflow-y-auto", !columns && "flex flex-col gap-0.5")}>
           {loading ? (
             <p className="py-2 text-center text-sm text-muted-foreground">{loadingMessage}</p>
+          ) : toErrorInfo(error) !== undefined ? (
+            <div className="flex justify-center py-2">
+              <InlineError error={error} onRetry={onRetry} />
+            </div>
           ) : visibleOptions.length === 0 ? (
             <p className="py-2 text-center text-sm text-muted-foreground">{emptyMessage}</p>
           ) : columns ? (
