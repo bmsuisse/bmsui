@@ -3,9 +3,9 @@ import { describe, expect, it } from "vitest";
 import { AsyncBoundary } from "../../../src/patterns/async-boundary/AsyncBoundary";
 
 describe("AsyncBoundary", () => {
-  it("first load shows the skeleton, not children", () => {
+  it("first load shows the skeleton, not children, with no other props", () => {
     render(
-      <AsyncBoundary loading empty>
+      <AsyncBoundary loading>
         <p>data</p>
       </AsyncBoundary>,
     );
@@ -15,7 +15,7 @@ describe("AsyncBoundary", () => {
 
   it("error without data shows ErrorState", () => {
     render(
-      <AsyncBoundary error="fail" empty>
+      <AsyncBoundary error="fail">
         <p>data</p>
       </AsyncBoundary>,
     );
@@ -24,7 +24,7 @@ describe("AsyncBoundary", () => {
 
   it("error with stale data keeps children and shows a banner", () => {
     render(
-      <AsyncBoundary error="fail">
+      <AsyncBoundary error="fail" hasData>
         <p>data</p>
       </AsyncBoundary>,
     );
@@ -34,7 +34,7 @@ describe("AsyncBoundary", () => {
 
   it("refetch keeps children with a refresh bar", () => {
     render(
-      <AsyncBoundary loading>
+      <AsyncBoundary loading hasData>
         <p>data</p>
       </AsyncBoundary>,
     );

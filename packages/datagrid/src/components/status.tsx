@@ -22,7 +22,11 @@ export function toErrorInfo(error: unknown): ErrorInfo | undefined {
     const { title, message, details } = error as ErrorInfo;
     if (title !== undefined || message !== undefined || details !== undefined) return { title, message, details };
   }
-  return { message: String(error) };
+  try {
+    return { message: typeof error === "object" ? "Unknown error" : String(error) };
+  } catch {
+    return { message: "Unknown error" };
+  }
 }
 
 /** User-facing strings of the grid's loading/error/empty states. Anything omitted keeps its English default. */
@@ -70,7 +74,7 @@ export function RefreshBar(props: { "data-testid"?: string }): ReactElement {
       className="pointer-events-none absolute inset-x-0 top-0 z-30 h-0.5 overflow-hidden bg-muted"
       {...props}
     >
-      <div className="h-full w-1/3 animate-pulse bg-primary" />
+      <div className="h-full w-1/3 animate-pulse bg-primary motion-reduce:animate-none" />
     </div>
   );
 }
@@ -133,7 +137,7 @@ export function GridInlineError({
       role="alert"
       data-testid="grid-inline-error"
       title={info.details}
-      className={cn("inline-flex min-w-0 items-center gap-1.5 text-xs text-destructive", className)}
+      className={cn("inline-flex min-w-0 items-center gap-1.5 text-xs text-red-700 dark:text-red-300", className)}
     >
       <ExclamationTriangleIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
       <span className="truncate">{info.message ?? info.title ?? labels.errorTitle}</span>

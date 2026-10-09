@@ -240,6 +240,8 @@ export function Combobox(props: ComboboxProps): ReactElement {
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>): void {
+    // The list is replaced by the error line, so any option under the cursor is hidden.
+    if (hasError) return;
     if (event.key === "ArrowDown") {
       event.preventDefault();
       setActiveIndex((i) => Math.min(i + 1, visibleOptions.length - 1));
@@ -382,7 +384,7 @@ export function Combobox(props: ComboboxProps): ReactElement {
             placeholder={searchPlaceholder}
             aria-label={searchPlaceholder}
           />
-          <div role="listbox" className={cn("max-h-60 overflow-y-auto", !columns && "flex flex-col gap-0.5")}>
+          <div role={hasError ? undefined : "listbox"} className={cn("max-h-60 overflow-y-auto", !columns && "flex flex-col gap-0.5")}>
             {hasError ? (
               <div className="flex justify-center py-2">
                 <InlineError error={error} onRetry={onRetry} />

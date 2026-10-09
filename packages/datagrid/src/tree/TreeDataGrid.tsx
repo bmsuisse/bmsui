@@ -536,10 +536,10 @@ export function TreeDataGrid<TRow>({
             {data.length === 0 ? (
               <tr>
                 <td colSpan={totalColumnCount} className="p-4 text-center text-muted-foreground">
-                  {hasError ? (
-                    <GridErrorState error={error} onRetry={onRetry} labels={labels} />
-                  ) : loading ? (
+                  {loading ? (
                     <LoadingRows label={labels.loading} />
+                  ) : hasError ? (
+                    <GridErrorState error={error} onRetry={onRetry} labels={labels} />
                   ) : (
                     labels.noResults
                   )}

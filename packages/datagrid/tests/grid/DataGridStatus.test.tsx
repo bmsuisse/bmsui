@@ -79,3 +79,11 @@ describe("TreeDataGrid status states", () => {
     expect(screen.getByTestId("grid-inline-error")).toBeInTheDocument();
   });
 });
+
+describe("loading wins over a stale error with no rows (retry in flight)", () => {
+  it("shows the skeleton, not the error", () => {
+    render(<DataGrid columns={columns} dataSource={client([])} getRowId={(r) => r.id} loading error="old" />);
+    expect(screen.getByTestId("grid-loading-rows")).toBeInTheDocument();
+    expect(screen.queryByTestId("grid-error-state")).not.toBeInTheDocument();
+  });
+});

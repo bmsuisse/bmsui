@@ -205,7 +205,9 @@ logic above, which already had its own extraction). Structure:
     (normalize with `toErrorInfo`), so a TanStack Query/SWR error can be passed straight
     through. `LoadingState` is a skeleton (or spinner) that appears only after 150ms;
     `RefreshBar` is the thin bar for a refetch over visible data; `AsyncBoundary` wires
-    loading → error → empty → content. Convention: first load = skeleton, refetch = keep data +
+    loading → error → empty → content; pass `hasData={query.data !== undefined}` so a refetch keeps
+    the content (bar) and an error over stale data becomes a banner — without it children never render
+    during `loading`/`error`. `useDelayedFlag` is the 150ms hook behind `LoadingState`. Convention: first load = skeleton, refetch = keep data +
     bar, error without data = `ErrorState`, error with stale data = data + `InlineError`
     banner. `Combobox`, `TagCombobox`, `SearchBar`, `SearchPanel` and `KpiCard` take
     `error`/`onRetry`; `SearchBar`/`SearchPanel` `isLoading` is now `loading` (old name
@@ -974,7 +976,9 @@ with rows = thin `datagrid-loading-overlay` bar, rows dimmed and still interacti
 stale rows = rows stay under a slim banner. `NumberHistogramFilter`'s `loadValues`
 rejection shows `filterLabels.loadFailed` + `retry` instead of an empty histogram. The
 datagrid package does not depend on `@bmsuisse/ui`, so these are small local copies
-(`src/components/status.tsx`) with the same `ErrorInput` shape.
+(`src/components/status.tsx`) with the same `ErrorInput` shape — keep the two in sync when
+changing either. Error text uses `text-red-700 dark:text-red-300` (like `AlertBox`), not `text-destructive`,
+which fails WCAG AA as small text.
 
 ### `renderDetail` — expand a row to show more, without `<TreeDataGrid>`
 

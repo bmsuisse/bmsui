@@ -50,7 +50,8 @@ export function SearchBar({
   const hasError = toErrorInfo(error) !== undefined;
   const showClear = onClear !== false && value.length > 0;
   return (
-    <div className={cn("relative", className)}>
+    <div className={className}>
+      <div className="relative">
       <span className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-muted-foreground">
         {busy ? (
           <LoadingSpinner size="sm" />
@@ -88,6 +89,7 @@ export function SearchBar({
           <XMarkIcon className="h-4 w-4" aria-hidden="true" />
         </button>
       )}
+      </div>
       {hasError && <InlineError error={error} onRetry={onRetry} className="mt-1 ml-4" />}
     </div>
   );

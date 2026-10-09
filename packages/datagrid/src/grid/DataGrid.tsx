@@ -1581,9 +1581,8 @@ export function DataGrid<TRow extends RowData>({
           ref={scrollRef}
           data-testid={testId}
           className={cn(
-            "h-full overflow-auto rounded-md border transition-opacity",
+            "h-full overflow-auto rounded-md border",
             hasCellEditing && "relative",
-            loading && rows.length > 0 && "opacity-70",
           )}
           style={shouldVirtualize ? { maxHeight: virtualize?.maxBodyHeight ?? 480 } : undefined}
           // `tabIndex`/`onKeyDown` only under `cellEditing` — the scroll
@@ -1849,10 +1848,10 @@ export function DataGrid<TRow extends RowData>({
           <tbody>
             <tr>
               <td colSpan={totalColumnCount} className="p-4 text-center text-muted-foreground">
-                {hasError ? (
-                  <GridErrorState error={error} onRetry={onRetry} labels={labels} />
-                ) : loading ? (
+                {loading ? (
                   <LoadingRows label={labels.loading} />
+                ) : hasError ? (
+                  <GridErrorState error={error} onRetry={onRetry} labels={labels} />
                 ) : (
                   labels.noResults
                 )}

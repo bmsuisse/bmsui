@@ -192,7 +192,7 @@ export const KpiCard = memo(function KpiCard({
     return (
       <div
         data-testid={testId}
-        role="alert"
+        role="status"
         className={cn(
           "flex min-w-0 flex-col gap-1 rounded-2xl border border-destructive/40 bg-card p-3",
           hero && "col-span-2 flex-1 lg:col-span-1 lg:max-w-[340px] lg:min-w-[260px]",
@@ -201,12 +201,13 @@ export const KpiCard = memo(function KpiCard({
         <p className="text-[11px] font-bold tracking-[0.14em] text-muted-foreground uppercase">{label}</p>
         <p className="flex items-center gap-1.5 text-xl font-bold text-muted-foreground">
           —
-          <span title={[errorInfo.title, errorInfo.message].filter(Boolean).join(": ") || "Failed to load"}>
-            <ExclamationTriangleIcon className="h-4 w-4 text-destructive" aria-label="Failed to load" />
-          </span>
+          <ExclamationTriangleIcon className="h-4 w-4 text-destructive" aria-hidden="true" />
+        </p>
+        <p className="truncate text-xs text-red-700 dark:text-red-300">
+          {errorInfo.message ?? errorInfo.title ?? "Failed to load"}
         </p>
         {onRetry ? (
-          <button type="button" onClick={onRetry} className="self-start text-xs text-destructive underline underline-offset-2">
+          <button type="button" onClick={onRetry} className="self-start text-xs text-red-700 underline underline-offset-2 dark:text-red-300">
             Retry
           </button>
         ) : null}

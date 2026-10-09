@@ -22,5 +22,9 @@ export function toErrorInfo(error: unknown): ErrorInfo | undefined {
     const { title, message, details } = error as ErrorInfo;
     if (title !== undefined || message !== undefined || details !== undefined) return { title, message, details };
   }
-  return { message: String(error) };
+  try {
+    return { message: typeof error === "object" ? "Unknown error" : String(error) };
+  } catch {
+    return { message: "Unknown error" };
+  }
 }

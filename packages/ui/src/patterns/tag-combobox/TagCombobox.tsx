@@ -192,6 +192,8 @@ export function TagCombobox({
     inputRef.current?.focus();
   }
 
+  const hasError = toErrorInfo(error) !== undefined;
+
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>): void {
     if (event.key === "ArrowDown") {
       event.preventDefault();
@@ -203,7 +205,8 @@ export function TagCombobox({
     } else if (event.key === "Enter") {
       event.preventDefault();
       const option = visibleOptions[activeIndex];
-      if (option) toggleOption(option);
+      // The list is replaced by the error line, so the active option is hidden.
+      if (option && !hasError) toggleOption(option);
     } else if (event.key === "Escape") {
       setOpen(false);
     } else if (event.key === "Backspace" && search === "") {
@@ -321,10 +324,10 @@ export function TagCombobox({
           if (fieldRef.current?.contains(event.target as Node)) event.preventDefault();
         }}
       >
-        <div role="listbox" className={cn("max-h-60 overflow-y-auto", !columns && "flex flex-col gap-0.5")}>
+        <div role={hasError ? undefined : "listbox"} className={cn("max-h-60 overflow-y-auto", !columns && "flex flex-col gap-0.5")}>
           {loading ? (
             <p className="py-2 text-center text-sm text-muted-foreground">{loadingMessage}</p>
-          ) : toErrorInfo(error) !== undefined ? (
+          ) : hasError ? (
             <div className="flex justify-center py-2">
               <InlineError error={error} onRetry={onRetry} />
             </div>

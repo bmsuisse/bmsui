@@ -77,9 +77,38 @@ describe("error integration", () => {
   it("KpiCard replaces the value with a warning and Retry", () => {
     const onRetry = vi.fn();
     render(<KpiCard label="Revenue" value={5} error="down" onRetry={onRetry} />);
-    expect(screen.getByRole("alert")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("down");
     expect(screen.queryByText("5")).not.toBeInTheDocument();
     fireEvent.click(screen.getByText("Retry"));
     expect(onRetry).toHaveBeenCalledOnce();
+  });
+});
+
+describe("review fixes", () => {
+  it("toErrorInfo never throws on odd objects", () => {
+    expect(toErrorInfo(Object.create(null))).toEqual({ message: "Unknown error" });
+    expect(toErrorInfo({ status: 500 })).toEqual({ message: "Unknown error" });
+  });
+
+  it("Combobox ignores Enter on hidden options while in error", () => {
+    const onChange = vi.fn();
+    render(<Combobox options={[{ value: "a", label: "A" }]} value={null} onChange={onChange} error="x" />);
+    fireEvent.click(screen.getByRole("combobox"));
+    fireEvent.keyDown(screen.getByPlaceholderText("Search…"), { key: "Enter" });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("SearchBar keeps icon and clear button anchored to the input when an error shows", () => {
+    const { container } = render(<SearchBar value="x" onChange={() => {}} error="boom" />);
+    const relative = container.querySelector(".relative")!;
+    expect(relative.querySelector("input")).toBeInTheDocument();
+    expect(relative).not.toContainElement(screen.getByTestId("inline-error"));
+  });
+});
+
+describe("loading helpers", () => {
+  it("SearchBar/SearchPanel keep the deprecated isLoading alias", () => {
+    const { container } = render(<SearchBar value="" onChange={() => {}} isLoading />);
+    expect(container.querySelector("svg.animate-spin")).toBeInTheDocument();
   });
 });

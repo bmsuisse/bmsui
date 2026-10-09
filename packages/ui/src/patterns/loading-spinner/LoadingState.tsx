@@ -52,13 +52,13 @@ export const LoadingState = ({
     <div
       role="status"
       aria-busy="true"
-      aria-label={label}
       data-testid="loading-state"
       className={cn("flex w-full flex-col gap-2 p-1", !visible && "invisible", className)}
       {...props}
     >
+      <span className="sr-only">{label}</span>
       {Array.from({ length: lines }, (_, i) => (
-        <Skeleton key={i} className={cn("h-4", i === lines - 1 && lines > 1 ? "w-2/3" : "w-full")} />
+        <Skeleton key={i} aria-hidden="true" className={cn("h-4", i === lines - 1 && lines > 1 ? "w-2/3" : "w-full")} />
       ))}
     </div>
   );
@@ -73,6 +73,6 @@ export const RefreshBar = ({ active, className }: { active: boolean; className?:
       data-testid="refresh-bar"
       className={cn("absolute inset-x-0 top-0 z-30 h-0.5 overflow-hidden bg-muted", className)}
     >
-      <div className="h-full w-1/3 animate-pulse bg-primary" />
+      <div className="h-full w-1/3 animate-pulse bg-primary motion-reduce:animate-none" />
     </div>
   ) : null;

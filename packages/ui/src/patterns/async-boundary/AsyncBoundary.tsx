@@ -14,8 +14,10 @@ export interface AsyncBoundaryProps {
   /** Placeholder for the first load. Defaults to `<LoadingState />`. */
   loadingContent?: ReactNode;
   /**
-   * Whether `children` already has data to show (stale or previous). When true, a refetch keeps
-   * the content with a refresh bar, and an error becomes a slim banner above it. Defaults to `!empty`.
+   * Whether `children` already has data to show (stale or previous), e.g. `hasData={query.data !== undefined}`.
+   * When true, a refetch keeps the content with a refresh bar and an error becomes a slim banner above it.
+   * Defaults to `false`: `loading` shows the skeleton and `error` the ErrorState, so children never
+   * render without data.
    */
   hasData?: boolean;
   children: ReactNode;
@@ -37,9 +39,10 @@ export const AsyncBoundary = ({
   children,
 }: AsyncBoundaryProps): ReactElement => {
   const failed = toErrorInfo(error) !== undefined;
-  const showData = hasData ?? !empty;
+  const showData = hasData ?? false;
+  // Loading wins over a stale error so a Retry in flight gives feedback (and can't be spammed).
+  if (loading && !showData) return <>{loadingContent ?? <LoadingState />}</>;
   if (failed && !showData) return <ErrorState error={error} onRetry={onRetry} />;
-  if (loading && !showData && !failed) return <>{loadingContent ?? <LoadingState />}</>;
   if (empty && !showData) return <>{emptyContent ?? null}</>;
   return (
     <div className="relative">

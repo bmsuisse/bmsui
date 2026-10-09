@@ -384,10 +384,10 @@ export function App(): ReactElement {
               </div>
               <div className="flex flex-col gap-3 rounded-md border p-3">
                 <p className="text-xs font-semibold text-muted-foreground">Refetch / stale data (AsyncBoundary)</p>
-                <AsyncBoundary loading>
+                <AsyncBoundary loading hasData>
                   <p className="text-sm">Existing data stays visible while refreshing.</p>
                 </AsyncBoundary>
-                <AsyncBoundary error="Couldn't refresh" onRetry={() => {}}>
+                <AsyncBoundary error="Couldn't refresh" onRetry={() => {}} hasData>
                   <p className="text-sm">Stale data under an error banner.</p>
                 </AsyncBoundary>
                 <InlineError error="Search failed" onRetry={() => {}} />
