@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { ErrorInput, GridStatusLabels } from "../components/status";
 import type { ColumnDef } from "../column/types";
 import type { ColumnVisibility } from "../column-selector/types";
 import type { EditingOptions } from "../edit/types";
@@ -43,6 +44,16 @@ export interface TreeDataGridProps<TRow> extends TreeAccessors<TRow> {
    * Defaults to `false`.
    */
   loading?: boolean;
+  /**
+   * The root data fetch failed. With no rows, the body shows an error state (title,
+   * message, collapsible details, Retry); with rows, they stay and a slim banner
+   * appears above. Per-node lazy-load failures are handled separately (inline, per row).
+   */
+  error?: ErrorInput;
+  /** Shows a Retry action in the error state/banner. */
+  onRetry?: () => void;
+  /** Overrides the grid's "Loading...", "No results." and error-state strings. */
+  statusLabels?: Partial<GridStatusLabels>;
   /**
    * The column whose cell gets the depth indentation + expand/collapse
    * chevron prepended. Defaults to the first column in `columns`.

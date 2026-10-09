@@ -1,9 +1,9 @@
+import { GridErrorState, GridInlineError, LoadingRows, resolveStatusLabels, toErrorInfo, type GridStatusLabels } from "../components/status";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   ArrowPathIcon,
   ChevronDownIcon,
   ChevronRightIcon,
-  ExclamationCircleIcon,
 } from "@heroicons/react/24/outline";
 import type { ReactElement, ReactNode } from "react";
 import { Fragment, useEffect, useMemo, useRef } from "react";
@@ -46,6 +46,7 @@ interface TreeCellProps<TRow> {
   indentSize: number;
   isLoading: boolean;
   error: string | undefined;
+  labels: GridStatusLabels;
   onToggle: () => void;
   onRetry: () => void;
   editingCtx: EditingCellContext<TRow> | undefined;
@@ -57,6 +58,7 @@ function TreeCell<TRow>({
   indentSize,
   isLoading,
   error,
+  labels,
   onToggle,
   onRetry,
   editingCtx,
@@ -98,13 +100,12 @@ function TreeCell<TRow>({
           has to account for error state — see useTreeState's module doc for
           why a failed fetch surfaces via errorIds instead of throwing. */}
       {flatRow.isExpanded && error ? (
-        <span className="ml-1 flex shrink-0 items-center gap-1 text-xs text-destructive">
-          <ExclamationCircleIcon className="h-3 w-3" aria-hidden="true" />
-          Failed to load.
-          <button type="button" className="underline underline-offset-2" onClick={onRetry}>
-            Retry
-          </button>
-        </span>
+        <GridInlineError
+          error={{ message: labels.nodeLoadFailed, details: error }}
+          onRetry={onRetry}
+          labels={labels}
+          className="ml-1 shrink-0"
+        />
       ) : null}
     </div>
   );
@@ -128,6 +129,9 @@ export function TreeDataGrid<TRow>({
   columns,
   data,
   loading = false,
+  error,
+  onRetry,
+  statusLabels,
   treeColumnId,
   columnVisibility,
   getRowId,
@@ -160,6 +164,8 @@ export function TreeDataGrid<TRow>({
   showTotals = false,
   editing,
 }: TreeDataGridProps<TRow>): ReactElement {
+  const labels = resolveStatusLabels(statusLabels);
+  const hasError = toErrorInfo(error) !== undefined;
   const accessors: TreeAccessors<TRow> = useMemo(
     () => ({ getRowId, getChildren, hasChildren }),
     [getRowId, getChildren, hasChildren],
@@ -433,6 +439,7 @@ export function TreeDataGrid<TRow>({
                 indentSize={indentSize}
                 isLoading={loadingIds.has(flatRow.id)}
                 error={errorIds.get(flatRow.id)}
+                labels={labels}
                 onToggle={() => toggleExpand(flatRow.row)}
                 onRetry={() => retry(flatRow.row)}
                 editingCtx={editingState.ctx}
@@ -462,6 +469,11 @@ export function TreeDataGrid<TRow>({
 
   return (
     <div className="flex flex-col gap-2" data-testid="tree-datagrid">
+      {hasError && data.length > 0 && (
+        <div className="flex shrink-0 items-center rounded-md border border-destructive/40 bg-destructive/10 px-2 py-1">
+          <GridInlineError error={error} onRetry={onRetry} labels={labels} />
+        </div>
+      )}
       {editing && editingState.pendingEdits.size > 0 && (
         <EditingBar
           editing={editing}
@@ -524,13 +536,12 @@ export function TreeDataGrid<TRow>({
             {data.length === 0 ? (
               <tr>
                 <td colSpan={totalColumnCount} className="p-4 text-center text-muted-foreground">
-                  {loading ? (
-                    <span className="inline-flex items-center gap-2">
-                      <ArrowPathIcon className="h-4 w-4 animate-spin" aria-hidden="true" />
-                      Loading...
-                    </span>
+                  {hasError ? (
+                    <GridErrorState error={error} onRetry={onRetry} labels={labels} />
+                  ) : loading ? (
+                    <LoadingRows label={labels.loading} />
                   ) : (
-                    "No results."
+                    labels.noResults
                   )}
                 </td>
               </tr>

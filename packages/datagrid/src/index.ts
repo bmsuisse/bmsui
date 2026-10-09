@@ -121,3 +121,5 @@ export type { FlatTreeRow } from "./tree/flattenTree";
 export { flattenTree } from "./tree/flattenTree";
 export type { TreeStateController, UseTreeStateOptions } from "./tree/useTreeState";
 export { useTreeState } from "./tree/useTreeState";
+export type { ErrorInfo, ErrorInput, GridStatusLabels } from "./components/status";
+export { defaultGridStatusLabels, toErrorInfo } from "./components/status";

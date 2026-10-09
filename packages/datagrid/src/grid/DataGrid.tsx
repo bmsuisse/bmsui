@@ -1,5 +1,4 @@
 import {
-  ArrowPathIcon,
   BarsArrowDownIcon,
   BarsArrowUpIcon,
   ChevronRightIcon,
@@ -22,6 +21,7 @@ import type {
   ReactElement,
   ReactNode,
 } from "react";
+import { GridErrorState, GridInlineError, LoadingRows, RefreshBar, resolveStatusLabels, toErrorInfo } from "../components/status";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { parseTsv, rangeToTsv } from "../cell-editing/clipboard";
 import { coerceValueForColumn } from "../cell-editing/coerce";
@@ -290,6 +290,9 @@ export function DataGrid<TRow extends RowData>({
   onSelectedIdsChange,
   testId,
   loading: loadingProp = false,
+  error,
+  onRetry,
+  statusLabels,
   groupBy,
   renderGroupHeader,
   defaultGroupsExpanded = true,
@@ -464,6 +467,8 @@ export function DataGrid<TRow extends RowData>({
   }
 
   const pageCount = Math.max(1, Math.ceil(rowCount / state.pageSize));
+  const labels = resolveStatusLabels(statusLabels);
+  const hasError = toErrorInfo(error) !== undefined;
   const loading = loadingProp || (dataSource.mode === "server" ? Boolean(dataSource.loading) : false);
   // The checkbox column itself is decoupled from `headerActions`: a caller
   // using controlled `selectedIds` (its own toolbar elsewhere on the page,
@@ -1565,19 +1570,21 @@ export function DataGrid<TRow extends RowData>({
           <ActionsMenu items={headerActions} ctx={{ selectedRows }} triggerLabel="Bulk actions" />
         </div>
       )}
+      {hasError && rows.length > 0 && (
+        <div className="flex shrink-0 items-center rounded-md border border-destructive/40 bg-destructive/10 px-2 py-1">
+          <GridInlineError error={error} onRetry={onRetry} labels={labels} />
+        </div>
+      )}
       <div className="relative min-h-0 flex-1">
-        {loading && (
-          <div
-            data-testid="datagrid-loading-overlay"
-            className="absolute inset-0 z-30 flex items-center justify-center bg-background/60"
-          >
-            <ArrowPathIcon className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden />
-          </div>
-        )}
+        {loading && rows.length > 0 && <RefreshBar data-testid="datagrid-loading-overlay" />}
         <div
           ref={scrollRef}
           data-testid={testId}
-          className={cn("h-full overflow-auto rounded-md border", hasCellEditing && "relative")}
+          className={cn(
+            "h-full overflow-auto rounded-md border transition-opacity",
+            hasCellEditing && "relative",
+            loading && rows.length > 0 && "opacity-70",
+          )}
           style={shouldVirtualize ? { maxHeight: virtualize?.maxBodyHeight ?? 480 } : undefined}
           // `tabIndex`/`onKeyDown` only under `cellEditing` — the scroll
           // container itself (not any individual cell, which is a plain
@@ -1842,7 +1849,13 @@ export function DataGrid<TRow extends RowData>({
           <tbody>
             <tr>
               <td colSpan={totalColumnCount} className="p-4 text-center text-muted-foreground">
-                {loading ? "Loading..." : "No results."}
+                {hasError ? (
+                  <GridErrorState error={error} onRetry={onRetry} labels={labels} />
+                ) : loading ? (
+                  <LoadingRows label={labels.loading} />
+                ) : (
+                  labels.noResults
+                )}
               </td>
             </tr>
           </tbody>

@@ -1,4 +1,4 @@
-import { FunnelIcon } from "@heroicons/react/24/outline";
+import { ExclamationTriangleIcon, FunnelIcon } from "@heroicons/react/24/outline";
 import type { MouseEvent, ReactElement } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { NumberColumn } from "../column/types";
@@ -126,6 +126,8 @@ export function NumberHistogramFilter<TRow>({
   const [minOnTop, setMinOnTop] = useState(false);
   const [loadedValues, setLoadedValues] = useState<(number | null | undefined)[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | undefined>(undefined);
+  const [retryKey, setRetryKey] = useState(0);
 
   const { min, max } = rangeOf(value);
 
@@ -137,9 +139,13 @@ export function NumberHistogramFilter<TRow>({
     if (!open || !loadValues) return;
     let cancelled = false;
     setLoading(true);
+    setLoadError(undefined);
     loadValues()
       .then((values) => {
         if (!cancelled) setLoadedValues(values);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) setLoadError(err instanceof Error ? err.message : String(err));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -147,7 +153,7 @@ export function NumberHistogramFilter<TRow>({
     return () => {
       cancelled = true;
     };
-  }, [open, loadValues]);
+  }, [open, loadValues, retryKey]);
 
   const sourceValues = allValues ?? loadedValues;
 
@@ -255,6 +261,20 @@ export function NumberHistogramFilter<TRow>({
         <p className="text-xs text-muted-foreground" data-testid={`filter-${column.id}-loading`}>
           {labels.loading}
         </p>
+      )}
+      {loadError !== undefined && !loading && (
+        <span
+          role="alert"
+          title={loadError}
+          className="flex items-center gap-1.5 text-xs text-destructive"
+          data-testid={`filter-${column.id}-error`}
+        >
+          <ExclamationTriangleIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          {labels.loadFailed}
+          <button type="button" className="underline underline-offset-2" onClick={() => setRetryKey((k) => k + 1)}>
+            {labels.retry}
+          </button>
+        </span>
       )}
       <div className="flex items-end gap-px" style={{ height: BAR_HEIGHT_PX }} data-testid={`filter-${column.id}-histogram`}>
         {histBars.map((bar, i) => (
