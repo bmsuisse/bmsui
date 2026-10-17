@@ -36,7 +36,7 @@ export function BrandMotionDemo(): ReactElement {
     <main className={`brand-demo${dark ? " brand-demo--dark" : ""}`}>
       <div className="brand-demo__layout">
         <header className="brand-demo__header">
-          <a className="brand-demo__home" href="./">bmsui <span>/ Brand motion</span></a>
+          <a className="brand-demo__home" href={window.location.pathname.replace(/brand-motion\/?$/, "") || "/"}>bmsui <span>/ Brand motion</span></a>
           <button className="brand-demo__text-button" type="button" onClick={() => setDark(!dark)}>
             {dark ? "Light background" : "Dark background"}
           </button>

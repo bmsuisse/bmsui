@@ -58,9 +58,10 @@ jobs:
       - name: Assemble Pages artifact
         run: |
           set -euo pipefail
-          mkdir -p site/demo/ui site/demo/datagrid
+          mkdir -p site/demo/ui/brand-motion site/demo/datagrid
           cp -r docs-site/build/. site/
           cp -r packages/ui/demo/dist/. site/demo/ui/
+          cp packages/ui/demo/dist/index.html site/demo/ui/brand-motion/index.html
           cp -r packages/datagrid/demo/dist/. site/demo/datagrid/
 
       - uses: actions/upload-pages-artifact@v3
