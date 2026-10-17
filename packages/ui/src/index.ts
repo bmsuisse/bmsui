@@ -192,3 +192,8 @@ export { cn } from "./lib/utils";
 export { useMediaQuery } from "./lib/useMediaQuery";
 export type { ConfirmButtonPlacement } from "./lib/platform";
 export { getConfirmButtonPlacement, isWindowsPlatform } from "./lib/platform";
+
+export type { AnimatedBrandProps } from "./patterns/animated-brand/AnimatedBrand";
+export { AnimatedBrand } from "./patterns/animated-brand/AnimatedBrand";
+export type { BrandAnimation, BrandMode } from "./patterns/animated-brand/brandMotion";
+export { BRAND_ANIMATIONS } from "./patterns/animated-brand/brandMotion";

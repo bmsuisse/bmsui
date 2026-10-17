@@ -444,6 +444,10 @@ logic above, which already had its own extraction). Structure:
 - `packages/ui/demo/` — same pattern as `packages/datagrid/demo`: a Vite
   app aliasing `@bmsuisse/ui` straight to `src/index.ts`, using the same
   reference-app-derived Tailwind v4 tokens, for visual QA.
+- `animated-brand/` exports `AnimatedBrand`: generic One* product suffix, full /
+  mark / One modes, seven finite native Web Animations, and reduced-motion
+  fallback. See `docs-site/docs/ui/animated-brand.md` for the props and
+  `packages/ui/demo/` at `/brand-motion` for the interactive comparison.
 - Same conventions as `@bmsuisse/datagrid`: `packages/ui/src/index.ts` is the
   entire public surface, `tsup` build, `vitest` + Testing Library tests
   under `packages/ui/tests/` mirroring `src/`.
