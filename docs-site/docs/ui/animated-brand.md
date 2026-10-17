@@ -5,7 +5,7 @@ title: Animated brand
 # Animated brand
 
 `AnimatedBrand` shares the One* identity across products. Set `product` to the
-suffix (`"Hub"`, `"Brain"`, `"Docs"`, `"Product"`, or your own name), then choose
+suffix (`"Hub"`, `"Brain"`, `"Docs"`, `"Product"`, `"Sales"`, `"Supply"`, or your own name), then choose
 whether to display the full wordmark, the O symbol, or One.
 
 ```tsx

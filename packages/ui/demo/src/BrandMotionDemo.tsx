@@ -2,7 +2,7 @@ import { useState, type ReactElement } from "react";
 import { AnimatedBrand, BRAND_ANIMATIONS, type BrandAnimation, type BrandMode } from "@bmsuisse/ui";
 import "./BrandMotionDemo.css";
 
-const PRODUCTS = ["Hub", "Brain", "Docs", "Product"];
+const PRODUCTS = ["Hub", "Brain", "Docs", "Product", "Sales", "Supply"];
 const MODES: { value: BrandMode; label: string; description: string }[] = [
   { value: "full", label: "Full name", description: "One + your product" },
   { value: "one", label: "One", description: "The shared wordmark" },
