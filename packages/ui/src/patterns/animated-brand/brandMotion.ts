@@ -25,7 +25,7 @@ export function playBrandMotion(
     onComplete?.();
     return () => {};
   }
-  const red = "#e60028";
+  const accent = "var(--bms-brand-dot)";
   const q = (s: string): HTMLElement => {
       const element = p.querySelector<HTMLElement>(s);
       if (!element) throw new Error(`Missing logo part: ${s}`);
@@ -51,7 +51,7 @@ export function playBrandMotion(
   const t = (x: number, y: number, sx = 1, sy = sx) =>
     `translate(${x}em,${y}em) scale(${sx},${sy})`;
   const points = (items: MotionPoint[]) =>
-    items.map(([offset, x, y, sx = 1, sy = sx, color = red]) => ({
+    items.map(([offset, x, y, sx = 1, sy = sx, color = accent]) => ({
       offset,
       transform: t(x, y, sx, sy),
       background: color,
@@ -306,11 +306,11 @@ export function playBrandMotion(
     a(
       core,
       [
-        { opacity: 1, background: red, transform: "scale(1)" },
-        { opacity: 1, background: red, transform: "scale(1.08)", offset: 0.22 },
-        { opacity: 1, background: red, transform: "scale(.22)", offset: 0.65 },
-        { opacity: 1, background: red, transform: "scale(.25)", offset: 0.84 },
-        { opacity: 0, background: red, transform: "scale(.25)", offset: 1 },
+        { opacity: 1, background: accent, transform: "scale(1)" },
+        { opacity: 1, background: accent, transform: "scale(1.08)", offset: 0.22 },
+        { opacity: 1, background: accent, transform: "scale(.22)", offset: 0.65 },
+        { opacity: 1, background: accent, transform: "scale(.25)", offset: 0.84 },
+        { opacity: 0, background: accent, transform: "scale(.25)", offset: 1 },
       ],
       d,
     );
@@ -345,9 +345,9 @@ export function playBrandMotion(
     a(
       core,
       [
-        { opacity: 1, background: red, transform: "scale(.92)" },
-        { opacity: 1, background: red, transform: "scale(1.14)", offset: 0.24 },
-        { opacity: 0, background: red, transform: "scale(.1)", offset: 0.36 },
+        { opacity: 1, background: accent, transform: "scale(.92)" },
+        { opacity: 1, background: accent, transform: "scale(1.14)", offset: 0.24 },
+        { opacity: 0, background: accent, transform: "scale(.1)", offset: 0.36 },
         { opacity: 0, offset: 1 },
       ],
       d,

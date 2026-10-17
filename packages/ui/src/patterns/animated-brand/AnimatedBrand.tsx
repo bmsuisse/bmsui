@@ -14,6 +14,14 @@ import {
 export interface AnimatedBrandProps {
   /** Product suffix, for example Brain, Hub, Docs, or Product. */
   product?: string;
+  /** Accent color shared by the dot, trails, and particles. Accepts any CSS color. */
+  dotColor?: string;
+  /** Base color for the wordmark and ring. */
+  textColor?: string;
+  /** Optional overrides for the One prefix, product suffix, and O ring. */
+  oneColor?: string;
+  productColor?: string;
+  ringColor?: string;
   mode?: BrandMode;
   animation?: BrandAnimation | "random";
   /** Font size in CSS pixels. The O scales proportionally with the wordmark. */
@@ -39,11 +47,16 @@ const centered: CSSProperties = {
   top: "50%",
   margin: "-.1em",
 };
-const red = "#e60028";
+const accent = "var(--bms-brand-dot)";
 
 /** A static accessible brand with an optional finite, reduced-motion-aware introduction. */
 export function AnimatedBrand({
   product = "Brain",
+  dotColor = "#e60028",
+  textColor = "#929292",
+  oneColor,
+  productColor,
+  ringColor,
   mode = "full",
   animation = "random",
   size = 48,
@@ -104,16 +117,18 @@ export function AnimatedBrand({
   const tail = mode === "full" ? `ne${product}` : mode === "one" ? "ne" : "";
   const label =
     mode === "full" ? `One${product}` : mode === "one" ? "One" : "O";
+  const wrapperStyle: CSSProperties & { "--bms-brand-dot": string } = {
+    "--bms-brand-dot": dotColor,
+    display: "inline-flex",
+    fontSize: size,
+    color: textColor,
+    ...style,
+  };
   return (
     <span
       ref={ref}
       className={className}
-      style={{
-        display: "inline-flex",
-        fontSize: size,
-        color: "#929292",
-        ...style,
-      }}
+      style={wrapperStyle}
     >
       <span
         data-logo-part="logo"
@@ -137,6 +152,7 @@ export function AnimatedBrand({
           style={{
             position: "relative",
             flex: "none",
+            color: ringColor ?? oneColor,
             width: ".8em",
             height: ".8em",
             marginRight: tail ? ".04em" : 0,
@@ -156,7 +172,7 @@ export function AnimatedBrand({
             style={{
               ...absolute,
               inset: 0,
-              background: red,
+              background: accent,
               opacity: 0,
               zIndex: 2,
             }}
@@ -170,7 +186,7 @@ export function AnimatedBrand({
               left: "50%",
               top: "50%",
               marginTop: "-.0225em",
-              background: `linear-gradient(90deg, ${red}, transparent)`,
+              background: `linear-gradient(90deg, ${accent}, transparent)`,
               transformOrigin: "left center",
               opacity: 0,
               pointerEvents: "none",
@@ -182,7 +198,7 @@ export function AnimatedBrand({
               data-logo-part="echo"
               style={{
                 ...centered,
-                border: `.025em solid ${red}`,
+                border: `.025em solid ${accent}`,
                 boxSizing: "border-box",
                 opacity: 0,
               }}
@@ -197,14 +213,14 @@ export function AnimatedBrand({
                 width: ".055em",
                 height: ".055em",
                 margin: "-.0275em",
-                background: red,
+                background: accent,
                 opacity: 0,
               }}
             />
           ))}
           <span
             data-logo-part="bead"
-            style={{ ...centered, background: red, zIndex: 3 }}
+            style={{ ...centered, background: accent, zIndex: 3 }}
           />
         </span>
         <span
@@ -220,7 +236,7 @@ export function AnimatedBrand({
             <span
               key={`${index}-${letter}`}
               data-brand-letter=""
-              style={{ display: "inline-block" }}
+              style={{ display: "inline-block", color: index < 2 ? oneColor : productColor }}
             >
               {letter}
             </span>

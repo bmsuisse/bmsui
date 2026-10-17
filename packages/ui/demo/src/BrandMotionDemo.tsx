@@ -24,8 +24,13 @@ export function BrandMotionDemo(): ReactElement {
   const [animation, setAnimation] = useState<BrandAnimation | "random">("bounce");
   const [replay, setReplay] = useState(0);
   const [dark, setDark] = useState(false);
+  const [dotColor, setDotColor] = useState("#e60028");
+  const [textColor, setTextColor] = useState("#929292");
+  const [partColors, setPartColors] = useState<{ oneColor?: string; productColor?: string; ringColor?: string }>({});
+  const colors = { dotColor, textColor, ...partColors };
+  const colorProps = Object.entries(colors).filter(([, value]) => value !== undefined).map(([key, value]) => `  ${key}="${value}"`).join("\n");
   const selectedMotion = BRAND_ANIMATIONS.find((motion) => motion.id === animation);
-  const snippet = `<AnimatedBrand\n  product=${JSON.stringify(product)}\n  mode="${mode}"\n  animation="${animation}"\n  size={80}\n/>`;
+  const snippet = `<AnimatedBrand\n  product=${JSON.stringify(product)}\n  mode="${mode}"\n  animation="${animation}"\n  size={80}\n${colorProps}\n/>`;
 
   return (
     <main className={`brand-demo${dark ? " brand-demo--dark" : ""}`}>
@@ -46,7 +51,7 @@ export function BrandMotionDemo(): ReactElement {
           <div className="brand-demo__preview-column">
             <div className="brand-demo__stage" aria-label="Selected brand preview">
               <div className="brand-demo__stage-logo">
-                <AnimatedBrand product={product} mode={mode} animation={animation} size={80} replayKey={replay} style={{ fontSize: "clamp(32px, 6vw, 80px)" }} />
+                <AnimatedBrand {...colors} product={product} mode={mode} animation={animation} size={80} replayKey={replay} style={{ fontSize: "clamp(32px, 6vw, 80px)" }} />
               </div>
               <div className="brand-demo__stage-footer">
                 <span>{selectedMotion?.label ?? "A different motion each time"}</span>
@@ -59,7 +64,7 @@ export function BrandMotionDemo(): ReactElement {
             <section className="brand-demo__family" aria-label="Product examples">
               {PRODUCTS.map((name) => (
                 <button key={name} type="button" aria-label={`Choose One${name}`} aria-pressed={product === name} onClick={() => setProduct(name)}>
-                  <AnimatedBrand product={name} mode="full" autoPlay={false} size={23} />
+                  <AnimatedBrand {...colors} product={name} mode="full" autoPlay={false} size={23} />
                 </button>
               ))}
             </section>
@@ -79,6 +84,18 @@ export function BrandMotionDemo(): ReactElement {
               <div className="brand-demo__modes">
                 {MODES.map((item) => <button key={item.value} type="button" aria-pressed={mode === item.value} onClick={() => setMode(item.value)}><strong>{item.label}</strong><span>{item.description}</span></button>)}
               </div>
+            </fieldset>
+            <fieldset className="brand-demo__field brand-demo__colors">
+              <legend>Colors</legend>
+              <label className="brand-demo__color-row">Dot & effects<input aria-label="Dot color" type="color" value={dotColor} onChange={(event) => setDotColor(event.target.value)} /></label>
+              <label className="brand-demo__color-row">All text<input aria-label="Text color" type="color" value={textColor} onChange={(event) => setTextColor(event.target.value)} /></label>
+              {([{ key: "oneColor", label: "One" }, { key: "productColor", label: "Product" }, { key: "ringColor", label: "O ring" }] as const).map(({ key, label }) => (
+                <div className="brand-demo__color-row" key={key}>
+                  <label><input type="checkbox" checked={partColors[key] !== undefined} onChange={(event) => setPartColors((current) => ({ ...current, [key]: event.target.checked ? textColor : undefined }))} />Custom {label}</label>
+                  <input type="color" aria-label={`${label} color`} disabled={partColors[key] === undefined} value={partColors[key] ?? (key === "ringColor" ? partColors.oneColor : undefined) ?? textColor} onChange={(event) => setPartColors((current) => ({ ...current, [key]: event.target.value }))} />
+                </div>
+              ))}
+              <button type="button" className="brand-demo__text-button" onClick={() => { setDotColor("#e60028"); setTextColor("#929292"); setPartColors({}); }}>Reset colors</button>
             </fieldset>
             <fieldset className="brand-demo__field">
               <legend>Motion</legend>

@@ -16,7 +16,26 @@ import { AnimatedBrand } from "@bmsuisse/ui";
 <AnimatedBrand product="Product" mode="one" animation="bounce" size={56} />
 ```
 
-The lettering stays grey and the dot stays red throughout the animation.
+By default the lettering stays grey and the dot stays red throughout the animation.
+Customize the identity with CSS color strings (hex, named colors, or CSS variables):
+
+```tsx
+<AnimatedBrand
+  product="Hub"
+  dotColor="#f97316"
+  textColor="#64748b"
+  oneColor="#334155"
+  productColor="#2563eb"
+  ringColor="#334155"
+/>
+```
+
+`textColor` sets the base for all letters and the ring. `oneColor` overrides
+One (including the O ring), `productColor` overrides the product suffix, and
+`ringColor` can override the ring separately. Unset part colors inherit the base.
+`dotColor` also colors the animated trails, particles, and expanding shapes;
+it stays consistent throughout playback. Colors can change without restarting
+the animation.
 The component supplies its own geometry styles; no animation library or extra
 stylesheet import is required. It inherits the surrounding font family.
 
@@ -25,6 +44,11 @@ stylesheet import is required. It inherits the surrounding font family.
 | Prop | Default | Purpose |
 | --- | --- | --- |
 | `product` | `"Brain"` | Product suffix, without the One prefix. |
+| `dotColor` | `"#e60028"` | Dot and all accent animation effects. |
+| `textColor` | `"#929292"` | Base wordmark and ring color. |
+| `oneColor` | inherited | Override the One prefix and its ring. |
+| `productColor` | inherited | Override the product suffix. |
+| `ringColor` | inherited | Override just the O ring, taking precedence over `oneColor`. |
 | `mode` | `"full"` | `"full"`, `"mark"` (O), or `"one"` (One). |
 | `animation` | `"random"` | A named motion, or a random choice for each playback. |
 | `size` | `48` | Wordmark font size in CSS pixels; the mark scales with it. |

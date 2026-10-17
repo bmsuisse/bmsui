@@ -67,6 +67,44 @@ describe("AnimatedBrand", () => {
     },
   );
 
+  it("inherits the base text color unless a part is overridden", () => {
+    const { container, rerender } = render(<AnimatedBrand autoPlay={false} textColor="#112233" />);
+    const wrapper = container.firstElementChild as HTMLElement;
+    expect(wrapper).toHaveStyle({ color: "#112233" });
+    expect(container.querySelector('[data-logo-part="mark"]')).not.toHaveAttribute("style", expect.stringContaining("color:"));
+    rerender(<AnimatedBrand autoPlay={false} textColor="#112233" oneColor="#445566" productColor="#778899" ringColor="#aabbcc" dotColor="#0077ee" />);
+    expect(wrapper.style.getPropertyValue("--bms-brand-dot")).toBe("#0077ee");
+    expect(container.querySelector('[data-logo-part="mark"]')).toHaveStyle({ color: "#aabbcc" });
+    const letters = container.querySelectorAll('[data-brand-letter]');
+    expect(letters[0]).toHaveStyle({ color: "#445566" });
+    expect(letters[1]).toHaveStyle({ color: "#445566" });
+    expect(letters[2]).toHaveStyle({ color: "#778899" });
+  });
+
+  it.each(BRAND_ANIMATIONS.map(({ id }) => id))("%s uses the selected dot color throughout its effects", async (animation) => {
+    const { container } = render(<AnimatedBrand animation={animation} dotColor="#0077ee" />);
+    await flush();
+    expect((container.firstElementChild as HTMLElement).style.getPropertyValue("--bms-brand-dot")).toBe("#0077ee");
+    for (const [frames] of animate.mock.calls as [Keyframe[]][]) {
+      for (const frame of frames) {
+        if (frame.background) expect(frame.background).toBe("var(--bms-brand-dot)");
+      }
+    }
+    for (const part of ["bead", "core", "trail", "echo", "particle"]) {
+      expect(container.querySelector(`[data-logo-part="${part}"]`)?.getAttribute("style")).toContain("var(--bms-brand-dot)");
+    }
+  });
+
+  it("updates colors during playback without restarting the animation", async () => {
+    const { container, rerender } = render(<AnimatedBrand animation="signature" dotColor="#0077ee" />);
+    await flush();
+    const count = animate.mock.calls.length;
+    rerender(<AnimatedBrand animation="signature" dotColor="#22bb66" textColor="#445566" />);
+    await flush();
+    expect(animate).toHaveBeenCalledTimes(count);
+    expect((container.firstElementChild as HTMLElement).style.getPropertyValue("--bms-brand-dot")).toBe("#22bb66");
+  });
+
   it("preserves spaces in custom product suffixes", () => {
     const { container } = render(
       <AnimatedBrand product="My Product" autoPlay={false} />,
