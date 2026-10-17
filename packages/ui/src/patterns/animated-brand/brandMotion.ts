@@ -113,6 +113,10 @@ export function playBrandMotion(
   };
   if (name === "bounce") {
     const beadRect = bead.getBoundingClientRect();
+    // The bead is .2em wide/high. Its viewport size includes ancestor scale,
+    // so normalize each axis before combining viewport and font metrics.
+    const viewportUnitX = beadRect.width > 0 ? beadRect.width / 0.2 : unit;
+    const viewportUnitY = beadRect.height > 0 ? beadRect.height / 0.2 : unit;
     const originX = beadRect.x + beadRect.width / 2;
     const originY = beadRect.y + beadRect.height / 2;
     const letters = Array.from(
@@ -134,8 +138,8 @@ export function playBrandMotion(
             pen?.measureText(letter.textContent ?? "")
               .actualBoundingBoxAscent ?? unit * 0.7;
           return {
-            x: (rect.x + rect.width / 2 - originX) / unit,
-            y: (baseline - ascent - originY) / unit - 0.1,
+            x: (rect.x + rect.width / 2 - originX) / viewportUnitX,
+            y: (baseline - originY) / viewportUnitY - ascent / unit - 0.1,
           };
         })
       : [

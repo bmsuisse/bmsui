@@ -446,7 +446,9 @@ logic above, which already had its own extraction). Structure:
   reference-app-derived Tailwind v4 tokens, for visual QA.
 - `animated-brand/` exports `AnimatedBrand`: generic One* product suffix, full /
   mark / One modes, seven finite native Web Animations, and reduced-motion
-  fallback. See `docs-site/docs/ui/animated-brand.md` for the props and
+  fallback. Custom suffixes preserve grapheme clusters (whole-suffix fallback
+  without `Intl.Segmenter`); bounce coordinates normalize ancestor CSS scale.
+  See `docs-site/docs/ui/animated-brand.md` for the props and
   `packages/ui/demo/` at `/brand-motion` for the interactive comparison.
 - Same conventions as `@bmsuisse/datagrid`: `packages/ui/src/index.ts` is the
   entire public surface, `tsup` build, `vitest` + Testing Library tests

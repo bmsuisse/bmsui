@@ -1,6 +1,7 @@
 import {
   useEffect,
   useRef,
+  useState,
   type CSSProperties,
   type ReactElement,
 } from "react";
@@ -68,13 +69,21 @@ export function AnimatedBrand({
 }: AnimatedBrandProps): ReactElement {
   const ref = useRef<HTMLSpanElement>(null);
   const completion = useRef(onComplete);
+  const [segmented, setSegmented] = useState<{ product: string; letters: string[] } | null>(null);
+  // Initial markup stays identical on the server and older clients.
+  useEffect(() => {
+    const letters = typeof Intl.Segmenter === "function"
+      ? Array.from(new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(product), ({ segment }) => segment)
+      : product ? [product] : [];
+    setSegmented({ product, letters });
+  }, [product]);
   useEffect(() => {
     completion.current = onComplete;
   }, [onComplete]);
 
   useEffect(() => {
     const element = ref.current;
-    if (!element || !autoPlay) return;
+    if (!element || !autoPlay || segmented?.product !== product) return;
     let disposed = false;
     let stop: (() => void) | undefined;
     let completed = false;
@@ -112,9 +121,13 @@ export function AnimatedBrand({
       stop?.();
       reduced.removeEventListener("change", changed);
     };
-  }, [product, mode, animation, size, autoPlay, replayKey]);
+  }, [product, mode, animation, size, autoPlay, replayKey, segmented]);
 
   const tail = mode === "full" ? `ne${product}` : mode === "one" ? "ne" : "";
+  const suffix = mode === "full" && product
+    ? segmented?.product === product ? segmented.letters : [product]
+    : [];
+  const letters = tail ? ["n", "e", ...suffix] : [];
   const label =
     mode === "full" ? `One${product}` : mode === "one" ? "One" : "O";
   const wrapperStyle: CSSProperties & { "--bms-brand-dot": string } = {
@@ -232,7 +245,7 @@ export function AnimatedBrand({
             whiteSpace: "pre",
           }}
         >
-          {Array.from(tail).map((letter, index) => (
+          {letters.map((letter, index) => (
             <span
               key={`${index}-${letter}`}
               data-brand-letter=""

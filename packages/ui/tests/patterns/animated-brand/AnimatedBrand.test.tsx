@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { act, render, screen } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
+import { hydrateRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AnimatedBrand } from "../../../src/patterns/animated-brand/AnimatedBrand";
 import { BRAND_ANIMATIONS } from "../../../src/patterns/animated-brand/brandMotion";
@@ -116,6 +117,87 @@ describe("AnimatedBrand", () => {
       container.querySelectorAll("[data-brand-letter]"),
     ).find((letter) => letter.textContent === " ");
     expect(space).toBeDefined();
+  });
+
+  it.each(["Cafe\u0301", "Family 👨‍👩‍👧‍👦", "🇨🇭"])("keeps %s graphemes together", (product) => {
+    const { container } = render(<AnimatedBrand product={product} autoPlay={false} />);
+    const text = Array.from(container.querySelectorAll("[data-brand-letter]"), (el) => el.textContent);
+    expect(text.join("")).toBe(`ne${product}`);
+    if (product === "Cafe\u0301") expect(text).toContain("e\u0301");
+    if (product.includes("👨")) expect(text).toContain("👨‍👩‍👧‍👦");
+    if (product === "🇨🇭") expect(text).toContain("🇨🇭");
+  });
+
+  it("preserves text shaping when Intl.Segmenter is unavailable", () => {
+    const segmenter = Intl.Segmenter;
+    Object.defineProperty(Intl, "Segmenter", { configurable: true, value: undefined });
+    try {
+      const { container } = render(<AnimatedBrand product={"Cafe\u0301 👨‍👩‍👧‍👦"} autoPlay={false} />);
+      expect(container.querySelectorAll("[data-brand-letter]")[2]?.textContent).toBe("Cafe\u0301 👨‍👩‍👧‍👦");
+    } finally {
+      Object.defineProperty(Intl, "Segmenter", { configurable: true, value: segmenter });
+    }
+  });
+
+  it("keeps server markup identical regardless of Intl.Segmenter support", () => {
+    const modern = renderToString(<AnimatedBrand product={"Cafe\u0301 👨‍👩‍👧‍👦"} />);
+    const segmenter = Intl.Segmenter;
+    Object.defineProperty(Intl, "Segmenter", { configurable: true, value: undefined });
+    try {
+      expect(renderToString(<AnimatedBrand product={"Cafe\u0301 👨‍👩‍👧‍👦"} />)).toBe(modern);
+    } finally {
+      Object.defineProperty(Intl, "Segmenter", { configurable: true, value: segmenter });
+    }
+  });
+
+  it("hydrates modern server markup in a client without Intl.Segmenter", async () => {
+    const container = document.createElement("div");
+    container.innerHTML = renderToString(<AnimatedBrand product={"Cafe\u0301 👨‍👩‍👧‍👦"} animation="bounce" />);
+    const segmenter = Intl.Segmenter;
+    const recovered = vi.fn();
+    Object.defineProperty(Intl, "Segmenter", { configurable: true, value: undefined });
+    let root: ReturnType<typeof hydrateRoot> | undefined;
+    try {
+      await act(async () => {
+        root = hydrateRoot(container, <AnimatedBrand product={"Cafe\u0301 👨‍👩‍👧‍👦"} animation="bounce" />, { onRecoverableError: recovered });
+      });
+      expect(recovered).not.toHaveBeenCalled();
+      expect(container.querySelectorAll("[data-brand-letter]")[2]?.textContent).toBe("Cafe\u0301 👨‍👩‍👧‍👦");
+      expect(animate).toHaveBeenCalled();
+    } finally {
+      act(() => root?.unmount());
+      Object.defineProperty(Intl, "Segmenter", { configurable: true, value: segmenter });
+    }
+  });
+
+  it("uses the same bounce path under scaled ancestors", async () => {
+    let scale = 1;
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (this: Element) {
+      const isBead = this.getAttribute("data-logo-part") === "bead";
+      const isBaseline = this.hasAttribute("data-brand-baseline");
+      const index = Array.from(this.parentElement?.children ?? []).indexOf(this);
+      const x = isBead ? 14.4 : isBaseline ? 0 : 40 + index * 25;
+      const y = isBead ? 14.4 : isBaseline ? 38 : 0;
+      const width = isBead ? 9.6 : isBaseline ? 0 : 24;
+      const height = isBead ? 9.6 : isBaseline ? 0 : 48;
+      return { x: 100 + x * scale, y: 100 + y * scale, top: 100 + y * scale, left: 100 + x * scale, width: width * scale, height: height * scale, right: 100 + (x + width) * scale, bottom: 100 + (y + height) * scale, toJSON: () => ({}) };
+    });
+    const { rerender } = render(<AnimatedBrand animation="bounce" />);
+    await flush();
+    const frames = animate.mock.calls[0]![0];
+    animate.mockClear();
+    scale = 0.5;
+    rerender(<AnimatedBrand animation="bounce" replayKey={1} />);
+    await flush();
+    const scaledFrames = animate.mock.calls[0]![0] as Keyframe[];
+    expect(scaledFrames).toHaveLength(frames.length);
+    scaledFrames.forEach((frame, index) => {
+      expect(frame.offset).toBe(frames[index].offset);
+      const numbers = (value: string) => value.match(/-?\d+(?:\.\d+)?/g)!.map(Number);
+      numbers(String(frame.transform)).forEach((value, axis) => {
+        expect(value).toBeCloseTo(numbers(String(frames[index].transform))[axis]!, 10);
+      });
+    });
   });
 
   it.each(["mark", "one"] as const)(

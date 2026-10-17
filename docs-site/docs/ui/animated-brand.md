@@ -89,3 +89,7 @@ emits a static logo; random motion is chosen in the browser.
 
 The UI demo includes an interactive comparison at `/brand-motion`, with product,
 mode and motion selectors, custom product names, and light/dark previews.
+
+Custom names preserve combining accents and joined emoji as grapheme clusters.
+Older browsers without `Intl.Segmenter` retain the suffix in one text run.
+Bounce geometry accounts for scaled ancestor containers.
