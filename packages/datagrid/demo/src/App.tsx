@@ -608,7 +608,7 @@ function FacetedNumberFilterDemo(): ReactElement {
         always stay full-width; only the OTHER column's active filter narrows it. Stock uses
         the Excel-style comparison filter instead, e.g. "Less than 10" to find what's low.
       </p>
-      <DataGrid columns={productColumns} dataSource={{ mode: "client", data: PRODUCTS }} getRowId={(row) => row.id} />
+      <DataGrid columns={productColumns} dataSource={{ mode: "client", data: PRODUCTS }} getRowId={(row) => row.id} selectionMode="single" maxHeight={180} testId="products-scroll" />
     </div>
   );
 }
