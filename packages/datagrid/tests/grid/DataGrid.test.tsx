@@ -2056,6 +2056,21 @@ describe("DataGrid selectionMode=\"single\"", () => {
     expect(screen.getByRole("radio", { name: "Select row 3" })).not.toBeChecked();
   });
 
+  it("tells the owner when switching from multiple to single reduces the selection", () => {
+    const onSelectedIdsChange = vi.fn();
+    const props = {
+      columns,
+      dataSource: { mode: "client" as const, data: rows },
+      getRowId: (row: Row) => row.id,
+      selectedIds: new Set(["1", "3"]),
+      onSelectedIdsChange,
+    };
+    const { rerender } = render(<DataGrid {...props} />);
+    expect(onSelectedIdsChange).not.toHaveBeenCalled();
+    rerender(<DataGrid {...props} selectionMode="single" />);
+    expect(onSelectedIdsChange).toHaveBeenLastCalledWith(new Set(["1"]));
+  });
+
   it("keeps the row selected when its radio is clicked again", async () => {
     const onSelectedIdsChange = vi.fn();
     renderSingle({ selectedIds: new Set(["1"]), onSelectedIdsChange });

@@ -333,6 +333,11 @@ export function DataGrid<TRow extends RowData>({
     setInternalSelectedIds(next);
     onSelectedIdsChange?.(next);
   }
+  // Persist that reduction (and tell the owner) instead of only hiding the extra ids.
+  useEffect(() => {
+    if (selectedIds !== rawSelectedIds) updateSelectedIds(selectedIds);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedIds, rawSelectedIds]);
 
   // Same controlled/uncontrolled pattern as `selectedIds` above — without
   // an internal fallback here, dragging a resize handle with no
