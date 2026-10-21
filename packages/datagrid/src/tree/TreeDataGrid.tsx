@@ -5,7 +5,7 @@ import {
   ChevronDownIcon,
   ChevronRightIcon,
 } from "@heroicons/react/24/outline";
-import type { ReactElement, ReactNode } from "react";
+import type { CSSProperties, ReactElement, ReactNode } from "react";
 import { Fragment, useEffect, useMemo, useRef } from "react";
 import { alignClassName } from "../column/format";
 import type { ColumnDef } from "../column/types";
@@ -17,11 +17,13 @@ import { useEditingState } from "../edit/editingState";
 import { renderEditableCell } from "../edit/renderEditableCell";
 import { groupRows } from "../grid/groupRows";
 import { useGroupExpansion } from "../hooks/useGroupExpansion";
+import { useColumnSizing } from "../hooks/useColumnSizing";
 import { useStickyGroupHeaderTop } from "../hooks/useStickyGroupHeaderTop";
 import { useVisibleColumns } from "../hooks/useVisibleColumns";
 import { SELECTION_COLUMN_WIDTH } from "../lib/structuralColumns";
 import { cn, stopRowClick } from "../lib/utils";
 import { ActionsMenu } from "../menu/ActionsMenu";
+import { ColumnResizeHandle } from "./ColumnResizeHandle";
 import type { FlatTreeRow } from "./flattenTree";
 import { flattenTree } from "./flattenTree";
 import { computeSelectionStates } from "./selectionState";
@@ -163,6 +165,9 @@ export function TreeDataGrid<TRow>({
   zebra = true,
   showTotals = false,
   editing,
+  enableColumnResizing = false,
+  columnSizing: controlledColumnSizing,
+  onColumnSizingChange,
 }: TreeDataGridProps<TRow>): ReactElement {
   const labels = resolveStatusLabels(statusLabels);
   const hasError = toErrorInfo(error) !== undefined;
@@ -273,6 +278,20 @@ export function TreeDataGrid<TRow>({
   // A group-header row sticks right below the real `<thead>` while its
   // members scroll past. Shared with `<DataGrid>`'s own `groupBy` support
   // via `useStickyGroupHeaderTop`.
+  const { columnSizing, setColumnSize } = useColumnSizing(controlledColumnSizing, onColumnSizingChange);
+  const columnWidthStyle = (column: ColumnDef<TRow>): CSSProperties | undefined => {
+    const width = enableColumnResizing ? (columnSizing[column.id] ?? column.width) : column.width;
+    return width ? { width } : undefined;
+  };
+
+  // With every column explicitly sized and no flexible one (the row-actions column has no
+  // width) to take the leftover space, `w-full` would make the browser stretch every
+  // column past the width the user dragged it to — so the table is sized to its columns.
+  const fixedTableWidth =
+    enableColumnResizing && !showRowActionsColumn && visibleColumns.every((c) => columnWidthStyle(c))
+      ? visibleColumns.reduce((sum, c) => sum + Number(columnWidthStyle(c)?.width), showSelectionColumn ? SELECTION_COLUMN_WIDTH : 0)
+      : undefined;
+
   const { theadRef, groupHeaderTop } = useStickyGroupHeaderTop(Boolean(groupBy));
 
   // Computed once (not per visible row) over the whole *loaded* tree, not
@@ -333,9 +352,11 @@ export function TreeDataGrid<TRow>({
   // a plain template string is exact, not an approximation.
   const bodyTdClassByColumn = useMemo(() => {
     const map = new Map<string, string>();
-    for (const column of visibleColumns) map.set(column.id, `p-2 ${alignClassName(column)}`);
+    // Fixed layout lets a narrowed column's text paint over its neighbours unless clipped.
+    const clip = enableColumnResizing ? "overflow-hidden " : "";
+    for (const column of visibleColumns) map.set(column.id, `${clip}p-2 ${alignClassName(column)}`);
     return map;
-  }, [visibleColumns]);
+  }, [visibleColumns, enableColumnResizing]);
 
   // Same "entirely opt-in" convention `<DataGrid>`'s own `hasColumnSummary`
   // has — the per-group summary row below and the `showTotals` `<tfoot>`
@@ -500,7 +521,14 @@ export function TreeDataGrid<TRow>({
         className="overflow-y-auto"
         style={{ maxHeight: maxBodyHeight }}
       >
-        <table className="w-full border-collapse text-sm">
+        <table
+          className={cn(
+            "border-collapse text-sm",
+            fixedTableWidth === undefined && "w-full",
+            enableColumnResizing && "table-fixed",
+          )}
+          style={fixedTableWidth === undefined ? undefined : { width: fixedTableWidth }}
+        >
           <thead ref={theadRef}>
             <tr className="divide-x divide-border">
               {showSelectionColumn && (
@@ -518,13 +546,19 @@ export function TreeDataGrid<TRow>({
               {visibleColumns.map((column) => (
                 <th
                   key={column.id}
-                  style={column.width ? { width: column.width } : undefined}
+                  style={columnWidthStyle(column)}
                   className={cn(
                     "sticky top-0 z-20 border-b border-border bg-muted p-2 font-medium",
+                    enableColumnResizing && "overflow-hidden",
                     alignClassName(column),
                   )}
                 >
                   {column.header}
+                  {enableColumnResizing && (
+                    <ColumnResizeHandle columnId={column.id} label={String(column.header)}
+                      width={columnSizing[column.id] ?? column.width}
+                      onResize={setColumnSize} />
+                  )}
                 </th>
               ))}
               {showRowActionsColumn && (
@@ -647,9 +681,10 @@ export function TreeDataGrid<TRow>({
                 {visibleColumns.map((column) => (
                   <td
                     key={column.id}
-                    style={column.width ? { width: column.width } : undefined}
+                    style={columnWidthStyle(column)}
                     className={cn(
                       "sticky bottom-0 z-20 border-t border-border bg-muted p-2 font-medium",
+                      enableColumnResizing && "overflow-hidden",
                       alignClassName(column),
                     )}
                   >

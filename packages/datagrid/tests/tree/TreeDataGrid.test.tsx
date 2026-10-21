@@ -873,4 +873,75 @@ describe("TreeDataGrid (showTotals)", () => {
     );
     expect(screen.queryByTestId("totals-row")).not.toBeInTheDocument();
   });
+
+  describe("column resizing", () => {
+    const renderGrid = (props: Partial<React.ComponentProps<typeof TreeDataGrid<Node>>> = {}) =>
+      render(
+        <TreeDataGrid
+          columns={twoColumns}
+          data={eagerTree}
+          getRowId={(row) => row.id}
+          getChildren={(row) => row.children}
+          {...props}
+        />,
+      );
+
+    it("renders no resize handles by default", () => {
+      renderGrid();
+      expect(screen.queryByTestId("resize-handle-name")).not.toBeInTheDocument();
+    });
+
+    it("renders one handle per column and fixed layout when enableColumnResizing is true", () => {
+      renderGrid({ enableColumnResizing: true });
+      expect(screen.getByTestId("resize-handle-name")).toBeInTheDocument();
+      expect(screen.getByTestId("resize-handle-id")).toBeInTheDocument();
+      expect(screen.getByRole("table")).toHaveClass("table-fixed");
+    });
+
+    it("resizes with the arrow keys from the rendered width and reports the new sizing", async () => {
+      const onColumnSizingChange = vi.fn();
+      const rect = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({ width: 100 } as DOMRect);
+      renderGrid({ enableColumnResizing: true, onColumnSizingChange });
+      const user = userEvent.setup();
+
+      screen.getByTestId("resize-handle-name").focus();
+      await user.keyboard("{ArrowRight}");
+
+      expect(onColumnSizingChange).toHaveBeenLastCalledWith({ name: 110 });
+      expect(screen.getByRole("columnheader", { name: /Name/ })).toHaveStyle({ width: "110px" });
+      expect(screen.getByTestId("resize-handle-name")).toHaveAttribute("aria-valuenow", "110");
+      rect.mockRestore();
+    });
+
+    it("never shrinks a column below the minimum width", async () => {
+      const onColumnSizingChange = vi.fn();
+      const rect = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({ width: 45 } as DOMRect);
+      renderGrid({ enableColumnResizing: true, onColumnSizingChange });
+      const user = userEvent.setup();
+
+      screen.getByTestId("resize-handle-id").focus();
+      await user.keyboard("{ArrowLeft}");
+
+      expect(onColumnSizingChange).toHaveBeenLastCalledWith({ id: 40 });
+      rect.mockRestore();
+    });
+
+    it("sizes the table to its columns once every column is sized, instead of w-full", () => {
+      renderGrid({ enableColumnResizing: true, columnSizing: { name: 200, id: 100 }, onColumnSizingChange: vi.fn() });
+      const table = screen.getByRole("table");
+      expect(table).toHaveStyle({ width: "300px" });
+      expect(table).not.toHaveClass("w-full");
+    });
+
+    it("keeps w-full while a column is still flexible, and clips cells", () => {
+      renderGrid({ enableColumnResizing: true, columnSizing: { name: 200 }, onColumnSizingChange: vi.fn() });
+      expect(screen.getByRole("table")).toHaveClass("w-full");
+      expect(screen.getByRole("columnheader", { name: /Name/ })).toHaveClass("overflow-hidden");
+    });
+
+    it("applies controlled columnSizing", () => {
+      renderGrid({ enableColumnResizing: true, columnSizing: { id: 222 }, onColumnSizingChange: vi.fn() });
+      expect(screen.getByRole("columnheader", { name: /ID/ })).toHaveStyle({ width: "222px" });
+    });
+  });
 });

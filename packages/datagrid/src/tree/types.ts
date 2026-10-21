@@ -1,3 +1,4 @@
+import type { ColumnSizingState } from "@tanstack/react-table";
 import type { ReactNode } from "react";
 import type { ErrorInput, GridStatusLabels } from "../components/status";
 import type { ColumnDef } from "../column/types";
@@ -254,6 +255,20 @@ export interface TreeDataGridProps<TRow> extends TreeAccessors<TRow> {
    * bottom) but neither requires the other. Defaults to false.
    */
   showTotals?: boolean;
+  /**
+   * Opt-in: defaults to false. Gives every header a drag handle (and
+   * ArrowLeft/ArrowRight keyboard resize) on its trailing edge, and switches
+   * the table to `table-layout: fixed` so a dragged width is exactly the
+   * rendered width. A column without an explicit `width` stays flexible and
+   * absorbs the leftover space until it is resized itself.
+   */
+  enableColumnResizing?: boolean;
+  /**
+   * Controlled column widths in px, keyed by column id. Both must be supplied
+   * together to control it — omit both for `<TreeDataGrid>` to own the state.
+   */
+  columnSizing?: ColumnSizingState;
+  onColumnSizingChange?: (sizing: ColumnSizingState) => void;
   /**
    * Enables the same built-in inline-editing workflow `<DataGrid>` has:
    * any column with `editable` set renders as an interactive editor
