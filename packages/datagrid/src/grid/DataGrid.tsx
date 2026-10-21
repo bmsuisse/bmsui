@@ -1144,7 +1144,13 @@ export function DataGrid<TRow extends RowData>({
     if (!hasCellEditing || !cellEditingCtx) return;
     // The selection column's own radio/checkbox keeps its native keyboard behaviour
     // (arrows move between radios, Space toggles); this model is for data cells.
-    if (event.target instanceof HTMLInputElement && (event.target.type === "radio" || event.target.type === "checkbox")) return;
+    // Inputs inside a data cell (a custom renderEditCell checkbox) are not exempt.
+    if (
+      event.target instanceof HTMLInputElement &&
+      (event.target.type === "radio" || event.target.type === "checkbox") &&
+      !event.target.closest("[data-cell-row]")
+    )
+      return;
     // Under `alwaysEdit`, focus normally lives inside one of the always-
     // mounted per-cell `<input>`s, not the scroll container — this whole
     // custom arrow/Tab/Enter-moves-the-selection model would fight native
