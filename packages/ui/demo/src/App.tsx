@@ -243,6 +243,7 @@ export function App(): ReactElement {
             <div>
               <h1 className="text-xl font-semibold">@bmsuisse/ui</h1>
               <p className="text-sm text-muted-foreground">Shared primitives — visual QA demo</p>
+              <a className="text-sm underline underline-offset-4" href="brand-motion">Explore brand motion</a>
             </div>
             <Button variant="outline" data-testid="dark-mode-toggle" onClick={toggleDarkMode}>
               {dark ? "Light mode" : "Dark mode"}
