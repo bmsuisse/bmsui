@@ -322,7 +322,13 @@ export function DataGrid<TRow extends RowData>({
     onGridStateChange,
   );
   const [internalSelectedIds, setInternalSelectedIds] = useState<ReadonlySet<string>>(new Set());
-  const selectedIds = controlledSelectedIds ?? internalSelectedIds;
+  const rawSelectedIds = controlledSelectedIds ?? internalSelectedIds;
+  // Switching to "single" with several ids already selected keeps only the first, so the
+  // radio, "N selected" and bulk actions all agree on one row.
+  const selectedIds = useMemo<ReadonlySet<string>>(
+    () => (selectionMode === "single" && rawSelectedIds.size > 1 ? new Set([...rawSelectedIds].slice(0, 1)) : rawSelectedIds),
+    [selectionMode, rawSelectedIds],
+  );
   function updateSelectedIds(next: ReadonlySet<string>): void {
     setInternalSelectedIds(next);
     onSelectedIdsChange?.(next);
@@ -1131,6 +1137,9 @@ export function DataGrid<TRow extends RowData>({
 
   function handleCellKeyDown(event: ReactKeyboardEvent<HTMLDivElement>): void {
     if (!hasCellEditing || !cellEditingCtx) return;
+    // The selection column's own radio/checkbox keeps its native keyboard behaviour
+    // (arrows move between radios, Space toggles); this model is for data cells.
+    if (event.target instanceof HTMLInputElement && (event.target.type === "radio" || event.target.type === "checkbox")) return;
     // Under `alwaysEdit`, focus normally lives inside one of the always-
     // mounted per-cell `<input>`s, not the scroll container — this whole
     // custom arrow/Tab/Enter-moves-the-selection model would fight native

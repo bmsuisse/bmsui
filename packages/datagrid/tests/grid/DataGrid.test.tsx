@@ -2050,6 +2050,12 @@ describe("DataGrid selectionMode=\"single\"", () => {
     expect(onSelectedIdsChange).toHaveBeenLastCalledWith(new Set(["2"]));
   });
 
+  it("reduces an existing multi-row selection to one row", () => {
+    renderSingle({ selectedIds: new Set(["1", "3"]), onSelectedIdsChange: vi.fn(), headerActions: [{ id: "bulk", label: "Bulk", onSelect: vi.fn() }] });
+    expect(screen.getByText("1 selected")).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "Select row 3" })).not.toBeChecked();
+  });
+
   it("keeps the row selected when its radio is clicked again", async () => {
     const onSelectedIdsChange = vi.fn();
     renderSingle({ selectedIds: new Set(["1"]), onSelectedIdsChange });

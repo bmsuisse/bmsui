@@ -120,6 +120,22 @@ describe("DataGrid cellEditing — selection wiring", () => {
     expect(preventDefaultSpy).toHaveBeenCalled();
   });
 
+  it("leaves arrow keys on a selection-column radio to the browser instead of moving the cell selection", () => {
+    render(
+      <DataGrid
+        columns={columns}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        selectionMode="single"
+        cellEditing={{ onCellsChange: vi.fn() }}
+      />,
+    );
+    const event = new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true, cancelable: true });
+    const preventDefaultSpy = vi.spyOn(event, "preventDefault");
+    screen.getByRole("radio", { name: "Select row 1" }).dispatchEvent(event);
+    expect(preventDefaultSpy).not.toHaveBeenCalled();
+  });
+
   it("keyboard/mouse selection wiring is inert when `cellEditing` is omitted, even with `editing` set", () => {
     const { container } = render(
       <DataGrid
