@@ -189,6 +189,23 @@ export interface DataGridProps<TRow> {
   selectedIds?: ReadonlySet<string>;
   onSelectedIdsChange?: (ids: ReadonlySet<string>) => void;
   /**
+   * `"multiple"` (default) renders a checkbox per row plus a select-all in the
+   * header. `"single"` renders a radio per row instead, selects exactly one
+   * row (choosing another replaces it; a radio can't be cleared by clicking
+   * it again), and leaves the header cell empty. Setting `"single"` shows the
+   * selection column even when neither `selectedIds` nor `headerActions` is
+   * supplied; the selection itself is still read through `selectedIds` /
+   * `onSelectedIdsChange`, which hold at most one id in this mode.
+   */
+  selectionMode?: "multiple" | "single";
+  /**
+   * Caps the height of the scroll container (px number or any CSS length such
+   * as `"65vh"`) without needing `virtualize` — the header stays sticky while
+   * the rows scroll under it. Ignored when `virtualize` is active, which uses
+   * `virtualize.maxBodyHeight` instead. Omit for a grid that grows with its rows.
+   */
+  maxHeight?: number | string;
+  /**
    * Extra props (className, onClick, data-* attributes, etc.) spread onto a
    * row's own `<tr>`. Applied AFTER `<DataGrid>`'s own `data-testid`/
    * `data-index`/`ref`, so those stay intact even if this returns keys that

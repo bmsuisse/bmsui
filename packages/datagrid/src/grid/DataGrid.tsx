@@ -22,7 +22,7 @@ import type {
   ReactNode,
 } from "react";
 import { GridErrorState, GridInlineError, LoadingRows, RefreshBar, resolveStatusLabels, toErrorInfo } from "../components/status";
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useId, useMemo, useRef, useState } from "react";
 import { parseTsv, rangeToTsv } from "../cell-editing/clipboard";
 import { coerceValueForColumn } from "../cell-editing/coerce";
 import { computeFillChanges } from "../cell-editing/fillHandle";
@@ -288,6 +288,8 @@ export function DataGrid<TRow extends RowData>({
   onGridStateChange,
   selectedIds: controlledSelectedIds,
   onSelectedIdsChange,
+  selectionMode = "multiple",
+  maxHeight,
   testId,
   loading: loadingProp = false,
   error,
@@ -404,7 +406,14 @@ export function DataGrid<TRow extends RowData>({
   );
   const allOnPageSelected = rows.length > 0 && rows.every((row) => selectedIds.has(getRowId(row)));
 
+  const singleSelect = selectionMode === "single";
+  const selectionGroupName = useId();
+
   function toggleRowSelected(id: string): void {
+    if (singleSelect) {
+      updateSelectedIds(new Set([id]));
+      return;
+    }
     const next = new Set(selectedIds);
     if (next.has(id)) next.delete(id);
     else next.add(id);
@@ -475,7 +484,8 @@ export function DataGrid<TRow extends RowData>({
   // e.g. a bulk-export button) wants the checkboxes without <DataGrid>'s own
   // redundant "{N} selected" + bulk-actions bar, which stays gated on
   // `headerActions` specifically, below.
-  const showSelectionColumn = Boolean(headerActions?.length) || controlledSelectedIds !== undefined;
+  const showSelectionColumn =
+    Boolean(headerActions?.length) || controlledSelectedIds !== undefined || selectionMode === "single";
   const showRowActionsColumn = Boolean(rowActions?.length);
   const showDetailColumn = Boolean(renderDetail);
   const totalColumnCount =
@@ -1324,7 +1334,8 @@ export function DataGrid<TRow extends RowData>({
               style={selectionCellProps.style}
             >
               <input
-                type="checkbox"
+                type={singleSelect ? "radio" : "checkbox"}
+                name={singleSelect ? selectionGroupName : undefined}
                 aria-label={`Select row ${row.id}`}
                 checked={selectedIds.has(row.id)}
                 onClick={stopRowClick}
@@ -1584,7 +1595,7 @@ export function DataGrid<TRow extends RowData>({
             "h-full overflow-auto rounded-md border",
             hasCellEditing && "relative",
           )}
-          style={shouldVirtualize ? { maxHeight: virtualize?.maxBodyHeight ?? 480 } : undefined}
+          style={shouldVirtualize ? { maxHeight: virtualize?.maxBodyHeight ?? 480 } : maxHeight !== undefined ? { maxHeight } : undefined}
           // `tabIndex`/`onKeyDown` only under `cellEditing` — the scroll
           // container itself (not any individual cell, which is a plain
           // `<td>`, not a focusable control) holds keyboard focus for
@@ -1744,12 +1755,14 @@ export function DataGrid<TRow extends RowData>({
                         className={selectionHeaderCellProps.className}
                         style={selectionHeaderCellProps.style}
                       >
-                        <input
-                          type="checkbox"
-                          aria-label="Select all rows on this page"
-                          checked={allOnPageSelected}
-                          onChange={toggleAllOnPageSelected}
-                        />
+                        {!singleSelect && (
+                          <input
+                            type="checkbox"
+                            aria-label="Select all rows on this page"
+                            checked={allOnPageSelected}
+                            onChange={toggleAllOnPageSelected}
+                          />
+                        )}
                       </th>
                     )}
                     {headerRuns.map((run) =>
@@ -1788,12 +1801,14 @@ export function DataGrid<TRow extends RowData>({
                       className={selectionHeaderCellProps.className}
                       style={selectionHeaderCellProps.style}
                     >
-                      <input
-                        type="checkbox"
-                        aria-label="Select all rows on this page"
-                        checked={allOnPageSelected}
-                        onChange={toggleAllOnPageSelected}
-                      />
+                      {!singleSelect && (
+                        <input
+                          type="checkbox"
+                          aria-label="Select all rows on this page"
+                          checked={allOnPageSelected}
+                          onChange={toggleAllOnPageSelected}
+                        />
+                      )}
                     </th>
                   )}
                   {headerGroup.headers.map((header) => {

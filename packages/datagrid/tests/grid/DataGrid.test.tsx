@@ -2021,3 +2021,67 @@ describe("DataGrid onGridStateChange", () => {
     expect(onGridStateChange).toHaveBeenCalled();
   });
 });
+
+describe("DataGrid selectionMode=\"single\"", () => {
+  const renderSingle = (props: Partial<React.ComponentProps<typeof DataGrid<Row>>> = {}) =>
+    render(
+      <DataGrid
+        columns={columns}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        selectionMode="single"
+        {...props}
+      />,
+    );
+
+  it("renders a radio per row, shows the column on its own, and has no select-all", () => {
+    renderSingle();
+    expect(screen.getAllByRole("radio")).toHaveLength(rows.length);
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+  });
+
+  it("replaces the selection when another row is chosen", async () => {
+    const onSelectedIdsChange = vi.fn();
+    renderSingle({ selectedIds: new Set(["1"]), onSelectedIdsChange });
+    expect(screen.getByRole("radio", { name: "Select row 1" })).toBeChecked();
+
+    await userEvent.click(screen.getByRole("radio", { name: "Select row 2" }));
+
+    expect(onSelectedIdsChange).toHaveBeenLastCalledWith(new Set(["2"]));
+  });
+
+  it("keeps the row selected when its radio is clicked again", async () => {
+    const onSelectedIdsChange = vi.fn();
+    renderSingle({ selectedIds: new Set(["1"]), onSelectedIdsChange });
+    await userEvent.click(screen.getByRole("radio", { name: "Select row 1" }));
+    expect(onSelectedIdsChange).not.toHaveBeenCalledWith(new Set());
+  });
+});
+
+describe("DataGrid maxHeight", () => {
+  const renderGrid = (props: Partial<React.ComponentProps<typeof DataGrid<Row>>> = {}) =>
+    render(
+      <DataGrid
+        columns={columns}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        testId="grid-scroll"
+        {...props}
+      />,
+    );
+
+  it("caps the scroll container without virtualization", () => {
+    renderGrid({ maxHeight: 200 });
+    expect(screen.getByTestId("grid-scroll")).toHaveStyle({ maxHeight: "200px" });
+  });
+
+  it("accepts a CSS length", () => {
+    renderGrid({ maxHeight: "65vh" });
+    expect(screen.getByTestId("grid-scroll")).toHaveStyle({ maxHeight: "65vh" });
+  });
+
+  it("is uncapped by default", () => {
+    renderGrid();
+    expect(screen.getByTestId("grid-scroll").style.maxHeight).toBe("");
+  });
+});

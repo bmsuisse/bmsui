@@ -1071,6 +1071,22 @@ stays gated on `headerActions` specifically, so a controlled-selection
 caller building its own toolbar (like the example above) doesn't get a
 second, redundant one from `<DataGrid>` itself.
 
+### `selectionMode="single"` — radio selection
+
+`selectionMode` defaults to `"multiple"` (checkbox per row + select-all). `"single"`
+swaps in a radio per row, leaves the header cell empty, and shows the selection
+column even with no `selectedIds`/`headerActions`. Selection still flows through
+`selectedIds`/`onSelectedIdsChange`, holding at most one id; choosing another row
+replaces it, and clicking the selected radio again keeps it (a radio can't clear).
+`<TreeDataGrid>` doesn't have this prop.
+
+### `maxHeight` — a scrolling grid without `virtualize`
+
+`maxHeight` (px number or any CSS length, e.g. `"65vh"`) caps the grid's scroll
+container so a long table scrolls inside it with the header still sticky, without
+opting into virtualization. When `virtualize` is active it is ignored in favour of
+`virtualize.maxBodyHeight`. Omit it and the grid grows with its rows.
+
 ### `virtualize` — row virtualization + infinite scroll
 
 `DataGridProps.virtualize?: DataGridVirtualizeOptions` turns on
