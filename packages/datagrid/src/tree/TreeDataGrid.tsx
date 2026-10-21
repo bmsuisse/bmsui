@@ -5,7 +5,7 @@ import {
   ChevronDownIcon,
   ChevronRightIcon,
 } from "@heroicons/react/24/outline";
-import type { ReactElement, ReactNode } from "react";
+import type { CSSProperties, ReactElement, ReactNode } from "react";
 import { Fragment, useEffect, useMemo, useRef } from "react";
 import { alignClassName } from "../column/format";
 import type { ColumnDef } from "../column/types";
@@ -17,11 +17,13 @@ import { useEditingState } from "../edit/editingState";
 import { renderEditableCell } from "../edit/renderEditableCell";
 import { groupRows } from "../grid/groupRows";
 import { useGroupExpansion } from "../hooks/useGroupExpansion";
+import { useColumnSizing } from "../hooks/useColumnSizing";
 import { useStickyGroupHeaderTop } from "../hooks/useStickyGroupHeaderTop";
 import { useVisibleColumns } from "../hooks/useVisibleColumns";
 import { SELECTION_COLUMN_WIDTH } from "../lib/structuralColumns";
 import { cn, stopRowClick } from "../lib/utils";
 import { ActionsMenu } from "../menu/ActionsMenu";
+import { ColumnResizeHandle } from "./ColumnResizeHandle";
 import type { FlatTreeRow } from "./flattenTree";
 import { flattenTree } from "./flattenTree";
 import { computeSelectionStates } from "./selectionState";
@@ -163,6 +165,9 @@ export function TreeDataGrid<TRow>({
   zebra = true,
   showTotals = false,
   editing,
+  enableColumnResizing = false,
+  columnSizing: controlledColumnSizing,
+  onColumnSizingChange,
 }: TreeDataGridProps<TRow>): ReactElement {
   const labels = resolveStatusLabels(statusLabels);
   const hasError = toErrorInfo(error) !== undefined;
@@ -273,6 +278,12 @@ export function TreeDataGrid<TRow>({
   // A group-header row sticks right below the real `<thead>` while its
   // members scroll past. Shared with `<DataGrid>`'s own `groupBy` support
   // via `useStickyGroupHeaderTop`.
+  const { columnSizing, setColumnSize } = useColumnSizing(controlledColumnSizing, onColumnSizingChange);
+  const columnWidthStyle = (column: ColumnDef<TRow>): CSSProperties | undefined => {
+    const width = enableColumnResizing ? (columnSizing[column.id] ?? column.width) : column.width;
+    return width ? { width } : undefined;
+  };
+
   const { theadRef, groupHeaderTop } = useStickyGroupHeaderTop(Boolean(groupBy));
 
   // Computed once (not per visible row) over the whole *loaded* tree, not
@@ -500,7 +511,7 @@ export function TreeDataGrid<TRow>({
         className="overflow-y-auto"
         style={{ maxHeight: maxBodyHeight }}
       >
-        <table className="w-full border-collapse text-sm">
+        <table className={cn("w-full border-collapse text-sm", enableColumnResizing && "table-fixed")}>
           <thead ref={theadRef}>
             <tr className="divide-x divide-border">
               {showSelectionColumn && (
@@ -518,13 +529,16 @@ export function TreeDataGrid<TRow>({
               {visibleColumns.map((column) => (
                 <th
                   key={column.id}
-                  style={column.width ? { width: column.width } : undefined}
+                  style={columnWidthStyle(column)}
                   className={cn(
                     "sticky top-0 z-20 border-b border-border bg-muted p-2 font-medium",
                     alignClassName(column),
                   )}
                 >
                   {column.header}
+                  {enableColumnResizing && (
+                    <ColumnResizeHandle columnId={column.id} label={String(column.header)} onResize={setColumnSize} />
+                  )}
                 </th>
               ))}
               {showRowActionsColumn && (
@@ -647,7 +661,7 @@ export function TreeDataGrid<TRow>({
                 {visibleColumns.map((column) => (
                   <td
                     key={column.id}
-                    style={column.width ? { width: column.width } : undefined}
+                    style={columnWidthStyle(column)}
                     className={cn(
                       "sticky bottom-0 z-20 border-t border-border bg-muted p-2 font-medium",
                       alignClassName(column),
