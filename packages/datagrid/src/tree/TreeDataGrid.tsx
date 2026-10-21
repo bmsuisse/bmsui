@@ -284,6 +284,14 @@ export function TreeDataGrid<TRow>({
     return width ? { width } : undefined;
   };
 
+  // With every column explicitly sized and no flexible one (the row-actions column has no
+  // width) to take the leftover space, `w-full` would make the browser stretch every
+  // column past the width the user dragged it to — so the table is sized to its columns.
+  const fixedTableWidth =
+    enableColumnResizing && !showRowActionsColumn && visibleColumns.every((c) => columnWidthStyle(c))
+      ? visibleColumns.reduce((sum, c) => sum + Number(columnWidthStyle(c)?.width), showSelectionColumn ? SELECTION_COLUMN_WIDTH : 0)
+      : undefined;
+
   const { theadRef, groupHeaderTop } = useStickyGroupHeaderTop(Boolean(groupBy));
 
   // Computed once (not per visible row) over the whole *loaded* tree, not
@@ -344,9 +352,11 @@ export function TreeDataGrid<TRow>({
   // a plain template string is exact, not an approximation.
   const bodyTdClassByColumn = useMemo(() => {
     const map = new Map<string, string>();
-    for (const column of visibleColumns) map.set(column.id, `p-2 ${alignClassName(column)}`);
+    // Fixed layout lets a narrowed column's text paint over its neighbours unless clipped.
+    const clip = enableColumnResizing ? "overflow-hidden " : "";
+    for (const column of visibleColumns) map.set(column.id, `${clip}p-2 ${alignClassName(column)}`);
     return map;
-  }, [visibleColumns]);
+  }, [visibleColumns, enableColumnResizing]);
 
   // Same "entirely opt-in" convention `<DataGrid>`'s own `hasColumnSummary`
   // has — the per-group summary row below and the `showTotals` `<tfoot>`
@@ -511,7 +521,14 @@ export function TreeDataGrid<TRow>({
         className="overflow-y-auto"
         style={{ maxHeight: maxBodyHeight }}
       >
-        <table className={cn("w-full border-collapse text-sm", enableColumnResizing && "table-fixed")}>
+        <table
+          className={cn(
+            "border-collapse text-sm",
+            fixedTableWidth === undefined && "w-full",
+            enableColumnResizing && "table-fixed",
+          )}
+          style={fixedTableWidth === undefined ? undefined : { width: fixedTableWidth }}
+        >
           <thead ref={theadRef}>
             <tr className="divide-x divide-border">
               {showSelectionColumn && (
@@ -532,6 +549,7 @@ export function TreeDataGrid<TRow>({
                   style={columnWidthStyle(column)}
                   className={cn(
                     "sticky top-0 z-20 border-b border-border bg-muted p-2 font-medium",
+                    enableColumnResizing && "overflow-hidden",
                     alignClassName(column),
                   )}
                 >
@@ -664,6 +682,7 @@ export function TreeDataGrid<TRow>({
                     style={columnWidthStyle(column)}
                     className={cn(
                       "sticky bottom-0 z-20 border-t border-border bg-muted p-2 font-medium",
+                      enableColumnResizing && "overflow-hidden",
                       alignClassName(column),
                     )}
                   >

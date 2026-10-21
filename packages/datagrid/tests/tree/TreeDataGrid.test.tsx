@@ -925,6 +925,19 @@ describe("TreeDataGrid (showTotals)", () => {
       rect.mockRestore();
     });
 
+    it("sizes the table to its columns once every column is sized, instead of w-full", () => {
+      renderGrid({ enableColumnResizing: true, columnSizing: { name: 200, id: 100 }, onColumnSizingChange: vi.fn() });
+      const table = screen.getByRole("table");
+      expect(table).toHaveStyle({ width: "300px" });
+      expect(table).not.toHaveClass("w-full");
+    });
+
+    it("keeps w-full while a column is still flexible, and clips cells", () => {
+      renderGrid({ enableColumnResizing: true, columnSizing: { name: 200 }, onColumnSizingChange: vi.fn() });
+      expect(screen.getByRole("table")).toHaveClass("w-full");
+      expect(screen.getByRole("columnheader", { name: /Name/ })).toHaveClass("overflow-hidden");
+    });
+
     it("applies controlled columnSizing", () => {
       renderGrid({ enableColumnResizing: true, columnSizing: { id: 222 }, onColumnSizingChange: vi.fn() });
       expect(screen.getByRole("columnheader", { name: /ID/ })).toHaveStyle({ width: "222px" });

@@ -1632,6 +1632,22 @@ generalizes.
   and one node whose first load intentionally fails, to exercise the
   error+retry UX.
 
+### `enableColumnResizing` — drag/keyboard column widths
+
+Opt-in, same props as `<DataGrid>`: `enableColumnResizing`, `columnSizing`
+(`Record<columnId, px>`) and `onColumnSizingChange`; omit the last two to let the
+grid own the state. Every header gets a trailing-edge handle (`resize-handle-<columnId>`)
+that resizes by pointer drag or ArrowLeft/ArrowRight (10px steps, 40px floor); the
+starting width is read from the rendered `<th>`, so a column with no `width` yet
+resizes from what it currently renders at.
+
+Resizing switches the table to `table-fixed` and clips cell overflow, so a dragged
+width is the rendered width. A column without a `width` (or a row-actions column)
+stays flexible and absorbs leftover space; once every column is sized and there is
+no row-actions column, the table is exactly as wide as its columns instead of
+stretching to the container. Unlike `<DataGrid>`, this is not built on TanStack
+Table's sizing feature (`<TreeDataGrid>` doesn't use TanStack Table).
+
 ### `selectedIds` — controlled row selection (tri-state)
 
 Same controlled-only convention as `<DataGrid>`'s own `selectedIds`/
