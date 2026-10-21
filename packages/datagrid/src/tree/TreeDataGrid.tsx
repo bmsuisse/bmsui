@@ -555,7 +555,9 @@ export function TreeDataGrid<TRow>({
                 >
                   {column.header}
                   {enableColumnResizing && (
-                    <ColumnResizeHandle columnId={column.id} label={String(column.header)} onResize={setColumnSize} />
+                    <ColumnResizeHandle columnId={column.id} label={String(column.header)}
+                      width={columnSizing[column.id] ?? column.width}
+                      onResize={setColumnSize} />
                   )}
                 </th>
               ))}

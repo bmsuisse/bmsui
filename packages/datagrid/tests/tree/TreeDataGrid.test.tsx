@@ -909,6 +909,7 @@ describe("TreeDataGrid (showTotals)", () => {
 
       expect(onColumnSizingChange).toHaveBeenLastCalledWith({ name: 110 });
       expect(screen.getByRole("columnheader", { name: /Name/ })).toHaveStyle({ width: "110px" });
+      expect(screen.getByTestId("resize-handle-name")).toHaveAttribute("aria-valuenow", "110");
       rect.mockRestore();
     });
 

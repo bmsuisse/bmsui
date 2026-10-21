@@ -285,6 +285,7 @@ function OrgTreeDemo(): ReactElement {
   return (
     <TreeDataGrid
       columns={orgTreeColumns}
+      enableColumnResizing
       data={ORG_ROOTS}
       getRowId={(row) => row.id}
       getChildren={() => undefined}

@@ -1,10 +1,12 @@
 import type { KeyboardEvent, PointerEvent, ReactElement } from "react";
 import { useRef } from "react";
-import { KEYBOARD_RESIZE_STEP } from "../hooks/useColumnSizing";
+import { KEYBOARD_RESIZE_STEP, MIN_COLUMN_SIZE } from "../hooks/useColumnSizing";
 
 interface ColumnResizeHandleProps {
   columnId: string;
   label: string;
+  /** The column's current width in px, once resizing (or an explicit `width`) has set one. */
+  width?: number;
   /** Called with the column's new width in px while dragging or on a key press. */
   onResize: (columnId: string, width: number) => void;
 }
@@ -14,7 +16,7 @@ interface ColumnResizeHandleProps {
  * from the rendered `<th>` rather than from state, because a column with no
  * explicit width has none in state yet.
  */
-export function ColumnResizeHandle({ columnId, label, onResize }: ColumnResizeHandleProps): ReactElement {
+export function ColumnResizeHandle({ columnId, label, width, onResize }: ColumnResizeHandleProps): ReactElement {
   const drag = useRef<{ startX: number; startWidth: number } | null>(null);
 
   const cellWidth = (handle: HTMLElement): number => handle.parentElement?.getBoundingClientRect().width ?? 0;
@@ -50,6 +52,9 @@ export function ColumnResizeHandle({ columnId, label, onResize }: ColumnResizeHa
       role="separator"
       aria-orientation="vertical"
       aria-label={`Resize ${label} column`}
+      aria-valuenow={width}
+      aria-valuemin={MIN_COLUMN_SIZE}
+      aria-valuetext={width === undefined ? undefined : `${width} pixels`}
       tabIndex={0}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
