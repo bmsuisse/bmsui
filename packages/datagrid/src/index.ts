@@ -86,8 +86,17 @@ export {
   countVisible,
   groupColumns,
   isColumnVisible,
+  sameVisibility,
 } from "./column-selector/visibility";
-export { storageKeyFor, orderStorageKeyFor } from "./column-selector/persistence";
+export {
+  storageKeyFor,
+  orderStorageKeyFor,
+  sizingStorageKeyFor,
+  parseStoredWidths,
+  readPersistedColumnSizing,
+  writePersistedColumnSizing,
+  clearPersistedVisibility,
+} from "./column-selector/persistence";
 export { applyColumnOrder, moveColumnBefore } from "./column-selector/ordering";
 
 // --- menus -------------------------------------------------------------------
@@ -113,6 +122,8 @@ export { useGroupExpansion } from "./hooks/useGroupExpansion";
 export type { StickyGroupHeaderTop } from "./hooks/useStickyGroupHeaderTop";
 export { useStickyGroupHeaderTop } from "./hooks/useStickyGroupHeaderTop";
 export { useVisibleColumns } from "./hooks/useVisibleColumns";
+export type { PersistedColumnSizing } from "./hooks/usePersistedColumnSizing";
+export { mergeSizing, usePersistedColumnSizing } from "./hooks/usePersistedColumnSizing";
 
 // --- tree grid ---------------------------------------------------------------
 export type { TreeAccessors, TreeDataGridProps } from "./tree/types";

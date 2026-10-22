@@ -68,3 +68,12 @@ export function canHideGroup<TRow>(
   ).length;
   return visibleOutsideGroup > 0;
 }
+
+/** True when `a` and `b` show exactly the same columns among `columns` (a missing key counts as shown). */
+export function sameVisibility<TRow>(
+  columns: readonly ColumnDef<TRow>[],
+  a: ColumnVisibility,
+  b: ColumnVisibility,
+): boolean {
+  return columns.every((column) => isColumnVisible(a, column.id) === isColumnVisible(b, column.id));
+}

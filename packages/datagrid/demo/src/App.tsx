@@ -14,6 +14,7 @@ import {
   NumberComparisonFilter,
   NumberHistogramFilter,
   TreeDataGrid,
+  usePersistedColumnSizing,
 } from "@bmsuisse/datagrid";
 import { de } from "date-fns/locale";
 import type { ReactElement } from "react";
@@ -677,6 +678,45 @@ function PinnedColumnsDemo(): ReactElement {
   );
 }
 
+// --- persisted widths + reset: the table is narrower than its container, so
+// a dragged edge must follow the pointer instead of the spare width being
+// spread over every column. Widths and visibility survive a reload; "Reset
+// columns" in the selector puts both back.
+const persistedColumns: ColumnDef<WideRow>[] = wideColumns.map(({ pinned: _pinned, ...column }) => column);
+const PERSISTED_DEFAULT_VISIBILITY: ColumnVisibility = { lastRestocked: false };
+
+function PersistedColumnsDemo(): ReactElement {
+  const sizing = usePersistedColumnSizing("demo-persisted-columns", persistedColumns);
+  const [visibility, setVisibility] = useState<ColumnVisibility>(PERSISTED_DEFAULT_VISIBILITY);
+  return (
+    <div data-testid="persisted-columns-demo">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <p className="text-sm text-muted-foreground">
+          Resize a column, hide one, then reload — both come back. Reset lives in the Columns dialog.
+        </p>
+        <ColumnSelector
+          columns={persistedColumns}
+          visibility={visibility}
+          onVisibilityChange={setVisibility}
+          persistKey="demo-persisted-columns"
+          defaultVisibility={PERSISTED_DEFAULT_VISIBILITY}
+          isCustomized={sizing.isCustomized}
+          onReset={sizing.reset}
+        />
+      </div>
+      <DataGrid
+        columns={persistedColumns}
+        dataSource={{ mode: "client", data: WIDE_ROWS }}
+        getRowId={(row) => row.id}
+        columnVisibility={visibility}
+        enableColumnResizing
+        columnSizing={sizing.columnSizing}
+        onColumnSizingChange={sizing.onColumnSizingChange}
+      />
+    </div>
+  );
+}
+
 // --- headerGroup demo: two campaign sub-columns spanned under one label
 // each, plus one ungrouped column (SKU) that spans both header rows instead
 // of leaving a blank cell above it — the shape a per-campaign pricing grid
@@ -1332,6 +1372,9 @@ export function App(): ReactElement {
       <h2 className="mb-2 mt-8 text-lg font-semibold">Column pinning + resize demo</h2>
       <PinnedColumnsDemo />
       <PinnedAutoLayoutDemo />
+
+      <h2 className="mb-2 mt-8 text-lg font-semibold">Persisted column widths + reset demo</h2>
+      <PersistedColumnsDemo />
 
       <h2 className="mb-2 mt-8 text-lg font-semibold">headerGroup demo — spanning header cells</h2>
       <HeaderGroupDemo />

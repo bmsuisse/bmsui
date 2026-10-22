@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it } from "vitest";
 import {
   orderStorageKeyFor,
+  parseStoredWidths,
+  readPersistedColumnSizing,
+  sizingStorageKeyFor,
+  writePersistedColumnSizing,
   readPersistedColumnOrder,
   readPersistedVisibility,
   storageKeyFor,
@@ -104,5 +108,25 @@ describe("readPersistedColumnOrder", () => {
     expect(readPersistedVisibility("orders")).toEqual({ a: false });
     expect(readPersistedColumnOrder("orders")).toEqual(["b", "a"]);
     expect(readPersistedColumnOrder("customers")).toEqual(["c"]);
+  });
+});
+
+describe("column sizing persistence", () => {
+  it("uses its own namespace", () => {
+    expect(sizingStorageKeyFor("orders")).toBe("bmsui-datagrid:column-sizing:orders");
+  });
+
+  it("keeps valid widths, clamps small ones and drops junk", () => {
+    expect(parseStoredWidths(JSON.stringify({ a: 120.4, b: 5, c: "x", d: -3, e: null }))).toEqual({ a: 120, b: 40 });
+    expect(parseStoredWidths(null)).toEqual({});
+    expect(parseStoredWidths("{not json")).toEqual({});
+    expect(parseStoredWidths("[1,2]")).toEqual({});
+  });
+
+  it("round-trips, and an empty value removes the entry", () => {
+    writePersistedColumnSizing("orders", { a: 90 });
+    expect(readPersistedColumnSizing("orders")).toEqual({ a: 90 });
+    writePersistedColumnSizing("orders", {});
+    expect(window.localStorage.getItem(sizingStorageKeyFor("orders"))).toBeNull();
   });
 });

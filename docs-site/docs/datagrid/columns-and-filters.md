@@ -115,3 +115,10 @@ handle to every column's trailing edge. Turning it on gives *every* column a
 concrete pixel width, trading natural content-driven widths for resizability
 across the board — leave it off unless the grid actually needs manual
 resize.
+
+Once every visible column has a width (its own `width` or a dragged one)
+and there's no row-actions column, the table is exactly as wide as its
+columns instead of stretching to the container, so a dragged edge follows
+the pointer. Body cells clip overflow with an ellipsis while resizing is on.
+To keep widths across reloads, see `usePersistedColumnSizing` on the
+[ColumnSelector](/datagrid/column-selector) page.

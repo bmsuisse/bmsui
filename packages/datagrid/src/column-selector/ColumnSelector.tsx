@@ -1,4 +1,4 @@
-import { Bars2Icon, ViewColumnsIcon } from "@heroicons/react/24/outline";
+import { ArrowUturnLeftIcon, Bars2Icon, ViewColumnsIcon } from "@heroicons/react/24/outline";
 import type { ReactElement, ReactNode } from "react";
 import { useEffect, useState } from "react";
 import type { ColumnDef } from "../column/types";
@@ -14,13 +14,14 @@ import {
 import { cn } from "../lib/utils";
 import { applyColumnOrder, moveColumnBefore } from "./ordering";
 import {
+  clearPersistedVisibility,
   readPersistedColumnOrder,
   readPersistedVisibility,
   writePersistedColumnOrder,
   writePersistedVisibility,
 } from "./persistence";
 import type { ColumnVisibility } from "./types";
-import { canHideColumn, countVisible, groupColumns, isColumnVisible } from "./visibility";
+import { canHideColumn, countVisible, groupColumns, isColumnVisible, sameVisibility } from "./visibility";
 
 export interface ColumnSelectorProps<TRow> {
   columns: ColumnDef<TRow>[];
@@ -54,6 +55,17 @@ export interface ColumnSelectorProps<TRow> {
    */
   columnOrder?: string[];
   onColumnOrderChange?: (order: string[]) => void;
+  /**
+   * The visibility a "Reset columns" button restores. The button only renders
+   * when this is set; it also clears the persisted entry (`persistKey`) and
+   * calls `onReset`, e.g. wired to `usePersistedColumnSizing`'s `reset`.
+   */
+  defaultVisibility?: ColumnVisibility;
+  onReset?: () => void;
+  /** Something else `onReset` restores (e.g. column widths) differs from its default, so Reset stays enabled. */
+  isCustomized?: boolean;
+  /** Defaults to "Reset columns". */
+  resetLabel?: ReactNode;
 }
 
 /**
@@ -90,6 +102,10 @@ export function ColumnSelector<TRow>({
   onOpenChange,
   columnOrder,
   onColumnOrderChange,
+  defaultVisibility,
+  onReset,
+  isCustomized = false,
+  resetLabel = "Reset columns",
 }: ColumnSelectorProps<TRow>): ReactElement {
   // Restore from localStorage once on mount. Intentionally does not depend
   // on `visibility`/`onVisibilityChange` identity — this must run exactly
@@ -121,6 +137,13 @@ export function ColumnSelector<TRow>({
   function toggleColumn(columnId: string): void {
     if (!canHideColumn(columns, visibility, columnId)) return;
     commit({ ...visibility, [columnId]: !isColumnVisible(visibility, columnId) });
+  }
+
+  function reset(): void {
+    if (!defaultVisibility) return;
+    onVisibilityChange(defaultVisibility);
+    if (persistKey) clearPersistedVisibility(persistKey);
+    onReset?.();
   }
 
   const totalVisible = countVisible(columns, visibility);
@@ -243,6 +266,21 @@ export function ColumnSelector<TRow>({
             </div>
           ))}
         </div>
+        {defaultVisibility && (
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              data-testid="column-selector-reset"
+              disabled={!isCustomized && sameVisibility(columns, visibility, defaultVisibility)}
+              onClick={reset}
+            >
+              <ArrowUturnLeftIcon className="h-3.5 w-3.5" aria-hidden />
+              {resetLabel}
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

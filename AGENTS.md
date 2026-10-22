@@ -802,6 +802,26 @@ Uncontrolled by default (`<DataGrid>` manages resize state internally); pass
 `columnVisibility`) to persist/restore widths yourself, e.g. to `localStorage`
 the same way `<ColumnSelector persistKey>` does for visibility.
 
+**Table width under resizing (0.42.0).** Once every visible column has a
+width (`column.width` or a `columnSizing` entry) and there's no row-actions
+column, the `<table>` gets an explicit width (sum of columns + detail/
+selection columns) instead of `w-full` — same rule as `<TreeDataGrid>`'s
+`fixedTableWidth`. Before, `w-full table-fixed` spread spare container width
+over every column, so a dragged edge didn't follow the pointer. Body cells
+get `overflow-hidden text-ellipsis` while resizing is on.
+
+**`usePersistedColumnSizing(persistKey, columns)`** (0.42.0,
+`hooks/usePersistedColumnSizing.ts`) returns `{ columnSizing,
+onColumnSizingChange, reset, isCustomized }` for either grid's controlled
+props. It stores *overrides only* (`mergeSizing` drops a column dragged back
+to its default and keeps hidden columns' overrides), so a column the user
+never touched keeps following its default in code. Storage lives under its
+own namespace, `bmsui-datagrid:column-sizing:<key>` (`sizingStorageKeyFor`,
+same reasoning as `orderStorageKeyFor`), and every read/write is in
+try/catch. Ported from MDMApp's Taxonomy Manager (`columnWidths.ts`). Its
+`resolveWidths`/`totalWidth` were not ported: the grid sizes its own table
+now.
+
 ## `<ColumnSelector>` — column visibility, grouping, persistence
 
 `packages/datagrid/src/column-selector/ColumnSelector.tsx` is a **controlled**
@@ -850,6 +870,11 @@ Notes for extending it:
   zero columns visible. `canHideGroup` (same file) still exists and is
   still exported/tested, but nothing in `ColumnSelector.tsx` itself calls it
   anymore now that there's no group-level action to guard.
+- **Reset** (0.42.0): `defaultVisibility` makes a "Reset columns" button
+  (`resetLabel`) appear; it restores the defaults, clears the persisted
+  visibility entry and calls `onReset` (wire to
+  `usePersistedColumnSizing().reset`). Disabled while `sameVisibility(columns,
+  visibility, defaultVisibility)` and `isCustomized` is false.
 - `persistKey`, if set, reads `localStorage["bmsui-datagrid:columns:" +
   persistKey]` once on mount (calling `onVisibilityChange` once, merged over
   whatever `visibility` was passed in) and writes on every subsequent

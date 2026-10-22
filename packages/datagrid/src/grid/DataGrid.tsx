@@ -542,6 +542,18 @@ export function DataGrid<TRow extends RowData>({
     (showDetailColumn ? DETAIL_COLUMN_WIDTH : 0) + (showSelectionColumn ? SELECTION_COLUMN_WIDTH : 0);
   const trailingStructuralWidth = showRowActionsColumn ? ROW_ACTIONS_COLUMN_WIDTH : 0;
 
+  // Same rule as `<TreeDataGrid>`'s `fixedTableWidth`: once every visible column
+  // has an explicit or dragged width and there's no flexible row-actions
+  // column, `w-full table-fixed` would spread the container's spare width over
+  // every column, so a dragged edge wouldn't follow the pointer. Size the table
+  // to its columns instead.
+  const fixedTableWidth =
+    enableColumnResizing &&
+    !showRowActionsColumn &&
+    visibleColumns.every((column) => column.width !== undefined || columnSizing[column.id] !== undefined)
+      ? visibleColumns.reduce((sum, column) => sum + columnSize(column.id), leadingStructuralWidth)
+      : undefined;
+
   // Memoized on `columnSizing` (rather than recomputed every render) because
   // every scroll tick re-renders this whole component (the virtualizer's own
   // state lives in React state) — without this, scrolling a wide/pinned grid
@@ -663,9 +675,11 @@ export function DataGrid<TRow extends RowData>({
   const BODY_TD_BASE_CLASS = "border-b border-border p-2";
   function bodyCellClassAndStyle(column: ColumnDef<TRow>): { className: string; classNameOdd: string; style?: CSSProperties } {
     const pinnedProps = column.pinned || enableColumnResizing ? pinnedCellProps(column) : undefined;
+    // Fixed layout lets a narrowed column's text paint over its neighbours unless clipped.
+    const base = enableColumnResizing ? `${BODY_TD_BASE_CLASS} overflow-hidden text-ellipsis` : BODY_TD_BASE_CLASS;
     return {
-      className: pinnedProps?.className ? `${BODY_TD_BASE_CLASS} ${pinnedProps.className}` : BODY_TD_BASE_CLASS,
-      classNameOdd: pinnedProps?.classNameOdd ? `${BODY_TD_BASE_CLASS} ${pinnedProps.classNameOdd}` : BODY_TD_BASE_CLASS,
+      className: pinnedProps?.className ? `${base} ${pinnedProps.className}` : base,
+      classNameOdd: pinnedProps?.classNameOdd ? `${base} ${pinnedProps.classNameOdd}` : base,
       style: pinnedProps?.style,
     };
   }
@@ -1641,7 +1655,14 @@ export function DataGrid<TRow extends RowData>({
           `getSize()`). Omitted otherwise so a grid with no explicit widths
           keeps natural, content-driven column sizing.
         */}
-        <table className={cn("w-full border-collapse text-sm", enableColumnResizing && "table-fixed")}>
+        <table
+          className={cn(
+            "border-collapse text-sm",
+            fixedTableWidth === undefined && "w-full",
+            enableColumnResizing && "table-fixed",
+          )}
+          style={fixedTableWidth === undefined ? undefined : { width: fixedTableWidth }}
+        >
         <thead ref={theadRef} className="bg-muted">
           {table.getHeaderGroups().map((headerGroup) => {
             // `headerById` backs both the optional spanning-label row below
