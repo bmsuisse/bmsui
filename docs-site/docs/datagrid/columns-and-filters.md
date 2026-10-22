@@ -163,6 +163,10 @@ flat AND of leaves round-trips — what the built-in widgets produce.
 - **`pinned?: "left" | "right"`** — sticks a column to either edge of the
   grid's own scroll container. Give a pinned column an explicit `width`;
   otherwise offset math falls back to a fixed 150px per column.
+- **`cellClassName?: string`** / **`headerClassName?: string`** — extra
+  classes on the column's body (and summary/totals) cells / header cell,
+  merged last so a `bg-*` tint wins over the zebra stripe. Works in both
+  grids.
 - **`renderHeader?: (column) => ReactNode`** — overrides the header cell's
   content (the sort caret still renders alongside it). Don't return a
   nested `<button>` or other focusable element — it's already inside the

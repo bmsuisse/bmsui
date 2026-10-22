@@ -307,6 +307,15 @@ export interface DataGridProps<TRow> {
   /** Alternates body row backgrounds for readability on wide/dense tables. Defaults to true. */
   zebra?: boolean;
   /**
+   * The highlighted ("active") row, by id — e.g. the row whose details a side
+   * panel shows. Independent of checkbox selection. The row gets
+   * `aria-selected`, `data-active` and a wash. With `onActiveRowChange` the
+   * row is also focusable, and a click (outside any inner control) or
+   * Enter/Space on the row itself toggles it.
+   */
+  activeRowId?: string | null;
+  onActiveRowChange?: (id: string | null) => void;
+  /**
    * Renders a `<tfoot>` totals row below the grid's body, with one cell per
    * visible column computed via that column's own `ColumnDef.summary(rows)`
    * — `rows` being every row `<DataGrid>` currently has (the current page,

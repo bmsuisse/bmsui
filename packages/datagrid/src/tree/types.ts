@@ -159,8 +159,12 @@ export interface TreeDataGridProps<TRow> extends TreeAccessors<TRow> {
   virtualizeThreshold?: number;
   /** Fixed row height estimate in pixels, used by the virtualizer. Defaults to 40. */
   estimatedRowHeight?: number;
-  /** Max height of the scrollable table body in pixels. Required for virtualization to have a viewport to scroll within. Defaults to 480. */
-  maxBodyHeight?: number;
+  /**
+   * Max height of the scroll container: pixels, or any CSS length (`"65vh"`,
+   * or `"100%"` to fill a bounded parent). Defaults to 480. The virtualizer
+   * measures the scroll element itself, so any length works.
+   */
+  maxBodyHeight?: number | string;
   /**
    * `data-testid` for the tree's own scrollable container — the element
    * `maxBodyHeight` actually applies to once virtualized. Omit for no
@@ -293,6 +297,15 @@ export interface TreeDataGridProps<TRow> extends TreeAccessors<TRow> {
    */
   gridState?: Pick<GridState, "filter" | "sort">;
   onGridStateChange?: (state: Pick<GridState, "filter" | "sort">) => void;
+  /**
+   * The highlighted ("active") row, by id — e.g. the row whose details a side
+   * panel shows. Independent of checkbox selection. The row gets
+   * `aria-selected`, `data-active` and a wash. With `onActiveRowChange` the
+   * row is also focusable, and a click (outside any inner control) or
+   * Enter/Space on the row itself toggles it.
+   */
+  activeRowId?: string | null;
+  onActiveRowChange?: (id: string | null) => void;
   /** Translated filter UI strings, same as `<DataGrid filterLabels>`. */
   filterLabels?: Partial<FilterLabels>;
 }

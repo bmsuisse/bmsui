@@ -1100,6 +1100,32 @@ returns colliding keys.
 />
 ```
 
+Since 0.42.0 the caller's `className` comes *after* the zebra stripe in the
+row's `cn()`, so a caller's `bg-*` wins on odd rows too (before, twMerge
+dropped it there — MDMApp's "selection only showed on every other row").
+Same in `<TreeDataGrid>`. A pinned or structural cell (selection, expand,
+row actions) still paints its own opaque background over the row's.
+
+### `activeRowId` / `onActiveRowChange` — the highlighted row (0.42.0)
+
+Both grids. Independent of checkbox selection: one "active" row, e.g. the
+one a side panel shows. `lib/activeRow.ts`'s `activeRowProps` adds
+`aria-selected`, `data-active` and the `ACTIVE_ROW_CLASS` wash (after the
+zebra and the caller's class). With `onActiveRowChange` the row also gets
+`tabIndex=0`; a click toggles it unless it landed inside an inner control
+(`closest("button, a, input, …, [tabindex]")` that isn't the row itself — so
+inline-editing cells and the selection checkbox keep their own clicks), and
+Enter/Space only count when `event.target === event.currentTarget` (ported
+from MDMApp's `selectedRow.ts`). A caller's `getRowProps` `onClick`/
+`onKeyDown` still run first; `preventDefault()` there skips the toggle.
+
+### `cellClassName` / `headerClassName` — per-column classes (0.42.0)
+
+`BaseColumn.cellClassName` goes on every body cell of the column and on its
+group-summary and totals cells; `headerClassName` on its header cell. Both
+are merged *last* via `cn()`, so a `bg-*` tint wins over zebra/pinned
+backgrounds. Replaces MDMApp's `:nth-child` column-tint CSS. Both grids.
+
 ### `selectedIds` — controlled row selection
 
 By default `<DataGrid>` owns selection internally, exposed only via
@@ -1698,7 +1724,11 @@ filtering, matching `ContractTreelist` (hierarchy order from the backend).
   `<tbody>`-level attachment above), so actual per-row DOM height — e.g. a
   multi-line label — is measured and corrected for after the fact, not just
   estimated. `maxBodyHeight` (default 480, becomes the scrollable
-  container's `max-height`) tunes the viewport.
+  container's `max-height`) tunes the viewport. Since 0.42.0 it also takes a
+  CSS length (`"65vh"`, `"100%"`), like `<DataGrid maxHeight>`; the root and
+  scroll div carry `h-full min-h-0`/`min-h-0` so `"100%"` fills a bounded
+  parent. The virtualizer measures the scroll element, so it isn't tied to a
+  pixel number.
 - **`rowActions`** reuses the exact `MenuItem<TRow>`/`ActionsMenu` contract
   `<DataGrid>`'s `rowActions` prop uses — a deliberate improvement over
   `ContractTreelist`'s always-visible bespoke icon buttons, for consistency

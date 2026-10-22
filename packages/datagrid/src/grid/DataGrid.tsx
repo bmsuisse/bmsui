@@ -45,6 +45,7 @@ import { useStickyGroupHeaderTop } from "../hooks/useStickyGroupHeaderTop";
 import { useVisibleColumns } from "../hooks/useVisibleColumns";
 import { cn, stopRowClick } from "../lib/utils";
 import { SELECTION_COLUMN_WIDTH } from "../lib/structuralColumns";
+import { ACTIVE_ROW_CLASS, activeRowProps } from "../lib/activeRow";
 import { HeaderCellContent } from "./HeaderCellContent";
 import { ActionsMenu } from "../menu/ActionsMenu";
 import { groupRows } from "./groupRows";
@@ -296,6 +297,8 @@ export function DataGrid<TRow extends RowData>({
   expandedGroups: controlledExpandedGroups,
   onExpandedGroupsChange,
   zebra = true,
+  activeRowId,
+  onActiveRowChange,
   showTotals = false,
   editing,
   cellEditing,
@@ -672,8 +675,8 @@ export function DataGrid<TRow extends RowData>({
     // Fixed layout lets a narrowed column's text paint over its neighbours unless clipped.
     const base = enableColumnResizing ? `${BODY_TD_BASE_CLASS} overflow-hidden text-ellipsis` : BODY_TD_BASE_CLASS;
     return {
-      className: pinnedProps?.className ? `${base} ${pinnedProps.className}` : base,
-      classNameOdd: pinnedProps?.classNameOdd ? `${base} ${pinnedProps.classNameOdd}` : base,
+      className: cn(base, pinnedProps?.className, column.cellClassName),
+      classNameOdd: cn(base, pinnedProps?.classNameOdd, column.cellClassName),
       style: pinnedProps?.style,
     };
   }
@@ -713,6 +716,7 @@ export function DataGrid<TRow extends RowData>({
       align,
       pinnedProps.className,
       options.sticky && (column.pinned ? "sticky top-0 z-30 bg-muted" : "sticky top-0 z-20 bg-muted"),
+      column.headerClassName,
     );
     return { className, style: pinnedProps.style };
   }
@@ -1316,10 +1320,12 @@ export function DataGrid<TRow extends RowData>({
     const rowProps = getRowProps?.(row.original);
     const rowTestId = getRowTestId?.(row.original) ?? `row-${row.id}`;
     const isOddRow = zebra && row.index % 2 === 1;
+    const isActive = activeRowId === row.id;
     return (
       <tbody key={row.id} ref={measureRef} data-index={dataIndex}>
         <tr
           {...rowProps}
+          {...activeRowProps(row.id, activeRowId, onActiveRowChange, rowProps)}
           data-testid={rowTestId}
           // `cn()` (clsx+twMerge) is only needed here when a caller-supplied
           // `getRowProps().className` might itself carry a conflicting
@@ -1327,9 +1333,16 @@ export function DataGrid<TRow extends RowData>({
           // the overwhelmingly common case (no `getRowProps` at all) skips
           // straight to a plain string, avoiding that per-row allocation
           // for every grid that doesn't use the feature.
+          // The caller's class (then the active wash) comes after the zebra
+          // stripe so twMerge keeps *its* `bg-*` on odd rows too.
           className={
-            rowProps?.className
-              ? cn("divide-x divide-border", rowProps.className as string, isOddRow && "bg-foreground/5")
+            rowProps?.className || isActive
+              ? cn(
+                  "divide-x divide-border",
+                  isOddRow && "bg-foreground/5",
+                  rowProps?.className as string | undefined,
+                  isActive && ACTIVE_ROW_CLASS,
+                )
               : `divide-x divide-border${isOddRow ? " bg-foreground/5" : ""}`
           }
         >
@@ -1429,7 +1442,7 @@ export function DataGrid<TRow extends RowData>({
       return (
         <td
           key={column.id}
-          className={cn(cellProps?.className, bgClassName, "font-medium", alignClassName(column))}
+          className={cn(cellProps?.className, bgClassName, "font-medium", alignClassName(column), column.cellClassName)}
           style={cellProps?.style}
         >
           {column.summary?.(rows)}
@@ -1492,6 +1505,7 @@ export function DataGrid<TRow extends RowData>({
                   alignClassName(column),
                   pinnedProps.className,
                   "sticky bottom-0 z-20 bg-muted",
+                  column.cellClassName,
                 )}
                 style={pinnedProps.style}
               >

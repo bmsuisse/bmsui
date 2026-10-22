@@ -741,6 +741,50 @@ function FilterBarDemo(): ReactElement {
   );
 }
 
+// --- row + column styling: an active row (click, or Tab + Enter) that keeps
+// its wash on odd and even rows, a tinted column via `cellClassName`/
+// `headerClassName`, and a tree filling a fixed-height box via
+// `maxBodyHeight="100%"`.
+const tintedShipmentColumns: ColumnDef<Shipment>[] = shipmentColumns.map((column) =>
+  column.id === "weight"
+    ? { ...column, cellClassName: "bg-amber-500/10", headerClassName: "bg-amber-500/20" }
+    : column,
+);
+
+function RowStylingDemo(): ReactElement {
+  const [activeId, setActiveId] = useState<string | null>("s2");
+  const [activeTreeId, setActiveTreeId] = useState<string | null>(null);
+  return (
+    <div className="grid gap-4 md:grid-cols-2" data-testid="row-styling-demo">
+      <div>
+        <p className="mb-2 text-sm text-muted-foreground">Active row: {activeId ?? "none"}</p>
+        <DataGrid
+          columns={tintedShipmentColumns}
+          dataSource={{ mode: "client", data: SHIPMENTS }}
+          getRowId={(row) => row.id}
+          initialState={{ filter: null, sort: [], page: 0, pageSize: 8 }}
+          activeRowId={activeId}
+          onActiveRowChange={setActiveId}
+        />
+      </div>
+      <div className="flex h-80 flex-col">
+        <p className="mb-2 text-sm text-muted-foreground">This tree fills its 20rem box.</p>
+        <div className="min-h-0 flex-1">
+          <TreeDataGrid
+            columns={bigTreeColumns}
+            data={BIG_TREE_ROWS}
+            getRowId={(row) => row.id}
+            getChildren={() => undefined}
+            maxBodyHeight="100%"
+            activeRowId={activeTreeId}
+            onActiveRowChange={setActiveTreeId}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // --- column pinning demo: enough columns to force horizontal scroll (via
 // the max-w-md wrapper below), with the leftmost column pinned so it stays
 // visible while scrolling the rest.
@@ -1500,6 +1544,11 @@ export function App(): ReactElement {
         Filter UX demo — faceted checklists, active-filter chips, URL state
       </h2>
       <FilterBarDemo />
+
+      <h2 className="mb-2 mt-8 text-lg font-semibold">
+        Row + column styling demo — active row, column tint, tree filling its box
+      </h2>
+      <RowStylingDemo />
 
       <h2 className="mb-2 mt-8 text-lg font-semibold">Column pinning + resize demo</h2>
       <PinnedColumnsDemo />

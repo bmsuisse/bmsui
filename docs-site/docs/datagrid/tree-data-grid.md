@@ -127,9 +127,9 @@ Save/Discard bar's `data-testid`s are prefixed `tree-datagrid-` instead of
   *cascade* semantics (selecting a parent selects its descendants, etc.)
   are the caller's job, via `onSelectedIdsChange` or the
   `getRowSelectionState` override.
-- **Server-driven filtering** is intentionally **not** built in — hierarchy
-  order and any filtering both come from the backend for this component;
-  that's application-specific, same as it would be composing on top of
+- **`maxBodyHeight`** takes pixels or any CSS length; `"100%"` fills a
+  bounded parent (e.g. a `flex-1 min-h-0` box).
+- **`activeRowId` / `onActiveRowChange`** — same highlighted-row props as
   `<DataGrid>`.
 
 See the [live demo](https://bmsuisse.github.io/bmsui/demo/datagrid/) for a complete 3-level lazy org
