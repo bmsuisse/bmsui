@@ -751,6 +751,9 @@ const tintedShipmentColumns: ColumnDef<Shipment>[] = shipmentColumns.map((column
     : column,
 );
 
+// Own labels, so e2e locators for the virtualized tree's "Row N" stay unique.
+const FILL_TREE_ROWS: BigTreeRow[] = Array.from({ length: 60 }, (_, i) => ({ id: `fill-${i + 1}`, name: `Node ${i + 1}` }));
+
 function RowStylingDemo(): ReactElement {
   const [activeId, setActiveId] = useState<string | null>("s2");
   const [activeTreeId, setActiveTreeId] = useState<string | null>(null);
@@ -772,7 +775,7 @@ function RowStylingDemo(): ReactElement {
         <div className="min-h-0 flex-1">
           <TreeDataGrid
             columns={bigTreeColumns}
-            data={BIG_TREE_ROWS}
+            data={FILL_TREE_ROWS}
             getRowId={(row) => row.id}
             getChildren={() => undefined}
             maxBodyHeight="100%"
@@ -873,6 +876,11 @@ function PersistedColumnsDemo(): ReactElement {
           defaultVisibility={PERSISTED_DEFAULT_VISIBILITY}
           isCustomized={sizing.isCustomized}
           onReset={sizing.reset}
+          trigger={
+            <button type="button" className="rounded-md border px-3 py-1 text-sm">
+              Table layout
+            </button>
+          }
         />
       </div>
       <DataGrid
