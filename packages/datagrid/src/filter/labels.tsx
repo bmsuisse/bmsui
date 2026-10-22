@@ -1,5 +1,6 @@
 import type { Locale } from "date-fns";
 import type { ReactElement, ReactNode } from "react";
+import type { FilterOperator } from "./types";
 import { createContext, useContext, useMemo } from "react";
 
 /**
@@ -30,6 +31,23 @@ export interface FilterLabels {
   noMatches: string;
   /** EnumFilter `bare={false}` trigger summary once something is selected. */
   selectedCount: (count: number) => string;
+  /** EnumFilter `allowExclude` toggle: include mode (`in`). */
+  enumIsAnyOf: string;
+  /** EnumFilter `allowExclude` toggle: exclude mode (`notIn`). */
+  enumIsNoneOf: string;
+  /** EnumFilter hint under a list capped at 300 rows. */
+  moreOptions: (hiddenCount: number) => string;
+
+  // --- ActiveFilterBar ---
+  /** The operator word in a chip ("Status is any of Open"). */
+  operatorLabel: (operator: FilterOperator) => string;
+  activeFilters: (count: number) => string;
+  noActiveFilters: string;
+  noActiveFiltersHint: string;
+  clearAllFilters: string;
+  moreFilters: (hiddenCount: number) => string;
+  /** Accessible name of a chip's × button; `text` is the whole chip text. */
+  removeFilter: (text: string) => string;
 
   // --- StringFilter ---
   stringPlaceholder: (header: string) => string;
@@ -86,6 +104,26 @@ export interface FilterLabels {
   dateLocale?: Locale;
 }
 
+const DEFAULT_OPERATOR_LABELS: Record<FilterOperator, string> = {
+  in: "is any of",
+  notIn: "is none of",
+  eq: "is",
+  neq: "is not",
+  contains: "contains",
+  doesNotContain: "does not contain",
+  startsWith: "starts with",
+  endsWith: "ends with",
+  gt: ">",
+  gte: "≥",
+  lt: "<",
+  lte: "≤",
+  between: "between",
+  isEmpty: "is empty",
+  isNotEmpty: "is not empty",
+  isNull: "is empty",
+  isNotNull: "is not empty",
+};
+
 /** English defaults — byte-for-byte the strings every widget rendered before `FilterLabels` existed. */
 export const defaultFilterLabels: FilterLabels = {
   filterAriaLabel: (header) => `Filter ${header}`,
@@ -95,6 +133,17 @@ export const defaultFilterLabels: FilterLabels = {
   selectAllOfGroup: (group) => `Select all of ${group}`,
   noMatches: "No matches.",
   selectedCount: (count) => `${count} selected`,
+  enumIsAnyOf: "is any of",
+  enumIsNoneOf: "is none of",
+  moreOptions: (hiddenCount) => `${hiddenCount} more, type to narrow`,
+
+  operatorLabel: (operator) => DEFAULT_OPERATOR_LABELS[operator],
+  activeFilters: (count) => `Filters (${count}):`,
+  noActiveFilters: "No filters",
+  noActiveFiltersHint: "Use the filter icon in a column header.",
+  clearAllFilters: "Clear all filters",
+  moreFilters: (hiddenCount) => `+${hiddenCount} more`,
+  removeFilter: (text) => `Remove filter ${text}`,
 
   stringPlaceholder: (header) => `Filter ${header.toLowerCase()}...`,
   stringContains: "Contains",

@@ -8,8 +8,13 @@ import type {
   NumberColumn,
 } from "@bmsuisse/datagrid";
 import {
+  ActiveFilterBar,
   ColumnSelector,
   DataGrid,
+  decodeGridStateSearch,
+  encodeGridStateSearch,
+  EnumFilter,
+  facetedSetOptions,
   facetedNumberValues,
   NumberComparisonFilter,
   NumberHistogramFilter,
@@ -139,6 +144,15 @@ const GERMAN_FILTER_LABELS: Partial<FilterLabels> = {
   dateThisMonth: "Dieser Monat",
   dateCustom: "Benutzerdefiniert",
   dateLocale: de,
+  enumIsAnyOf: "ist eines von",
+  enumIsNoneOf: "ist keines von",
+  moreOptions: (hiddenCount) => `${hiddenCount} weitere, tippen zum Eingrenzen`,
+  activeFilters: (count) => `Filter (${count}):`,
+  noActiveFilters: "Keine Filter",
+  noActiveFiltersHint: "Filter über das Symbol im Spaltenkopf setzen.",
+  clearAllFilters: "Alle Filter entfernen",
+  moreFilters: (hiddenCount) => `+${hiddenCount} weitere`,
+  removeFilter: (text) => `Filter entfernen: ${text}`,
 };
 
 const DEFAULT_GRID_STATE: GridState = { filter: null, sort: [], page: 0, pageSize: 20 };
@@ -610,6 +624,102 @@ function FacetedNumberFilterDemo(): ReactElement {
         the Excel-style comparison filter instead, e.g. "Less than 10" to find what's low.
       </p>
       <DataGrid columns={productColumns} dataSource={{ mode: "client", data: PRODUCTS }} getRowId={(row) => row.id} selectionMode="single" maxHeight={180} testId="products-scroll" />
+    </div>
+  );
+}
+
+// --- filter UX: faceted checklists with counts and "is none of", an
+// ActiveFilterBar strip, and the filter/sort mirrored into the URL (`?xf=`/
+// `?xs=`) so a reload or a shared link restores it.
+interface Shipment {
+  id: string;
+  region: string;
+  carrier: string;
+  weight: number;
+}
+
+const REGIONS = ["EMEA", "APAC", "AMER", "LATAM"];
+const CARRIERS = ["DHL", "UPS", "FedEx", "Post", "Planzer"];
+const SHIPMENTS: Shipment[] = Array.from({ length: 40 }, (_, i) => ({
+  id: `s${i + 1}`,
+  region: REGIONS[i % REGIONS.length]!,
+  carrier: CARRIERS[(i * 3) % CARRIERS.length]!,
+  weight: ((i * 37) % 90) + 1,
+}));
+
+function setColumn(column: ColumnDef<Shipment>): ColumnDef<Shipment> {
+  return {
+    ...column,
+    sortable: true,
+    filterable: true,
+    renderFilter: (value, onChange, filter) => (
+      <EnumFilter
+        bare
+        allowExclude
+        column={column}
+        value={value}
+        onChange={onChange}
+        options={facetedSetOptions(SHIPMENTS, column, filter)}
+      />
+    ),
+  };
+}
+
+const shipmentColumns: ColumnDef<Shipment>[] = [
+  { id: "id", type: "string", header: "Shipment", accessorKey: "id" },
+  setColumn({ id: "region", type: "string", header: "Region", accessorKey: "region" }),
+  setColumn({ id: "carrier", type: "string", header: "Carrier", accessorKey: "carrier" }),
+  { id: "weight", type: "number", header: "Weight (kg)", accessorKey: "weight", sortable: true, filterable: true },
+];
+
+const URL_PREFIX = "x";
+
+function readGridStateFromUrl(): GridState {
+  const params = new URLSearchParams(window.location.search);
+  const search: Record<string, unknown> = {};
+  for (const key of [`${URL_PREFIX}f`, `${URL_PREFIX}s`]) {
+    try {
+      search[key] = JSON.parse(params.get(key) ?? "null");
+    } catch {
+      // a hand-edited param: ignore it
+    }
+  }
+  return { ...decodeGridStateSearch(search, URL_PREFIX), page: 0, pageSize: 10 };
+}
+
+function writeGridStateToUrl(state: GridState): void {
+  const params = new URLSearchParams(window.location.search);
+  for (const [key, value] of Object.entries(encodeGridStateSearch(state, URL_PREFIX))) {
+    if (value === undefined) params.delete(key);
+    else params.set(key, JSON.stringify(value));
+  }
+  window.history.replaceState({}, "", `?${params.toString()}`);
+}
+
+function FilterBarDemo(): ReactElement {
+  const [gridState, setGridState] = useState<GridState>(readGridStateFromUrl);
+  function update(next: GridState): void {
+    setGridState(next);
+    writeGridStateToUrl(next);
+  }
+  return (
+    <div className="flex flex-col gap-2" data-testid="filter-bar-demo">
+      <p className="text-sm text-muted-foreground">
+        Region and Carrier list only values the other filters leave, with counts, and can switch to
+        "is none of". Filter, then reload: the URL brings it back.
+      </p>
+      <ActiveFilterBar
+        filter={gridState.filter}
+        columns={shipmentColumns}
+        onFilterChange={(filter) => update({ ...gridState, filter, page: 0 })}
+      />
+      <DataGrid
+        columns={shipmentColumns}
+        dataSource={{ mode: "client", data: SHIPMENTS }}
+        getRowId={(row) => row.id}
+        gridState={gridState}
+        onGridStateChange={update}
+      />
     </div>
   );
 }
@@ -1368,6 +1478,11 @@ export function App(): ReactElement {
         &lt;NumberHistogramFilter&gt; demo — faceted numeric filters
       </h2>
       <FacetedNumberFilterDemo />
+
+      <h2 className="mb-2 mt-8 text-lg font-semibold">
+        Filter UX demo — faceted checklists, active-filter chips, URL state
+      </h2>
+      <FilterBarDemo />
 
       <h2 className="mb-2 mt-8 text-lg font-semibold">Column pinning + resize demo</h2>
       <PinnedColumnsDemo />

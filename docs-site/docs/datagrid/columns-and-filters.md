@@ -88,6 +88,66 @@ own needed); omit it (or pass `true`) under the default `"popover"` display,
 so this component's own trigger doesn't nest a second popover inside the
 grid's.
 
+### `EnumFilter` + `facetedSetOptions` — faceted checklists
+
+`facetedSetOptions(data, column, filter)` is the checklist counterpart of
+`facetedNumberValues`: the distinct values of a column with how many rows
+carry each (`{ value, label, count }[]`), narrowed by every *other* active
+filter. Values already selected stay listed with count 0 so they can still
+be unticked. Feed it to `EnumFilter`'s `options` prop — which also works on
+a string or number column, not just `type: "enum"`:
+
+```tsx
+{
+  ...regionColumn, filterable: true,
+  renderFilter: (value, onChange, filter) => (
+    <EnumFilter
+      bare
+      allowExclude
+      column={regionColumn}
+      value={value}
+      onChange={onChange}
+      options={facetedSetOptions(allRows, regionColumn, filter)}
+    />
+  ),
+}
+```
+
+`allowExclude` adds an "is any of / is none of" toggle (`in`/`notIn`). An
+option with a `count` shows it. At most 300 rows render; past that a hint
+asks the user to type to narrow. There is no "(Blank)" option: `in`/`notIn`
+never match null on any engine (client, SQL, Meilisearch).
+
+## `<ActiveFilterBar>` — active filters as chips
+
+A fixed-height strip listing the active filters as "Header op value" chips
+with ×, a "+N more" popover past `maxChips` (default 3), and "Clear all
+filters". It is there whether or not a filter is active, so applying or
+clearing one never moves the table. Drive it and the grid from one state:
+
+```tsx
+const [gridState, setGridState] = useState<GridState>(INITIAL);
+
+<ActiveFilterBar
+  filter={gridState.filter}
+  columns={columns}
+  onFilterChange={(filter) => setGridState({ ...gridState, filter, page: 0 })}
+/>
+<DataGrid gridState={gridState} onGridStateChange={setGridState} /* ... */ />
+```
+
+Operator words come from `filterLabels.operatorLabel`; the strip's own
+strings are `FilterLabels` keys too.
+
+## URL state — `encodeGridStateSearch` / `decodeGridStateSearch`
+
+Pure, router-agnostic helpers that turn a grid's filter and sort into compact
+`[field, op, value]` / `[field, dir]` tuples under `f`/`s` search params
+(optionally prefixed, so two grids can share a page). Decoding drops
+malformed tuples and unknown operators instead of throwing;
+`validateGridStateSearch` is shaped for a router's `validateSearch`. Only a
+flat AND of leaves round-trips — what the built-in widgets produce.
+
 ## Other column options
 
 - **`sortDescFirst?: boolean`** — for a column whose "interesting" direction

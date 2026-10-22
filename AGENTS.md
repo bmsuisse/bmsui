@@ -651,6 +651,42 @@ affected by every other filter as expected. See
 `packages/datagrid/demo/src/App.tsx`'s `FacetedNumberFilterDemo` for a full
 working `<DataGrid>` example with two interacting numeric columns.
 
+### `facetedSetOptions` + `EnumFilter` extensions + `<ActiveFilterBar>` + URL codec (0.42.0)
+
+Ported from MDMApp's Taxonomy Manager (`tableView.ts`, `FilterWidgets.tsx`,
+`ActiveFilterBar.tsx`):
+
+- **`facetedSetOptions(data, column, filter)`** (`filter/facetedValues.ts`)
+  — distinct values + counts (`FacetOption[]`), narrowed by every *other*
+  filter via the same `withoutColumn` exclusion `facetedNumberValues` uses.
+  Values selected in the column's own `in`/`notIn` stay listed with count 0.
+  Values are stringified (what `EnumFilter` emits); enum columns keep
+  `options` order/groups, others sort by label.
+- **`EnumFilter`** now takes `column: ColumnDef` (any type; `EnumColumn`
+  callers unchanged) plus optional `options` (overrides `column.options`),
+  shows `count`, `allowExclude` (`in`/`notIn` toggle, mode remembered while
+  nothing is selected) and renders at most 300 rows with a `moreOptions` hint.
+- **Scope cut: no "(Blank)" option.** The app turned null into `""` so a
+  blank could be picked and survive `notIn`; that doesn't match
+  `evaluate.ts`/`sql.py`/`meili.py`, where `in`/`notIn` never match null.
+  `facetedSetOptions` skips nulls instead. Use `isNull`/`isNotNull` if a
+  blank filter is needed.
+- **`<ActiveFilterBar filter columns onFilterChange maxChips>`**
+  (`filter/ActiveFilterBar.tsx`) — chips via `describeFilter` (values through
+  `defaultFormat`, booleans through `booleanYes/No`), operator words from the
+  new `filterLabels.operatorLabel`. Fixed `h-10` strip so the table never
+  moves. Works with `<DataGrid gridState onGridStateChange>`.
+- **URL codec** (`filter/urlState.ts`): `encodeGridStateSearch`,
+  `decodeGridStateSearch`, `validateGridStateSearch`. Tuples are `[field, op,
+  value?, 1?]` (trailing `1` = `ignoreCase`), validated against the new
+  runtime `FILTER_OPERATORS` (a `Record<FilterOperator, true>` under the
+  hood, so a new operator that isn't listed is a compile error) and
+  `UNARY_OPERATORS`. Multi-sort survives (the app kept one). No router
+  dependency.
+- `leafFilters` moved into `filter/types.ts` and is exported.
+
+See `FilterBarDemo` in `packages/datagrid/demo/src/App.tsx`.
+
 ### `filterLabels` — translating the filter UI (#72)
 
 Every user-facing string of the column-filter UI (header funnel

@@ -380,3 +380,63 @@ describe("EnumFilter: grouped options", () => {
     expect(screen.queryByRole("checkbox", { name: "Select all of Closed" })).not.toBeInTheDocument();
   });
 });
+
+describe("EnumFilter: options, counts, exclude and cap", () => {
+  const stringColumn = { id: "region", type: "string" as const, header: "Region" };
+
+  it("uses `options` over column.options (any column type) and shows counts", () => {
+    render(
+      <EnumFilter
+        column={stringColumn}
+        value={undefined}
+        onChange={vi.fn()}
+        bare
+        options={[
+          { value: "EMEA", label: "EMEA", count: 12 },
+          { value: "APAC", label: "APAC", count: 3 },
+        ]}
+      />,
+    );
+    expect(screen.getByText("EMEA").closest("label")).toHaveTextContent("EMEA12");
+    expect(screen.getByText("APAC")).toBeInTheDocument();
+  });
+
+  it("allowExclude toggles between in and notIn, re-emitting the selection", async () => {
+    const spy = vi.fn();
+    render(
+      <ControlledFilter
+        Widget={EnumFilter<Row>}
+        column={column}
+        onChangeSpy={spy}
+        extraProps={{ bare: true, allowExclude: true }}
+      />,
+    );
+    await userEvent.click(screen.getByTestId("filter-status-exclude"));
+    expect(spy).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByLabelText("Open"));
+    expect(spy).toHaveBeenLastCalledWith({ field: "status", operator: "notIn", value: ["open"] });
+    await userEvent.click(screen.getByTestId("filter-status-include"));
+    expect(spy).toHaveBeenLastCalledWith({ field: "status", operator: "in", value: ["open"] });
+  });
+
+  it("reads an existing notIn filter as selected", () => {
+    render(
+      <EnumFilter
+        column={column}
+        value={{ field: "status", operator: "notIn", value: ["closed"] }}
+        onChange={vi.fn()}
+        bare
+        allowExclude
+      />,
+    );
+    expect(screen.getByLabelText("Closed")).toBeChecked();
+    expect(screen.getByTestId("filter-status-exclude")).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("renders at most 300 rows with a hint for the rest", () => {
+    const options = Array.from({ length: 305 }, (_, i) => ({ value: `v${i}`, label: `Value ${i}` }));
+    render(<EnumFilter column={stringColumn} value={undefined} onChange={vi.fn()} bare options={options} />);
+    expect(screen.queryByText("Value 300")).not.toBeInTheDocument();
+    expect(screen.getByText("5 more, type to narrow")).toBeInTheDocument();
+  });
+});

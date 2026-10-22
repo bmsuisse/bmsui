@@ -8,7 +8,16 @@ export type {
   GridState,
   SortDescriptor,
 } from "./filter/types";
-export { UNARY_OPERATORS, fieldKey, isCompositeFilterDescriptor, isFilterDescriptor } from "./filter/types";
+export {
+  FILTER_OPERATORS,
+  UNARY_OPERATORS,
+  fieldKey,
+  isCompositeFilterDescriptor,
+  isFilterDescriptor,
+  leafFilters,
+} from "./filter/types";
+export type { FilterTuple, GridStateSearch, SortTuple } from "./filter/urlState";
+export { decodeGridStateSearch, encodeGridStateSearch, validateGridStateSearch } from "./filter/urlState";
 
 // --- client-mode filter evaluation ----------------------------------------
 export { evaluateFilter } from "./filter/evaluate";
@@ -19,12 +28,16 @@ export type { FilterLabels } from "./filter/labels";
 export { FilterLabelsProvider, defaultFilterLabels, mergeFilterLabels, useFilterLabels } from "./filter/labels";
 export { BooleanFilter } from "./filter/BooleanFilter";
 export { DateRangeFilter } from "./filter/DateRangeFilter";
+export type { EnumFilterOption } from "./filter/EnumFilter";
 export { EnumFilter } from "./filter/EnumFilter";
+export type { ActiveFilterBarProps, FilterDescription } from "./filter/ActiveFilterBar";
+export { ActiveFilterBar, describeFilter } from "./filter/ActiveFilterBar";
 export { NumberComparisonFilter } from "./filter/NumberComparisonFilter";
 export { NumberRangeFilter } from "./filter/NumberRangeFilter";
 export type { NumberHistogramFilterProps } from "./filter/NumberHistogramFilter";
 export { NumberHistogramFilter } from "./filter/NumberHistogramFilter";
-export { facetedNumberValues } from "./filter/facetedValues";
+export type { FacetOption } from "./filter/facetedValues";
+export { facetedNumberValues, facetedSetOptions } from "./filter/facetedValues";
 export { StringFilter } from "./filter/StringFilter";
 export { renderDefaultFilterWidget } from "./filter/registry";
 

@@ -78,6 +78,31 @@ export function isCompositeFilterDescriptor(
   return "logic" in node;
 }
 
+// A Record (not an array literal) so adding an operator to `FilterOperator`
+// without listing it here is a compile error.
+const OPERATOR_SET: Record<FilterOperator, true> = {
+  eq: true,
+  neq: true,
+  lt: true,
+  lte: true,
+  gt: true,
+  gte: true,
+  in: true,
+  notIn: true,
+  contains: true,
+  doesNotContain: true,
+  startsWith: true,
+  endsWith: true,
+  isEmpty: true,
+  isNotEmpty: true,
+  isNull: true,
+  isNotNull: true,
+  between: true,
+};
+
+/** Every `FilterOperator`, for validating untrusted input (e.g. URL params). */
+export const FILTER_OPERATORS = Object.keys(OPERATOR_SET) as readonly FilterOperator[];
+
 /** Operators that never carry a `value` (unary presence/absence checks). */
 export const UNARY_OPERATORS: ReadonlySet<FilterOperator> = new Set([
   "isEmpty",
@@ -89,4 +114,11 @@ export const UNARY_OPERATORS: ReadonlySet<FilterOperator> = new Set([
 /** Renders a `field` (string or pre-qualified path) as a single dotted key, for use as a stable id/key. */
 export function fieldKey(field: string | string[]): string {
   return Array.isArray(field) ? field.join(".") : field;
+}
+
+/** Every leaf of a filter tree, depth-first. */
+export function leafFilters(node: FilterDescriptor | CompositeFilterDescriptor | null | undefined): FilterDescriptor[] {
+  if (!node) return [];
+  if (!isCompositeFilterDescriptor(node)) return [node];
+  return node.filters.flatMap(leafFilters);
 }
