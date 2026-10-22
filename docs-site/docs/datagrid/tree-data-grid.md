@@ -8,10 +8,9 @@ A lazy-loading tree grid for hierarchical data — org charts, nested
 categories, folder trees — reusing the exact same `ColumnDef<TRow>` system
 `<DataGrid>` uses, rather than a second column-definition system.
 
-It deliberately has **no sorting and no client-side filtering**: hierarchy
-order comes from the backend, and "filtering" a tree usually means asking
-for a differently-shaped tree, which is application-specific rather than
-something a generic component can own.
+By default it renders the tree in the order `data` gives it, with no sort
+or filter controls. Sorting and filtering are opt-in — see
+[Sort and filter](#sort-and-filter) below.
 
 ```tsx
 <TreeDataGrid
@@ -35,6 +34,31 @@ requiring a fixed field shape on `TRow`:
   purpose: a node can know it has children the backend hasn't sent yet.
   Omit it only for a fully eager tree, where it defaults to
   `getChildren(row)?.length > 0`. A lazy tree must supply it explicitly.
+
+## Sort and filter
+
+Pass `gridState` and `onGridStateChange` together (fully controlled, no
+internal fallback) and every `sortable`/`filterable` column gets the same
+header sort toggle and filter popover `<DataGrid>` has:
+
+```tsx
+const [gridState, setGridState] = useState<Pick<GridState, "filter" | "sort">>({ filter: null, sort: [] });
+
+<TreeDataGrid gridState={gridState} onGridStateChange={setGridState} /* columns, data, ... */ />
+```
+
+- A node stays when it matches every filter **or has a descendant that
+  does**, so a match always shows under its ancestors — and those ancestors
+  open automatically (the user can still collapse one; it stays collapsed
+  until the filter changes).
+- Siblings are sorted at every level.
+- Operators mean exactly what they mean in a `"client"` `<DataGrid>`
+  (`evaluateFilter` + `processClientData`).
+- Only **loaded** nodes are searched: a lazy node never expanded can't
+  reveal a match below it.
+
+The same logic is exported as `filterSortTree(roots, state, { getRowId,
+getChildren, columns, childrenMap })` for use outside the grid.
 
 ## Lazy loading
 

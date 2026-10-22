@@ -708,7 +708,7 @@ convention as `EditingOptions.saveLabel`: pass already-translated strings.
 - `dateLocale` (a date-fns `Locale`, e.g. `de` from `date-fns/locale`) is
   the one non-string key: it localizes DateRangeFilter's calendar and
   trigger summary.
-- `<TreeDataGrid>` renders no filter UI, so it has no such prop.
+- `<TreeDataGrid filterLabels>` (0.42.0) does the same for its opt-in sort/filter header controls.
 
 The demo's EN/DE toggle (`GERMAN_FILTER_LABELS` in
 `packages/datagrid/demo/src/App.tsx`) shows a full German set.
@@ -1600,11 +1600,30 @@ Generalizes a consuming app's contract tree list component (1343 lines,
 entirely bespoke, no shared abstraction) into a reusable component in
 `packages/datagrid/src/tree/`, reusing the same `ColumnDef<TRow>` system
 `<DataGrid>` uses rather than a
-second column-definition system. **Deliberately has no sorting or
-client-side filtering** — neither does `ContractTreelist`; hierarchy order
-comes from the backend, and "filtering" there means asking the server for a
-differently-shaped tree, which is app-level, not something this component
-generalizes.
+second column-definition system. Without `gridState` it has no sorting or
+filtering, matching `ContractTreelist` (hierarchy order from the backend).
+
+- **Sort + filter (0.42.0), opt-in and fully controlled.** Pass
+  `gridState` (`Pick<GridState, "filter" | "sort">`) **and**
+  `onGridStateChange`; then `sortable`/`filterable` columns render the same
+  header controls as `<DataGrid>` — both grids share
+  `grid/HeaderCellContent.tsx` (sort button / plain label + funnel popover;
+  the `<th>` stays per grid) and the pure `withColumnFilter`/
+  `withToggledSort` helpers from `useGridState.ts`. The grid runs
+  `tree/filterSortTree.ts` (ported from MDMApp's `treeView.ts`): a node
+  stays when it matches every filter or has a kept descendant; nodes kept
+  for a descendant come back in `expandedIds` and are merged open over
+  `expanded`; siblings are sorted at every level. Values go through
+  `getColumnValue` into a projected record, so `accessorFn` columns work and
+  operators match client mode exactly (`evaluateFilter`/`processClientData`).
+  A forced-open node the user collapses is tracked in local state keyed by
+  the filter's JSON, so it stays collapsed until the filter changes (without
+  this, `toggleExpand` would flip `expanded` underneath a forced `true` and
+  nothing would visibly happen). **Only loaded nodes** are searched — a lazy
+  node never expanded can't reveal a match. `filterDisplay: "row"` isn't
+  supported in the tree; such columns use the header popover. Also gained a
+  `filterLabels` prop (same as `<DataGrid>`'s). `OrgTreeDemo` in the demo
+  uses it.
 
 - **Accessor-based node shape**, not a required field shape on `TRow`
   (matches `<DataGrid>`'s `getRowId` convention): `getRowId`, `getChildren`

@@ -254,8 +254,20 @@ interface OrgRow {
 }
 
 const orgTreeColumns: ColumnDef<OrgRow>[] = [
-  { id: "name", type: "string", header: "Name", accessorKey: "name", width: 260 },
-  { id: "role", type: "string", header: "Role", accessorKey: "role" },
+  { id: "name", type: "string", header: "Name", accessorKey: "name", width: 260, sortable: true, filterable: true },
+  {
+    id: "role",
+    type: "enum",
+    header: "Role",
+    accessorKey: "role",
+    sortable: true,
+    filterable: true,
+    options: [
+      { value: "Department", label: "Department" },
+      { value: "Team", label: "Team" },
+      { value: "Employee", label: "Employee" },
+    ],
+  },
 ];
 
 const ORG_ROOTS: OrgRow[] = [
@@ -297,9 +309,14 @@ function useFakeLoadChildren(): (row: OrgRow) => Promise<OrgRow[]> {
 
 function OrgTreeDemo(): ReactElement {
   const loadChildren = useFakeLoadChildren();
+  // Controlled sort + filter: header toggles and funnels appear, and only
+  // *loaded* nodes are searched (expand Engineering first, then filter "Alice").
+  const [gridState, setGridState] = useState<Pick<GridState, "filter" | "sort">>({ filter: null, sort: [] });
   return (
     <TreeDataGrid
       columns={orgTreeColumns}
+      gridState={gridState}
+      onGridStateChange={setGridState}
       enableColumnResizing
       data={ORG_ROOTS}
       getRowId={(row) => row.id}

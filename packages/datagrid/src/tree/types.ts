@@ -4,6 +4,8 @@ import type { ErrorInput, GridStatusLabels } from "../components/status";
 import type { ColumnDef } from "../column/types";
 import type { ColumnVisibility } from "../column-selector/types";
 import type { EditingOptions } from "../edit/types";
+import type { FilterLabels } from "../filter/labels";
+import type { GridState } from "../filter/types";
 import type { MenuItem } from "../menu/types";
 
 /**
@@ -281,4 +283,16 @@ export interface TreeDataGridProps<TRow> extends TreeAccessors<TRow> {
    * `<DataGrid>`) for the full contract.
    */
   editing?: EditingOptions<TRow>;
+  /**
+   * Sort and filter, fully controlled — both must be supplied. Then every
+   * `sortable`/`filterable` column gets the same header sort toggle and
+   * filter popover `<DataGrid>` has, and the grid applies
+   * `filterSortTree`: a node stays when it or a loaded descendant matches,
+   * ancestors of a match open automatically, siblings sort at every level.
+   * Omit both for the original unsorted, unfiltered tree.
+   */
+  gridState?: Pick<GridState, "filter" | "sort">;
+  onGridStateChange?: (state: Pick<GridState, "filter" | "sort">) => void;
+  /** Translated filter UI strings, same as `<DataGrid filterLabels>`. */
+  filterLabels?: Partial<FilterLabels>;
 }

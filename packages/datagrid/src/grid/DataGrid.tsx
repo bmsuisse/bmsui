@@ -1,9 +1,4 @@
-import {
-  BarsArrowDownIcon,
-  BarsArrowUpIcon,
-  ChevronRightIcon,
-  FunnelIcon,
-} from "@heroicons/react/24/outline";
+import { ChevronRightIcon } from "@heroicons/react/24/outline";
 import type {
   CellContext,
   ColumnDef as TanstackColumnDef,
@@ -38,12 +33,11 @@ import { alignClassName } from "../column/format";
 import type { ColumnDef } from "../column/types";
 import { getColumnValue, isEditable, isFilterable, isSortable } from "../column/types";
 import { Button } from "../components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
 import { EditingBar } from "../edit/EditingBar";
 import type { EditingCellContext } from "../edit/editingState";
 import { useEditingState } from "../edit/editingState";
 import { renderEditableCell } from "../edit/renderEditableCell";
-import { FilterLabelsProvider, useFilterLabels } from "../filter/labels";
+import { FilterLabelsProvider } from "../filter/labels";
 import { renderDefaultFilterWidget } from "../filter/registry";
 import type { FilterDescriptor } from "../filter/types";
 import { useGroupExpansion } from "../hooks/useGroupExpansion";
@@ -51,6 +45,7 @@ import { useStickyGroupHeaderTop } from "../hooks/useStickyGroupHeaderTop";
 import { useVisibleColumns } from "../hooks/useVisibleColumns";
 import { cn, stopRowClick } from "../lib/utils";
 import { SELECTION_COLUMN_WIDTH } from "../lib/structuralColumns";
+import { HeaderCellContent } from "./HeaderCellContent";
 import { ActionsMenu } from "../menu/ActionsMenu";
 import { groupRows } from "./groupRows";
 import { processClientData } from "./processClientData";
@@ -306,7 +301,6 @@ export function DataGrid<TRow extends RowData>({
   cellEditing,
   filterLabels,
 }: DataGridProps<TRow>): ReactElement {
-  const resolvedFilterLabels = useFilterLabels(filterLabels);
   // Not supported together with `groupBy` yet — `cellEditingRowIds` below is
   // built from the flat `tableRows` list, but rendering only shows expanded-
   // group rows via `groupedBuckets`'s own bucketed order, so a keyboard-
@@ -1680,7 +1674,6 @@ export function DataGrid<TRow extends RowData>({
               const sortable = isSortable(column);
               const filterable = isFilterable(column) && column.filterDisplay !== "row";
               const cellProps = leafHeaderCellPropsByColumn.get(column.id);
-              const headerContent = column.renderHeader ? column.renderHeader(column) : column.header;
               const headerLabelId = `${header.id}-label`;
               return (
                 <th
@@ -1704,57 +1697,18 @@ export function DataGrid<TRow extends RowData>({
                   // live outside it as siblings.
                   aria-labelledby={headerLabelId}
                 >
-                  <div className="flex items-center gap-1">
-                    {sortable ? (
-                      <button
-                        type="button"
-                        id={headerLabelId}
-                        data-testid={`sort-button-${column.id}`}
-                        className="flex items-center gap-1 rounded-sm px-1 hover:bg-accent hover:text-accent-foreground"
-                        onClick={(event) =>
-                          toggleSort(column.id, enableMultiSort && event.shiftKey, column.sortDescFirst === true)
-                        }
-                      >
-                        {headerContent}
-                        {sortEntry?.dir === "asc" && <BarsArrowUpIcon className="h-3 w-3" aria-hidden />}
-                        {sortEntry?.dir === "desc" && <BarsArrowDownIcon className="h-3 w-3" aria-hidden />}
-                      </button>
-                    ) : (
-                      // Not wrapped in a `<button>` (unlike the sortable branch above): a
-                      // disabled `<button>` swallows pointer events for its entire subtree,
-                      // silently breaking any interactive content a column's own `renderHeader`
-                      // embeds directly (bare filter inputs, "select/reject all" buttons) —
-                      // clicks never reach them at all, even though nothing looks wrong visually.
-                      <div id={headerLabelId} className="flex items-center gap-1 px-1">
-                        {headerContent}
-                      </div>
-                    )}
-                    {filterable && (
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            data-testid={`filter-trigger-${column.id}`}
-                            aria-label={resolvedFilterLabels.filterAriaLabel(column.header)}
-                          >
-                            <FunnelIcon
-                              className={cn(
-                                "h-3 w-3",
-                                filtersByColumn.get(column.id) !== undefined
-                                  ? "opacity-100 text-primary"
-                                  : "opacity-40",
-                              )}
-                              aria-hidden
-                            />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto max-w-[var(--radix-popover-content-available-width)]">
-                          {renderFilterWidget(column)}
-                        </PopoverContent>
-                      </Popover>
-                    )}
-                  </div>
+                  <HeaderCellContent
+                    column={column}
+                    labelId={headerLabelId}
+                    sortDir={sortEntry?.dir}
+                    onToggleSort={
+                      sortable
+                        ? (event) => toggleSort(column.id, enableMultiSort && event.shiftKey, column.sortDescFirst === true)
+                        : undefined
+                    }
+                    renderFilter={filterable ? () => renderFilterWidget(column) : undefined}
+                    filterActive={filtersByColumn.get(column.id) !== undefined}
+                  />
                   {enableColumnResizing && (
                     <div
                       data-testid={`resize-handle-${column.id}`}

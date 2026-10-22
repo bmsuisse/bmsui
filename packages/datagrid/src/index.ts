@@ -143,6 +143,8 @@ export type { TreeAccessors, TreeDataGridProps } from "./tree/types";
 export { TreeDataGrid } from "./tree/TreeDataGrid";
 export type { FlatTreeRow } from "./tree/flattenTree";
 export { flattenTree } from "./tree/flattenTree";
+export type { FilteredSortedTree, FilterSortTreeOptions } from "./tree/filterSortTree";
+export { filterSortTree } from "./tree/filterSortTree";
 export type { TreeStateController, UseTreeStateOptions } from "./tree/useTreeState";
 export { useTreeState } from "./tree/useTreeState";
 export type { ErrorInfo, ErrorInput, GridStatusLabels } from "./components/status";
