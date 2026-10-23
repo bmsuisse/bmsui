@@ -58,6 +58,16 @@ describe("TreeDataGrid: sort + filter", () => {
     expect(names()).toEqual(["Alpha", "Crate", "Beta"]);
   });
 
+  it("shift-click replaces the sort unless enableMultiSort is set", async () => {
+    render(<Controlled initial={{ filter: null, sort: [{ field: "id", dir: "asc" }] }} />);
+    const user = userEvent.setup();
+    await user.keyboard("{Shift>}");
+    await user.click(screen.getByTestId("sort-button-name"));
+    await user.keyboard("{/Shift}");
+    expect(screen.getByRole("columnheader")).toHaveAttribute("aria-sort", "ascending");
+    expect(names()).toEqual(["Alpha", "Beta"]);
+  });
+
   it("filters through the header popover, opening the ancestors of a match", async () => {
     render(<Controlled initial={{ filter: null, sort: [] }} />);
     await userEvent.click(screen.getByTestId("filter-trigger-name"));

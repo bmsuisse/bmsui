@@ -183,6 +183,7 @@ export function TreeDataGrid<TRow>({
   onColumnSizingChange,
   gridState,
   onGridStateChange,
+  enableMultiSort = false,
   activeRowId,
   onActiveRowChange,
   filterLabels,
@@ -228,12 +229,16 @@ export function TreeDataGrid<TRow>({
 
   // Sort/filter only run when the caller controls them (see `gridState`'s doc).
   const viewEnabled = gridState !== undefined && onGridStateChange !== undefined;
+  // Accessors are often inline lambdas; reading them through a ref keeps the
+  // whole-tree filter from re-running on every render (e.g. each scroll tick).
+  const viewInputsRef = useRef({ getRowId, getChildren, columns });
+  viewInputsRef.current = { getRowId, getChildren, columns };
   const viewed = useMemo(
     () =>
       viewEnabled && (gridState.filter || gridState.sort.length > 0)
-        ? filterSortTree(data, gridState, { getRowId, getChildren, columns, childrenMap })
+        ? filterSortTree(data, gridState, { ...viewInputsRef.current, childrenMap })
         : undefined,
-    [viewEnabled, gridState, data, getRowId, getChildren, columns, childrenMap],
+    [viewEnabled, gridState, data, childrenMap],
   );
   const viewRoots = viewed?.roots ?? data;
   const viewChildren = viewed?.childrenMap ?? childrenMap;
@@ -650,7 +655,7 @@ export function TreeDataGrid<TRow>({
                           ? (event) =>
                               onGridStateChange?.({
                                 ...gridState,
-                                sort: withToggledSort(gridState.sort, column.id, event.shiftKey, column.sortDescFirst === true),
+                                sort: withToggledSort(gridState.sort, column.id, enableMultiSort && event.shiftKey, column.sortDescFirst === true),
                               })
                           : undefined
                       }

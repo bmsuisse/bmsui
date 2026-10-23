@@ -296,6 +296,8 @@ export interface TreeDataGridProps<TRow> extends TreeAccessors<TRow> {
    * Omit both for the original unsorted, unfiltered tree.
    */
   gridState?: Pick<GridState, "filter" | "sort">;
+  /** Shift-click a header to add a secondary sort level, same as `<DataGrid>`. Defaults to false. */
+  enableMultiSort?: boolean;
   onGridStateChange?: (state: Pick<GridState, "filter" | "sort">) => void;
   /**
    * The highlighted ("active") row, by id — e.g. the row whose details a side

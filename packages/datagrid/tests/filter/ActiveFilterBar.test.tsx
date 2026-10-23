@@ -66,6 +66,17 @@ describe("ActiveFilterBar", () => {
     expect(onFilterChange).toHaveBeenLastCalledWith(null);
   });
 
+  it("× removes only that chip, even with two filters on the same field", async () => {
+    const onFilterChange = vi.fn();
+    const gte: FilterDescriptor = { field: "amount", operator: "gte", value: 10 };
+    const lte: FilterDescriptor = { field: "amount", operator: "lte", value: 100 };
+    render(
+      <ActiveFilterBar filter={{ logic: "and", filters: [gte, lte] }} columns={columns} onFilterChange={onFilterChange} />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Remove filter Amount ≥ 10" }));
+    expect(onFilterChange).toHaveBeenLastCalledWith({ logic: "and", filters: [lte] });
+  });
+
   it("takes translated operator words", () => {
     render(
       <ActiveFilterBar

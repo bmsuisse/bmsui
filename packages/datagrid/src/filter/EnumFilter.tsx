@@ -138,7 +138,7 @@ export function EnumFilter<TRow>({
   const [search, setSearch] = useState("");
   const selected = selectedValuesOf(value);
   // Remembered while nothing is selected (no filter to read the mode from).
-  const [excludeWhileEmpty, setExcludeWhileEmpty] = useState(false);
+  const [excludeWhileEmpty, setExcludeWhileEmpty] = useState(value?.operator === "notIn");
   const exclude = allowExclude && (value ? value.operator === "notIn" : excludeWhileEmpty);
   const options: EnumFilterOption[] = optionsOverride ?? (column.type === "enum" ? column.options : []);
 
@@ -155,14 +155,15 @@ export function EnumFilter<TRow>({
   );
 
   function emit(next: string[], nextExclude = exclude): void {
+    setExcludeWhileEmpty(nextExclude);
     onChange(
       next.length === 0 ? undefined : { field: column.id, operator: nextExclude ? "notIn" : "in", value: next },
     );
   }
 
   function setExclude(nextExclude: boolean): void {
-    setExcludeWhileEmpty(nextExclude);
     if (selected.length > 0) emit(selected, nextExclude);
+    else setExcludeWhileEmpty(nextExclude);
   }
 
   const visibleValues = visibleOptions.map((option) => option.value);

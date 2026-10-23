@@ -21,6 +21,10 @@ describe("mergeSizing", () => {
     expect(mergeSizing({ a: 130 }, { ...defaults }, defaults)).toEqual({});
   });
 
+  it("never drops the override of a column without a width (it would turn flexible mid-drag)", () => {
+    expect(mergeSizing({}, { b: 150 }, { a: 100 })).toEqual({ b: 150 });
+  });
+
   it("keeps overrides of hidden columns", () => {
     expect(mergeSizing({ hidden: 77 }, { ...defaults, b: 90 }, defaults)).toEqual({ hidden: 77, b: 90 });
   });

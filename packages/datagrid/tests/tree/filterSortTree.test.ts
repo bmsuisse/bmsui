@@ -66,7 +66,17 @@ describe("filterSortTree", () => {
       ]),
       options,
     );
-    expect(keys(result)).toEqual(["01", "01.b"]);
+    // 01.b matches itself, so it keeps its (non-matching) child, closed.
+    expect(keys(result)).toEqual(["01", "01.b", "01.b.x"]);
+    expect([...result.expandedIds]).toEqual(["01"]);
+  });
+
+  it("a matching parent whose children don't match keeps them, so its chevron expands to something", () => {
+    const result = filterSortTree(TREE, state([{ field: "level1", operator: "eq", value: "02" }]), options);
+    expect(keys(result)).toEqual(["02", "02.a"]);
+    const parentOnly = filterSortTree(TREE, state([{ field: "key", operator: "eq", value: "03" }]), options);
+    expect(keys(parentOnly)).toEqual(["03", "03.a"]);
+    expect(parentOnly.expandedIds.size).toBe(0);
   });
 
   it("sorts siblings at every level without opening anything", () => {

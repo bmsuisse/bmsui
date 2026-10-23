@@ -850,7 +850,9 @@ get `overflow-hidden text-ellipsis` while resizing is on.
 `hooks/usePersistedColumnSizing.ts`) returns `{ columnSizing,
 onColumnSizingChange, reset, isCustomized }` for either grid's controlled
 props. It stores *overrides only* (`mergeSizing` drops a column dragged back
-to its default and keeps hidden columns' overrides), so a column the user
+to its explicit `width` and keeps hidden columns' overrides; a column with no
+`width` keeps its override at any size, else it would turn flexible mid-drag
+and un-fix the table width), so a column the user
 never touched keeps following its default in code. Storage lives under its
 own namespace, `bmsui-datagrid:column-sizing:<key>` (`sizingStorageKeyFor`,
 same reasoning as `orderStorageKeyFor`), and every read/write is in
@@ -1637,7 +1639,9 @@ filtering, matching `ContractTreelist` (hierarchy order from the backend).
   the `<th>` stays per grid) and the pure `withColumnFilter`/
   `withToggledSort` helpers from `useGridState.ts`. The grid runs
   `tree/filterSortTree.ts` (ported from MDMApp's `treeView.ts`): a node
-  stays when it matches every filter or has a kept descendant; nodes kept
+  stays when it matches every filter or has a kept descendant (a node that
+  matches itself but has no matching children keeps *all* its children,
+  closed, so its chevron never expands to nothing); nodes kept
   for a descendant come back in `expandedIds` and are merged open over
   `expanded`; siblings are sorted at every level. Values go through
   `getColumnValue` into a projected record, so `accessorFn` columns work and
@@ -1647,7 +1651,10 @@ filtering, matching `ContractTreelist` (hierarchy order from the backend).
   this, `toggleExpand` would flip `expanded` underneath a forced `true` and
   nothing would visibly happen). **Only loaded nodes** are searched — a lazy
   node never expanded can't reveal a match. `filterDisplay: "row"` isn't
-  supported in the tree; such columns use the header popover. Also gained a
+  supported in the tree; such columns use the header popover. Shift-click
+  only adds a sort level with `enableMultiSort` (same as `<DataGrid>`). The
+  accessors (`getRowId`/`getChildren`/`columns`) are read through a ref, so
+  inline lambdas don't re-run the whole-tree filter every render. Also gained a
   `filterLabels` prop (same as `<DataGrid>`'s). `OrgTreeDemo` in the demo
   uses it.
 

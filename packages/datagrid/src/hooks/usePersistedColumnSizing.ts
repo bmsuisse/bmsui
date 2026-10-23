@@ -3,9 +3,6 @@ import type { ColumnSizingState } from "@tanstack/react-table";
 import { readPersistedColumnSizing, writePersistedColumnSizing } from "../column-selector/persistence";
 import { MIN_COLUMN_SIZE } from "./useColumnSizing";
 
-/** The width a column gets when its definition sets none (TanStack's own default). */
-const DEFAULT_COLUMN_WIDTH = 150;
-
 interface SizedColumn {
   id: string;
   width?: number;
@@ -13,8 +10,10 @@ interface SizedColumn {
 
 /**
  * Folds a grid's full column sizing back into overrides: a column dragged
- * back to its default drops out, and overrides of columns not in `next`
- * (currently hidden ones) are kept.
+ * back to its default `width` drops out, and overrides of columns not in
+ * `next` (currently hidden ones) are kept. A column without a `width` (absent
+ * from `defaults`) keeps its override at any size: dropping it would turn the
+ * column flexible again mid-drag and un-fix the table width.
  */
 export function mergeSizing(
   overrides: ColumnSizingState,
@@ -53,7 +52,10 @@ export function usePersistedColumnSizing(
   // ponytail: read once on mount; a changing persistKey needs a remount (`key`).
   const [overrides, setOverrides] = useState<ColumnSizingState>(() => readPersistedColumnSizing(persistKey));
   const defaults = useMemo(
-    () => Object.fromEntries(columns.map((column) => [column.id, column.width ?? DEFAULT_COLUMN_WIDTH])),
+    () =>
+      Object.fromEntries(
+        columns.flatMap((column) => (column.width === undefined ? [] : [[column.id, column.width]])),
+      ),
     [columns],
   );
 

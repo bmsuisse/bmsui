@@ -4,11 +4,20 @@ import { defaultFormat } from "../column/format";
 import type { ColumnDef } from "../column/types";
 import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
 import { cn } from "../lib/utils";
-import { withoutColumn } from "./facetedValues";
 import type { FilterLabels } from "./labels";
 import { useFilterLabels } from "./labels";
 import { fieldKey, isCompositeFilterDescriptor, leafFilters } from "./types";
-import type { FilterDescriptor, GridState } from "./types";
+import type { CompositeFilterDescriptor, FilterDescriptor, GridState } from "./types";
+
+type FilterNode = FilterDescriptor | CompositeFilterDescriptor;
+
+/** Removes exactly `leaf` (by identity) from a filter tree; `null` if nothing is left. */
+function withoutLeaf(node: FilterNode | null | undefined, leaf: FilterDescriptor): FilterNode | null {
+  if (!node || node === leaf) return null;
+  if (!isCompositeFilterDescriptor(node)) return node;
+  const kept = node.filters.map((child) => withoutLeaf(child, leaf)).filter((child): child is FilterNode => child !== null);
+  return kept.length > 0 ? { logic: node.logic, filters: kept } : null;
+}
 
 export interface FilterDescription {
   label: string;
@@ -100,7 +109,7 @@ export function ActiveFilterBar<TRow>({
   const hidden = leaves.slice(maxChips);
 
   function remove(leaf: FilterDescriptor): void {
-    const next = withoutColumn(filter, fieldKey(leaf.field));
+    const next = withoutLeaf(filter, leaf);
     if (!next) onFilterChange(null);
     else onFilterChange(isCompositeFilterDescriptor(next) ? next : { logic: "and", filters: [next] });
   }

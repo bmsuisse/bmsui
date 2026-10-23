@@ -419,6 +419,24 @@ describe("EnumFilter: options, counts, exclude and cap", () => {
     expect(spy).toHaveBeenLastCalledWith({ field: "status", operator: "in", value: ["open"] });
   });
 
+  it("stays in exclude mode after unticking everything", async () => {
+    const spy = vi.fn();
+    render(
+      <ControlledFilter
+        Widget={EnumFilter<Row>}
+        column={column}
+        initial={{ field: "status", operator: "notIn", value: ["open"] }}
+        onChangeSpy={spy}
+        extraProps={{ bare: true, allowExclude: true }}
+      />,
+    );
+    await userEvent.click(screen.getByLabelText("Open"));
+    expect(spy).toHaveBeenLastCalledWith(undefined);
+    expect(screen.getByTestId("filter-status-exclude")).toHaveAttribute("aria-pressed", "true");
+    await userEvent.click(screen.getByLabelText("Closed"));
+    expect(spy).toHaveBeenLastCalledWith({ field: "status", operator: "notIn", value: ["closed"] });
+  });
+
   it("reads an existing notIn filter as selected", () => {
     render(
       <EnumFilter

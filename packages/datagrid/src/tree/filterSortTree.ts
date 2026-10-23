@@ -61,14 +61,31 @@ export function filterSortTree<TRow>(
   const outChildren = new Map<string, TRow[]>();
   const expandedIds = new Set<string>();
 
+  const childrenOf = (row: TRow): TRow[] => childrenMap?.get(getRowId(row)) ?? getChildren(row) ?? [];
+
+  // The whole subtree, unfiltered but sorted.
+  function keepAll(row: TRow): void {
+    const children = childrenOf(row);
+    if (children.length === 0) return;
+    outChildren.set(getRowId(row), sortSiblings(children));
+    children.forEach(keepAll);
+  }
+
   // Returns whether `row` stays.
   function visit(row: TRow): boolean {
     const id = getRowId(row);
-    const children = childrenMap?.get(id) ?? getChildren(row) ?? [];
+    const children = childrenOf(row);
     const kept = children.filter(visit);
-    if (children.length > 0) outChildren.set(id, sortSiblings(kept));
-    if (kept.length > 0 && state.filter) expandedIds.add(id);
-    return kept.length > 0 || !state.filter || evaluateFilter(project(row), state.filter);
+    if (kept.length > 0) {
+      outChildren.set(id, sortSiblings(kept));
+      if (state.filter) expandedIds.add(id);
+      return true;
+    }
+    if (state.filter && !evaluateFilter(project(row), state.filter)) return false;
+    // A match whose own children don't match keeps them all (not opened), so
+    // its chevron still expands to something.
+    keepAll(row);
+    return true;
   }
 
   const keptRoots = roots.filter(visit);
