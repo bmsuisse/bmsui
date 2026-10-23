@@ -6,25 +6,33 @@ import {
   ChevronRightIcon,
 } from "@heroicons/react/24/outline";
 import type { CSSProperties, ReactElement, ReactNode } from "react";
-import { Fragment, useEffect, useMemo, useRef } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { alignClassName } from "../column/format";
 import type { ColumnDef } from "../column/types";
-import { getColumnValue } from "../column/types";
+import { getColumnValue, isFilterable, isSortable } from "../column/types";
 import { Checkbox } from "../components/ui/checkbox";
 import { EditingBar } from "../edit/EditingBar";
 import type { EditingCellContext } from "../edit/editingState";
 import { useEditingState } from "../edit/editingState";
 import { renderEditableCell } from "../edit/renderEditableCell";
+import { FilterLabelsProvider } from "../filter/labels";
+import { renderDefaultFilterWidget } from "../filter/registry";
+import type { FilterDescriptor } from "../filter/types";
+import { fieldKey, leafFilters } from "../filter/types";
 import { groupRows } from "../grid/groupRows";
+import { HeaderCellContent } from "../grid/HeaderCellContent";
+import { withColumnFilter, withToggledSort } from "../grid/useGridState";
 import { useGroupExpansion } from "../hooks/useGroupExpansion";
 import { useColumnSizing } from "../hooks/useColumnSizing";
 import { useStickyGroupHeaderTop } from "../hooks/useStickyGroupHeaderTop";
 import { useVisibleColumns } from "../hooks/useVisibleColumns";
 import { SELECTION_COLUMN_WIDTH } from "../lib/structuralColumns";
+import { ACTIVE_ROW_CLASS, activeRowProps } from "../lib/activeRow";
 import { cn, stopRowClick } from "../lib/utils";
 import { ActionsMenu } from "../menu/ActionsMenu";
 import { ColumnResizeHandle } from "./ColumnResizeHandle";
 import type { FlatTreeRow } from "./flattenTree";
+import { filterSortTree } from "./filterSortTree";
 import { flattenTree } from "./flattenTree";
 import { computeSelectionStates } from "./selectionState";
 import type { RowSelectionState } from "./selectionState";
@@ -33,6 +41,13 @@ import { useTreeState } from "./useTreeState";
 
 const EMPTY_SELECTED_IDS: ReadonlySet<string> = new Set();
 const UNCHECKED_STATE: RowSelectionState = { checked: false, indeterminate: false };
+const NO_IDS: ReadonlySet<string> = new Set();
+
+function sortDirToAriaSort(dir: "asc" | "desc" | undefined): "ascending" | "descending" | "none" {
+  if (dir === "asc") return "ascending";
+  if (dir === "desc") return "descending";
+  return "none";
+}
 
 function renderCell<TRow>(
   column: ColumnDef<TRow>,
@@ -117,11 +132,9 @@ function TreeCell<TRow>({
  * A lazy-loading tree grid: generalizes a consuming app's contract tree list
  * (a from-scratch hand-rolled hierarchy table with no shared abstraction)
  * into a reusable component on top of the same `ColumnDef<TRow>` system
- * `<DataGrid>` uses. Deliberately does NOT support sorting or client-side
- * filtering — that original hierarchy table has neither (hierarchy order
- * comes from the backend; "filtering" there means asking the server for a
- * differently-shaped tree, which is an app-level concern, not something
- * this component can generalize).
+ * `<DataGrid>` uses. Sorting and filtering are opt-in and fully controlled
+ * (`gridState` + `onGridStateChange`, see `filterSortTree`); without them the
+ * tree renders in the order `data` gives it.
  *
  * Row indentation + the expand/collapse chevron are prepended to whichever
  * column's cell matches `treeColumnId` (defaults to `columns[0]`); every
@@ -168,6 +181,12 @@ export function TreeDataGrid<TRow>({
   enableColumnResizing = false,
   columnSizing: controlledColumnSizing,
   onColumnSizingChange,
+  gridState,
+  onGridStateChange,
+  enableMultiSort = false,
+  activeRowId,
+  onActiveRowChange,
+  filterLabels,
 }: TreeDataGridProps<TRow>): ReactElement {
   const labels = resolveStatusLabels(statusLabels);
   const hasError = toErrorInfo(error) !== undefined;
@@ -208,6 +227,61 @@ export function TreeDataGrid<TRow>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Sort/filter only run when the caller controls them (see `gridState`'s doc).
+  const viewEnabled = gridState !== undefined && onGridStateChange !== undefined;
+  // Accessors are often inline lambdas; reading them through a ref keeps the
+  // whole-tree filter from re-running on every render (e.g. each scroll tick).
+  const viewInputsRef = useRef({ getRowId, getChildren, columns });
+  viewInputsRef.current = { getRowId, getChildren, columns };
+  const viewed = useMemo(
+    () =>
+      viewEnabled && (gridState.filter || gridState.sort.length > 0)
+        ? filterSortTree(data, gridState, { ...viewInputsRef.current, childrenMap })
+        : undefined,
+    [viewEnabled, gridState, data, childrenMap],
+  );
+  const viewRoots = viewed?.roots ?? data;
+  const viewChildren = viewed?.childrenMap ?? childrenMap;
+  // Ancestors of a match open automatically; one the user collapses stays
+  // collapsed until the filter changes.
+  const filterKey = JSON.stringify(gridState?.filter ?? null);
+  const [collapsedWhileFiltered, setCollapsedWhileFiltered] = useState({ key: filterKey, ids: NO_IDS });
+  const collapsedIds = collapsedWhileFiltered.key === filterKey ? collapsedWhileFiltered.ids : NO_IDS;
+  const forcedOpenIds = viewed?.expandedIds;
+  const viewExpanded = useMemo(() => {
+    if (!forcedOpenIds || forcedOpenIds.size === 0) return expanded;
+    const merged = { ...expanded };
+    for (const id of forcedOpenIds) merged[id] = !collapsedIds.has(id);
+    return merged;
+  }, [expanded, forcedOpenIds, collapsedIds]);
+
+  function toggleRow(flatRow: FlatTreeRow<TRow>): void {
+    if (!forcedOpenIds?.has(flatRow.id)) {
+      toggleExpand(flatRow.row);
+      return;
+    }
+    const ids = new Set(collapsedIds);
+    if (ids.has(flatRow.id)) ids.delete(flatRow.id);
+    else ids.add(flatRow.id);
+    setCollapsedWhileFiltered({ key: filterKey, ids });
+  }
+
+  const filtersByColumn = useMemo(() => {
+    const map = new Map<string, FilterDescriptor>();
+    for (const leaf of leafFilters(gridState?.filter)) map.set(fieldKey(leaf.field), leaf);
+    return map;
+  }, [gridState?.filter]);
+
+  function renderFilterWidget(column: ColumnDef<TRow>): ReactNode {
+    const value = filtersByColumn.get(column.id);
+    const onChange = (next: FilterDescriptor | undefined): void => {
+      if (gridState) onGridStateChange?.({ ...gridState, filter: withColumnFilter(gridState.filter, column.id, next) });
+    };
+    return column.renderFilter
+      ? column.renderFilter(value, onChange, gridState?.filter ?? null)
+      : renderDefaultFilterWidget(column, value, onChange);
+  }
+
   // Single source of truth for "which columns actually render", same
   // convention as `<DataGrid>`'s own `visibleColumns` — every other
   // representation below (the header/body column loops, `bodyTdClassByColumn`,
@@ -230,19 +304,19 @@ export function TreeDataGrid<TRow>({
   // entirely when grouped (nothing reads it in that mode, and flattening the
   // whole tree in original — not bucketed — order would be wasted work).
   const flatRows = useMemo(
-    () => (groupBy ? [] : flattenTree(data, accessors, expanded, childrenMap)),
-    [groupBy, data, accessors, expanded, childrenMap],
+    () => (groupBy ? [] : flattenTree(viewRoots, accessors, viewExpanded, viewChildren)),
+    [groupBy, viewRoots, accessors, viewExpanded, viewChildren],
   );
   const groupedBuckets = useMemo(
     () =>
       groupBy
-        ? groupRows(data, groupBy).map((bucket) => ({
+        ? groupRows(viewRoots, groupBy).map((bucket) => ({
             key: bucket.key,
             roots: bucket.items,
-            flatRows: flattenTree(bucket.items, accessors, expanded, childrenMap),
+            flatRows: flattenTree(bucket.items, accessors, viewExpanded, viewChildren),
           }))
         : undefined,
-    [groupBy, data, accessors, expanded, childrenMap],
+    [groupBy, viewRoots, accessors, viewExpanded, viewChildren],
   );
   // Rows belonging to a *collapsed* group are never rendered, so — unlike
   // `<DataGrid>`'s page-scoped "select all on this page" (which has no
@@ -354,7 +428,10 @@ export function TreeDataGrid<TRow>({
     const map = new Map<string, string>();
     // Fixed layout lets a narrowed column's text paint over its neighbours unless clipped.
     const clip = enableColumnResizing ? "overflow-hidden " : "";
-    for (const column of visibleColumns) map.set(column.id, `${clip}p-2 ${alignClassName(column)}`);
+    for (const column of visibleColumns) {
+      const base = `${clip}p-2 ${alignClassName(column)}`;
+      map.set(column.id, column.cellClassName ? cn(base, column.cellClassName) : base);
+    }
     return map;
   }, [visibleColumns, enableColumnResizing]);
 
@@ -399,11 +476,13 @@ export function TreeDataGrid<TRow>({
     const rowProps = getRowProps?.(flatRow.row, flatRow.depth, index);
     const rowTestId = getRowTestId?.(flatRow.row) ?? `tree-row-${flatRow.id}`;
     const isOddRow = zebra && index % 2 === 1;
+    const isActive = activeRowId === flatRow.id;
     return (
       <tr
         key={flatRow.id}
         ref={measureRef}
         {...rowProps}
+        {...activeRowProps(flatRow.id, activeRowId, onActiveRowChange, rowProps)}
         // Required by `@tanstack/react-virtual`'s `measureElement` (wired
         // below via `measureRef`): it reads this attribute back off the
         // measured node to know which row it just measured. Without it,
@@ -425,12 +504,15 @@ export function TreeDataGrid<TRow>({
         // conflict resolution is only needed when a caller-supplied
         // `getRowProps().className` might collide with the zebra stripe's
         // `bg-*` utility — skip straight to a plain string otherwise.
+        // Caller's class (then the active wash) after the zebra stripe, so
+        // twMerge keeps the caller's `bg-*` on odd rows too.
         className={
-          rowProps?.className
+          rowProps?.className || isActive
             ? cn(
                 "border-b border-border divide-x divide-border",
-                rowProps.className as string,
                 isOddRow && "bg-foreground/5",
+                rowProps?.className as string | undefined,
+                isActive && ACTIVE_ROW_CLASS,
               )
             : `border-b border-border divide-x divide-border${isOddRow ? " bg-foreground/5" : ""}`
         }
@@ -461,7 +543,7 @@ export function TreeDataGrid<TRow>({
                 isLoading={loadingIds.has(flatRow.id)}
                 error={errorIds.get(flatRow.id)}
                 labels={labels}
-                onToggle={() => toggleExpand(flatRow.row)}
+                onToggle={() => toggleRow(flatRow)}
                 onRetry={() => retry(flatRow.row)}
                 editingCtx={editingState.ctx}
               />
@@ -489,7 +571,10 @@ export function TreeDataGrid<TRow>({
     virtualItems.length > 0 ? virtualizer.getTotalSize() - virtualItems[virtualItems.length - 1]!.end : 0;
 
   return (
-    <div className="flex flex-col gap-2" data-testid="tree-datagrid">
+    <FilterLabelsProvider labels={filterLabels}>
+    {/* `h-full`/`min-h-0` only matter inside a bounded parent — that's what
+        lets `maxBodyHeight="100%"` fill it, same as `<DataGrid>`'s wrappers. */}
+    <div className="flex h-full min-h-0 flex-col gap-2" data-testid="tree-datagrid">
       {hasError && data.length > 0 && (
         <div className="flex shrink-0 items-center rounded-md border border-destructive/40 bg-destructive/10 px-2 py-1">
           <GridInlineError error={error} onRetry={onRetry} labels={labels} />
@@ -518,7 +603,7 @@ export function TreeDataGrid<TRow>({
         // its overflow-y-auto/maxHeight styling once virtualization kicked
         // in, so a non-virtualized (or grouped) tree that outgrew its box
         // just rendered past it with no way to scroll to what was clipped.
-        className="overflow-y-auto"
+        className="min-h-0 overflow-y-auto"
         style={{ maxHeight: maxBodyHeight }}
       >
         <table
@@ -543,7 +628,11 @@ export function TreeDataGrid<TRow>({
                   />
                 </th>
               )}
-              {visibleColumns.map((column) => (
+              {visibleColumns.map((column) => {
+                const sortEntry = gridState?.sort.find((s) => s.field === column.id);
+                const sortable = viewEnabled && isSortable(column);
+                const labelId = `tree-header-${column.id}-label`;
+                return (
                 <th
                   key={column.id}
                   style={columnWidthStyle(column)}
@@ -551,23 +640,46 @@ export function TreeDataGrid<TRow>({
                     "sticky top-0 z-20 border-b border-border bg-muted p-2 font-medium",
                     enableColumnResizing && "overflow-hidden",
                     alignClassName(column),
+                    column.headerClassName,
                   )}
+                  aria-sort={sortable ? sortDirToAriaSort(sortEntry?.dir) : undefined}
+                  aria-labelledby={viewEnabled ? labelId : undefined}
                 >
-                  {column.header}
+                  {viewEnabled && gridState ? (
+                    <HeaderCellContent
+                      column={column}
+                      labelId={labelId}
+                      sortDir={sortEntry?.dir}
+                      onToggleSort={
+                        sortable
+                          ? (event) =>
+                              onGridStateChange?.({
+                                ...gridState,
+                                sort: withToggledSort(gridState.sort, column.id, enableMultiSort && event.shiftKey, column.sortDescFirst === true),
+                              })
+                          : undefined
+                      }
+                      renderFilter={isFilterable(column) ? () => renderFilterWidget(column) : undefined}
+                      filterActive={filtersByColumn.has(column.id)}
+                    />
+                  ) : (
+                    column.header
+                  )}
                   {enableColumnResizing && (
                     <ColumnResizeHandle columnId={column.id} label={String(column.header)}
                       width={columnSizing[column.id] ?? column.width}
                       onResize={setColumnSize} />
                   )}
                 </th>
-              ))}
+                );
+              })}
               {showRowActionsColumn && (
                 <th className="sticky top-0 z-20 border-b border-border bg-muted p-2" aria-label="Row actions" />
               )}
             </tr>
           </thead>
           <tbody>
-            {data.length === 0 ? (
+            {viewRoots.length === 0 ? (
               <tr>
                 <td colSpan={totalColumnCount} className="p-4 text-center text-muted-foreground">
                   {loading ? (
@@ -686,9 +798,10 @@ export function TreeDataGrid<TRow>({
                       "sticky bottom-0 z-20 border-t border-border bg-muted p-2 font-medium",
                       enableColumnResizing && "overflow-hidden",
                       alignClassName(column),
+                      column.cellClassName,
                     )}
                   >
-                    {column.summary?.(data)}
+                    {column.summary?.(viewRoots)}
                   </td>
                 ))}
                 {showRowActionsColumn && (
@@ -700,5 +813,6 @@ export function TreeDataGrid<TRow>({
         </table>
       </div>
     </div>
+    </FilterLabelsProvider>
   );
 }

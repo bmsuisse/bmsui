@@ -52,5 +52,46 @@ const [visibility, setVisibility] = useState<ColumnVisibility>({});
   render — it never writes it itself. `<ColumnSelector>` is what drives
   changes.
 
+## Persisted widths and "Reset columns"
+
+`usePersistedColumnSizing(persistKey, columns)` keeps column widths in
+`localStorage["bmsui-datagrid:column-sizing:" + persistKey]` and returns
+`{ columnSizing, onColumnSizingChange, reset, isCustomized }`, which plug
+straight into either grid's controlled sizing props. Only the user's
+*overrides* are stored, so a column nobody dragged keeps following its
+`width` in code. Storage failures (private window, blocked, corrupt JSON)
+just mean "use the defaults".
+
+Pass `defaultVisibility` to `<ColumnSelector>` and the dialog shows a
+"Reset columns" button (`resetLabel` to translate it). It restores
+`defaultVisibility`, clears the persisted visibility entry and calls
+`onReset`. It is disabled while visibility equals the defaults and
+`isCustomized` is `false`.
+
+```tsx
+const DEFAULT_VISIBILITY: ColumnVisibility = { notes: false };
+const sizing = usePersistedColumnSizing("orders", columns);
+const [visibility, setVisibility] = useState(DEFAULT_VISIBILITY);
+
+<ColumnSelector
+  columns={columns}
+  visibility={visibility}
+  onVisibilityChange={setVisibility}
+  persistKey="orders"
+  defaultVisibility={DEFAULT_VISIBILITY}
+  isCustomized={sizing.isCustomized}
+  onReset={sizing.reset}
+/>
+<DataGrid
+  columns={columns}
+  columnVisibility={visibility}
+  enableColumnResizing
+  columnSizing={sizing.columnSizing}
+  onColumnSizingChange={sizing.onColumnSizingChange}
+  dataSource={dataSource}
+  getRowId={(row) => row.id}
+/>
+```
+
 See the [live demo](https://bmsuisse.github.io/bmsui/demo/datagrid/) for a working example with
 grouped columns.

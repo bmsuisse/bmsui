@@ -34,6 +34,29 @@ function nextSortDir(
   return undefined;
 }
 
+/** Replaces (or clears) one column's leaf in a flat AND filter; `null` once nothing is left. */
+export function withColumnFilter(
+  filter: GridState["filter"],
+  columnId: string,
+  next: FilterDescriptor | undefined,
+): GridState["filter"] {
+  const remaining = (filter?.filters ?? []).filter((f) => !("operator" in f) || fieldKey(f.field) !== columnId);
+  const filters = next ? [...remaining, next] : remaining;
+  return filters.length > 0 ? { logic: "and", filters } : null;
+}
+
+/** One click on a column's sort toggle: cycles its direction, replacing the other columns unless `additive`. */
+export function withToggledSort(
+  sort: readonly SortDescriptor[],
+  columnId: string,
+  additive: boolean,
+  descFirst = false,
+): SortDescriptor[] {
+  const dir = nextSortDir(sort.find((s) => s.field === columnId)?.dir, descFirst);
+  const base = additive ? sort.filter((s) => s.field !== columnId) : [];
+  return dir ? [...base, { field: columnId, dir }] : base;
+}
+
 /**
  * Owns `GridState` (filter/sort/page/pageSize) for `<DataGrid>` and, in
  * `"server"` mode, calls `dataSource.onStateChange` on every change —
@@ -161,15 +184,7 @@ export function useGridState<TRow>(
   const setColumnFilter = useCallback(
     (columnId: string, next: FilterDescriptor | undefined) => {
       setState((prev) => {
-        const remaining = (prev.filter?.filters ?? []).filter(
-          (f) => !("operator" in f) || fieldKey(f.field) !== columnId,
-        );
-        const filters = next ? [...remaining, next] : remaining;
-        const nextState: GridState = {
-          ...prev,
-          filter: filters.length > 0 ? { logic: "and", filters } : null,
-          page: 0,
-        };
+        const nextState: GridState = { ...prev, filter: withColumnFilter(prev.filter, columnId, next), page: 0 };
         notifyDebounced(nextState);
         return nextState;
       });
@@ -180,12 +195,7 @@ export function useGridState<TRow>(
   const toggleSort = useCallback(
     (columnId: string, additive: boolean, descFirst = false) => {
       setState((prev) => {
-        const existing = prev.sort.find((s) => s.field === columnId);
-        const dir = nextSortDir(existing?.dir, descFirst);
-        const withoutColumn = prev.sort.filter((s) => s.field !== columnId);
-        const base = additive ? withoutColumn : [];
-        const sort = dir ? [...base, { field: columnId, dir }] : base;
-        const nextState: GridState = { ...prev, sort };
+        const nextState: GridState = { ...prev, sort: withToggledSort(prev.sort, columnId, additive, descFirst) };
         notifyNow(nextState);
         return nextState;
       });

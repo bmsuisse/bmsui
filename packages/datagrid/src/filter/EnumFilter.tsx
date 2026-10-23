@@ -1,7 +1,7 @@
 import { FunnelIcon } from "@heroicons/react/24/outline";
 import type { ReactElement } from "react";
 import { useMemo, useState } from "react";
-import type { EnumColumn, EnumOption } from "../column/types";
+import type { ColumnDef, EnumOption } from "../column/types";
 import { Button } from "../components/ui/button";
 import { Checkbox } from "../components/ui/checkbox";
 import { Input } from "../components/ui/input";
@@ -11,8 +11,14 @@ import type { FilterDescriptor } from "./types";
 import { useFilterLabels } from "./labels";
 import type { FilterWidgetProps } from "./widget-types";
 
+/** Rows rendered at most; past it a hint asks the user to type to narrow. */
+const MAX_RENDERED_OPTIONS = 300;
+
+/** An option, optionally with how many rows carry it (see `facetedSetOptions`). */
+export type EnumFilterOption = EnumOption & { count?: number };
+
 function selectedValuesOf(value: FilterDescriptor | undefined): string[] {
-  if (!value || value.operator !== "in" || !Array.isArray(value.value)) return [];
+  if (!value || (value.operator !== "in" && value.operator !== "notIn") || !Array.isArray(value.value)) return [];
   return value.value.filter((entry): entry is string => typeof entry === "string");
 }
 
@@ -23,7 +29,7 @@ function toggle(selected: string[], optionValue: string): string[] {
 }
 
 interface OptionRow {
-  option: EnumOption;
+  option: EnumFilterOption;
   index: number;
 }
 interface GroupChunk {
@@ -45,7 +51,7 @@ type RenderChunk = GroupChunk | SingleChunk;
  * must be adjacent in the array. Kept separate from JSX so the render below
  * is a plain `.map()` with no per-row bookkeeping of its own.
  */
-function buildRenderChunks(options: EnumOption[]): RenderChunk[] {
+function buildRenderChunks(options: EnumFilterOption[]): RenderChunk[] {
   const chunks: RenderChunk[] = [];
   options.forEach((option, index) => {
     const row: OptionRow = { option, index };
@@ -64,7 +70,7 @@ function buildRenderChunks(options: EnumOption[]): RenderChunk[] {
 type GroupCheckState = "checked" | "unchecked" | "indeterminate";
 
 /** Tri-state of `group` scoped to `candidates` — pass the currently-*visible* (search-filtered) options, matching "Select all"'s own scoping. */
-function groupCheckState(candidates: EnumOption[], selected: string[], group: string): GroupCheckState {
+function groupCheckState(candidates: EnumFilterOption[], selected: string[], group: string): GroupCheckState {
   const members = candidates.filter((o) => o.group === group).map((o) => o.value);
   const selectedCount = members.filter((v) => selected.includes(v)).length;
   if (members.length === 0 || selectedCount === 0) return "unchecked";
@@ -107,6 +113,13 @@ function groupCheckState(candidates: EnumOption[], selected: string[], group: st
  * `renderDefaultFilterWidget` passes automatically outside `filterDisplay:
  * "row"`, so `<DataGrid>`'s own header-icon popover isn't nested inside a
  * second one of this component's own).
+ *
+ * Optional extras (all off by default):
+ * - `options` replaces `column.options` — typically `facetedSetOptions(...)`
+ *   via `renderFilter`, which also works for a string/number column. An
+ *   option with a `count` shows it next to its label.
+ * - `allowExclude` adds an "is any of / is none of" toggle (`in`/`notIn`).
+ * - at most 300 rows render; the rest are behind a "type to narrow" hint.
  */
 export function EnumFilter<TRow>({
   column,
@@ -114,21 +127,43 @@ export function EnumFilter<TRow>({
   onChange,
   bare = false,
   labels: labelOverrides,
-}: FilterWidgetProps<EnumColumn<TRow>> & { bare?: boolean }): ReactElement {
+  options: optionsOverride,
+  allowExclude = false,
+}: FilterWidgetProps<ColumnDef<TRow>> & {
+  bare?: boolean;
+  options?: EnumFilterOption[];
+  allowExclude?: boolean;
+}): ReactElement {
   const labels = useFilterLabels(labelOverrides);
   const [search, setSearch] = useState("");
   const selected = selectedValuesOf(value);
+  // Remembered while nothing is selected (no filter to read the mode from).
+  const [excludeWhileEmpty, setExcludeWhileEmpty] = useState(value?.operator === "notIn");
+  const exclude = allowExclude && (value ? value.operator === "notIn" : excludeWhileEmpty);
+  const options: EnumFilterOption[] = optionsOverride ?? (column.type === "enum" ? column.options : []);
 
   const visibleOptions = useMemo(() => {
     const term = search.trim().toLowerCase();
-    if (!term) return column.options;
-    return column.options.filter((option) => option.label.toLowerCase().includes(term));
-  }, [column.options, search]);
+    if (!term) return options;
+    return options.filter((option) => option.label.toLowerCase().includes(term));
+  }, [options, search]);
 
-  const renderChunks = useMemo(() => buildRenderChunks(visibleOptions), [visibleOptions]);
+  const hiddenCount = Math.max(0, visibleOptions.length - MAX_RENDERED_OPTIONS);
+  const renderChunks = useMemo(
+    () => buildRenderChunks(visibleOptions.slice(0, MAX_RENDERED_OPTIONS)),
+    [visibleOptions],
+  );
 
-  function emit(next: string[]): void {
-    onChange(next.length === 0 ? undefined : { field: column.id, operator: "in", value: next });
+  function emit(next: string[], nextExclude = exclude): void {
+    setExcludeWhileEmpty(nextExclude);
+    onChange(
+      next.length === 0 ? undefined : { field: column.id, operator: nextExclude ? "notIn" : "in", value: next },
+    );
+  }
+
+  function setExclude(nextExclude: boolean): void {
+    if (selected.length > 0) emit(selected, nextExclude);
+    else setExcludeWhileEmpty(nextExclude);
   }
 
   const visibleValues = visibleOptions.map((option) => option.value);
@@ -157,7 +192,7 @@ export function EnumFilter<TRow>({
     emit([...new Set([...selected, ...members])]);
   }
 
-  function renderOption(option: EnumOption): ReactElement {
+  function renderOption(option: EnumFilterOption): ReactElement {
     return (
       <label
         key={option.value}
@@ -167,7 +202,10 @@ export function EnumFilter<TRow>({
           checked={selected.includes(option.value)}
           onCheckedChange={() => emit(toggle(selected, option.value))}
         />
-        {option.label}
+        <span className="min-w-0 flex-1 truncate">{option.label}</span>
+        {option.count !== undefined && (
+          <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{option.count}</span>
+        )}
       </label>
     );
   }
@@ -177,6 +215,22 @@ export function EnumFilter<TRow>({
 
   const panel = (
     <div className={bare ? "flex w-full flex-col gap-2" : "flex w-64 flex-col gap-2 p-2"}>
+      {allowExclude && (
+        <div className="flex overflow-hidden rounded-md border text-xs" role="group">
+          {([false, true] as const).map((mode) => (
+            <button
+              key={String(mode)}
+              type="button"
+              aria-pressed={exclude === mode}
+              data-testid={`filter-${column.id}-${mode ? "exclude" : "include"}`}
+              className="flex-1 px-2 py-1 aria-pressed:bg-accent aria-pressed:font-medium aria-pressed:text-accent-foreground"
+              onClick={() => setExclude(mode)}
+            >
+              {mode ? labels.enumIsNoneOf : labels.enumIsAnyOf}
+            </button>
+          ))}
+        </div>
+      )}
       <Input
         placeholder={labels.searchPlaceholder(column.header)}
         value={search}
@@ -219,6 +273,9 @@ export function EnumFilter<TRow>({
               </div>
             );
           })
+        )}
+        {hiddenCount > 0 && (
+          <p className="px-2 py-1.5 text-xs text-muted-foreground">{labels.moreOptions(hiddenCount)}</p>
         )}
       </div>
     </div>

@@ -651,6 +651,42 @@ affected by every other filter as expected. See
 `packages/datagrid/demo/src/App.tsx`'s `FacetedNumberFilterDemo` for a full
 working `<DataGrid>` example with two interacting numeric columns.
 
+### `facetedSetOptions` + `EnumFilter` extensions + `<ActiveFilterBar>` + URL codec (0.42.0)
+
+Ported from MDMApp's Taxonomy Manager (`tableView.ts`, `FilterWidgets.tsx`,
+`ActiveFilterBar.tsx`):
+
+- **`facetedSetOptions(data, column, filter)`** (`filter/facetedValues.ts`)
+  — distinct values + counts (`FacetOption[]`), narrowed by every *other*
+  filter via the same `withoutColumn` exclusion `facetedNumberValues` uses.
+  Values selected in the column's own `in`/`notIn` stay listed with count 0.
+  Values are stringified (what `EnumFilter` emits); enum columns keep
+  `options` order/groups, others sort by label.
+- **`EnumFilter`** now takes `column: ColumnDef` (any type; `EnumColumn`
+  callers unchanged) plus optional `options` (overrides `column.options`),
+  shows `count`, `allowExclude` (`in`/`notIn` toggle, mode remembered while
+  nothing is selected) and renders at most 300 rows with a `moreOptions` hint.
+- **Scope cut: no "(Blank)" option.** The app turned null into `""` so a
+  blank could be picked and survive `notIn`; that doesn't match
+  `evaluate.ts`/`sql.py`/`meili.py`, where `in`/`notIn` never match null.
+  `facetedSetOptions` skips nulls instead. Use `isNull`/`isNotNull` if a
+  blank filter is needed.
+- **`<ActiveFilterBar filter columns onFilterChange maxChips>`**
+  (`filter/ActiveFilterBar.tsx`) — chips via `describeFilter` (values through
+  `defaultFormat`, booleans through `booleanYes/No`), operator words from the
+  new `filterLabels.operatorLabel`. Fixed `h-10` strip so the table never
+  moves. Works with `<DataGrid gridState onGridStateChange>`.
+- **URL codec** (`filter/urlState.ts`): `encodeGridStateSearch`,
+  `decodeGridStateSearch`, `validateGridStateSearch`. Tuples are `[field, op,
+  value?, 1?]` (trailing `1` = `ignoreCase`), validated against the new
+  runtime `FILTER_OPERATORS` (a `Record<FilterOperator, true>` under the
+  hood, so a new operator that isn't listed is a compile error) and
+  `UNARY_OPERATORS`. Multi-sort survives (the app kept one). No router
+  dependency.
+- `leafFilters` moved into `filter/types.ts` and is exported.
+
+See `FilterBarDemo` in `packages/datagrid/demo/src/App.tsx`.
+
 ### `filterLabels` — translating the filter UI (#72)
 
 Every user-facing string of the column-filter UI (header funnel
@@ -672,7 +708,7 @@ convention as `EditingOptions.saveLabel`: pass already-translated strings.
 - `dateLocale` (a date-fns `Locale`, e.g. `de` from `date-fns/locale`) is
   the one non-string key: it localizes DateRangeFilter's calendar and
   trigger summary.
-- `<TreeDataGrid>` renders no filter UI, so it has no such prop.
+- `<TreeDataGrid filterLabels>` (0.42.0) does the same for its opt-in sort/filter header controls.
 
 The demo's EN/DE toggle (`GERMAN_FILTER_LABELS` in
 `packages/datagrid/demo/src/App.tsx`) shows a full German set.
@@ -802,6 +838,28 @@ Uncontrolled by default (`<DataGrid>` manages resize state internally); pass
 `columnVisibility`) to persist/restore widths yourself, e.g. to `localStorage`
 the same way `<ColumnSelector persistKey>` does for visibility.
 
+**Table width under resizing (0.42.0).** Once every visible column has a
+width (`column.width` or a `columnSizing` entry) and there's no row-actions
+column, the `<table>` gets an explicit width (sum of columns + detail/
+selection columns) instead of `w-full` — same rule as `<TreeDataGrid>`'s
+`fixedTableWidth`. Before, `w-full table-fixed` spread spare container width
+over every column, so a dragged edge didn't follow the pointer. Body cells
+get `overflow-hidden text-ellipsis` while resizing is on.
+
+**`usePersistedColumnSizing(persistKey, columns)`** (0.42.0,
+`hooks/usePersistedColumnSizing.ts`) returns `{ columnSizing,
+onColumnSizingChange, reset, isCustomized }` for either grid's controlled
+props. It stores *overrides only* (`mergeSizing` drops a column dragged back
+to its explicit `width` and keeps hidden columns' overrides; a column with no
+`width` keeps its override at any size, else it would turn flexible mid-drag
+and un-fix the table width), so a column the user
+never touched keeps following its default in code. Storage lives under its
+own namespace, `bmsui-datagrid:column-sizing:<key>` (`sizingStorageKeyFor`,
+same reasoning as `orderStorageKeyFor`), and every read/write is in
+try/catch. Ported from MDMApp's Taxonomy Manager (`columnWidths.ts`). Its
+`resolveWidths`/`totalWidth` were not ported: the grid sizes its own table
+now.
+
 ## `<ColumnSelector>` — column visibility, grouping, persistence
 
 `packages/datagrid/src/column-selector/ColumnSelector.tsx` is a **controlled**
@@ -850,6 +908,11 @@ Notes for extending it:
   zero columns visible. `canHideGroup` (same file) still exists and is
   still exported/tested, but nothing in `ColumnSelector.tsx` itself calls it
   anymore now that there's no group-level action to guard.
+- **Reset** (0.42.0): `defaultVisibility` makes a "Reset columns" button
+  (`resetLabel`) appear; it restores the defaults, clears the persisted
+  visibility entry and calls `onReset` (wire to
+  `usePersistedColumnSizing().reset`). Disabled while `sameVisibility(columns,
+  visibility, defaultVisibility)` and `isCustomized` is false.
 - `persistKey`, if set, reads `localStorage["bmsui-datagrid:columns:" +
   persistKey]` once on mount (calling `onVisibilityChange` once, merged over
   whatever `visibility` was passed in) and writes on every subsequent
@@ -1038,6 +1101,32 @@ returns colliding keys.
   })}
 />
 ```
+
+Since 0.42.0 the caller's `className` comes *after* the zebra stripe in the
+row's `cn()`, so a caller's `bg-*` wins on odd rows too (before, twMerge
+dropped it there — MDMApp's "selection only showed on every other row").
+Same in `<TreeDataGrid>`. A pinned or structural cell (selection, expand,
+row actions) still paints its own opaque background over the row's.
+
+### `activeRowId` / `onActiveRowChange` — the highlighted row (0.42.0)
+
+Both grids. Independent of checkbox selection: one "active" row, e.g. the
+one a side panel shows. `lib/activeRow.ts`'s `activeRowProps` adds
+`aria-selected`, `data-active` and the `ACTIVE_ROW_CLASS` wash (after the
+zebra and the caller's class). With `onActiveRowChange` the row also gets
+`tabIndex=0`; a click toggles it unless it landed inside an inner control
+(`closest("button, a, input, …, [tabindex]")` that isn't the row itself — so
+inline-editing cells and the selection checkbox keep their own clicks), and
+Enter/Space only count when `event.target === event.currentTarget` (ported
+from MDMApp's `selectedRow.ts`). A caller's `getRowProps` `onClick`/
+`onKeyDown` still run first; `preventDefault()` there skips the toggle.
+
+### `cellClassName` / `headerClassName` — per-column classes (0.42.0)
+
+`BaseColumn.cellClassName` goes on every body cell of the column and on its
+group-summary and totals cells; `headerClassName` on its header cell. Both
+are merged *last* via `cn()`, so a `bg-*` tint wins over zebra/pinned
+backgrounds. Replaces MDMApp's `:nth-child` column-tint CSS. Both grids.
 
 ### `selectedIds` — controlled row selection
 
@@ -1539,11 +1628,35 @@ Generalizes a consuming app's contract tree list component (1343 lines,
 entirely bespoke, no shared abstraction) into a reusable component in
 `packages/datagrid/src/tree/`, reusing the same `ColumnDef<TRow>` system
 `<DataGrid>` uses rather than a
-second column-definition system. **Deliberately has no sorting or
-client-side filtering** — neither does `ContractTreelist`; hierarchy order
-comes from the backend, and "filtering" there means asking the server for a
-differently-shaped tree, which is app-level, not something this component
-generalizes.
+second column-definition system. Without `gridState` it has no sorting or
+filtering, matching `ContractTreelist` (hierarchy order from the backend).
+
+- **Sort + filter (0.42.0), opt-in and fully controlled.** Pass
+  `gridState` (`Pick<GridState, "filter" | "sort">`) **and**
+  `onGridStateChange`; then `sortable`/`filterable` columns render the same
+  header controls as `<DataGrid>` — both grids share
+  `grid/HeaderCellContent.tsx` (sort button / plain label + funnel popover;
+  the `<th>` stays per grid) and the pure `withColumnFilter`/
+  `withToggledSort` helpers from `useGridState.ts`. The grid runs
+  `tree/filterSortTree.ts` (ported from MDMApp's `treeView.ts`): a node
+  stays when it matches every filter or has a kept descendant (a node that
+  matches itself but has no matching children keeps *all* its children,
+  closed, so its chevron never expands to nothing); nodes kept
+  for a descendant come back in `expandedIds` and are merged open over
+  `expanded`; siblings are sorted at every level. Values go through
+  `getColumnValue` into a projected record, so `accessorFn` columns work and
+  operators match client mode exactly (`evaluateFilter`/`processClientData`).
+  A forced-open node the user collapses is tracked in local state keyed by
+  the filter's JSON, so it stays collapsed until the filter changes (without
+  this, `toggleExpand` would flip `expanded` underneath a forced `true` and
+  nothing would visibly happen). **Only loaded nodes** are searched — a lazy
+  node never expanded can't reveal a match. `filterDisplay: "row"` isn't
+  supported in the tree; such columns use the header popover. Shift-click
+  only adds a sort level with `enableMultiSort` (same as `<DataGrid>`). The
+  accessors (`getRowId`/`getChildren`/`columns`) are read through a ref, so
+  inline lambdas don't re-run the whole-tree filter every render. Also gained a
+  `filterLabels` prop (same as `<DataGrid>`'s). `OrgTreeDemo` in the demo
+  uses it.
 
 - **Accessor-based node shape**, not a required field shape on `TRow`
   (matches `<DataGrid>`'s `getRowId` convention): `getRowId`, `getChildren`
@@ -1618,7 +1731,11 @@ generalizes.
   `<tbody>`-level attachment above), so actual per-row DOM height — e.g. a
   multi-line label — is measured and corrected for after the fact, not just
   estimated. `maxBodyHeight` (default 480, becomes the scrollable
-  container's `max-height`) tunes the viewport.
+  container's `max-height`) tunes the viewport. Since 0.42.0 it also takes a
+  CSS length (`"65vh"`, `"100%"`), like `<DataGrid maxHeight>`; the root and
+  scroll div carry `h-full min-h-0`/`min-h-0` so `"100%"` fills a bounded
+  parent. The virtualizer measures the scroll element, so it isn't tied to a
+  pixel number.
 - **`rowActions`** reuses the exact `MenuItem<TRow>`/`ActionsMenu` contract
   `<DataGrid>`'s `rowActions` prop uses — a deliberate improvement over
   `ContractTreelist`'s always-visible bespoke icon buttons, for consistency

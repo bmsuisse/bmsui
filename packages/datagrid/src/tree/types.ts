@@ -4,6 +4,8 @@ import type { ErrorInput, GridStatusLabels } from "../components/status";
 import type { ColumnDef } from "../column/types";
 import type { ColumnVisibility } from "../column-selector/types";
 import type { EditingOptions } from "../edit/types";
+import type { FilterLabels } from "../filter/labels";
+import type { GridState } from "../filter/types";
 import type { MenuItem } from "../menu/types";
 
 /**
@@ -157,8 +159,12 @@ export interface TreeDataGridProps<TRow> extends TreeAccessors<TRow> {
   virtualizeThreshold?: number;
   /** Fixed row height estimate in pixels, used by the virtualizer. Defaults to 40. */
   estimatedRowHeight?: number;
-  /** Max height of the scrollable table body in pixels. Required for virtualization to have a viewport to scroll within. Defaults to 480. */
-  maxBodyHeight?: number;
+  /**
+   * Max height of the scroll container: pixels, or any CSS length (`"65vh"`,
+   * or `"100%"` to fill a bounded parent). Defaults to 480. The virtualizer
+   * measures the scroll element itself, so any length works.
+   */
+  maxBodyHeight?: number | string;
   /**
    * `data-testid` for the tree's own scrollable container — the element
    * `maxBodyHeight` actually applies to once virtualized. Omit for no
@@ -281,4 +287,27 @@ export interface TreeDataGridProps<TRow> extends TreeAccessors<TRow> {
    * `<DataGrid>`) for the full contract.
    */
   editing?: EditingOptions<TRow>;
+  /**
+   * Sort and filter, fully controlled — both must be supplied. Then every
+   * `sortable`/`filterable` column gets the same header sort toggle and
+   * filter popover `<DataGrid>` has, and the grid applies
+   * `filterSortTree`: a node stays when it or a loaded descendant matches,
+   * ancestors of a match open automatically, siblings sort at every level.
+   * Omit both for the original unsorted, unfiltered tree.
+   */
+  gridState?: Pick<GridState, "filter" | "sort">;
+  /** Shift-click a header to add a secondary sort level, same as `<DataGrid>`. Defaults to false. */
+  enableMultiSort?: boolean;
+  onGridStateChange?: (state: Pick<GridState, "filter" | "sort">) => void;
+  /**
+   * The highlighted ("active") row, by id — e.g. the row whose details a side
+   * panel shows. Independent of checkbox selection. The row gets
+   * `aria-selected`, `data-active` and a wash. With `onActiveRowChange` the
+   * row is also focusable, and a click (outside any inner control) or
+   * Enter/Space on the row itself toggles it.
+   */
+  activeRowId?: string | null;
+  onActiveRowChange?: (id: string | null) => void;
+  /** Translated filter UI strings, same as `<DataGrid filterLabels>`. */
+  filterLabels?: Partial<FilterLabels>;
 }

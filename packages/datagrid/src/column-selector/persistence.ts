@@ -63,3 +63,56 @@ export function readPersistedColumnOrder(persistKey: string): string[] | null {
 export function writePersistedColumnOrder(persistKey: string, order: readonly string[]): void {
   window.localStorage.setItem(orderStorageKeyFor(persistKey), JSON.stringify(order));
 }
+
+export function clearPersistedVisibility(persistKey: string): void {
+  try {
+    window.localStorage.removeItem(storageKeyFor(persistKey));
+  } catch {
+    // storage unavailable: nothing to clear
+  }
+}
+
+// Own namespace segment, same reasoning as `orderStorageKeyFor` above.
+export function sizingStorageKeyFor(persistKey: string): string {
+  return `bmsui-datagrid:column-sizing:${persistKey}`;
+}
+
+/**
+ * Keeps only finite positive numbers, clamped to `minWidth`; anything else in
+ * a corrupt or hand-edited entry is dropped. Never throws.
+ */
+export function parseStoredWidths(raw: string | null, minWidth = 40): Record<string, number> {
+  if (!raw) return {};
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!isPlainObject(parsed)) return {};
+    const widths: Record<string, number> = {};
+    for (const [id, value] of Object.entries(parsed)) {
+      if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+        widths[id] = Math.max(minWidth, Math.round(value));
+      }
+    }
+    return widths;
+  } catch {
+    return {};
+  }
+}
+
+/** Any storage failure (blocked, private window, corrupt value) reads as "no overrides". */
+export function readPersistedColumnSizing(persistKey: string): Record<string, number> {
+  try {
+    return parseStoredWidths(window.localStorage.getItem(sizingStorageKeyFor(persistKey)));
+  } catch {
+    return {};
+  }
+}
+
+/** An empty `sizing` removes the entry, so a reset leaves nothing behind. */
+export function writePersistedColumnSizing(persistKey: string, sizing: Record<string, number>): void {
+  try {
+    if (Object.keys(sizing).length === 0) window.localStorage.removeItem(sizingStorageKeyFor(persistKey));
+    else window.localStorage.setItem(sizingStorageKeyFor(persistKey), JSON.stringify(sizing));
+  } catch {
+    // storage unavailable: the widths just won't survive a reload
+  }
+}

@@ -8,12 +8,18 @@ import type {
   NumberColumn,
 } from "@bmsuisse/datagrid";
 import {
+  ActiveFilterBar,
   ColumnSelector,
   DataGrid,
+  decodeGridStateSearch,
+  encodeGridStateSearch,
+  EnumFilter,
+  facetedSetOptions,
   facetedNumberValues,
   NumberComparisonFilter,
   NumberHistogramFilter,
   TreeDataGrid,
+  usePersistedColumnSizing,
 } from "@bmsuisse/datagrid";
 import { de } from "date-fns/locale";
 import type { ReactElement } from "react";
@@ -138,6 +144,15 @@ const GERMAN_FILTER_LABELS: Partial<FilterLabels> = {
   dateThisMonth: "Dieser Monat",
   dateCustom: "Benutzerdefiniert",
   dateLocale: de,
+  enumIsAnyOf: "ist eines von",
+  enumIsNoneOf: "ist keines von",
+  moreOptions: (hiddenCount) => `${hiddenCount} weitere, tippen zum Eingrenzen`,
+  activeFilters: (count) => `Filter (${count}):`,
+  noActiveFilters: "Keine Filter",
+  noActiveFiltersHint: "Filter über das Symbol im Spaltenkopf setzen.",
+  clearAllFilters: "Alle Filter entfernen",
+  moreFilters: (hiddenCount) => `+${hiddenCount} weitere`,
+  removeFilter: (text) => `Filter entfernen: ${text}`,
 };
 
 const DEFAULT_GRID_STATE: GridState = { filter: null, sort: [], page: 0, pageSize: 20 };
@@ -239,8 +254,20 @@ interface OrgRow {
 }
 
 const orgTreeColumns: ColumnDef<OrgRow>[] = [
-  { id: "name", type: "string", header: "Name", accessorKey: "name", width: 260 },
-  { id: "role", type: "string", header: "Role", accessorKey: "role" },
+  { id: "name", type: "string", header: "Name", accessorKey: "name", width: 260, sortable: true, filterable: true },
+  {
+    id: "role",
+    type: "enum",
+    header: "Role",
+    accessorKey: "role",
+    sortable: true,
+    filterable: true,
+    options: [
+      { value: "Department", label: "Department" },
+      { value: "Team", label: "Team" },
+      { value: "Employee", label: "Employee" },
+    ],
+  },
 ];
 
 const ORG_ROOTS: OrgRow[] = [
@@ -280,11 +307,16 @@ function useFakeLoadChildren(): (row: OrgRow) => Promise<OrgRow[]> {
     });
 }
 
-function OrgTreeDemo(): ReactElement {
+export function OrgTreeDemo(): ReactElement {
   const loadChildren = useFakeLoadChildren();
+  // Controlled sort + filter: header toggles and funnels appear, and only
+  // *loaded* nodes are searched (expand Engineering first, then filter "Alice").
+  const [gridState, setGridState] = useState<Pick<GridState, "filter" | "sort">>({ filter: null, sort: [] });
   return (
     <TreeDataGrid
       columns={orgTreeColumns}
+      gridState={gridState}
+      onGridStateChange={setGridState}
       enableColumnResizing
       data={ORG_ROOTS}
       getRowId={(row) => row.id}
@@ -613,6 +645,149 @@ function FacetedNumberFilterDemo(): ReactElement {
   );
 }
 
+// --- filter UX: faceted checklists with counts and "is none of", an
+// ActiveFilterBar strip, and the filter/sort mirrored into the URL (`?xf=`/
+// `?xs=`) so a reload or a shared link restores it.
+interface Shipment {
+  id: string;
+  region: string;
+  carrier: string;
+  weight: number;
+}
+
+const REGIONS = ["EMEA", "APAC", "AMER", "LATAM"];
+const CARRIERS = ["DHL", "UPS", "FedEx", "Post", "Planzer"];
+const SHIPMENTS: Shipment[] = Array.from({ length: 40 }, (_, i) => ({
+  id: `s${i + 1}`,
+  region: REGIONS[i % REGIONS.length]!,
+  carrier: CARRIERS[(i * 3) % CARRIERS.length]!,
+  weight: ((i * 37) % 90) + 1,
+}));
+
+function setColumn(column: ColumnDef<Shipment>): ColumnDef<Shipment> {
+  return {
+    ...column,
+    sortable: true,
+    filterable: true,
+    renderFilter: (value, onChange, filter) => (
+      <EnumFilter
+        bare
+        allowExclude
+        column={column}
+        value={value}
+        onChange={onChange}
+        options={facetedSetOptions(SHIPMENTS, column, filter)}
+      />
+    ),
+  };
+}
+
+const shipmentColumns: ColumnDef<Shipment>[] = [
+  { id: "id", type: "string", header: "Shipment", accessorKey: "id" },
+  setColumn({ id: "region", type: "string", header: "Region", accessorKey: "region" }),
+  setColumn({ id: "carrier", type: "string", header: "Carrier", accessorKey: "carrier" }),
+  { id: "weight", type: "number", header: "Weight (kg)", accessorKey: "weight", sortable: true, filterable: true },
+];
+
+const URL_PREFIX = "x";
+
+function readGridStateFromUrl(): GridState {
+  const params = new URLSearchParams(window.location.search);
+  const search: Record<string, unknown> = {};
+  for (const key of [`${URL_PREFIX}f`, `${URL_PREFIX}s`]) {
+    try {
+      search[key] = JSON.parse(params.get(key) ?? "null");
+    } catch {
+      // a hand-edited param: ignore it
+    }
+  }
+  return { ...decodeGridStateSearch(search, URL_PREFIX), page: 0, pageSize: 10 };
+}
+
+function writeGridStateToUrl(state: GridState): void {
+  const params = new URLSearchParams(window.location.search);
+  for (const [key, value] of Object.entries(encodeGridStateSearch(state, URL_PREFIX))) {
+    if (value === undefined) params.delete(key);
+    else params.set(key, JSON.stringify(value));
+  }
+  window.history.replaceState({}, "", `?${params.toString()}`);
+}
+
+export function FilterBarDemo(): ReactElement {
+  const [gridState, setGridState] = useState<GridState>(readGridStateFromUrl);
+  function update(next: GridState): void {
+    setGridState(next);
+    writeGridStateToUrl(next);
+  }
+  return (
+    <div className="flex flex-col gap-2" data-testid="filter-bar-demo">
+      <p className="text-sm text-muted-foreground">
+        Region and Carrier list only values the other filters leave, with counts, and can switch to
+        "is none of". Filter, then reload: the URL brings it back.
+      </p>
+      <ActiveFilterBar
+        filter={gridState.filter}
+        columns={shipmentColumns}
+        onFilterChange={(filter) => update({ ...gridState, filter, page: 0 })}
+      />
+      <DataGrid
+        columns={shipmentColumns}
+        dataSource={{ mode: "client", data: SHIPMENTS }}
+        getRowId={(row) => row.id}
+        gridState={gridState}
+        onGridStateChange={update}
+      />
+    </div>
+  );
+}
+
+// --- row + column styling: an active row (click, or Tab + Enter) that keeps
+// its wash on odd and even rows, a tinted column via `cellClassName`/
+// `headerClassName`, and a tree filling a fixed-height box via
+// `maxBodyHeight="100%"`.
+const tintedShipmentColumns: ColumnDef<Shipment>[] = shipmentColumns.map((column) =>
+  column.id === "weight"
+    ? { ...column, cellClassName: "bg-amber-500/10", headerClassName: "bg-amber-500/20" }
+    : column,
+);
+
+// Own labels, so e2e locators for the virtualized tree's "Row N" stay unique.
+const FILL_TREE_ROWS: BigTreeRow[] = Array.from({ length: 60 }, (_, i) => ({ id: `fill-${i + 1}`, name: `Node ${i + 1}` }));
+
+export function RowStylingDemo(): ReactElement {
+  const [activeId, setActiveId] = useState<string | null>("s2");
+  const [activeTreeId, setActiveTreeId] = useState<string | null>(null);
+  return (
+    <div className="grid gap-4 md:grid-cols-2" data-testid="row-styling-demo">
+      <div>
+        <p className="mb-2 text-sm text-muted-foreground">Active row: {activeId ?? "none"}</p>
+        <DataGrid
+          columns={tintedShipmentColumns}
+          dataSource={{ mode: "client", data: SHIPMENTS }}
+          getRowId={(row) => row.id}
+          initialState={{ filter: null, sort: [], page: 0, pageSize: 8 }}
+          activeRowId={activeId}
+          onActiveRowChange={setActiveId}
+        />
+      </div>
+      <div className="flex h-80 flex-col">
+        <p className="mb-2 text-sm text-muted-foreground">This tree fills its 20rem box.</p>
+        <div className="min-h-0 flex-1">
+          <TreeDataGrid
+            columns={bigTreeColumns}
+            data={FILL_TREE_ROWS}
+            getRowId={(row) => row.id}
+            getChildren={() => undefined}
+            maxBodyHeight="100%"
+            activeRowId={activeTreeId}
+            onActiveRowChange={setActiveTreeId}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // --- column pinning demo: enough columns to force horizontal scroll (via
 // the max-w-md wrapper below), with the leftmost column pinned so it stays
 // visible while scrolling the rest.
@@ -672,6 +847,50 @@ function PinnedColumnsDemo(): ReactElement {
         dataSource={{ mode: "client", data: WIDE_ROWS }}
         getRowId={(row) => row.id}
         enableColumnResizing
+      />
+    </div>
+  );
+}
+
+// --- persisted widths + reset: the table is narrower than its container, so
+// a dragged edge must follow the pointer instead of the spare width being
+// spread over every column. Widths and visibility survive a reload; "Reset
+// columns" in the selector puts both back.
+const persistedColumns: ColumnDef<WideRow>[] = wideColumns.map(({ pinned: _pinned, ...column }) => column);
+const PERSISTED_DEFAULT_VISIBILITY: ColumnVisibility = { lastRestocked: false };
+
+export function PersistedColumnsDemo(): ReactElement {
+  const sizing = usePersistedColumnSizing("demo-persisted-columns", persistedColumns);
+  const [visibility, setVisibility] = useState<ColumnVisibility>(PERSISTED_DEFAULT_VISIBILITY);
+  return (
+    <div data-testid="persisted-columns-demo">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <p className="text-sm text-muted-foreground">
+          Resize a column, hide one, then reload — both come back. Reset lives in the Columns dialog.
+        </p>
+        <ColumnSelector
+          columns={persistedColumns}
+          visibility={visibility}
+          onVisibilityChange={setVisibility}
+          persistKey="demo-persisted-columns"
+          defaultVisibility={PERSISTED_DEFAULT_VISIBILITY}
+          isCustomized={sizing.isCustomized}
+          onReset={sizing.reset}
+          trigger={
+            <button type="button" className="rounded-md border px-3 py-1 text-sm">
+              Table layout
+            </button>
+          }
+        />
+      </div>
+      <DataGrid
+        columns={persistedColumns}
+        dataSource={{ mode: "client", data: WIDE_ROWS }}
+        getRowId={(row) => row.id}
+        columnVisibility={visibility}
+        enableColumnResizing
+        columnSizing={sizing.columnSizing}
+        onColumnSizingChange={sizing.onColumnSizingChange}
       />
     </div>
   );
@@ -1329,9 +1548,22 @@ export function App(): ReactElement {
       </h2>
       <FacetedNumberFilterDemo />
 
+      <h2 className="mb-2 mt-8 text-lg font-semibold">
+        Filter UX demo — faceted checklists, active-filter chips, URL state
+      </h2>
+      <FilterBarDemo />
+
+      <h2 className="mb-2 mt-8 text-lg font-semibold">
+        Row + column styling demo — active row, column tint, tree filling its box
+      </h2>
+      <RowStylingDemo />
+
       <h2 className="mb-2 mt-8 text-lg font-semibold">Column pinning + resize demo</h2>
       <PinnedColumnsDemo />
       <PinnedAutoLayoutDemo />
+
+      <h2 className="mb-2 mt-8 text-lg font-semibold">Persisted column widths + reset demo</h2>
+      <PersistedColumnsDemo />
 
       <h2 className="mb-2 mt-8 text-lg font-semibold">headerGroup demo — spanning header cells</h2>
       <HeaderGroupDemo />

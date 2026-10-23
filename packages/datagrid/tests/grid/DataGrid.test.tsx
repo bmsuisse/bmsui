@@ -1021,6 +1021,37 @@ describe("DataGrid (column resizing)", () => {
     expect(screen.getByRole("columnheader", { name: /Age/ })).toHaveStyle({ width: "300px" });
   });
 
+  it("sizes the table to its columns once every column has a width, so a dragged edge follows the pointer", () => {
+    render(
+      <DataGrid
+        columns={columns}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        enableColumnResizing
+        columnSizing={{ name: 120, age: 80 }}
+        onColumnSizingChange={vi.fn()}
+      />,
+    );
+    const table = screen.getByRole("table");
+    expect(table).toHaveStyle({ width: "200px" });
+    expect(table).not.toHaveClass("w-full");
+    expect(screen.getByRole("cell", { name: "Alice" })).toHaveClass("overflow-hidden", "text-ellipsis");
+  });
+
+  it("keeps filling the container while a column has no width yet", () => {
+    render(
+      <DataGrid
+        columns={columns}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        enableColumnResizing
+        columnSizing={{ name: 120 }}
+        onColumnSizingChange={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole("table")).toHaveClass("w-full");
+  });
+
   // Regression test: with no `columnSizing`/`onColumnSizingChange` passed (the
   // common, uncontrolled case), <DataGrid> used to never give `useTable` a
   // `state.columnSizing`/`onColumnSizingChange` at all, so every drag was

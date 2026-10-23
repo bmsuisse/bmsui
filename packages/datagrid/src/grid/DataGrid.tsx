@@ -1,9 +1,4 @@
-import {
-  BarsArrowDownIcon,
-  BarsArrowUpIcon,
-  ChevronRightIcon,
-  FunnelIcon,
-} from "@heroicons/react/24/outline";
+import { ChevronRightIcon } from "@heroicons/react/24/outline";
 import type {
   CellContext,
   ColumnDef as TanstackColumnDef,
@@ -38,12 +33,11 @@ import { alignClassName } from "../column/format";
 import type { ColumnDef } from "../column/types";
 import { getColumnValue, isEditable, isFilterable, isSortable } from "../column/types";
 import { Button } from "../components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
 import { EditingBar } from "../edit/EditingBar";
 import type { EditingCellContext } from "../edit/editingState";
 import { useEditingState } from "../edit/editingState";
 import { renderEditableCell } from "../edit/renderEditableCell";
-import { FilterLabelsProvider, useFilterLabels } from "../filter/labels";
+import { FilterLabelsProvider } from "../filter/labels";
 import { renderDefaultFilterWidget } from "../filter/registry";
 import type { FilterDescriptor } from "../filter/types";
 import { useGroupExpansion } from "../hooks/useGroupExpansion";
@@ -51,6 +45,8 @@ import { useStickyGroupHeaderTop } from "../hooks/useStickyGroupHeaderTop";
 import { useVisibleColumns } from "../hooks/useVisibleColumns";
 import { cn, stopRowClick } from "../lib/utils";
 import { SELECTION_COLUMN_WIDTH } from "../lib/structuralColumns";
+import { ACTIVE_ROW_CLASS, activeRowProps } from "../lib/activeRow";
+import { HeaderCellContent } from "./HeaderCellContent";
 import { ActionsMenu } from "../menu/ActionsMenu";
 import { groupRows } from "./groupRows";
 import { processClientData } from "./processClientData";
@@ -301,12 +297,13 @@ export function DataGrid<TRow extends RowData>({
   expandedGroups: controlledExpandedGroups,
   onExpandedGroupsChange,
   zebra = true,
+  activeRowId,
+  onActiveRowChange,
   showTotals = false,
   editing,
   cellEditing,
   filterLabels,
 }: DataGridProps<TRow>): ReactElement {
-  const resolvedFilterLabels = useFilterLabels(filterLabels);
   // Not supported together with `groupBy` yet — `cellEditingRowIds` below is
   // built from the flat `tableRows` list, but rendering only shows expanded-
   // group rows via `groupedBuckets`'s own bucketed order, so a keyboard-
@@ -542,6 +539,18 @@ export function DataGrid<TRow extends RowData>({
     (showDetailColumn ? DETAIL_COLUMN_WIDTH : 0) + (showSelectionColumn ? SELECTION_COLUMN_WIDTH : 0);
   const trailingStructuralWidth = showRowActionsColumn ? ROW_ACTIONS_COLUMN_WIDTH : 0;
 
+  // Same rule as `<TreeDataGrid>`'s `fixedTableWidth`: once every visible column
+  // has an explicit or dragged width and there's no flexible row-actions
+  // column, `w-full table-fixed` would spread the container's spare width over
+  // every column, so a dragged edge wouldn't follow the pointer. Size the table
+  // to its columns instead.
+  const fixedTableWidth =
+    enableColumnResizing &&
+    !showRowActionsColumn &&
+    visibleColumns.every((column) => column.width !== undefined || columnSizing[column.id] !== undefined)
+      ? visibleColumns.reduce((sum, column) => sum + columnSize(column.id), leadingStructuralWidth)
+      : undefined;
+
   // Memoized on `columnSizing` (rather than recomputed every render) because
   // every scroll tick re-renders this whole component (the virtualizer's own
   // state lives in React state) — without this, scrolling a wide/pinned grid
@@ -663,9 +672,11 @@ export function DataGrid<TRow extends RowData>({
   const BODY_TD_BASE_CLASS = "border-b border-border p-2";
   function bodyCellClassAndStyle(column: ColumnDef<TRow>): { className: string; classNameOdd: string; style?: CSSProperties } {
     const pinnedProps = column.pinned || enableColumnResizing ? pinnedCellProps(column) : undefined;
+    // Fixed layout lets a narrowed column's text paint over its neighbours unless clipped.
+    const base = enableColumnResizing ? `${BODY_TD_BASE_CLASS} overflow-hidden text-ellipsis` : BODY_TD_BASE_CLASS;
     return {
-      className: pinnedProps?.className ? `${BODY_TD_BASE_CLASS} ${pinnedProps.className}` : BODY_TD_BASE_CLASS,
-      classNameOdd: pinnedProps?.classNameOdd ? `${BODY_TD_BASE_CLASS} ${pinnedProps.classNameOdd}` : BODY_TD_BASE_CLASS,
+      className: cn(base, pinnedProps?.className, column.cellClassName),
+      classNameOdd: cn(base, pinnedProps?.classNameOdd, column.cellClassName),
       style: pinnedProps?.style,
     };
   }
@@ -705,6 +716,7 @@ export function DataGrid<TRow extends RowData>({
       align,
       pinnedProps.className,
       options.sticky && (column.pinned ? "sticky top-0 z-30 bg-muted" : "sticky top-0 z-20 bg-muted"),
+      column.headerClassName,
     );
     return { className, style: pinnedProps.style };
   }
@@ -1308,10 +1320,12 @@ export function DataGrid<TRow extends RowData>({
     const rowProps = getRowProps?.(row.original);
     const rowTestId = getRowTestId?.(row.original) ?? `row-${row.id}`;
     const isOddRow = zebra && row.index % 2 === 1;
+    const isActive = activeRowId === row.id;
     return (
       <tbody key={row.id} ref={measureRef} data-index={dataIndex}>
         <tr
           {...rowProps}
+          {...activeRowProps(row.id, activeRowId, onActiveRowChange, rowProps)}
           data-testid={rowTestId}
           // `cn()` (clsx+twMerge) is only needed here when a caller-supplied
           // `getRowProps().className` might itself carry a conflicting
@@ -1319,9 +1333,16 @@ export function DataGrid<TRow extends RowData>({
           // the overwhelmingly common case (no `getRowProps` at all) skips
           // straight to a plain string, avoiding that per-row allocation
           // for every grid that doesn't use the feature.
+          // The caller's class (then the active wash) comes after the zebra
+          // stripe so twMerge keeps *its* `bg-*` on odd rows too.
           className={
-            rowProps?.className
-              ? cn("divide-x divide-border", rowProps.className as string, isOddRow && "bg-foreground/5")
+            rowProps?.className || isActive
+              ? cn(
+                  "divide-x divide-border",
+                  isOddRow && "bg-foreground/5",
+                  rowProps?.className as string | undefined,
+                  isActive && ACTIVE_ROW_CLASS,
+                )
               : `divide-x divide-border${isOddRow ? " bg-foreground/5" : ""}`
           }
         >
@@ -1421,7 +1442,7 @@ export function DataGrid<TRow extends RowData>({
       return (
         <td
           key={column.id}
-          className={cn(cellProps?.className, bgClassName, "font-medium", alignClassName(column))}
+          className={cn(cellProps?.className, bgClassName, "font-medium", alignClassName(column), column.cellClassName)}
           style={cellProps?.style}
         >
           {column.summary?.(rows)}
@@ -1484,6 +1505,7 @@ export function DataGrid<TRow extends RowData>({
                   alignClassName(column),
                   pinnedProps.className,
                   "sticky bottom-0 z-20 bg-muted",
+                  column.cellClassName,
                 )}
                 style={pinnedProps.style}
               >
@@ -1641,7 +1663,14 @@ export function DataGrid<TRow extends RowData>({
           `getSize()`). Omitted otherwise so a grid with no explicit widths
           keeps natural, content-driven column sizing.
         */}
-        <table className={cn("w-full border-collapse text-sm", enableColumnResizing && "table-fixed")}>
+        <table
+          className={cn(
+            "border-collapse text-sm",
+            fixedTableWidth === undefined && "w-full",
+            enableColumnResizing && "table-fixed",
+          )}
+          style={fixedTableWidth === undefined ? undefined : { width: fixedTableWidth }}
+        >
         <thead ref={theadRef} className="bg-muted">
           {table.getHeaderGroups().map((headerGroup) => {
             // `headerById` backs both the optional spanning-label row below
@@ -1659,7 +1688,6 @@ export function DataGrid<TRow extends RowData>({
               const sortable = isSortable(column);
               const filterable = isFilterable(column) && column.filterDisplay !== "row";
               const cellProps = leafHeaderCellPropsByColumn.get(column.id);
-              const headerContent = column.renderHeader ? column.renderHeader(column) : column.header;
               const headerLabelId = `${header.id}-label`;
               return (
                 <th
@@ -1683,57 +1711,18 @@ export function DataGrid<TRow extends RowData>({
                   // live outside it as siblings.
                   aria-labelledby={headerLabelId}
                 >
-                  <div className="flex items-center gap-1">
-                    {sortable ? (
-                      <button
-                        type="button"
-                        id={headerLabelId}
-                        data-testid={`sort-button-${column.id}`}
-                        className="flex items-center gap-1 rounded-sm px-1 hover:bg-accent hover:text-accent-foreground"
-                        onClick={(event) =>
-                          toggleSort(column.id, enableMultiSort && event.shiftKey, column.sortDescFirst === true)
-                        }
-                      >
-                        {headerContent}
-                        {sortEntry?.dir === "asc" && <BarsArrowUpIcon className="h-3 w-3" aria-hidden />}
-                        {sortEntry?.dir === "desc" && <BarsArrowDownIcon className="h-3 w-3" aria-hidden />}
-                      </button>
-                    ) : (
-                      // Not wrapped in a `<button>` (unlike the sortable branch above): a
-                      // disabled `<button>` swallows pointer events for its entire subtree,
-                      // silently breaking any interactive content a column's own `renderHeader`
-                      // embeds directly (bare filter inputs, "select/reject all" buttons) —
-                      // clicks never reach them at all, even though nothing looks wrong visually.
-                      <div id={headerLabelId} className="flex items-center gap-1 px-1">
-                        {headerContent}
-                      </div>
-                    )}
-                    {filterable && (
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            data-testid={`filter-trigger-${column.id}`}
-                            aria-label={resolvedFilterLabels.filterAriaLabel(column.header)}
-                          >
-                            <FunnelIcon
-                              className={cn(
-                                "h-3 w-3",
-                                filtersByColumn.get(column.id) !== undefined
-                                  ? "opacity-100 text-primary"
-                                  : "opacity-40",
-                              )}
-                              aria-hidden
-                            />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto max-w-[var(--radix-popover-content-available-width)]">
-                          {renderFilterWidget(column)}
-                        </PopoverContent>
-                      </Popover>
-                    )}
-                  </div>
+                  <HeaderCellContent
+                    column={column}
+                    labelId={headerLabelId}
+                    sortDir={sortEntry?.dir}
+                    onToggleSort={
+                      sortable
+                        ? (event) => toggleSort(column.id, enableMultiSort && event.shiftKey, column.sortDescFirst === true)
+                        : undefined
+                    }
+                    renderFilter={filterable ? () => renderFilterWidget(column) : undefined}
+                    filterActive={filtersByColumn.get(column.id) !== undefined}
+                  />
                   {enableColumnResizing && (
                     <div
                       data-testid={`resize-handle-${column.id}`}

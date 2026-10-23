@@ -74,6 +74,17 @@ Python package. The public demo deployed from this docs site swaps that
 backend out for a bundled in-memory dataset in `"client"` mode instead — the
 same component, a different `DataSource`.
 
+## Row options
+
+- **`getRowProps(row)`** spreads onto the row's `<tr>` (`onClick`,
+  `className`, `data-*`). A `bg-*` in its `className` wins over the zebra
+  stripe on every row.
+- **`activeRowId` / `onActiveRowChange`** — one highlighted row (e.g. the one
+  a side panel shows), separate from checkbox selection. The row gets
+  `aria-selected`, `data-active` and a wash; with `onActiveRowChange` it is
+  focusable, and a click (not on a button or input inside it) or Enter/Space
+  toggles it. `<TreeDataGrid>` has the same props.
+
 ## Shared `GridState`/`FilterDescriptor` contract
 
 `GridState`, `FilterDescriptor`, `CompositeFilterDescriptor`, and

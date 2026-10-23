@@ -91,6 +91,14 @@ export interface BaseColumn<TRow> {
    */
   renderHeader?: (column: BaseColumn<TRow>) => ReactNode;
   /**
+   * Extra classes on every body cell of this column (and its summary/totals
+   * cells), merged last so e.g. a `bg-*` tint wins over the zebra stripe or a
+   * pinned cell's own background. Both grids.
+   */
+  cellClassName?: string;
+  /** Extra classes on this column's header cell, merged last. Both grids. */
+  headerClassName?: string;
+  /**
    * Opt-in: defaults to false — must be explicitly set (or return true) for
    * `<DataGrid>` to render this column's cells as inline editors. A function
    * makes it conditional per row (e.g. a "locked" row that can't be

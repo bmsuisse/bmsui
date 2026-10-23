@@ -408,3 +408,49 @@ describe("ColumnSelector: column-order localStorage persistence", () => {
     expect(window.localStorage.getItem(orderStorageKeyFor("orders"))).toBeNull();
   });
 });
+
+describe("ColumnSelector: reset", () => {
+  it("renders no reset button without defaultVisibility", async () => {
+    render(<ColumnSelector columns={columns} visibility={{}} onVisibilityChange={vi.fn()} />);
+    await openDialog();
+    expect(screen.queryByTestId("column-selector-reset")).not.toBeInTheDocument();
+  });
+
+  it("is disabled while visibility equals the defaults and nothing else is customized", async () => {
+    render(
+      <ColumnSelector columns={columns} visibility={{ phone: true }} onVisibilityChange={vi.fn()} defaultVisibility={{}} />,
+    );
+    await openDialog();
+    expect(screen.getByRole("button", { name: "Reset columns" })).toBeDisabled();
+  });
+
+  it("stays enabled when isCustomized says something else differs", async () => {
+    render(
+      <ColumnSelector columns={columns} visibility={{}} onVisibilityChange={vi.fn()} defaultVisibility={{}} isCustomized />,
+    );
+    await openDialog();
+    expect(screen.getByRole("button", { name: "Reset columns" })).toBeEnabled();
+  });
+
+  it("restores the defaults, clears the persisted entry and calls onReset", async () => {
+    writePersistedVisibility("orders", { email: false });
+    const onVisibilityChange = vi.fn();
+    const onReset = vi.fn();
+    render(
+      <ColumnSelector
+        columns={columns}
+        visibility={{ email: false }}
+        onVisibilityChange={onVisibilityChange}
+        persistKey="orders"
+        defaultVisibility={{ phone: false }}
+        onReset={onReset}
+        resetLabel="Zurücksetzen"
+      />,
+    );
+    await openDialog();
+    await userEvent.click(screen.getByRole("button", { name: "Zurücksetzen" }));
+    expect(onVisibilityChange).toHaveBeenLastCalledWith({ phone: false });
+    expect(window.localStorage.getItem(storageKeyFor("orders"))).toBeNull();
+    expect(onReset).toHaveBeenCalledTimes(1);
+  });
+});
