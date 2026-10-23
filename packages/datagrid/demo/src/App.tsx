@@ -307,7 +307,7 @@ function useFakeLoadChildren(): (row: OrgRow) => Promise<OrgRow[]> {
     });
 }
 
-function OrgTreeDemo(): ReactElement {
+export function OrgTreeDemo(): ReactElement {
   const loadChildren = useFakeLoadChildren();
   // Controlled sort + filter: header toggles and funnels appear, and only
   // *loaded* nodes are searched (expand Engineering first, then filter "Alice").
@@ -713,7 +713,7 @@ function writeGridStateToUrl(state: GridState): void {
   window.history.replaceState({}, "", `?${params.toString()}`);
 }
 
-function FilterBarDemo(): ReactElement {
+export function FilterBarDemo(): ReactElement {
   const [gridState, setGridState] = useState<GridState>(readGridStateFromUrl);
   function update(next: GridState): void {
     setGridState(next);
@@ -754,7 +754,7 @@ const tintedShipmentColumns: ColumnDef<Shipment>[] = shipmentColumns.map((column
 // Own labels, so e2e locators for the virtualized tree's "Row N" stay unique.
 const FILL_TREE_ROWS: BigTreeRow[] = Array.from({ length: 60 }, (_, i) => ({ id: `fill-${i + 1}`, name: `Node ${i + 1}` }));
 
-function RowStylingDemo(): ReactElement {
+export function RowStylingDemo(): ReactElement {
   const [activeId, setActiveId] = useState<string | null>("s2");
   const [activeTreeId, setActiveTreeId] = useState<string | null>(null);
   return (
@@ -859,7 +859,7 @@ function PinnedColumnsDemo(): ReactElement {
 const persistedColumns: ColumnDef<WideRow>[] = wideColumns.map(({ pinned: _pinned, ...column }) => column);
 const PERSISTED_DEFAULT_VISIBILITY: ColumnVisibility = { lastRestocked: false };
 
-function PersistedColumnsDemo(): ReactElement {
+export function PersistedColumnsDemo(): ReactElement {
   const sizing = usePersistedColumnSizing("demo-persisted-columns", persistedColumns);
   const [visibility, setVisibility] = useState<ColumnVisibility>(PERSISTED_DEFAULT_VISIBILITY);
   return (
