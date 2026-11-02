@@ -8,8 +8,8 @@ export interface StepperStep {
   n: number;
   /** Visible label under the chip. */
   label: string;
-  /** Small uppercase caption under the label (e.g. a phase/section name). */
-  phase: string;
+  /** Small uppercase caption under the label (e.g. a phase/section name). Omit to render no caption. */
+  phase?: string;
 }
 
 export interface StepperProps {
@@ -31,12 +31,22 @@ export interface StepperProps {
   scrollTestId?: string;
   /** `data-testid` for the trailing `onNew` button, when rendered. */
   newTestId?: string;
+  /**
+   * Minimum width of the steps track; below it the track scrolls horizontally instead of
+   * shrinking further (a number is px, a string is any CSS length, e.g. `"40rem"`). By default
+   * the track has no fixed minimum: it fills the available width and only scrolls once the
+   * chips themselves no longer fit. Set it to give the chips more room than their own content.
+   */
+  minWidth?: number | string;
+  /** Extra classes for the root element (e.g. to constrain or centre the stepper). */
+  className?: string;
 }
 
 /**
- * Numbered-chip wizard progress indicator: a horizontally-scrolling row of
- * step chips (done/active/upcoming, connected by a line that fills in as
- * steps complete) plus an optional trailing "start over" button. Replaces
+ * Numbered-chip wizard progress indicator: a row of step chips
+ * (done/active/upcoming, connected by a line that fills in as steps complete)
+ * that scrolls horizontally only when the chips don't fit, plus an optional
+ * trailing "start over" button. Replaces
  * the same shape hand-rolled independently by more than one multi-step
  * wizard.
  *
@@ -58,6 +68,8 @@ export function Stepper({
   newLabel = "New",
   scrollTestId = "stepper-scroll",
   newTestId,
+  minWidth,
+  className,
 }: StepperProps) {
   const stepRefs = useRef(new Map<number, HTMLButtonElement>());
 
@@ -70,13 +82,16 @@ export function Stepper({
     // onNew is pinned outside the horizontally-scrolling region below (a sibling of
     // it, not a child) so its own edge never scrolls off-screen along with the
     // later steps once the scroller's min-width doesn't fit the viewport.
-    <div className="flex w-full shrink-0 items-center gap-2">
+    <div className={cn("flex w-full shrink-0 items-center gap-2", className)}>
       <nav aria-label={navLabel} className="min-w-0 flex-1">
         <div
           data-testid={scrollTestId}
           className="flex w-full items-center gap-0 overflow-x-auto px-2 py-1"
         >
-          <ol className="flex min-w-[700px] flex-1 items-start">
+          <ol
+            className={cn("flex flex-1 items-start", minWidth === undefined && "min-w-fit")}
+            style={minWidth === undefined ? undefined : { minWidth }}
+          >
             {steps.map(({ n, label, phase }, i) => {
               const done = step > n;
               const active = step === n;
@@ -122,9 +137,11 @@ export function Stepper({
                     >
                       {label}
                     </span>
-                    <span className="text-[9px] tracking-[0.5px] text-muted-foreground/50 uppercase">
-                      {phase}
-                    </span>
+                    {phase && (
+                      <span className="text-[9px] tracking-[0.5px] text-muted-foreground/50 uppercase">
+                        {phase}
+                      </span>
+                    )}
                   </button>
                   {!last && (
                     <div
