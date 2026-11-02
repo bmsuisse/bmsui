@@ -15,7 +15,7 @@ describe("Stepper", () => {
     for (const s of steps) {
       expect(screen.getByTestId(`step-${s.n}`)).toBeInTheDocument();
       expect(screen.getByText(s.label)).toBeInTheDocument();
-      expect(screen.getByText(s.phase)).toBeInTheDocument();
+      expect(screen.getByText(s.phase ?? "")).toBeInTheDocument();
     }
   });
 
@@ -80,5 +80,48 @@ describe("Stepper", () => {
   it("omits the new button entirely when onNew is not passed", () => {
     render(<Stepper step={1} maxStep={1} onNavigate={() => {}} steps={steps} />);
     expect(screen.queryByText("New")).not.toBeInTheDocument();
+  });
+
+  it("has no fixed minimum width by default, so it fits narrow containers", () => {
+    render(<Stepper step={1} maxStep={1} onNavigate={() => {}} steps={steps} />);
+    const track = screen.getByTestId("stepper-scroll").querySelector("ol");
+    expect(track).toHaveClass("min-w-fit");
+    expect(track?.className).not.toContain("min-w-[");
+    expect(track?.style.minWidth).toBe("");
+  });
+
+  it("applies minWidth (number as px, string as any CSS length) to the steps track", () => {
+    const { rerender } = render(
+      <Stepper step={1} maxStep={1} onNavigate={() => {}} steps={steps} minWidth={480} />,
+    );
+    const track = () => screen.getByTestId("stepper-scroll").querySelector("ol");
+    expect(track()?.style.minWidth).toBe("480px");
+    expect(track()).not.toHaveClass("min-w-fit");
+
+    rerender(<Stepper step={1} maxStep={1} onNavigate={() => {}} steps={steps} minWidth="40rem" />);
+    expect(track()?.style.minWidth).toBe("40rem");
+  });
+
+  it("merges className onto the root element", () => {
+    const { container } = render(
+      <Stepper step={1} maxStep={1} onNavigate={() => {}} steps={steps} className="mx-auto max-w-2xl" />,
+    );
+    expect(container.firstElementChild).toHaveClass("mx-auto", "max-w-2xl", "w-full");
+  });
+
+  it("renders no caption for a step without a phase", () => {
+    render(
+      <Stepper
+        step={1}
+        maxStep={1}
+        onNavigate={() => {}}
+        steps={[
+          { n: 1, label: "One" },
+          { n: 2, label: "Two", phase: "later" },
+        ]}
+      />,
+    );
+    expect(screen.getByTestId("step-1").querySelectorAll("span")).toHaveLength(1);
+    expect(screen.getByText("later")).toBeInTheDocument();
   });
 });

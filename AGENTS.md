@@ -441,6 +441,14 @@ logic above, which already had its own extraction). Structure:
     extracting the component, not an oversight; don't reintroduce full
     `tinderSubStep` support here by copying it back from the old OneSales
     file.
+    v0.19.0: the steps track no longer has a hardcoded `min-w-[700px]` — that
+    forced a horizontal scroll (and clipped the last chip) in any container
+    narrower than 700px, e.g. OneSales's `max-w-2xl` ProspectWizard column.
+    The track is now `min-w-fit` (fills the width, scrolls only once the
+    chips themselves don't fit); the new `minWidth` prop (number = px, or any
+    CSS length) restores a wider floor when more spacing is wanted. Also
+    additive: `className` on the root, and `StepperStep.phase` is optional
+    (omit it for no caption).
 - `packages/ui/demo/` — same pattern as `packages/datagrid/demo`: a Vite
   app aliasing `@bmsuisse/ui` straight to `src/index.ts`, using the same
   reference-app-derived Tailwind v4 tokens, for visual QA.

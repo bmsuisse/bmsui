@@ -1263,6 +1263,20 @@ function StepperDemo(): ReactElement {
         newLabel="Start over"
         steps={stepperSteps}
       />
+      <p className="text-xs text-muted-foreground">
+        Compact: no phase captions, narrow column, no fixed minimum width, so every step still fits.
+      </p>
+      <Stepper
+        className="max-w-md"
+        step={step}
+        maxStep={maxStep}
+        onNavigate={setStep}
+        steps={stepperSteps.map(({ n, label }) => ({ n, label }))}
+      />
+      <p className="text-xs text-muted-foreground">
+        Wider track (<code>minWidth=&quot;48rem&quot;</code>) in a narrow column: scrolls horizontally.
+      </p>
+      <Stepper className="max-w-md" minWidth="48rem" step={step} maxStep={maxStep} onNavigate={setStep} steps={stepperSteps} />
       <div>
         <Button
           variant="outline"
