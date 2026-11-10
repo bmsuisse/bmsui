@@ -225,7 +225,7 @@ export function Calendar(props: CalendarProps): ReactElement {
           <ChevronRightIcon aria-hidden="true" className="h-4 w-4" />
         </button>
       </div>
-      <table ref={gridRef} role="grid" aria-label={monthTitle(shownMonth, locale)} className="border-collapse" onKeyDown={onKeyDown}>
+      <table ref={gridRef} role="grid" aria-label={monthTitle(shownMonth, locale)} className="border-separate border-spacing-x-0 border-spacing-y-0.5" onKeyDown={onKeyDown}>
         <thead>
           <tr>
             {names.map((name, i) => (
@@ -243,7 +243,7 @@ export function Calendar(props: CalendarProps): ReactElement {
         <tbody>
           {weeks.map((week) => (
             <tr key={week[0]}>
-              {week.map((iso) => {
+              {week.map((iso, col) => {
                 const outside = iso.slice(0, 7) !== shownMonth.slice(0, 7);
                 const outOfBounds = Boolean((min && iso < min) || (max && iso > max));
                 const blocked = !outOfBounds && Boolean(isDateDisabled?.(iso));
@@ -260,9 +260,14 @@ export function Calendar(props: CalendarProps): ReactElement {
                     aria-selected={selected || inRange || undefined}
                     className={cn(
                       "p-0 text-center",
+                      // The range band is drawn per row: rounded where a week starts or ends, and
+                      // running from the middle of the start/end chip so it tucks in behind it.
                       inRange && "bg-accent/15",
-                      isStart && hi && hi !== lo && "rounded-l-md bg-gradient-to-r from-transparent from-50% to-accent/15 to-50%",
-                      isEnd && lo && hi !== lo && "rounded-r-md bg-gradient-to-l from-transparent from-50% to-accent/15 to-50%",
+                      inRange && col === 0 && "rounded-l-md",
+                      inRange && col === week.length - 1 && "rounded-r-md",
+                      isStart && hi && hi !== lo && col < week.length - 1 &&
+                        "bg-gradient-to-r from-transparent from-50% to-accent/15 to-50%",
+                      isEnd && lo && hi !== lo && col > 0 && "bg-gradient-to-l from-transparent from-50% to-accent/15 to-50%",
                     )}
                   >
                     <button
