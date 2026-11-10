@@ -203,6 +203,65 @@ export type { DateInputProps } from "./patterns/date-input/DateInput";
 export { DateInput } from "./patterns/date-input/DateInput";
 export { datePlaceholder, formatIsoDay, parseIsoDay, toLocalIsoDay } from "./lib/dateField";
 
+export type { BreadcrumbItem, BreadcrumbLinkRenderProps, BreadcrumbsLabels, BreadcrumbsProps } from "./patterns/breadcrumbs/Breadcrumbs";
+export { Breadcrumbs, defaultBreadcrumbsLabels } from "./patterns/breadcrumbs/Breadcrumbs";
+
+export type { PageHeaderBadge, PageHeaderLabels, PageHeaderProps } from "./patterns/page-header/PageHeader";
+export { defaultPageHeaderLabels, PageHeader } from "./patterns/page-header/PageHeader";
+
+export type {
+  TablePageProps,
+  TableResultCountLabels,
+  TableResultCountProps,
+  TableSearchProps,
+  TableShellProps,
+  TableToolbarProps,
+} from "./patterns/table-shell/TableShell";
+export {
+  defaultTableResultCountLabels,
+  TablePage,
+  TableResultCount,
+  TableSearch,
+  TableShell,
+  TableToolbar,
+} from "./patterns/table-shell/TableShell";
+
+export type { PageRangeItem, PaginationLabels, PaginationProps } from "./patterns/pagination/Pagination";
+export { defaultPaginationLabels, getPageRange, Pagination } from "./patterns/pagination/Pagination";
+
+export type { CommandItem } from "./patterns/command-palette/types";
+export type {
+  CommandPaletteLabels,
+  CommandPaletteProps,
+  CommandPaletteTriggerProps,
+  UseCommandPaletteHotkeyOptions,
+} from "./patterns/command-palette/CommandPalette";
+export {
+  CommandPalette,
+  CommandPaletteTrigger,
+  defaultCommandPaletteLabels,
+  formatCommandPaletteShortcut,
+  useCommandPaletteHotkey,
+  useRecentCommands,
+} from "./patterns/command-palette/CommandPalette";
+export { scoreCommand } from "./patterns/command-palette/commandFilter";
+export {
+  CommandRegistryProvider,
+  useRegisterCommands,
+  useRegisteredCommands,
+} from "./patterns/command-palette/registry";
+
+export type {
+  SplitPaneLabels,
+  SplitPaneLimit,
+  SplitPanePanelProps,
+  SplitPaneProps,
+} from "./patterns/split-pane/SplitPane";
+export { defaultSplitPaneLabels, SplitPane, SplitPanePanel } from "./patterns/split-pane/SplitPane";
+
+export type { ToolbarButtonProps, ToolbarLabels, ToolbarProps } from "./patterns/toolbar/Toolbar";
+export { defaultToolbarLabels, Toolbar, ToolbarButton, ToolbarSeparator } from "./patterns/toolbar/Toolbar";
+
 // --- shared utility -----------------------------------------------------------
 export { cn } from "./lib/utils";
 export { useMediaQuery } from "./lib/useMediaQuery";

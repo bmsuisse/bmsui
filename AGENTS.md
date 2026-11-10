@@ -485,6 +485,38 @@ logic above, which already had its own extraction). Structure:
     `toISOString().slice(0, 10)` UTC-day bug after 22:00 Swiss time. No
     calendar popover yet — that's the next step (Astryx's `Calendar` is the
     reference for keyboard behaviour).
+  - Layout set (v0.21.0): `page-header/` — `PageHeader`, OneSales's
+    `ui/PageHeader` API (45 importers: `title`/`badge`/`description`/
+    `actions`/`onBack`, same `page-header-*` test ids) rendered inline instead
+    of via its shell store, plus `backHref`/`breadcrumbs`/`tabs`/`divider`.
+    `breadcrumbs/` — `Breadcrumbs`, `nav`>`ol`, middle crumbs fold into a
+    DropdownMenu past `maxItems`, `renderLink` for routers. `table-shell/` —
+    `TableShell`/`TableToolbar`/`TableResultCount` lifted from OneSales (its
+    `ToolbarSearch` is `TableSearch` here, to avoid clashing with `Toolbar`;
+    OneSales's `[data-table-shell]` grid restyle lived in its index.css and is
+    not shipped — the attribute is kept so the app CSS still applies) and
+    `TablePage` = PageHeader + filling TableShell; no datagrid dependency.
+    `pagination/` — `Pagination` + `getPageRange` (Astryx's constant-slot
+    ellipsis rules), CSS-only collapse to prev / "3 / 13" / next below `sm`.
+    `command-palette/` — `CommandPalette` on `Dialog` with its own list (no
+    cmdk), input-driven `aria-activedescendant` like `Combobox`;
+    `scoreCommand` tiers; `useCommandPaletteHotkey`, `useRecentCommands`
+    (localStorage, try/catch), `CommandPaletteTrigger`, and OneDocs's
+    registry idea as `CommandRegistryProvider`/`useRegisterCommands`.
+    Highlight is `bg-foreground/6` rather than `bg-accent` (accent is a
+    saturated blue with white text in the reference theme — too loud for a
+    list you arrow through). `split-pane/` — `SplitPane`/`SplitPanePanel`
+    from OneDocs's `Splitter`: percentage sizes, px-or-% limits, neighbour-only
+    resize, role=separator + aria values, arrows/Home/End/Enter, pointer
+    capture with `pointer-events-none` panes while dragging. `toolbar/` —
+    `Toolbar`/`ToolbarButton`/`ToolbarSeparator`: roving tabindex managed on
+    the DOM after each render (items are `[data-toolbar-item]`), optional
+    measured `overflow` into a "…" DropdownMenu (widths cached while all
+    items are visible, refit on ResizeObserver). Hover/pressed states use
+    `foreground` alpha tints, since `--muted` is almost the page colour in the
+    light reference theme. `tests/setup.ts` gained an in-memory `localStorage`:
+    Node ≥ 25's own global `localStorage` (undefined without
+    `--localstorage-file`) shadows jsdom's.
 - `packages/ui/demo/` — same pattern as `packages/datagrid/demo`: a Vite
   app aliasing `@bmsuisse/ui` straight to `src/index.ts`, using the same
   reference-app-derived Tailwind v4 tokens, for visual QA.
