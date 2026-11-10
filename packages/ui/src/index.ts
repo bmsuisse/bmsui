@@ -213,3 +213,20 @@ export type { AnimatedBrandProps } from "./patterns/animated-brand/AnimatedBrand
 export { AnimatedBrand } from "./patterns/animated-brand/AnimatedBrand";
 export type { BrandAnimation, BrandMode } from "./patterns/animated-brand/brandMotion";
 export { BRAND_ANIMATIONS } from "./patterns/animated-brand/brandMotion";
+
+// --- hooks --------------------------------------------------------------------
+export type { Hotkey, UseHotkeysOptions } from "./hooks/useHotkeys";
+export { formatHotkey, useHotkeys } from "./hooks/useHotkeys";
+export type { UseClipboardOptions, UseClipboardResult } from "./hooks/useClipboard";
+export { useClipboard } from "./hooks/useClipboard";
+export type { AnnounceOptions, AnnouncePoliteness } from "./hooks/useAnnounce";
+export { announce, Announcer, useAnnounce } from "./hooks/useAnnounce";
+export { useMergedRefs } from "./hooks/useMergedRefs";
+export type { UseFocusTrapOptions } from "./hooks/useFocusTrap";
+export { useFocusTrap } from "./hooks/useFocusTrap";
+export type { LongPressHandlers, UseLongPressOptions } from "./hooks/useLongPress";
+export { useLongPress } from "./hooks/useLongPress";
+export type { ScrollOverflow, UseScrollOverflowResult } from "./hooks/useScrollOverflow";
+export { useScrollOverflow } from "./hooks/useScrollOverflow";
+export type { SetLocalStorageState, UseLocalStorageStateOptions } from "./hooks/useLocalStorageState";
+export { useLocalStorageState } from "./hooks/useLocalStorageState";

@@ -10,7 +10,8 @@
     "build": "bun run --filter '@bmsuisse/datagrid' --filter '@bmsuisse/ui' build",
     "test": "bun run --filter '@bmsuisse/datagrid' --filter '@bmsuisse/ui' test",
     "check": "bun run --filter '@bmsuisse/datagrid' --filter '@bmsuisse/ui' check",
-    "screenshots": "bun run scripts/screenshots.ts"
+    "screenshots": "bun run scripts/screenshots.ts",
+    "api-report": "bun run scripts/api-report.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.49.1"

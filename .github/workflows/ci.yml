@@ -14,6 +14,14 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - run: bun run check
+      - name: "API report is up to date (packages/*/api-report.md)"
+        run: |
+          bun run build
+          bun run api-report
+          if ! git diff --exit-code packages/*/api-report.md; then
+            echo "::error::The public API changed but packages/*/api-report.md was not regenerated. Run 'bun run build && bun run api-report' and commit the updated report(s)."
+            exit 1
+          fi
 
   python-check:
     name: "Python: ruff + ty + pytest (bmsdna-datagrid)"
