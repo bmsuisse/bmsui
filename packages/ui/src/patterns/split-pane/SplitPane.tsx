@@ -41,6 +41,8 @@ export interface SplitPaneProps extends Omit<HTMLAttributes<HTMLDivElement>, "ch
   /** Arrow-key step in percent; Shift multiplies by 5. @default 2 */
   keyboardStep?: number;
   labels?: Partial<SplitPaneLabels>;
+  /** Ease pane sizes over 150ms on keyboard steps and double-click reset (never while dragging; off under reduced motion). @default true */
+  animated?: boolean;
 }
 
 export interface SplitPanePanelProps extends HTMLAttributes<HTMLDivElement> {
@@ -118,6 +120,7 @@ export function SplitPane({
   storageKey,
   keyboardStep = 2,
   labels,
+  animated = true,
   className,
   style,
   ...props
@@ -150,6 +153,14 @@ export function SplitPane({
   const sizesRef = useRef(sizes);
   sizesRef.current = sizes;
   const [dragging, setDragging] = useState<number | null>(null);
+  // Panes ease to new sizes on keyboard steps / reset, never while pointer-dragging and
+  // not before the first paint (the stored layout is applied in a layout effect).
+  const [settled, setSettled] = useState(false);
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setSettled(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  const easeSizes = animated && settled && dragging == null;
   const drag = useRef<{ index: number; start: number; from: number[]; px: number } | null>(null);
 
   const containerPx = (): number => {
@@ -266,7 +277,11 @@ export function SplitPane({
               data-slot="split-pane-pane"
               data-testid="split-pane-pane"
               // Iframes/embeds under the pointer would swallow pointermove while dragging.
-              className={cn("relative min-h-0 min-w-0 overflow-auto", dragging != null && "pointer-events-none")}
+              className={cn(
+                "relative min-h-0 min-w-0 overflow-auto",
+                dragging != null && "pointer-events-none",
+                easeSizes && "transition-[flex-grow] duration-150 ease-out motion-reduce:transition-none",
+              )}
               style={{ flex: `${size} 1 0px` }}
             >
               {pane}
@@ -290,18 +305,20 @@ export function SplitPane({
                 onDoubleClick={() => apply(resetSizes(), true)}
                 onKeyDown={onKeyDown(index)}
                 className={cn(
-                  "group relative z-10 flex shrink-0 touch-none items-center justify-center bg-border outline-none transition-colors",
+                  "group relative z-10 flex shrink-0 touch-none items-center justify-center bg-foreground/10 outline-none transition-colors duration-150 ease-out dark:bg-border",
                   horizontal ? "w-px cursor-col-resize" : "h-px cursor-row-resize",
                   // 9px hit area centred on the 1px line.
                   horizontal ? "before:absolute before:inset-y-0 before:-left-1 before:-right-1" : "before:absolute before:inset-x-0 before:-top-1 before:-bottom-1",
-                  "hover:bg-ring/60 focus-visible:bg-ring data-[active]:bg-ring",
+                  "hover:bg-ring/50 focus-visible:bg-ring data-[active]:bg-ring dark:hover:bg-ring/60 dark:focus-visible:bg-ring dark:data-[active]:bg-ring",
                 )}
               >
                 <span
                   aria-hidden="true"
                   className={cn(
-                    "pointer-events-none absolute rounded-full border border-border bg-background shadow-sm transition-colors group-hover:border-ring/60 group-focus-visible:border-ring group-data-[active]:border-ring",
-                    horizontal ? "h-6 w-1.5" : "h-1.5 w-6",
+                    "pointer-events-none absolute rounded-full border border-foreground/20 bg-background shadow-xs transition-[border-color,background-color,height,width] duration-150 ease-out motion-reduce:transition-colors group-hover:border-ring/70 group-focus-visible:border-ring group-focus-visible:bg-ring group-data-[active]:border-ring group-data-[active]:bg-ring dark:border-foreground/25 dark:bg-muted dark:group-focus-visible:bg-ring dark:group-data-[active]:bg-ring",
+                    horizontal
+                      ? "h-6 w-1.5 group-hover:h-8 group-data-[active]:h-8"
+                      : "h-1.5 w-6 group-hover:w-8 group-data-[active]:w-8",
                   )}
                 />
               </div>

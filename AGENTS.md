@@ -534,7 +534,28 @@ logic above, which already had its own extraction). Structure:
     measured `overflow` into a "…" DropdownMenu (widths cached while all
     items are visible, refit on ResizeObserver). Hover/pressed states use
     `foreground` alpha tints, since `--muted` is almost the page colour in the
-    light reference theme. `tests/setup.ts` gained an in-memory `localStorage`:
+    light reference theme. Visual pass (v0.21.x): frames/dividers that must
+    show in light mode use `border-foreground/10` (`dark:border-border`);
+    `TableShell` insets the first/last cell of a plain `<table>` to the
+    toolbar's 12/16px edge; Pagination/Breadcrumbs/PageHeader hover tints are
+    `foreground/6`; palette group headings are sentence case like Sidebar's.
+    Motion (CSS transitions, Tailwind `starting:` and WAAPI only — no
+    keyframes, no tailwindcss-animate; 150ms ease-out, `motion-reduce:` drops
+    movement): `CommandPalette` fades/scales in from slightly above (Radix
+    unmounts on close, so exit is instant), its selected-row highlight is one
+    shared element that glides between rows, and the list eases to its new
+    height while filtering (WAAPI); `Pagination`'s current-page marker slides;
+    `PageHeader` slides one pill between a `TabsList`'s tabs (it hides the
+    active trigger's own surface only while the pill is placed,
+    `[data-indicator]`); `SplitPane` panes ease on keyboard steps/reset but
+    never while pointer-dragging, and the grip grows on hover/drag; Breadcrumbs'
+    "…" and Toolbar's overflow menus fade/scale from their Radix
+    transform-origin; `TableToolbar` filter chips fade/scale in; Toolbar
+    pressed/hover states transition. `CommandPalette`, `Pagination`,
+    `PageHeader` and `SplitPane` take `animated` (default `true`). The
+    gliding indicators share `lib/useSlidingIndicator` (internal): measured
+    with `offsetLeft/Top` (not client rects, so a dialog scaling in can't skew
+    them), first placement and resizes instant, later moves transition. `tests/setup.ts` gained an in-memory `localStorage`:
     Node ≥ 25's own global `localStorage` (undefined without
     `--localstorage-file`) shadows jsdom's.
   - Input set (v0.21.0), behaviour learned from Astryx (MIT) and the apps'

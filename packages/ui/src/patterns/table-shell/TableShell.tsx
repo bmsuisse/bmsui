@@ -47,7 +47,7 @@ export function TableShell({
       data-testid={dataTestId ?? testId ?? "table-shell"}
       className={cn(
         "flex min-w-0 flex-col overflow-hidden bg-background",
-        !flush && "rounded-xl border border-border shadow-sm",
+        !flush && "rounded-xl border border-foreground/10 shadow-xs dark:border-border",
         // Not filling: keep natural height -- inside a page that scrolls as a whole a
         // shrinkable overflow-hidden panel would clip its own rows.
         fill ? "min-h-0 flex-1" : "shrink-0",
@@ -56,25 +56,34 @@ export function TableShell({
       {...props}
     >
       {toolbar ? (
-        <div data-slot="table-shell-toolbar" className="shrink-0 border-b border-border px-3 py-2.5 md:px-4">
+        <div data-slot="table-shell-toolbar" className="shrink-0 border-b border-foreground/[0.07] px-3 py-2.5 md:px-4 dark:border-border">
           {toolbar}
         </div>
       ) : null}
       {meta ? (
         <div
           data-slot="table-shell-meta"
-          className="flex min-h-8 shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-b border-border bg-muted/60 px-3 py-1.5 text-xs text-muted-foreground md:px-4"
+          className="flex min-h-8 shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-b border-foreground/[0.07] bg-foreground/[0.015] px-3 py-1.5 text-xs text-muted-foreground md:px-4 dark:border-border dark:bg-foreground/[0.03]"
         >
           {meta}
         </div>
       ) : null}
-      <div data-slot="table-shell-body" className={cn("min-w-0", fill && "flex min-h-0 flex-1 flex-col overflow-auto")}>
+      <div
+        data-slot="table-shell-body"
+        className={cn(
+          "min-w-0",
+          // A plain <table> in the body: first/last cells line up with the toolbar's
+          // and footer's 12px/16px inset, so every band shares one left edge.
+          "[&_table_tr>*:first-child]:pl-3 [&_table_tr>*:last-child]:pr-3 md:[&_table_tr>*:first-child]:pl-4 md:[&_table_tr>*:last-child]:pr-4",
+          fill && "flex min-h-0 flex-1 flex-col overflow-auto",
+        )}
+      >
         {children}
       </div>
       {footer ? (
         <div
           data-slot="table-shell-footer"
-          className="shrink-0 border-t border-border bg-muted/60 px-3 py-2 text-xs text-muted-foreground md:px-4"
+          className="shrink-0 border-t border-foreground/[0.07] bg-foreground/[0.015] px-3 py-2 text-xs text-muted-foreground md:px-4 dark:border-border dark:bg-foreground/[0.03]"
         >
           {footer}
         </div>
@@ -115,7 +124,17 @@ export function TableToolbar({
         <span className="mr-auto shrink-0 text-sm font-semibold text-foreground md:mr-2">{title}</span>
       ) : null}
       {search}
-      {filters ? <div className="flex flex-wrap items-center gap-2">{filters}</div> : null}
+      {filters ? (
+        <div
+          className={cn(
+            "flex flex-wrap items-center gap-2",
+            // Chips added later (an active filter appearing) fade/scale in; colours keep their hover transition.
+            "[&>*]:transition-[color,background-color,border-color,opacity,scale] [&>*]:duration-150 [&>*]:ease-out [&>*]:starting:scale-95 [&>*]:starting:opacity-0 motion-reduce:[&>*]:starting:scale-100",
+          )}
+        >
+          {filters}
+        </div>
+      ) : null}
       {actions ? <div className="ml-auto flex shrink-0 items-center gap-2">{actions}</div> : null}
     </div>
   );

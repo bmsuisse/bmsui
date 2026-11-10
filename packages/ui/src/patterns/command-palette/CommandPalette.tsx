@@ -1,6 +1,8 @@
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import type { ButtonHTMLAttributes, KeyboardEvent, ReactElement, ReactNode } from "react";
 import { forwardRef, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { useIsomorphicLayoutEffect } from "../../lib/useIsomorphicLayoutEffect";
+import { slidingIndicatorClass, useSlidingIndicator } from "../../lib/useSlidingIndicator";
 import { cn } from "../../lib/utils";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "../../primitives/dialog";
 import { EmptyState } from "../empty-state/EmptyState";
@@ -57,6 +59,12 @@ export interface CommandPaletteProps {
   /** Replaces the keyboard-hint footer. `null` hides it. */
   footer?: ReactNode;
   labels?: Partial<CommandPaletteLabels>;
+  /**
+   * Motion: the dialog fades/scales in from slightly above, the selected-row
+   * highlight glides between items and the list eases to its new height while
+   * filtering (120–150ms; movement dropped under reduced motion). @default true
+   */
+  animated?: boolean;
   className?: string;
   "data-testid"?: string;
 }
@@ -80,6 +88,7 @@ interface Section {
 export function CommandPalette({
   open,
   onOpenChange,
+  animated = true,
   className,
   "data-testid": testId = "command-palette",
   ...rest
@@ -91,14 +100,17 @@ export function CommandPalette({
         showCloseButton={false}
         data-testid={testId}
         className={cn(
-          "top-4 w-[calc(100%-2rem)] max-w-xl translate-y-0 rounded-xl border-border shadow-2xl sm:top-[12vh]",
+          "top-4 w-[calc(100%-2rem)] max-w-xl translate-y-0 overflow-hidden rounded-xl border-foreground/10 shadow-2xl sm:top-[12vh] dark:border-border",
           "max-h-[min(36rem,calc(100dvh-2rem))] sm:max-h-[min(36rem,76vh)]",
+          // Enter: fade + slight drop/scale via @starting-style (Radix unmounts on close, so exit is instant).
+          animated &&
+            "origin-top transition-[opacity,translate,scale] duration-150 ease-out starting:-translate-y-2 starting:scale-[0.98] starting:opacity-0 motion-reduce:starting:translate-y-0 motion-reduce:starting:scale-100",
           className,
         )}
       >
         <DialogTitle className="sr-only">{l.title}</DialogTitle>
         <DialogDescription className="sr-only">{l.description}</DialogDescription>
-        <PaletteBody {...rest} labels={l} onClose={() => onOpenChange(false)} />
+        <PaletteBody {...rest} animated={animated} labels={l} onClose={() => onOpenChange(false)} />
       </DialogContent>
     </Dialog>
   );
@@ -114,6 +126,7 @@ function PaletteBody({
   loading,
   footer,
   labels: l,
+  animated = true,
   onClose,
 }: Omit<CommandPaletteProps, "open" | "onOpenChange" | "className" | "data-testid" | "labels"> & {
   labels: CommandPaletteLabels;
@@ -125,6 +138,8 @@ function PaletteBody({
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
   const listRef = useRef<HTMLDivElement>(null);
+  const highlightRef = useRef<HTMLDivElement>(null);
+  const listHeight = useRef<number | null>(null);
 
   const sections = useMemo<Section[]>(() => {
     const all = [...(ownCommands ?? []), ...registered];
@@ -191,6 +206,21 @@ function PaletteBody({
       ?.scrollIntoView({ block: "nearest" });
   }, [activeIndex]);
 
+  // One highlight element glides to the selected row.
+  useSlidingIndicator(listRef, highlightRef, '[role="option"][aria-selected="true"]', animated, [activeIndex, sections]);
+
+  // Ease the list to its new height when filtering changes the number of rows.
+  useIsomorphicLayoutEffect(() => {
+    const el = listRef.current;
+    if (!el) return;
+    const next = el.offsetHeight;
+    const prev = listHeight.current;
+    listHeight.current = next;
+    if (!animated || prev == null || prev === next || typeof el.animate !== "function") return;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    el.animate([{ height: `${prev}px` }, { height: `${next}px` }], { duration: 150, easing: "ease-out" });
+  }, [sections, animated]);
+
   const run = (command: CommandItem | undefined): void => {
     if (!command || command.disabled) return;
     onClose();
@@ -242,7 +272,7 @@ function PaletteBody({
             setActive(0);
             onQueryChange?.(event.target.value);
           }}
-          className="h-12 min-w-0 flex-1 bg-transparent text-[15px] text-foreground outline-none placeholder:text-muted-foreground"
+          className="h-12 min-w-0 flex-1 bg-transparent text-[15px] text-foreground outline-none placeholder:text-muted-foreground/80"
         />
         <Kbd className="max-sm:hidden">Esc</Kbd>
       </div>
@@ -252,8 +282,13 @@ function PaletteBody({
         role="listbox"
         aria-label={l.title}
         data-testid="command-palette-list"
-        className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2"
+        className="relative min-h-0 flex-1 scroll-py-2 overflow-y-auto overscroll-contain p-1.5"
       >
+        <div
+          ref={highlightRef}
+          aria-hidden="true"
+          className={cn(slidingIndicatorClass, "rounded-md bg-foreground/[0.06] dark:bg-foreground/10")}
+        />
         {count === 0 ? (
           loading ? (
             <p className="py-8 text-center text-sm text-muted-foreground">{l.loading}</p>
@@ -269,13 +304,13 @@ function PaletteBody({
                 key={section.key}
                 role="group"
                 aria-labelledby={section.label ? headerId : undefined}
-                className="pb-1 last:pb-0"
+                className="pb-1.5 last:pb-0"
               >
                 {section.label ? (
                   <div
                     id={headerId}
                     role="presentation"
-                    className="px-2.5 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+                    className="px-2.5 pb-1 pt-2 text-xs font-medium text-muted-foreground"
                   >
                     {section.label}
                   </div>
@@ -287,6 +322,7 @@ function PaletteBody({
                     index={index}
                     command={command}
                     active={index === activeIndex}
+                    animated={animated}
                     onHover={() => setActive(index)}
                     onRun={() => run(command)}
                   />
@@ -297,10 +333,12 @@ function PaletteBody({
         )}
       </div>
       {footer === undefined ? (
-        <div className="flex shrink-0 items-center gap-4 border-t border-[var(--dialog-divider)] bg-muted/50 px-4 py-2 text-xs text-muted-foreground max-sm:hidden">
+        <div className="flex shrink-0 items-center gap-4 border-t border-[var(--dialog-divider)] bg-foreground/[0.02] px-4 py-2 text-xs text-muted-foreground max-sm:hidden dark:bg-foreground/[0.03]">
           <span className="flex items-center gap-1.5">
-            <Kbd>↑</Kbd>
-            <Kbd>↓</Kbd>
+            <span className="flex gap-0.5">
+              <Kbd>↑</Kbd>
+              <Kbd>↓</Kbd>
+            </span>
             {l.navigate}
           </span>
           <span className="flex items-center gap-1.5">
@@ -324,6 +362,7 @@ function Option({
   index,
   command,
   active,
+  animated,
   onHover,
   onRun,
 }: {
@@ -331,6 +370,7 @@ function Option({
   index: number;
   command: CommandItem;
   active: boolean;
+  animated: boolean;
   onHover: () => void;
   onRun: () => void;
 }): ReactElement {
@@ -351,13 +391,23 @@ function Option({
       data-command={command.id}
       onMouseMove={active ? undefined : onHover}
       onClick={onRun}
+      data-active={active || undefined}
       className={cn(
-        "flex min-h-10 cursor-pointer select-none items-center gap-3 rounded-md px-2.5 py-2 text-sm text-foreground",
-        active && "bg-foreground/[0.06] dark:bg-foreground/10",
+        "relative flex min-h-9 cursor-pointer select-none items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm text-foreground",
+        // Animated: the shared highlight element draws the selected background.
+        active && !animated && "bg-foreground/[0.06] dark:bg-foreground/10",
         disabled && "cursor-not-allowed opacity-50",
       )}
     >
-      {Icon ? <Icon aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" /> : null}
+      {Icon ? (
+        <Icon
+          aria-hidden="true"
+          className={cn(
+            "h-4 w-4 shrink-0 text-muted-foreground transition-colors duration-150",
+            active && !disabled && "text-foreground",
+          )}
+        />
+      ) : null}
       <span className="min-w-0 truncate">{command.label}</span>
       {command.description ? (
         <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">{command.description}</span>
@@ -366,7 +416,7 @@ function Option({
       )}
       {reason ? <span className="shrink-0 text-xs text-muted-foreground">{reason}</span> : null}
       {keys.length > 0 ? (
-        <span className="flex shrink-0 items-center gap-1 max-sm:hidden">
+        <span className="flex shrink-0 items-center gap-0.5 max-sm:hidden">
           {keys.map((key, i) => (
             <Kbd key={i}>{key}</Kbd>
           ))}
@@ -380,7 +430,7 @@ function Kbd({ children, className }: { children: ReactNode; className?: string 
   return (
     <kbd
       className={cn(
-        "inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded border border-foreground/15 bg-muted px-1 font-sans text-[11px] font-medium text-muted-foreground",
+        "inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded border border-foreground/10 bg-background px-1 font-sans text-[11px] font-medium leading-none text-muted-foreground shadow-[0_1px_0_0] shadow-foreground/10 dark:border-foreground/15 dark:bg-foreground/5",
         className,
       )}
     >
@@ -455,7 +505,7 @@ export const CommandPaletteTrigger = forwardRef<HTMLButtonElement, CommandPalett
         aria-keyshortcuts={hint ? (isApplePlatform() ? "Meta+K" : "Control+K") : undefined}
         data-testid="command-palette-trigger"
         className={cn(
-          "inline-flex h-9 items-center gap-2 rounded-full border border-input bg-background px-3 text-sm text-muted-foreground shadow-sm transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-sm:w-9 max-sm:justify-center max-sm:px-0 sm:min-w-56",
+          "inline-flex h-9 items-center gap-2 rounded-full border border-foreground/10 bg-background px-3 text-sm text-muted-foreground shadow-xs transition-colors hover:border-foreground/20 hover:text-foreground dark:border-input dark:hover:border-foreground/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-sm:w-9 max-sm:justify-center max-sm:px-0 sm:min-w-56",
           className,
         )}
         {...props}

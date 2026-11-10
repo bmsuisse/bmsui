@@ -1,5 +1,7 @@
-import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
+import { ChevronLeftIcon, ChevronRightIcon, EllipsisHorizontalIcon } from "@heroicons/react/24/outline";
 import type { HTMLAttributes, ReactElement } from "react";
+import { useRef } from "react";
+import { slidingIndicatorClass, useSlidingIndicator } from "../../lib/useSlidingIndicator";
 import { cn } from "../../lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../primitives/select";
 
@@ -85,10 +87,18 @@ export interface PaginationProps extends Omit<HTMLAttributes<HTMLElement>, "onCh
   /** Number formatting locale for the range text. @default "de-CH" */
   locale?: string;
   labels?: Partial<PaginationLabels>;
+  /** Slide the current-page marker between pages (150ms ease-out; instant under reduced motion). @default true */
+  animated?: boolean;
 }
 
 const pageButton =
-  "inline-flex h-8 min-w-8 items-center justify-center gap-1 rounded-md px-2 text-sm tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40";
+  "relative inline-flex h-8 min-w-8 items-center justify-center gap-1 rounded-md px-2 tabular-nums transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40";
+// Foreground tints, not `bg-muted`: muted is almost the page colour in the light theme.
+const idleButton =
+  "text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground dark:hover:bg-foreground/10";
+const currentSurface =
+  "rounded-md border border-foreground/15 bg-background shadow-xs dark:border-foreground/20 dark:bg-foreground/[0.08]";
+const currentButton = "font-semibold text-foreground";
 
 /**
  * Page controls for a paged list or server-paged table: previous/next, page
@@ -111,9 +121,12 @@ export function Pagination({
   disabled = false,
   locale = "de-CH",
   labels,
+  animated = true,
   className,
   ...props
 }: PaginationProps): ReactElement {
+  const pagesRef = useRef<HTMLDivElement>(null);
+  const markerRef = useRef<HTMLSpanElement>(null);
   const l = { ...defaultPaginationLabels, ...labels };
   const pageCount = Math.max(
     1,
@@ -136,16 +149,17 @@ export function Pagination({
           fmt.format(totalItems),
         )
     : null;
+  useSlidingIndicator(pagesRef, markerRef, '[aria-current="page"]', animated && !compact, [current, pageCount, siblingCount]);
   const showSize = pageSizeOptions && pageSizeOptions.length > 0 && onPageSizeChange && pageSize != null;
 
   return (
     <nav
       aria-label={l.nav}
       data-testid="pagination"
-      className={cn("flex min-w-0 flex-wrap items-center justify-between gap-x-4 gap-y-2 text-sm", className)}
+      className={cn("flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 text-[13px]", className)}
       {...props}
     >
-      <div className="flex min-w-0 items-center gap-4 text-muted-foreground">
+      <div className="flex min-w-0 items-center gap-3 text-muted-foreground sm:gap-4">
         {rangeText ? (
           <span data-testid="pagination-range" aria-live="polite" className="whitespace-nowrap tabular-nums">
             {rangeText}
@@ -163,7 +177,7 @@ export function Pagination({
                 size="sm"
                 aria-label={l.pageSize}
                 data-testid="pagination-page-size"
-                className="w-[4.75rem] gap-1 tabular-nums text-foreground"
+                className="w-[4.25rem] gap-1 tabular-nums text-foreground"
               >
                 <SelectValue />
               </SelectTrigger>
@@ -178,23 +192,26 @@ export function Pagination({
           </div>
         ) : null}
       </div>
-      <div className="ml-auto flex items-center gap-1">
+      <div className="ml-auto flex items-center gap-0.5">
         <button
           type="button"
           onClick={() => go(current - 1)}
           disabled={disabled || current <= 1}
           aria-label={l.previous}
           data-testid="pagination-previous"
-          className={cn(pageButton, "text-muted-foreground hover:bg-muted hover:text-foreground sm:pr-2.5")}
+          className={cn(pageButton, idleButton, "sm:pr-2.5", compact && "sm:pr-2")}
         >
           <ChevronLeftIcon className="h-4 w-4" aria-hidden="true" />
           <span className={cn("max-sm:hidden", compact && "hidden")}>{l.previous}</span>
         </button>
-        <ul className={cn("items-center gap-1", compact ? "hidden" : "hidden sm:flex")}>
+        <div ref={pagesRef} className={cn("relative", compact ? "hidden" : "hidden sm:block")}>
+          {/* One shared marker that slides to the current page (useSlidingIndicator). */}
+          <span ref={markerRef} aria-hidden="true" className={cn(slidingIndicatorClass, currentSurface)} />
+          <ul className={cn("flex items-center gap-0.5", compact && "hidden")}>
           {getPageRange(current, pageCount, siblingCount).map((item, i) =>
             item === "ellipsis" ? (
-              <li key={`e-${i}`} aria-hidden="true" className="flex h-8 w-8 items-center justify-center text-muted-foreground">
-                …
+              <li key={`e-${i}`} aria-hidden="true" className="flex h-8 w-6 items-center justify-center text-muted-foreground/70">
+                <EllipsisHorizontalIcon className="h-4 w-4" />
               </li>
             ) : (
               <li key={item}>
@@ -207,9 +224,7 @@ export function Pagination({
                   data-testid="pagination-page"
                   className={cn(
                     pageButton,
-                    item === current
-                      ? "border border-border bg-muted font-semibold text-foreground shadow-sm"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    item === current ? cn(currentButton, !animated && currentSurface) : idleButton,
                   )}
                 >
                   {item}
@@ -217,10 +232,11 @@ export function Pagination({
               </li>
             ),
           )}
-        </ul>
+          </ul>
+        </div>
         <span
           data-testid="pagination-compact"
-          className={cn("px-2 tabular-nums text-muted-foreground", compact ? "inline" : "sm:hidden")}
+          className={cn("min-w-12 px-0.5 text-center tabular-nums text-foreground", compact ? "inline" : "sm:hidden")}
         >
           {l.compact(current, pageCount)}
         </span>
@@ -230,7 +246,7 @@ export function Pagination({
           disabled={disabled || current >= pageCount}
           aria-label={l.next}
           data-testid="pagination-next"
-          className={cn(pageButton, "text-muted-foreground hover:bg-muted hover:text-foreground sm:pl-2.5")}
+          className={cn(pageButton, idleButton, "sm:pl-2.5", compact && "sm:pl-2")}
         >
           <span className={cn("max-sm:hidden", compact && "hidden")}>{l.next}</span>
           <ChevronRightIcon className="h-4 w-4" aria-hidden="true" />

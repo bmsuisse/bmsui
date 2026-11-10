@@ -235,7 +235,7 @@ export function Toolbar({
         "flex min-w-0 gap-1",
         vertical ? "w-fit flex-col items-stretch" : "items-center",
         useOverflow ? "overflow-hidden" : !vertical && "flex-wrap",
-        variant === "outline" && "rounded-lg border border-border bg-background p-1 shadow-sm",
+        variant === "outline" && "rounded-lg border border-foreground/10 bg-background p-1 shadow-xs dark:border-border",
         className,
       )}
       {...props}
@@ -263,7 +263,7 @@ export function Toolbar({
           >
             <EllipsisHorizontalIcon className="h-4 w-4" aria-hidden="true" />
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" className="origin-[var(--radix-dropdown-menu-content-transform-origin)] transition-[opacity,scale] duration-150 ease-out starting:scale-95 starting:opacity-0 motion-reduce:starting:scale-100">
             {hiddenButtons.map((button, i) => {
               const { label, icon: Icon, onClick, disabled, pressed } = button.props;
               const content = (
@@ -310,7 +310,7 @@ function itemSignature(child: ReturnType<typeof Children.toArray>[number]): stri
 }
 
 const toolbarButtonClass =
-  "inline-flex h-8 min-w-8 shrink-0 items-center justify-center gap-1.5 rounded-md px-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40 aria-pressed:bg-foreground/[0.09] aria-pressed:text-foreground dark:hover:bg-foreground/10 dark:aria-pressed:bg-foreground/15 [&_svg]:size-4 [&_svg]:shrink-0";
+  "inline-flex h-8 min-w-8 shrink-0 items-center justify-center gap-1.5 rounded-md px-2 text-sm font-medium text-muted-foreground transition-colors duration-150 ease-out hover:bg-foreground/[0.05] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40 aria-pressed:bg-foreground/10 aria-pressed:text-foreground aria-pressed:hover:bg-foreground/[0.12] data-[state=open]:bg-foreground/[0.05] data-[state=open]:text-foreground dark:hover:bg-foreground/[0.08] dark:aria-pressed:bg-foreground/15 dark:data-[state=open]:bg-foreground/[0.08] [&_svg]:size-4 [&_svg]:shrink-0";
 
 export interface ToolbarButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "onClick" | "children"> {
   /** Accessible name, tooltip, and the text in the overflow menu. */
@@ -360,7 +360,7 @@ export function ToolbarSeparator({ className, ...props }: HTMLAttributes<HTMLDiv
       role="separator"
       aria-orientation={vertical ? "horizontal" : "vertical"}
       data-testid="toolbar-separator"
-      className={cn("shrink-0 bg-border", vertical ? "mx-1 my-1 h-px" : "mx-1 my-1.5 w-px self-stretch", className)}
+      className={cn("shrink-0 bg-foreground/10 dark:bg-border", vertical ? "mx-1 my-1 h-px" : "mx-1 my-2 w-px self-stretch", className)}
       {...props}
     />
   );

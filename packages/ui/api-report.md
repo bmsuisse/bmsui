@@ -498,6 +498,7 @@ interface CommandPaletteLabels
   title: string
 interface CommandPaletteProps
   "data-testid"?: string
+  animated?: boolean
   className?: string
   commands?: CommandItem[]
   filter?: (command: CommandItem, query: string) => number
@@ -767,6 +768,7 @@ interface PageHeaderLabels
   back: string
 interface PageHeaderProps extends Omit<HTMLAttributes<HTMLElement>, "title">
   actions?: ReactNode
+  animated?: boolean
   backHref?: string
   badge?: PageHeaderBadge | ReactNode
   breadcrumbs?: ReactNode
@@ -787,6 +789,7 @@ interface PaginationLabels
   previous: string
   range: (from: string, to: string, total: string) => string
 interface PaginationProps extends Omit<HTMLAttributes<HTMLElement>, "onChange">
+  animated?: boolean
   compact?: boolean
   disabled?: boolean
   hideRange?: boolean
@@ -987,6 +990,7 @@ interface SplitPanePanelProps extends HTMLAttributes<HTMLDivElement>
   maxSize?: SplitPaneLimit
   minSize?: SplitPaneLimit
 interface SplitPaneProps extends Omit<HTMLAttributes<HTMLDivElement>, "children">
+  animated?: boolean
   children: ReactNode
   defaultSizes?: number[]
   direction?: "horizontal" | "vertical"

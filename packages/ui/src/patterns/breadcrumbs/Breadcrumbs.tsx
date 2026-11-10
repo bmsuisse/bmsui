@@ -55,7 +55,7 @@ export interface BreadcrumbsProps extends Omit<HTMLAttributes<HTMLElement>, "chi
 }
 
 const linkClass =
-  "inline-flex min-w-0 items-center gap-1.5 rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+  "inline-flex min-w-0 items-center gap-1.5 rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
 /**
  * Where-am-I trail above a page title: `nav` > `ol` with the current page last.
@@ -83,7 +83,7 @@ export function Breadcrumbs({
   const lastIndex = items.length - 1;
 
   const sep = (
-    <li role="presentation" aria-hidden="true" className="flex shrink-0 items-center text-muted-foreground/60">
+    <li role="presentation" aria-hidden="true" className="flex shrink-0 items-center text-muted-foreground/50">
       {separator ?? <ChevronRightIcon className="h-3.5 w-3.5" />}
     </li>
   );
@@ -92,7 +92,7 @@ export function Breadcrumbs({
     const Icon = item.icon;
     const content = (
       <>
-        {Icon ? <Icon aria-hidden="true" className="h-4 w-4 shrink-0" /> : null}
+        {Icon ? <Icon aria-hidden="true" className="h-3.5 w-3.5 shrink-0" /> : null}
         <span className="truncate">{item.label}</span>
       </>
     );
@@ -124,7 +124,7 @@ export function Breadcrumbs({
       <li
         key={index}
         data-testid="breadcrumbs-item"
-        className={cn("flex min-w-0 items-center", index === lastIndex ? "max-w-[24ch] sm:max-w-[40ch]" : "max-w-[16ch] sm:max-w-[24ch]")}
+        className={cn("flex min-w-0 items-center", index === lastIndex ? "max-w-[24ch] shrink sm:max-w-[40ch]" : "max-w-[12ch] shrink-0 sm:max-w-[24ch]")}
       >
         {node}
       </li>
@@ -133,7 +133,7 @@ export function Breadcrumbs({
 
   return (
     <nav aria-label={l.nav} data-testid="breadcrumbs" className={cn("min-w-0", className)} {...props}>
-      <ol className="flex min-w-0 flex-wrap items-center gap-1.5 text-sm">
+      <ol className="flex min-w-0 items-center gap-1.5 text-[13px] leading-5">
         {before.map((item, i) => (
           <Fragment key={`b-${i}`}>
             {i > 0 ? sep : null}
@@ -143,16 +143,16 @@ export function Breadcrumbs({
         {collapse ? (
           <>
             {sep}
-            <li className="flex items-center">
+            <li className="flex shrink-0 items-center">
               <DropdownMenu>
                 <DropdownMenuTrigger
                   aria-label={l.more}
                   data-testid="breadcrumbs-more"
-                  className="inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="inline-flex h-5 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:bg-foreground/[0.06] data-[state=open]:text-foreground dark:hover:bg-foreground/10 dark:data-[state=open]:bg-foreground/10"
                 >
                   <EllipsisHorizontalIcon className="h-4 w-4" aria-hidden="true" />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
+                <DropdownMenuContent align="start" className="origin-[var(--radix-dropdown-menu-content-transform-origin)] transition-[opacity,scale] duration-150 ease-out starting:scale-95 starting:opacity-0 motion-reduce:starting:scale-100">
                   {hidden.map((item, i) => {
                     const Icon = item.icon;
                     const inner = (

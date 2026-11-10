@@ -175,13 +175,12 @@ export function TablePageDemo(): ReactElement {
               setPageSize(size);
               setPage(1);
             }}
-            className="text-xs"
           />
         }
       >
         <Table>
           <TableHeader>
-            <TableRow className="border-border">
+            <TableRow className="border-border hover:bg-transparent [&>th]:h-9 [&>th]:text-xs [&>th]:text-muted-foreground">
               <TableHead>Offer</TableHead>
               <TableHead>Customer</TableHead>
               <TableHead className="max-sm:hidden">Owner</TableHead>
@@ -192,9 +191,9 @@ export function TablePageDemo(): ReactElement {
           <TableBody>
             {rows.concat(rows).map((r, i) => (
               <TableRow key={`${r.id}-${i}`} className="border-border">
-                <TableCell className="font-mono text-xs">{r.id}</TableCell>
-                <TableCell>{r.customer}</TableCell>
-                <TableCell className="max-sm:hidden">{r.owner}</TableCell>
+                <TableCell className="font-mono text-xs text-muted-foreground">{r.id}</TableCell>
+                <TableCell className="font-medium">{r.customer}</TableCell>
+                <TableCell className="text-muted-foreground max-sm:hidden">{r.owner}</TableCell>
                 <TableCell>
                   <StatusBadge status={r.status} />
                 </TableCell>

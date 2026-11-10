@@ -1,5 +1,7 @@
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import type { ElementType, HTMLAttributes, ReactElement, ReactNode } from "react";
+import { useRef } from "react";
+import { slidingIndicatorClass, useSlidingIndicator } from "../../lib/useSlidingIndicator";
 import { cn } from "../../lib/utils";
 
 export type PageHeaderBadge = "alpha" | "beta" | "dev";
@@ -32,6 +34,12 @@ export interface PageHeaderProps extends Omit<HTMLAttributes<HTMLElement>, "titl
   /** Heading element for the title. @default "h1" */
   titleAs?: ElementType;
   labels?: Partial<PageHeaderLabels>;
+  /**
+   * When `tabs` is a Radix `TabsList`, one shared pill slides to the active tab
+   * (150ms ease-out, instant under reduced motion) instead of the active
+   * trigger's own background jumping. @default true
+   */
+  animated?: boolean;
 }
 
 const badgeTone: Record<PageHeaderBadge, string> = {
@@ -64,12 +72,16 @@ export function PageHeader({
   divider = false,
   titleAs: Title = "h1",
   labels,
+  animated = true,
   className,
   ...props
 }: PageHeaderProps): ReactElement {
   const l = { ...defaultPageHeaderLabels, ...labels };
+  const tabsRef = useRef<HTMLDivElement>(null);
+  const pillRef = useRef<HTMLSpanElement>(null);
+  useSlidingIndicator(tabsRef, pillRef, '[role="tab"][data-state="active"]', animated && !!tabs, [tabs]);
   const backClass =
-    "-ml-1.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+    "-ml-1.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:hover:bg-foreground/10";
   const back = onBack ? (
     <button type="button" onClick={onBack} aria-label={l.back} title={l.back} data-testid="page-header-back" className={backClass}>
       <ArrowLeftIcon className="h-4 w-4" aria-hidden="true" />
@@ -83,18 +95,22 @@ export function PageHeader({
   return (
     <header
       data-testid="page-header"
-      className={cn("flex min-w-0 flex-col gap-3", divider && !tabs && "border-b border-border pb-4", className)}
+      className={cn(
+        "flex min-w-0 flex-col gap-3",
+        divider && !tabs && "border-b border-foreground/10 pb-5 dark:border-border",
+        className,
+      )}
       {...props}
     >
       {breadcrumbs ? <div className="min-w-0">{breadcrumbs}</div> : null}
       <div className="flex min-w-0 flex-wrap items-start justify-between gap-x-6 gap-y-3">
         <div className="flex min-w-0 flex-[1_1_16rem] items-start gap-2">
           {back}
-          <div className="flex min-w-0 flex-col gap-1">
+          <div className="flex min-w-0 flex-col gap-0.5">
             <div className="flex min-w-0 items-center gap-x-2 gap-y-1 max-sm:flex-wrap">
               <Title
                 data-testid="page-header-title"
-                className="line-clamp-2 min-w-0 break-words text-xl font-semibold tracking-tight text-foreground sm:line-clamp-1"
+                className="line-clamp-2 min-w-0 break-words text-xl/8 font-semibold tracking-tight text-foreground sm:line-clamp-1"
               >
                 {title}
               </Title>
@@ -103,7 +119,7 @@ export function PageHeader({
                   <span
                     data-testid="page-header-badge"
                     className={cn(
-                      "inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide",
+                      "inline-flex h-5 shrink-0 items-center rounded-full border px-1.5 text-[10px] font-semibold uppercase leading-none tracking-wider",
                       badgeTone[badge],
                     )}
                   >
@@ -117,23 +133,34 @@ export function PageHeader({
               ) : null}
             </div>
             {description ? (
-              <p data-testid="page-header-description" className="max-w-prose text-sm text-muted-foreground">
+              <p data-testid="page-header-description" className="max-w-prose text-sm/6 text-pretty text-muted-foreground">
                 {description}
               </p>
             ) : null}
           </div>
         </div>
         {actions ? (
-          <div data-testid="page-header-actions" className="flex max-w-full flex-wrap items-center gap-2">
+          <div data-testid="page-header-actions" className="flex max-w-full min-h-8 flex-wrap items-center gap-2">
             {actions}
           </div>
         ) : null}
       </div>
       {tabs ? (
         <div
+          ref={tabsRef}
           data-testid="page-header-tabs"
-          className={cn("-mx-1 min-w-0 overflow-x-auto px-1 pb-px", divider && "border-b border-border pb-2")}
+          className={cn(
+            "relative -mx-1 mt-1 min-w-0 overflow-x-auto px-1 pb-px",
+            // While the sliding pill is placed, triggers sit above it and drop their own active surface.
+            "[&_[role=tab]]:relative [&[data-indicator]_[role=tab][data-state=active]]:bg-transparent [&[data-indicator]_[role=tab][data-state=active]]:shadow-none",
+            divider && "border-b border-foreground/10 pb-2 dark:border-border",
+          )}
         >
+          <span
+            ref={pillRef}
+            aria-hidden="true"
+            className={cn(slidingIndicatorClass, "rounded-md bg-background shadow-sm")}
+          />
           {tabs}
         </div>
       ) : null}
