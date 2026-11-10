@@ -3,7 +3,7 @@ import { datePlaceholder, formatIsoDay, parseIsoDay } from "../../lib/dateField"
 import { cn } from "../../lib/utils";
 import { Input, type InputProps } from "../../primitives/input";
 
-export interface DateInputProps extends Omit<InputProps, "value" | "defaultValue" | "onChange" | "type"> {
+export interface DateInputProps extends Omit<InputProps, "value" | "defaultValue" | "onChange" | "type" | "min" | "max"> {
   /** ISO day `yyyy-mm-dd` (the date part of an ISO datetime is accepted too), or `""` for none. */
   value: string;
   /** Called with an ISO day (or `""` when cleared) once the typed text is committed. */
@@ -12,6 +12,10 @@ export interface DateInputProps extends Omit<InputProps, "value" | "defaultValue
   onInvalidChange?: (invalid: boolean) => void;
   /** Display and parse order. Default `de-CH` (dd.mm.yyyy). */
   locale?: string;
+  /** Earliest accepted ISO day; earlier typed dates are marked invalid. */
+  min?: string;
+  /** Latest accepted ISO day; later typed dates are marked invalid. */
+  max?: string;
 }
 
 /**
@@ -22,7 +26,7 @@ export interface DateInputProps extends Omit<InputProps, "value" | "defaultValue
  */
 export const DateInput = forwardRef<HTMLInputElement, DateInputProps>(
   (
-    { value, onValueChange, onInvalidChange, locale = "de-CH", onBlur, onKeyDown, onFocus, placeholder, className, name, ...props },
+    { value, onValueChange, onInvalidChange, locale = "de-CH", min, max, onBlur, onKeyDown, onFocus, placeholder, className, name, ...props },
     ref,
   ) => {
     const [text, setText] = useState(() => formatIsoDay(value, locale));
@@ -54,7 +58,8 @@ export const DateInput = forwardRef<HTMLInputElement, DateInputProps>(
         if (value) onValueChange("");
         return;
       }
-      const iso = parseIsoDay(text, locale);
+      const parsed = parseIsoDay(text, locale);
+      const iso = parsed != null && ((min && parsed < min.slice(0, 10)) || (max && parsed > max.slice(0, 10))) ? null : parsed;
       setInvalid(iso == null);
       if (iso == null) return;
       setText(formatIsoDay(iso, locale));
