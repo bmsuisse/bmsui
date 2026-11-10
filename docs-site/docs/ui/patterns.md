@@ -250,6 +250,155 @@ previous value; `onInvalidChange` tells a form so it can block submit. With
 `name`, a hidden input submits the ISO day. `parseIsoDay`, `formatIsoDay`, `datePlaceholder` and
 `toLocalIsoDay` are exported for use outside the field.
 
+### `PageHeader` / `Breadcrumbs`
+
+The top of a page. Same props as OneSales's `ui/PageHeader` (`title`,
+`badge`, `description`, `actions`, `onBack`) plus `backHref`, `breadcrumbs`,
+`tabs` and `divider`; it renders inline instead of publishing into a shell
+store. Actions wrap below the title on narrow screens.
+
+```tsx
+<PageHeader
+  breadcrumbs={<Breadcrumbs items={[{ label: "Customers", href: "/customers" }, { label: customer.name }]} />}
+  onBack={() => navigate(-1)}
+  title={customer.name}
+  badge="beta"
+  description="Key account since 2014"
+  actions={<Button size="sm">New offer</Button>}
+  tabs={<TabsList>…</TabsList>}
+  labels={{ back: t("common.back") }}
+/>
+```
+
+`Breadcrumbs` is a `nav` > `ol` with the last item as `aria-current="page"`.
+Past `maxItems` (default 4) the middle crumbs fold into a "…" dropdown
+(`itemsBeforeCollapse`/`itemsAfterCollapse` choose what stays). Pass
+`renderLink={({ href, className, children }) => <Link to={href} className={className}>{children}</Link>}`
+for router links.
+
+### `TablePage` / `TableShell` / `TableToolbar`
+
+Lifted from OneSales's `ui/TableShell`: one panel in bands — toolbar → muted
+meta strip → body → footer. `TablePage` puts a `PageHeader` on top and makes
+the shell fill the remaining height, so the grid scrolls inside the panel and
+header and pager stay put (give the parent a height).
+
+```tsx
+<TablePage
+  title="Offers"
+  actions={<Button size="sm">New offer</Button>}
+  toolbar={
+    <TableToolbar
+      search={<TableSearch value={q} onChange={setQ} placeholder="Search offers…" />}
+      filters={<StatusFilter />}
+      actions={<RefreshButton />}
+    />
+  }
+  meta={<TableResultCount shown={rows.length} total={total} />}
+  footer={<Pagination page={page} onPageChange={setPage} totalItems={total} pageSize={25} />}
+>
+  <DataGrid … />
+</TablePage>
+```
+
+No dependency on `@bmsuisse/datagrid`: the body takes any table or list.
+`flush` drops the panel border for a shell inside a card; `fill` (default on
+`TablePage`) makes the body a `min-h-0 flex-1` column. `TableResultCount`
+reads "48 results", "12 of 48" or "48+ loaded" (`labels` translate).
+
+### `Pagination`
+
+```tsx
+<Pagination
+  page={page}
+  onPageChange={setPage}
+  totalItems={312}
+  pageSize={pageSize}
+  pageSizeOptions={[25, 50, 100]}
+  onPageSizeChange={setPageSize}
+/>
+```
+
+Shows first/last page, the current page and `siblingCount` (default 1) pages
+around it with "…" gaps, keeping the slot count constant so the bar doesn't
+jump (Astryx's rules; `getPageRange` is exported). Below `sm` — or always
+with `compact` — it collapses to prev / "3 / 13" / next. Pass `pageCount`
+instead of `totalItems` when the total is unknown; `labels` translate every
+string including the "1–25 of 312" range.
+
+### `CommandPalette`
+
+⌘K / Ctrl+K dialog for "do anything": grouped commands with icon, label,
+description, shortcut hint and `keywords`, a fuzzy-ish filter (prefix > word
+start > substring > all words in label/keywords > letters in order,
+accent-insensitive), recent commands, arrow keys/Enter/Esc and an empty
+state. Built on `Dialog` with its own list (no cmdk); the input drives the
+list via `aria-activedescendant`, like `Combobox`.
+
+```tsx
+const [open, setOpen] = useState(false);
+const { recent, push } = useRecentCommands("app");
+useCommandPaletteHotkey(() => setOpen((o) => !o));
+
+<CommandPaletteTrigger onClick={() => setOpen(true)} />   {/* top-bar pill with ⌘K hint */}
+<CommandPalette
+  open={open}
+  onOpenChange={setOpen}
+  commands={[
+    { id: "new-offer", group: "Create", label: "New offer", icon: DocumentPlusIcon, shortcut: ["⌘", "N"], keywords: ["angebot"], onSelect: createOffer },
+    { id: "delete", group: "Offer", label: "Delete offer", disabled: "Approved offers are locked", onSelect: remove },
+  ]}
+  recent={recent}
+  onCommandRun={push}
+/>
+```
+
+Registry (the idea from OneDocs's palette): wrap the shell in
+`CommandRegistryProvider` and call `useRegisterCommands(memoizedCommands)` in
+a page — its commands show up in the palette while that page is mounted.
+`onQueryChange` + `loading` let you merge server results into `commands`;
+`filter` replaces the scoring; `groupOrder` fixes the section order.
+
+### `SplitPane`
+
+Two or more panes with draggable separators, lifted from OneDocs's
+`layout/Splitter`. Sizes are percentages; limits are percentages or `"240px"`.
+
+```tsx
+<SplitPane defaultSizes={[30, 70]} storageKey="offers-master-detail">
+  <SplitPanePanel minSize="200px" maxSize={50}><OfferList /></SplitPanePanel>
+  <SplitPanePanel minSize="320px"><OfferDetail /></SplitPanePanel>
+</SplitPane>
+```
+
+Separators are `role="separator"` with `aria-valuenow/min/max`; arrows move
+them by `keyboardStep` (Shift ×5), Home/End jump to the limits, Enter or
+double-click resets. Only the two neighbouring panes change. Pointer events
+are disabled inside panes while dragging, so iframes don't swallow the drag.
+`storageKey` stores the layout in `localStorage` (try/catch — blocked storage
+just doesn't persist); `onSizesCommit` fires once per drag/keypress for
+server-side persistence. `direction="vertical"` stacks the panes.
+
+### `Toolbar`
+
+A row of related controls that is one Tab stop: `role="toolbar"`, roving
+tabindex, arrow keys (up/down when `orientation="vertical"`), Home/End,
+disabled items skipped.
+
+```tsx
+<Toolbar aria-label="Text formatting">
+  <ToolbarButton label="Bold" icon={BoldIcon} pressed={bold} onClick={toggleBold} />
+  <ToolbarButton label="Italic" icon={ItalicIcon} pressed={italic} onClick={toggleItalic} />
+  <ToolbarSeparator />
+  <ToolbarButton label="Export" icon={ArrowDownTrayIcon} showLabel />
+</Toolbar>
+```
+
+Icon-only buttons get `label` as `aria-label` and tooltip. Other controls join
+the arrow-key order with a `data-toolbar-item` attribute. `overflow` measures
+the buttons and folds those that don't fit into a "…" menu (toggles become
+checkbox items). `variant="ghost"` drops the border.
+
 ### `LoadingSpinner` / `LoadingOverlay`
 
 `LoadingSpinner` is an inline spinner (`size` + optional `label`);

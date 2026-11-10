@@ -145,6 +145,14 @@ import {
   UsersIcon,
 } from "@heroicons/react/24/outline";
 import type { ReactElement } from "react";
+import {
+  CommandPaletteDemo,
+  PageHeaderDemo,
+  PaginationDemo,
+  SplitPaneDemo,
+  TablePageDemo,
+  ToolbarDemo,
+} from "./LayoutDemos";
 import { useEffect, useState } from "react";
 
 function Section({ title, children }: { title: string; children: ReactElement }): ReactElement {
@@ -974,6 +982,30 @@ export function App(): ReactElement {
 
           <Section title="DateInput">
             <DateInputDemo />
+          </Section>
+
+          <Section title="PageHeader / Breadcrumbs">
+            <PageHeaderDemo />
+          </Section>
+
+          <Section title="TablePage / TableShell / TableToolbar">
+            <TablePageDemo />
+          </Section>
+
+          <Section title="Pagination">
+            <PaginationDemo />
+          </Section>
+
+          <Section title="CommandPalette">
+            <CommandPaletteDemo />
+          </Section>
+
+          <Section title="SplitPane">
+            <SplitPaneDemo />
+          </Section>
+
+          <Section title="Toolbar">
+            <ToolbarDemo />
           </Section>
 
           <Section title="Stepper">

@@ -95,6 +95,15 @@ repo's `AGENTS.md`.
 | Export | Use for |
 | --- | --- |
 | `Sidebar`, `SidebarNav`, `NavGroup`, `NavItem`, `useSidebarCollapsed` | App left navigation, resizable and rail-collapsible. |
+| `PageHeader`, `defaultPageHeaderLabels` | Top of every page: breadcrumbs, back arrow, title + badge, description, actions (wrap on phones), tabs row. Same props as OneSales's `ui/PageHeader`. |
+| `Breadcrumbs`, `defaultBreadcrumbsLabels` | Where-am-I trail (`nav` > `ol`, current page last); collapses the middle into a "…" menu past `maxItems`. `renderLink` for router links. |
+| `TablePage` | Whole table/list page: `PageHeader` + `TableShell` filling the remaining height. Start here for any list page. |
+| `TableShell`, `TableToolbar`, `TableSearch`, `TableResultCount`, `defaultTableResultCountLabels` | Panel around a table/grid: toolbar (search, filters, actions) → meta strip ("12 of 48") → body → footer. Wrap a `@bmsuisse/datagrid` grid or a `Table`. |
+| `Pagination`, `getPageRange`, `defaultPaginationLabels` | Server-side paging: prev/next, page numbers with "…", rows-per-page select, "1–25 of 312"; prev / "3 / 13" / next on phones. |
+| `CommandPalette`, `CommandPaletteTrigger`, `useCommandPaletteHotkey`, `useRecentCommands`, `formatCommandPaletteShortcut`, `defaultCommandPaletteLabels`, `scoreCommand` | ⌘K / Ctrl+K "do anything" dialog: grouped commands with icons and shortcut hints, fuzzy-ish filter, recent commands, keyboard navigation. Trigger = top-bar search pill. |
+| `CommandRegistryProvider`, `useRegisterCommands`, `useRegisteredCommands` | Let pages add their own commands to the app-wide `CommandPalette` while mounted. |
+| `SplitPane`, `SplitPanePanel`, `defaultSplitPaneLabels` | Two or more panes with draggable, keyboard-operable separators (master/detail, editor/preview); min/max in % or px; `storageKey` remembers the layout. Not for the app nav (use `Sidebar resizable`). |
+| `Toolbar`, `ToolbarButton`, `ToolbarSeparator`, `defaultToolbarLabels` | Row of related controls as one Tab stop (roving tabindex, arrow keys); toggle buttons; `overflow` folds what doesn't fit into a "…" menu. |
 | `AnimatedBrand`, `BRAND_ANIMATIONS` | One* product wordmark with optional intro animation. |
 
 ## AI
