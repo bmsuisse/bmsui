@@ -483,8 +483,38 @@ logic above, which already had its own extraction). Structure:
     `aria-invalid` and keep the old value. Accepts `3.2.26`, any of `. / -`,
     and ISO. `toLocalIsoDay` is exported because OneSales hit the
     `toISOString().slice(0, 10)` UTC-day bug after 22:00 Swiss time. No
-    calendar popover yet — that's the next step (Astryx's `Calendar` is the
+    calendar popover here — `DatePicker` (v0.21.0) adds it (Astryx's `Calendar` was the
     reference for keyboard behaviour).
+  - Input set (v0.21.0), behaviour learned from Astryx (MIT) and the apps'
+    local versions, styled with theme tokens only (`--primary` stays navy in
+    dark mode, so selected fills use `dark:bg-accent`, never `text-primary`):
+    - `number-input/` — `NumberInput` + `lib/numberField`
+      (`parseLocaleNumber`/`formatLocaleNumber`). de-CH display `1’234.50`
+      (Intl's group mark; ICU versions differ between `'` and `’`, both
+      parse). Accepts decimal comma, apostrophes/spaces as grouping; a lone
+      locale-group char counts as grouping only before exactly three digits.
+      Commit on blur/Enter like `DateInput`, clamp to min/max, ArrowUp/Down
+      float-safe stepping, optional `stepper` buttons, `role="spinbutton"`.
+    - `calendar/` — `Calendar` (`mode` single|range, ISO days in/out) +
+      `lib/calendar` (week start via `Intl.Locale#getWeekInfo` with a region
+      fallback, six-week grids). Roving tab stop; blocked days are
+      `aria-disabled` (not `disabled`) so keyboard focus can pass them.
+    - `date-picker/` — `DatePicker` (DateInput + Popover Calendar) and
+      `DateRangePicker` (two DateInputs in one `InputGroup`). `DateInput`
+      gained `min`/`max` (typed days outside → invalid).
+    - `input-group/` — `InputGroup`/`InputGroupAddon`/`InputGroupInput`/
+      `InputGroupButton`; ring via `focus-within`, invalid via `:has()`.
+    - `segmented-control/` — `SegmentedControl`, from OneDocs
+      `common/Segmented`; thumb measured from the checked button
+      (layout effect + ResizeObserver).
+    - `radio-list/` — `RadioList` over the new `RadioGroup`/`RadioGroupItem`
+      primitives (`@radix-ui/react-radio-group`).
+    - `range-slider/` — `RangeSlider` over the new `Slider` primitive
+      (`@radix-ui/react-slider`), the typed-bounds idea from OneSales
+      `RangeSliderFilter` (without its histogram/log scale).
+    - `file-input/` — `FileInput`, the drop behaviour of OneSales'
+      offer-parser `StepUpload` without pragmatic-drag-and-drop: native drag
+      events with an enter/leave depth counter, `accept` checked on drop too.
 - `packages/ui/demo/` — same pattern as `packages/datagrid/demo`: a Vite
   app aliasing `@bmsuisse/ui` straight to `src/index.ts`, using the same
   reference-app-derived Tailwind v4 tokens, for visual QA.

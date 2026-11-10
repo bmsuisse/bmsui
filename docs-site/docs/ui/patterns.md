@@ -132,6 +132,111 @@ previous value; `onInvalidChange` tells a form so it can block submit. With
 `name`, a hidden input submits the ISO day. `parseIsoDay`, `formatIsoDay`, `datePlaceholder` and
 `toLocalIsoDay` are exported for use outside the field.
 
+### `DatePicker` / `DateRangePicker` / `Calendar`
+
+`DatePicker` is `DateInput` plus a calendar button: type `3.2.26` or pick from
+a month grid in a popover. Same ISO-day value and commit rules as `DateInput`.
+
+```tsx
+<DatePicker value={due} onValueChange={setDue} min="2026-01-01" />
+<DateRangePicker value={period} onValueChange={setPeriod} />   {/* { from, to } ISO days */}
+<Calendar value={day} onValueChange={setDay} />                 {/* always visible */}
+<Calendar mode="range" value={range} onValueChange={setRange} isDateDisabled={isHoliday} />
+```
+
+`min`/`max` limit typed and picked days (typed days outside are marked
+invalid). The calendar follows `locale` for month/weekday names and week start
+(Monday in de-CH, Sunday in en-US; `weekStartsOn` overrides). Keyboard: arrows
+by day/week, PageUp/PageDown by month (Shift: year), Home/End to the week's
+ends. In a range the first click sets `from`, the second `to` (ordered);
+`DateRangePicker` closes once both are set. Inside a Dialog/Sheet pass
+`container` so the popover stays in the focus trap. `labels` translates the
+button names.
+
+### `NumberInput`
+
+A number field in the app locale instead of `<input type="number">`. The value
+is `number | null`.
+
+```tsx
+<NumberInput value={amount} onValueChange={setAmount} decimals={2} />       {/* 1’234.50 */}
+<NumberInput value={qty} onValueChange={setQty} min={0} max={99} stepper />
+```
+
+Reads `1234,5`, `1'234.50`, `1 234` and `1.234,56` alike; commits on blur or
+Enter; out-of-range numbers are clamped; junk sets `aria-invalid` and keeps the
+old value (`onInvalidChange`). ArrowUp/ArrowDown step by `step` (Shift ×10,
+float-safe). `size="sm"` is h-8. `parseLocaleNumber`/`formatLocaleNumber` are
+exported.
+
+### `InputGroup`
+
+Icons, units or small buttons around an input, with one border and focus ring.
+
+```tsx
+<InputGroup>
+  <InputGroupAddon>CHF</InputGroupAddon>
+  <InputGroupInput aria-label="Price" />
+  <InputGroupButton aria-label="Copy"><ClipboardDocumentIcon /></InputGroupButton>
+</InputGroup>
+```
+
+Clicking an addon focuses the input; an invalid input reddens the group.
+
+### `SegmentedControl`
+
+Compact switch between 2–5 views or modes with a sliding thumb. Radiogroup
+semantics: one tab stop, arrow keys move and select.
+
+```tsx
+<SegmentedControl aria-label="View" value={view} onValueChange={setView}
+  options={[{ value: "list", label: "List", icon: ListBulletIcon }, { value: "board", label: "Board" }]} />
+```
+
+`size="sm"`, `fullWidth`, per-option `disabled`. Use `ButtonGroup` for
+outlined connected buttons, `Tabs` when segments switch whole panels.
+
+### `RadioList` / `RadioGroup`
+
+```tsx
+<RadioList aria-label="Shipping" value={shipping} onValueChange={setShipping}
+  options={[{ value: "standard", label: "Standard", description: "3–5 days" }, …]} />
+<RadioList variant="card" orientation="horizontal" … />
+```
+
+Each radio is named by its label and described by its description.
+`RadioGroup` + `RadioGroupItem` are the bare Radix primitives for your own
+layout.
+
+### `Slider` / `RangeSlider`
+
+`Slider` is the Radix primitive (one thumb per value). `RangeSlider` is a
+two-thumb range with typed min/max `NumberInput`s:
+
+```tsx
+<Slider value={[volume]} onValueChange={([v]) => setVolume(v)} thumbLabels="Volume" />
+<RangeSlider min={0} max={10000} step={100} value={price} onValueChange={setPrice}
+  onValueCommit={refetch} unit="CHF" />
+```
+
+A typed low above the high is clamped to it. `onValueCommit` fires when a drag
+ends or a typed bound commits — use it for expensive refetches.
+
+### `FileInput`
+
+Drop zone + file dialog + removable file list. Controlled; uploading is up to
+you.
+
+```tsx
+<FileInput files={files} onFilesChange={setFiles} multiple accept=".pdf,.docx"
+  maxSize={10 * 1024 * 1024} hint="PDF or Word, up to 10 MB" />
+```
+
+Files that don't match `accept` (also enforced on drop), exceed `maxSize`, or
+go beyond `maxFiles` are refused with a visible error and passed to
+`onReject`. Without `multiple` a new file replaces the old one. `size="sm"`
+is a one-row zone. `labels` translates every string.
+
 ### `LoadingSpinner` / `LoadingOverlay`
 
 `LoadingSpinner` is an inline spinner (`size` + optional `label`);

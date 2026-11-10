@@ -87,6 +87,9 @@ export {
   sheetVariants,
 } from "./primitives/sheet";
 export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./primitives/tooltip";
+export { RadioGroup, RadioGroupItem } from "./primitives/radio-group";
+export type { SliderProps } from "./primitives/slider";
+export { Slider } from "./primitives/slider";
 
 // --- patterns (composed on top of the primitives above) ---------------------
 export type { ModalProps } from "./patterns/modal/Modal";
@@ -202,6 +205,50 @@ export { defaultToasterLabels, Toaster } from "./patterns/toast/Toaster";
 export type { DateInputProps } from "./patterns/date-input/DateInput";
 export { DateInput } from "./patterns/date-input/DateInput";
 export { datePlaceholder, formatIsoDay, parseIsoDay, toLocalIsoDay } from "./lib/dateField";
+
+export type {
+  CalendarLabels,
+  CalendarProps,
+  CalendarRangeProps,
+  CalendarSingleProps,
+  DateRange,
+} from "./patterns/calendar/Calendar";
+export { Calendar, defaultCalendarLabels } from "./patterns/calendar/Calendar";
+export type {
+  DatePickerLabels,
+  DatePickerProps,
+  DateRangePickerLabels,
+  DateRangePickerProps,
+} from "./patterns/date-picker/DatePicker";
+export {
+  DatePicker,
+  DateRangePicker,
+  defaultDatePickerLabels,
+  defaultDateRangePickerLabels,
+} from "./patterns/date-picker/DatePicker";
+
+export type { NumberInputLabels, NumberInputProps } from "./patterns/number-input/NumberInput";
+export { defaultNumberInputLabels, NumberInput } from "./patterns/number-input/NumberInput";
+export type { FormatNumberOptions } from "./lib/numberField";
+export { formatLocaleNumber, parseLocaleNumber } from "./lib/numberField";
+
+export type { InputGroupProps } from "./patterns/input-group/InputGroup";
+export { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "./patterns/input-group/InputGroup";
+
+export type {
+  SegmentedControlOption,
+  SegmentedControlProps,
+} from "./patterns/segmented-control/SegmentedControl";
+export { SegmentedControl } from "./patterns/segmented-control/SegmentedControl";
+
+export type { RadioListOption, RadioListProps } from "./patterns/radio-list/RadioList";
+export { RadioList } from "./patterns/radio-list/RadioList";
+
+export type { RangeSliderLabels, RangeSliderProps } from "./patterns/range-slider/RangeSlider";
+export { defaultRangeSliderLabels, RangeSlider } from "./patterns/range-slider/RangeSlider";
+
+export type { FileInputLabels, FileInputProps, FileRejection } from "./patterns/file-input/FileInput";
+export { defaultFileInputLabels, FileInput, formatFileSize, matchesAccept } from "./patterns/file-input/FileInput";
 
 // --- shared utility -----------------------------------------------------------
 export { cn } from "./lib/utils";

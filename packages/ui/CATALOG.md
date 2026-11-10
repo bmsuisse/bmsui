@@ -14,10 +14,12 @@ repo's `AGENTS.md`.
 | Export | Use for |
 | --- | --- |
 | `Button`, `buttonVariants` | Every button. Variants `default` `secondary` `outline` `ghost` `destructive` `link` `ai*`; sizes `xs` `sm` `default` `lg` `icon*`. |
-| `Input` | Single-line text input. For dates use `DateInput`; for search use `SearchBar`. |
+| `Input` | Single-line text input. For dates use `DateInput`/`DatePicker`; numbers `NumberInput`; search `SearchBar`; icons/units around it `InputGroup`. |
 | `Textarea` | Multi-line text. |
 | `Label` | Form label. Prefer `FormField`, which wires label + error + ids. |
 | `Checkbox`, `Switch` | Boolean inputs. |
+| `RadioGroup`, `RadioGroupItem` | Radix radio group + circle, for your own layout. With labels/descriptions use `RadioList`. |
+| `Slider` | Radix slider, one thumb per value (`[50]`, `[10, 80]`); `thumbLabels`, `getValueText`. Range with typed bounds: `RangeSlider`. |
 | `Select`, `SelectContent`, `SelectGroup`, `SelectItem`, `SelectTrigger`, `SelectValue` | Short fixed option list without search. With search use `Combobox`. |
 | `Card`, `CardHeader`, `CardTitle`, `CardDescription`, `CardContent`, `CardFooter` | Bordered content block. |
 | `Badge`, `badgeVariants` | Small label. For statuses use `StatusBadge`. |
@@ -50,6 +52,16 @@ repo's `AGENTS.md`.
 | `FormField` | Label + control + error/description with ids wired. Wrap every form control. |
 | `DateInput` | Day field in the app locale (dd.mm.yyyy), ISO value. Instead of `<input type="date">`. |
 | `parseIsoDay`, `formatIsoDay`, `datePlaceholder`, `toLocalIsoDay` | Date helpers. `toLocalIsoDay(new Date())` instead of `toISOString().slice(0, 10)` (UTC day bug). |
+| `DatePicker`, `defaultDatePickerLabels` | `DateInput` + calendar popover button. Default choice for date fields in forms. |
+| `DateRangePicker`, `defaultDateRangePickerLabels` | "from – to" day fields in one box + range calendar popover. Period filters, validity ranges. |
+| `Calendar`, `defaultCalendarLabels` | Always-visible month grid, `mode` single or `range`, min/max, keyboard nav, locale week start. ISO days. |
+| `NumberInput`, `defaultNumberInputLabels` | Locale number field (`1’234.50`, reads `1234,5`), commit on blur/Enter, min/max clamp, ArrowUp/Down, optional `stepper`. Instead of `type="number"`. |
+| `parseLocaleNumber`, `formatLocaleNumber` | The number parse/format behind `NumberInput`, for use outside the field. |
+| `InputGroup`, `InputGroupAddon`, `InputGroupInput`, `InputGroupButton` | Input with leading/trailing icon, unit text (`CHF`) or small buttons; one border + focus ring. |
+| `SegmentedControl` | Compact 2–5 option view/mode switch with sliding thumb; radiogroup + arrow keys. |
+| `RadioList` | Radio options with label + description, plain or `variant="card"`. |
+| `RangeSlider`, `defaultRangeSliderLabels` | Two-thumb numeric range with typed min/max inputs (price/area filters). |
+| `FileInput`, `defaultFileInputLabels`, `formatFileSize`, `matchesAccept` | Drop zone + click to browse, `accept`/`maxSize`/`maxFiles` errors, removable file list. Controlled `files`. |
 | `Combobox` | Searchable dropdown, single or `multiple`. |
 | `TagCombobox` | Multi-select with chips inline in the field. |
 | `ButtonGroup` | Connected single-select segment buttons. |

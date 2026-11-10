@@ -15,6 +15,21 @@ import {
   Combobox,
   ConfirmDialog,
   DateInput,
+  DatePicker,
+  DateRangePicker,
+  Calendar,
+  NumberInput,
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+  SegmentedControl,
+  RadioGroup,
+  RadioGroupItem,
+  RadioList,
+  Slider,
+  RangeSlider,
+  FileInput,
   EmptyState,
   FilteredEmptyState,
   Toaster,
@@ -114,7 +129,14 @@ import {
   useSidebarCollapsed,
 } from "@bmsuisse/ui";
 import {
+  AtSymbolIcon,
   BookOpenIcon,
+  ClipboardDocumentIcon,
+  EyeIcon,
+  EyeSlashIcon,
+  ListBulletIcon,
+  TableCellsIcon,
+  ViewColumnsIcon,
   ClipboardDocumentCheckIcon,
   Cog6ToothIcon,
   CurrencyDollarIcon,
@@ -928,6 +950,34 @@ export function App(): ReactElement {
             <DateInputDemo />
           </Section>
 
+          <Section title="NumberInput">
+            <NumberInputDemo />
+          </Section>
+
+          <Section title="Calendar / DatePicker / DateRangePicker">
+            <CalendarDemo />
+          </Section>
+
+          <Section title="SegmentedControl">
+            <SegmentedControlDemo />
+          </Section>
+
+          <Section title="RadioGroup / RadioList">
+            <RadioDemo />
+          </Section>
+
+          <Section title="InputGroup">
+            <InputGroupDemo />
+          </Section>
+
+          <Section title="Slider / RangeSlider">
+            <SliderDemo />
+          </Section>
+
+          <Section title="FileInput">
+            <FileInputDemo />
+          </Section>
+
           <Section title="Stepper">
             <StepperDemo />
           </Section>
@@ -1540,5 +1590,220 @@ function CollapsedStateReadout(): ReactElement {
   const collapsed = useSidebarCollapsed();
   return (
     <p className="text-xs text-muted-foreground">useSidebarCollapsed() → {String(collapsed)}</p>
+  );
+}
+
+function DemoField({ label, children, note }: { label: string; children: ReactElement; note?: string }): ReactElement {
+  return (
+    <div className="flex min-w-0 flex-col gap-1.5 text-sm">
+      <span className="font-medium">{label}</span>
+      {children}
+      {note ? <span className="text-xs text-muted-foreground">{note}</span> : null}
+    </div>
+  );
+}
+
+function NumberInputDemo(): ReactElement {
+  const [amount, setAmount] = useState<number | null>(1234.5);
+  const [qty, setQty] = useState<number | null>(3);
+  const [pct, setPct] = useState<number | null>(null);
+  return (
+    <div data-testid="demo-number-input" className="grid w-full max-w-3xl gap-4 sm:grid-cols-4">
+      <DemoField label="Amount (2 decimals)" note={`value: ${amount ?? "null"} — try 1234,5`}>
+        <NumberInput value={amount} onValueChange={setAmount} decimals={2} />
+      </DemoField>
+      <DemoField label="Quantity (stepper, 0–10)" note={`value: ${qty ?? "null"}`}>
+        <NumberInput value={qty} onValueChange={setQty} min={0} max={10} stepper />
+      </DemoField>
+      <DemoField label="Discount (sm)" note={`value: ${pct ?? "null"}`}>
+        <NumberInput value={pct} onValueChange={setPct} size="sm" stepper step={0.5} placeholder="0.0" />
+      </DemoField>
+      <DemoField label="Disabled">
+        <NumberInput value={42} onValueChange={() => {}} stepper disabled />
+      </DemoField>
+    </div>
+  );
+}
+
+function CalendarDemo(): ReactElement {
+  const [day, setDay] = useState("2026-11-18");
+  const [range, setRange] = useState({ from: "2026-11-09", to: "2026-11-20" });
+  const [due, setDue] = useState("2026-11-10");
+  const [period, setPeriod] = useState({ from: "2026-11-02", to: "2026-11-27" });
+  return (
+    <div data-testid="demo-calendar" className="flex w-full flex-wrap items-start gap-6">
+      <Card className="border-input p-0">
+        <Calendar value={day} onValueChange={setDay} today="2026-11-10" min="2026-11-03" isDateDisabled={(iso) => iso === "2026-11-25"} />
+      </Card>
+      <Card className="border-input p-0">
+        <Calendar mode="range" value={range} onValueChange={setRange} today="2026-11-10" />
+      </Card>
+      <div className="grid w-72 gap-4">
+        <DemoField label="DatePicker" note={`value: ${due || "—"}`}>
+          <DatePicker value={due} onValueChange={setDue} data-testid="demo-date-picker" />
+        </DemoField>
+        <DemoField label="DateRangePicker" note={`${period.from || "…"} → ${period.to || "…"}`}>
+          <DateRangePicker value={period} onValueChange={setPeriod} data-testid="demo-date-range-picker" />
+        </DemoField>
+        <DemoField label="DatePicker (sm, disabled)">
+          <DatePicker value="2026-12-24" onValueChange={() => {}} size="sm" disabled />
+        </DemoField>
+      </div>
+    </div>
+  );
+}
+
+function SegmentedControlDemo(): ReactElement {
+  const [view, setView] = useState("list");
+  const [period, setPeriod] = useState("month");
+  return (
+    <div data-testid="demo-segmented-control" className="flex flex-wrap items-center gap-6">
+      <SegmentedControl
+        aria-label="View"
+        value={view}
+        onValueChange={setView}
+        options={[
+          { value: "list", label: "List", icon: ListBulletIcon },
+          { value: "board", label: "Board", icon: ViewColumnsIcon },
+          { value: "table", label: "Table", icon: TableCellsIcon },
+        ]}
+      />
+      <SegmentedControl
+        aria-label="Period"
+        size="sm"
+        value={period}
+        onValueChange={setPeriod}
+        options={[
+          { value: "week", label: "Week" },
+          { value: "month", label: "Month" },
+          { value: "quarter", label: "Quarter" },
+          { value: "year", label: "Year", disabled: true },
+        ]}
+      />
+      <SegmentedControl aria-label="Disabled" disabled value="a" onValueChange={() => {}} options={[{ value: "a", label: "On" }, { value: "b", label: "Off" }]} />
+    </div>
+  );
+}
+
+function RadioDemo(): ReactElement {
+  const [shipping, setShipping] = useState("standard");
+  const [plan, setPlan] = useState("team");
+  const [size, setSize] = useState("m");
+  return (
+    <div data-testid="demo-radio" className="grid w-full max-w-4xl gap-6 md:grid-cols-[1fr_2fr]">
+      <div className="grid gap-4">
+        <RadioList
+          aria-label="Shipping"
+          value={shipping}
+          onValueChange={setShipping}
+          options={[
+            { value: "standard", label: "Standard", description: "3–5 working days, free" },
+            { value: "express", label: "Express", description: "Next working day, CHF 12.–" },
+            { value: "pickup", label: "Pick-up", description: "Not available for this order", disabled: true },
+          ]}
+        />
+        <RadioGroup aria-label="Size" value={size} onValueChange={setSize} className="flex gap-4">
+          {["s", "m", "l"].map((s) => (
+            <div key={s} className="flex items-center gap-2">
+              <RadioGroupItem id={`size-${s}`} value={s} />
+              <Label htmlFor={`size-${s}`}>{s.toUpperCase()}</Label>
+            </div>
+          ))}
+        </RadioGroup>
+      </div>
+      <RadioList
+        aria-label="Plan"
+        variant="card"
+        orientation="horizontal"
+        value={plan}
+        onValueChange={setPlan}
+        options={[
+          { value: "solo", label: "Solo", description: "One user, basic reports" },
+          { value: "team", label: "Team", description: "Up to 20 users, shared views" },
+          { value: "org", label: "Organisation", description: "SSO, audit log, support" },
+        ]}
+      />
+    </div>
+  );
+}
+
+function InputGroupDemo(): ReactElement {
+  const [show, setShow] = useState(false);
+  return (
+    <div data-testid="demo-input-group" className="grid w-full max-w-3xl gap-4 sm:grid-cols-2">
+      <DemoField label="Leading icon">
+        <InputGroup>
+          <InputGroupAddon>
+            <MagnifyingGlassIcon />
+          </InputGroupAddon>
+          <InputGroupInput placeholder="Search customers" />
+        </InputGroup>
+      </DemoField>
+      <DemoField label="Units">
+        <InputGroup>
+          <InputGroupAddon>CHF</InputGroupAddon>
+          <InputGroupInput defaultValue="1'250.00" className="tabular-nums" />
+          <InputGroupAddon>/ month</InputGroupAddon>
+        </InputGroup>
+      </DemoField>
+      <DemoField label="Trailing buttons">
+        <InputGroup>
+          <InputGroupInput type={show ? "text" : "password"} defaultValue="hunter22" />
+          <InputGroupButton aria-label={show ? "Hide password" : "Show password"} onClick={() => setShow((v) => !v)}>
+            {show ? <EyeSlashIcon /> : <EyeIcon />}
+          </InputGroupButton>
+          <InputGroupButton aria-label="Copy">
+            <ClipboardDocumentIcon />
+          </InputGroupButton>
+        </InputGroup>
+      </DemoField>
+      <DemoField label="sm, text button">
+        <InputGroup size="sm">
+          <InputGroupAddon>
+            <AtSymbolIcon />
+          </InputGroupAddon>
+          <InputGroupInput placeholder="name@company.ch" />
+          <InputGroupButton size="xs" variant="outline" className="h-6">
+            Invite
+          </InputGroupButton>
+        </InputGroup>
+      </DemoField>
+    </div>
+  );
+}
+
+function SliderDemo(): ReactElement {
+  const [volume, setVolume] = useState([40]);
+  const [price, setPrice] = useState<[number, number]>([1200, 8500]);
+  return (
+    <div data-testid="demo-slider" className="grid w-full max-w-3xl gap-8 sm:grid-cols-3">
+      <DemoField label={`Volume: ${volume[0]}%`}>
+        <Slider value={volume} onValueChange={setVolume} max={100} thumbLabels="Volume" />
+      </DemoField>
+      <DemoField label="Price range">
+        <RangeSlider value={price} onValueChange={setPrice} min={0} max={10000} step={100} unit="CHF" />
+      </DemoField>
+      <DemoField label="Disabled">
+        <Slider defaultValue={[30, 70]} disabled thumbLabels={["From", "To"]} />
+      </DemoField>
+    </div>
+  );
+}
+
+function FileInputDemo(): ReactElement {
+  const [files, setFiles] = useState<File[]>(() => [
+    new File(["x".repeat(184_320)], "Offerte_2026-114.pdf", { type: "application/pdf" }),
+    new File(["x".repeat(2_400_000)], "Leistungsverzeichnis Haus Seeblick.docx"),
+  ]);
+  const [single, setSingle] = useState<File[]>([]);
+  return (
+    <div data-testid="demo-file-input" className="grid w-full max-w-3xl gap-6 sm:grid-cols-2">
+      <DemoField label="Multiple, PDF/Word, max 5 MB">
+        <FileInput files={files} onFilesChange={setFiles} multiple accept=".pdf,.docx,.doc" maxSize={5 * 1024 * 1024} hint="PDF or Word, up to 5 MB" />
+      </DemoField>
+      <DemoField label="Single, compact (sm)">
+        <FileInput files={single} onFilesChange={setSingle} size="sm" accept="image/*" hint="PNG, JPG" />
+      </DemoField>
+    </div>
   );
 }
