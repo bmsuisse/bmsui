@@ -115,7 +115,7 @@ repo's `AGENTS.md`.
 | `CommandPalette`, `CommandPaletteTrigger`, `useCommandPaletteHotkey`, `useRecentCommands`, `formatCommandPaletteShortcut`, `defaultCommandPaletteLabels`, `scoreCommand` | ⌘K / Ctrl+K "do anything" dialog: grouped commands with icons and shortcut hints, fuzzy-ish filter, recent commands, keyboard navigation. Trigger = top-bar search pill. |
 | `CommandRegistryProvider`, `useRegisterCommands`, `useRegisteredCommands` | Let pages add their own commands to the app-wide `CommandPalette` while mounted. |
 | `SplitPane`, `SplitPanePanel`, `defaultSplitPaneLabels` | Two or more panes with draggable, keyboard-operable separators (master/detail, editor/preview); min/max in % or px; `storageKey` remembers the layout. Not for the app nav (use `Sidebar resizable`). |
-| `Toolbar`, `ToolbarButton`, `ToolbarSeparator`, `defaultToolbarLabels` | Row of related controls as one Tab stop (roving tabindex, arrow keys); toggle buttons; `overflow` folds what doesn't fit into a "…" menu. |
+| `Toolbar`, `ToolbarButton`, `ToolbarSeparator`, `defaultToolbarLabels` | Row of related controls as one Tab stop (roving tabindex, arrow keys); toggle buttons; `overflow` folds `ToolbarButton`s that don't fit into a "…" menu (other children stay visible). |
 | `AnimatedBrand`, `BRAND_ANIMATIONS` | One* product wordmark with optional intro animation. |
 
 ## AI

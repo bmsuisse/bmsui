@@ -59,3 +59,25 @@ describe("RadioList", () => {
     expect(screen.getByTestId("ship-option-express")).toBeInTheDocument();
   });
 });
+
+describe("RadioList ids", () => {
+  it("builds valid ids from the index, not values with spaces", () => {
+    const onChange = vi.fn();
+    render(
+      <RadioList
+        aria-label="Plan"
+        value=""
+        onValueChange={onChange}
+        options={[
+          { value: "per month", label: "Monthly", description: "Billed monthly" },
+          { value: "per year", label: "Yearly" },
+        ]}
+      />,
+    );
+    const radio = screen.getByRole("radio", { name: "Monthly" });
+    expect(radio.id).not.toMatch(/\s/);
+    expect(radio).toHaveAccessibleDescription("Billed monthly");
+    fireEvent.click(screen.getByText("Yearly"));
+    expect(onChange).toHaveBeenCalledWith("per year");
+  });
+});

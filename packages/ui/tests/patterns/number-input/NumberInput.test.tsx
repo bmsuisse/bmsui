@@ -110,3 +110,47 @@ describe("NumberInput", () => {
     expect(ref.current).toBeInstanceOf(HTMLInputElement);
   });
 });
+
+describe("NumberInput review fixes", () => {
+  it("re-syncs the text after a commit the parent clamps back to the same value", () => {
+    const Clamped = () => {
+      const [v, setV] = useState<number | null>(50);
+      return <NumberInput aria-label="Min" value={v} onValueChange={(n) => setV(Math.min(n ?? 0, 50))} />;
+    };
+    render(<Clamped />);
+    const input = screen.getByLabelText("Min");
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: "90" } });
+    fireEvent.blur(input);
+    expect(input).toHaveValue("50");
+    expect(input).toHaveAttribute("aria-valuenow", "50");
+  });
+
+  it("refills a cleared field the parent keeps at the same number", () => {
+    const Fixed = () => {
+      const [v, setV] = useState<number | null>(0);
+      return <NumberInput aria-label="Min" value={v} onValueChange={(n) => setV(n ?? 0)} />;
+    };
+    render(<Fixed />);
+    const input = screen.getByLabelText("Min");
+    fireEvent.change(input, { target: { value: "" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(input).toHaveValue("0");
+  });
+
+  it("parses its own currency display and rounds 1.005 to 1.01", () => {
+    const onChange = vi.fn();
+    render(
+      <Controlled initial={1234.5} onChange={onChange} decimals={2} formatOptions={{ style: "currency", currency: "CHF" }} />,
+    );
+    const input = screen.getByLabelText("Amount");
+    const shown = (input as HTMLInputElement).value;
+    expect(shown.replace(/\s/g, " ")).toBe(`CHF 1${G}234.50`);
+    fireEvent.change(input, { target: { value: shown } });
+    fireEvent.blur(input);
+    expect(input).not.toHaveAttribute("aria-invalid");
+    fireEvent.change(input, { target: { value: "1.005" } });
+    fireEvent.blur(input);
+    expect(onChange).toHaveBeenLastCalledWith(1.01);
+  });
+});

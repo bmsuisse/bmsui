@@ -63,3 +63,15 @@ describe("SegmentedControl", () => {
     screen.getAllByRole("radio").forEach((radio) => expect(radio).toBeDisabled());
   });
 });
+
+describe("SegmentedControl without a matching value", () => {
+  it("ArrowLeft goes to the last enabled option, ArrowRight to the first", () => {
+    const onChange = vi.fn();
+    render(<SegmentedControl aria-label="View" options={options} value="" onValueChange={onChange} />);
+    const group = screen.getByRole("radiogroup");
+    fireEvent.keyDown(group, { key: "ArrowLeft" });
+    expect(onChange).toHaveBeenLastCalledWith("table");
+    fireEvent.keyDown(group, { key: "ArrowRight" });
+    expect(onChange).toHaveBeenLastCalledWith("list");
+  });
+});

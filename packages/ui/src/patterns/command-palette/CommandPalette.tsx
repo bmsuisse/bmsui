@@ -261,8 +261,9 @@ function PaletteBody({
             <EmptyState size="sm" icon={MagnifyingGlassIcon} title={l.empty} className="py-8" data-testid="command-palette-empty" />
           )
         ) : (
-          sections.map((section) => {
-            const headerId = `${baseId}-group-${section.key || "none"}`;
+          sections.map((section, sectionIndex) => {
+            // Group names can contain spaces/punctuation; ids built from them would break aria-labelledby.
+            const headerId = `${baseId}-group-${sectionIndex}`;
             return (
               <div
                 key={section.key}
@@ -412,7 +413,7 @@ export function useCommandPaletteHotkey(handler: () => void, options: UseCommand
   useEffect(() => {
     if (!enabled) return undefined;
     const onKeyDown = (event: globalThis.KeyboardEvent): void => {
-      if (event.key.toLowerCase() !== key.toLowerCase() || !(event.metaKey || event.ctrlKey)) return;
+      if (event.key?.toLowerCase() !== key.toLowerCase() || !(event.metaKey || event.ctrlKey)) return;
       if (event.altKey || event.shiftKey || event.repeat) return;
       event.preventDefault();
       handlerRef.current();
@@ -481,7 +482,11 @@ export function useRecentCommands(
   max = 5,
 ): { recent: string[]; push: (command: CommandItem | string) => void; clear: () => void } {
   const fullKey = RECENT_PREFIX + storageKey;
-  const [recent, setRecent] = useState<string[]>(() => readRecent(fullKey));
+  // Start empty and read storage after mount so server and client markup match.
+  const [recent, setRecent] = useState<string[]>(EMPTY_RECENT);
+  useEffect(() => {
+    setRecent(readRecent(fullKey));
+  }, [fullKey]);
   const write = useCallback(
     (next: string[]) => {
       setRecent(next);
@@ -511,6 +516,8 @@ export function useRecentCommands(
   const clear = useCallback(() => write([]), [write]);
   return { recent, push, clear };
 }
+
+const EMPTY_RECENT: string[] = [];
 
 function readRecent(key: string): string[] {
   try {

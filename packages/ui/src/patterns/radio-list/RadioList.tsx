@@ -71,8 +71,9 @@ export function RadioList<T extends string = string>({
         className,
       )}
     >
-      {options.map((option) => {
-        const id = `${baseId}-${option.value}`;
+      {options.map((option, index) => {
+        // Index, not value: values may contain spaces or other characters invalid in ids.
+        const id = `${baseId}-${index}`;
         const labelId = `${id}-label`;
         const descriptionId = option.description ? `${id}-description` : undefined;
         const optionDisabled = disabled || option.disabled;

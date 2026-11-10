@@ -70,7 +70,9 @@ export function SegmentedControl<T extends string = string>({
     let next: SegmentedControlOption<T> | undefined;
     if (step) {
       const at = enabled.findIndex((o) => o.value === value);
-      next = enabled[(at + step + enabled.length) % enabled.length];
+      // No enabled option is checked yet: forward starts at the first, backward at the last.
+      if (at < 0) next = step > 0 ? enabled[0] : enabled[enabled.length - 1];
+      else next = enabled[(at + step + enabled.length) % enabled.length];
     } else if (e.key === "Home") next = enabled[0];
     else if (e.key === "End") next = enabled[enabled.length - 1];
     if (!next) return;

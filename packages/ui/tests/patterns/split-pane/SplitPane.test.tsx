@@ -149,3 +149,26 @@ describe("SplitPane", () => {
     expect(separators()[0]).toHaveAttribute("aria-valuenow", "33");
   });
 });
+
+describe("SplitPane SSR", () => {
+  it("server markup uses the defaults, the stored layout applies on the client", async () => {
+    window.localStorage.setItem("bmsui:split-pane:ssr", JSON.stringify([70, 30]));
+    const { renderToString } = await import("react-dom/server");
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+    const html = renderToString(
+      <SplitPane storageKey="ssr" defaultSizes={[40, 60]}>
+        <div>A</div>
+        <div>B</div>
+      </SplitPane>,
+    );
+    errors.mockRestore();
+    expect(html).toContain('aria-valuenow="40"');
+    render(
+      <SplitPane storageKey="ssr" defaultSizes={[40, 60]}>
+        <div>A</div>
+        <div>B</div>
+      </SplitPane>,
+    );
+    expect(separators()[0]).toHaveAttribute("aria-valuenow", "70");
+  });
+});

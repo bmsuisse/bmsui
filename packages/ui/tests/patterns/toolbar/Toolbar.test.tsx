@@ -1,5 +1,5 @@
 import { BoldIcon, ItalicIcon } from "@heroicons/react/24/outline";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Toolbar, ToolbarButton, ToolbarSeparator } from "../../../src/patterns/toolbar/Toolbar";
@@ -108,5 +108,90 @@ describe("Toolbar", () => {
     await userEvent.click(screen.getByRole("button", { name: "Mehr" }));
     await userEvent.click(await screen.findByRole("menuitem", { name: "Delete" }));
     expect(onDelete).toHaveBeenCalledOnce();
+  });
+});
+
+describe("Toolbar overflow regressions", () => {
+  const mockLayout = (state: { toolbar: number; perChar: number }): void => {
+    vi.spyOn(HTMLElement.prototype, "offsetWidth", "get").mockImplementation(function (this: HTMLElement) {
+      return (this.textContent?.length ?? 0) * state.perChar;
+    });
+    vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockImplementation(function (this: HTMLElement) {
+      return this.getAttribute("role") === "toolbar" ? state.toolbar : 0;
+    });
+  };
+
+  it("never hides non-ToolbarButton children; only ToolbarButtons go into the menu", () => {
+    mockLayout({ toolbar: 200, perChar: 10 });
+    render(
+      <Toolbar aria-label="Actions" overflow>
+        <select aria-label="View" data-toolbar-item="">
+          <option>Grid</option>
+        </select>
+        <ToolbarButton label="Copyyyy" showLabel />
+        <ToolbarButton label="Printtt" showLabel />
+        <span>
+          <button type="button">Wrapped</button>
+        </span>
+        <ToolbarButton label="Shareee" showLabel />
+      </Toolbar>,
+    );
+    const toolbar = screen.getByRole("toolbar");
+    const hidden = Array.from(toolbar.querySelectorAll("[data-toolbar-hidden]"));
+    expect(hidden.length).toBeGreaterThan(0);
+    for (const slot of hidden) expect(slot.querySelector("button[data-toolbar-item]")).not.toBeNull();
+    expect(screen.getByRole("combobox", { name: "View" }).closest("[data-toolbar-hidden]")).toBeNull();
+    expect(screen.getByRole("button", { name: "Wrapped" }).closest("[data-toolbar-hidden]")).toBeNull();
+    expect(screen.getByTestId("toolbar-more")).toBeInTheDocument();
+  });
+
+  it("re-measures when a button's label changes", () => {
+    mockLayout({ toolbar: 250, perChar: 10 });
+    const { rerender } = render(
+      <Toolbar aria-label="Actions" overflow>
+        <ToolbarButton label="Copy" showLabel />
+        <ToolbarButton label="Print" showLabel />
+      </Toolbar>,
+    );
+    expect(screen.queryByTestId("toolbar-more")).toBeNull();
+    rerender(
+      <Toolbar aria-label="Actions" overflow>
+        <ToolbarButton label="Copy" showLabel />
+        <ToolbarButton label="Print the whole document now" showLabel />
+      </Toolbar>,
+    );
+    expect(screen.getByTestId("toolbar-more")).toBeInTheDocument();
+    expect(screen.getByRole("toolbar").querySelectorAll("[data-toolbar-hidden]")).toHaveLength(1);
+  });
+
+  it("doesn't cache widths measured while the toolbar had no width", () => {
+    const callbacks: (() => void)[] = [];
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        constructor(cb: () => void) {
+          callbacks.push(cb);
+        }
+        observe(): void {}
+        disconnect(): void {}
+      },
+    );
+    const state = { toolbar: 0, perChar: 0 };
+    mockLayout(state);
+    render(
+      <Toolbar aria-label="Actions" overflow>
+        <ToolbarButton label="Copy" showLabel />
+        <ToolbarButton label="Print" showLabel />
+        <ToolbarButton label="Share" showLabel />
+      </Toolbar>,
+    );
+    expect(screen.queryByTestId("toolbar-more")).toBeNull();
+    state.toolbar = 100;
+    state.perChar = 10;
+    act(() => {
+      for (const cb of callbacks) cb();
+    });
+    expect(screen.getByTestId("toolbar-more")).toBeInTheDocument();
+    vi.unstubAllGlobals();
   });
 });

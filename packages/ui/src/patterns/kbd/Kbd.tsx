@@ -1,5 +1,6 @@
 import { Fragment, type HTMLAttributes, type ReactElement } from "react";
 import { isMacPlatform } from "../../lib/platform";
+import { useIsMac } from "../../lib/useHydrated";
 import { cn } from "../../lib/utils";
 
 const MAC_KEYS: Record<string, string> = {
@@ -81,7 +82,7 @@ export interface KeyComboProps extends Omit<HTMLAttributes<HTMLSpanElement>, "ch
    * `Mod` for the platform's command key, `Plus` for a literal "+".
    */
   keys: string | string[];
-  /** Force Apple (⌘) or PC (Ctrl) spelling; detected from the browser by default. */
+  /** Force Apple (⌘) or PC (Ctrl) spelling; detected from the browser after hydration by default (PC spelling on the server). */
   mac?: boolean;
   size?: KbdProps["size"];
   labels?: Partial<KeyComboLabels>;
@@ -92,7 +93,9 @@ export interface KeyComboProps extends Omit<HTMLAttributes<HTMLSpanElement>, "ch
  * elsewhere. Use it in menus, tooltips, buttons and the `ShortcutSheet`.
  */
 export const KeyCombo = ({ keys, mac, size, labels, className, ...props }: KeyComboProps): ReactElement => {
-  const isMac = mac ?? isMacPlatform();
+  // Detected after hydration (server renders the PC spelling); an explicit `mac` wins.
+  const detectedMac = useIsMac();
+  const isMac = mac ?? detectedMac;
   const l = { ...defaultKeyComboLabels, ...labels };
   const alternatives = Array.isArray(keys) ? keys : [keys];
   return (

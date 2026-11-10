@@ -16,7 +16,9 @@ export interface TableShellProps extends Omit<HTMLAttributes<HTMLElement>, "chil
   flush?: boolean;
   /** Fill the remaining height of a flex column; the body becomes a `min-h-0 flex-1` column so a grid can scroll inside it. @default false */
   fill?: boolean;
-  /** @deprecated Use `data-testid`. Kept for OneSales's `TableShell` API. */
+  /** Test id on the `<section>`. @default "table-shell" */
+  "data-testid"?: string;
+  /** @deprecated Use `data-testid`. Alias kept for OneSales's `TableShell` API; `data-testid` wins when both are set. */
   testId?: string;
 }
 
@@ -35,13 +37,14 @@ export function TableShell({
   flush = false,
   fill = false,
   className,
+  "data-testid": dataTestId,
   testId,
   ...props
 }: TableShellProps): ReactElement {
   return (
     <section
       data-table-shell=""
-      data-testid={testId ?? "table-shell"}
+      data-testid={dataTestId ?? testId ?? "table-shell"}
       className={cn(
         "flex min-w-0 flex-col overflow-hidden bg-background",
         !flush && "rounded-xl border border-border shadow-sm",
@@ -89,7 +92,9 @@ export interface TableToolbarProps extends Omit<HTMLAttributes<HTMLDivElement>, 
   filters?: ReactNode;
   /** Pinned to the right (New, Export, view switcher). */
   actions?: ReactNode;
-  /** @deprecated Use `data-testid`. */
+  /** Test id on the toolbar row. @default "table-toolbar" */
+  "data-testid"?: string;
+  /** @deprecated Use `data-testid` (alias kept for OneSales compatibility; `data-testid` wins when both are set). */
   testId?: string;
 }
 
@@ -100,11 +105,12 @@ export function TableToolbar({
   filters,
   actions,
   className,
+  "data-testid": dataTestId,
   testId,
   ...props
 }: TableToolbarProps): ReactElement {
   return (
-    <div data-testid={testId ?? "table-toolbar"} className={cn("flex flex-wrap items-center gap-2", className)} {...props}>
+    <div data-testid={dataTestId ?? testId ?? "table-toolbar"} className={cn("flex flex-wrap items-center gap-2", className)} {...props}>
       {title ? (
         <span className="mr-auto shrink-0 text-sm font-semibold text-foreground md:mr-2">{title}</span>
       ) : null}
@@ -157,10 +163,12 @@ export interface TableResultCountProps extends HTMLAttributes<HTMLSpanElement> {
   total?: number;
   /** More pages can still be loaded: "48+ loaded". */
   hasMore?: boolean;
-  /** Number formatting locale. @default "en-US" */
+  /** Number formatting locale. @default "de-CH" */
   locale?: string;
   labels?: Partial<TableResultCountLabels>;
-  /** @deprecated Use `data-testid`. */
+  /** Test id on the count. @default "table-result-count" */
+  "data-testid"?: string;
+  /** @deprecated Use `data-testid` (alias kept for OneSales compatibility; `data-testid` wins when both are set). */
   testId?: string;
 }
 
@@ -169,9 +177,10 @@ export function TableResultCount({
   shown,
   total,
   hasMore = false,
-  locale = "en-US",
+  locale = "de-CH",
   labels,
   className,
+  "data-testid": dataTestId,
   testId,
   ...props
 }: TableResultCountProps): ReactElement {
@@ -180,7 +189,7 @@ export function TableResultCount({
   const filtered = total != null && total !== shown;
   return (
     <span
-      data-testid={testId ?? "table-result-count"}
+      data-testid={dataTestId ?? testId ?? "table-result-count"}
       className={cn("font-medium tabular-nums text-foreground", className)}
       {...props}
     >

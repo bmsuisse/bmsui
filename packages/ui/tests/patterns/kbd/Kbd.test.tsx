@@ -1,4 +1,6 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { hydrateRoot } from "react-dom/client";
+import { renderToString } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import { formatKey, Kbd, KeyCombo } from "../../../src/patterns/kbd/Kbd";
 import { ShortcutSheet } from "../../../src/patterns/kbd/ShortcutSheet";
@@ -30,6 +32,29 @@ describe("KeyCombo", () => {
     expect(caps(combo)).toEqual(["G", "O", "Ctrl", "Shift", "O"]);
     expect(combo).toHaveTextContent("dann");
     expect(combo).toHaveTextContent("oder");
+  });
+
+  it("renders the PC spelling on the server and switches to ⌘ after hydration on a Mac", async () => {
+    const platform = vi.spyOn(navigator, "platform", "get").mockReturnValue("MacIntel");
+    try {
+      const html = renderToString(<KeyCombo keys="Mod+K" />);
+      expect(html).toContain("Ctrl");
+      expect(html).not.toContain("⌘");
+      // An explicit `mac` wins on the server too.
+      expect(renderToString(<KeyCombo keys="Mod+K" mac />)).toContain("⌘");
+      const container = document.createElement("div");
+      container.innerHTML = html;
+      const recovered = vi.fn();
+      let root: ReturnType<typeof hydrateRoot> | undefined;
+      await act(async () => {
+        root = hydrateRoot(container, <KeyCombo keys="Mod+K" />, { onRecoverableError: recovered });
+      });
+      expect(recovered).not.toHaveBeenCalled();
+      expect(caps(container.querySelector("[data-testid=key-combo]") as HTMLElement)).toEqual(["⌘", "K"]);
+      act(() => root?.unmount());
+    } finally {
+      platform.mockRestore();
+    }
   });
 
   it("Kbd renders a <kbd>", () => {

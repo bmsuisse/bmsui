@@ -37,10 +37,70 @@ const isGrouped = (chunks: string[]): boolean =>
  * three). One occurrence is the decimal point, except when it is the locale's
  * grouping character followed by exactly three digits (`1,234` in en-US,
  * `1.234` in de-DE). So in de-CH `1234,5`, `1234.5` and `1'234.50` all read.
+ * Swiss `50.-` / `50.–` read as 50. With `formatOptions`, the formatter's own
+ * currency, unit, `%` and literal text is ignored, so the field reads its own
+ * display (`CHF 1'234.50`, `1'234.5 kg`); `style: "percent"` reads `12%` as 0.12.
  */
-export function parseLocaleNumber(text: string, locale: string): number | null {
-  let s = text.normalize("NFKC").trim().replace(/[−–]/g, "-");
+export function parseLocaleNumber(
+  text: string,
+  locale: string,
+  formatOptions?: Intl.NumberFormatOptions,
+): number | null {
+  let s = text.normalize("NFKC");
+  for (const affix of formatAffixes(locale, formatOptions)) s = s.split(affix).join(" ");
+  s = s.trim().replace(/[−–—]/g, "-");
+  // Swiss whole amounts: `50.-` / `50.–` mean 50.
+  s = s.replace(/[.,]-+$/, "");
   if (!s) return null;
+  const parsed = parsePlainNumber(s, locale);
+  if (parsed == null || formatOptions?.style !== "percent") return parsed;
+  // The field shows `12%` for 0.12: read it back the same way.
+  return shiftDecimal(parsed, -2);
+}
+
+const affixCache = new Map<string, string[]>();
+const AFFIX_TYPES = new Set(["literal", "currency", "unit", "percentSign"]);
+
+/** Currency codes/symbols, units, `%` and literals the formatter puts around the digits. */
+function formatAffixes(locale: string, formatOptions?: Intl.NumberFormatOptions): string[] {
+  if (!formatOptions) return [];
+  const key = `${locale}|${JSON.stringify(formatOptions)}`;
+  const cached = affixCache.get(key);
+  if (cached) return cached;
+  const affixes = new Set<string>();
+  try {
+    const formatter = new Intl.NumberFormat(locale, formatOptions);
+    for (const sample of [1, 1234.5, -1234.5, 0]) {
+      for (const part of formatter.formatToParts(sample)) {
+        const value = part.value.normalize("NFKC").trim();
+        // Never strip separators or signs that a literal might happen to be.
+        if (AFFIX_TYPES.has(part.type) && value && !/^[\d.,'’+\-−]+$/.test(value)) affixes.add(value);
+      }
+    }
+  } catch {
+    // Invalid options: parse the text as is.
+  }
+  // Longest first, so `CHF` goes before a contained `F`.
+  const list = [...affixes].sort((a, b) => b.length - a.length);
+  affixCache.set(key, list);
+  return list;
+}
+
+/** `n * 10^exponent` by moving the decimal point (no `1.005 * 100 = 100.49999…`). */
+function shiftDecimal(n: number, exponent: number): number {
+  const [mantissa = "0", exp = "0"] = String(n).toLowerCase().split("e");
+  return Number(`${mantissa}e${Number(exp) + exponent}`);
+}
+
+/** Round to `decimals` places, halves away from zero, on the decimal digits as written (`1.005` -> `1.01`). */
+export function roundTo(value: number, decimals: number): number {
+  if (!Number.isFinite(value)) return value;
+  const sign = value < 0 ? -1 : 1;
+  return sign * shiftDecimal(Math.round(shiftDecimal(Math.abs(value), decimals)), -decimals);
+}
+
+function parsePlainNumber(input: string, locale: string): number | null {
+  let s = input;
   let sign = 1;
   if (s[0] === "-" || s[0] === "+") {
     if (s[0] === "-") sign = -1;

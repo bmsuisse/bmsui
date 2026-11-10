@@ -1,4 +1,5 @@
 import { type HTMLAttributes, type ReactElement, useEffect, useMemo, useState } from "react";
+import { useHydrated } from "../../lib/useHydrated";
 import { cn } from "../../lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../primitives/tooltip";
 import { formatRelativeTime, type RelativeTimeStyle, relativeRefreshInterval } from "./formatRelativeTime";
@@ -11,6 +12,18 @@ const ABSOLUTE: Record<Exclude<TimestampFormat, "relative">, Intl.DateTimeFormat
   time: { hour: "2-digit", minute: "2-digit" },
 };
 const FULL: Intl.DateTimeFormatOptions = { dateStyle: "full", timeStyle: "medium" };
+
+/**
+ * Time-zone- and clock-independent text for the server render and hydration
+ * ("2026-11-10 12:00 UTC"): the local-time and relative wording only appear
+ * once mounted, so server and client markup match.
+ */
+function stableText(date: Date, format: TimestampFormat): string {
+  const iso = date.toISOString();
+  if (format === "date") return iso.slice(0, 10);
+  if (format === "time") return `${iso.slice(11, 16)} UTC`;
+  return `${iso.slice(0, 10)} ${iso.slice(11, 16)} UTC`;
+}
 
 function toDate(value: Date | string | number): Date {
   return value instanceof Date ? value : new Date(value);
@@ -53,11 +66,13 @@ export const Timestamp = ({
   const date = useMemo(() => toDate(value), [value]);
   const valid = !Number.isNaN(date.getTime());
   const relative = format === "relative";
-  const [now, setNow] = useState(() => new Date());
+  const hydrated = useHydrated();
+  const [now, setNow] = useState<Date | null>(null);
 
   useEffect(() => {
-    if (!relative || !live || !valid) return;
+    if (!relative || !valid) return;
     setNow(new Date());
+    if (!live) return;
     let handle: ReturnType<typeof setTimeout>;
     const tick = (): void => {
       const current = new Date();
@@ -76,17 +91,20 @@ export const Timestamp = ({
     );
   }
 
-  const full = new Intl.DateTimeFormat(locale, FULL).format(date);
-  const text = relative
-    ? formatRelativeTime(date, now, locale, relativeStyle)
-    : new Intl.DateTimeFormat(locale, ABSOLUTE[format]).format(date);
+  // Before hydration: no clock and no local time zone, only the stable UTC text.
+  const full = hydrated ? new Intl.DateTimeFormat(locale, FULL).format(date) : null;
+  const text = !hydrated
+    ? stableText(date, format)
+    : relative
+      ? formatRelativeTime(date, now ?? new Date(), locale, relativeStyle)
+      : new Intl.DateTimeFormat(locale, ABSOLUTE[format]).format(date);
   const withTooltip = tooltip ?? relative;
 
   const time = (
     <time
       dateTime={date.toISOString()}
       data-testid="timestamp"
-      aria-label={withTooltip ? `${text} (${full})` : undefined}
+      aria-label={withTooltip ? (full ? `${text} (${full})` : text) : undefined}
       tabIndex={withTooltip ? 0 : undefined}
       className={cn(
         "whitespace-nowrap tabular-nums",
@@ -104,7 +122,7 @@ export const Timestamp = ({
     <TooltipProvider delayDuration={300}>
       <Tooltip>
         <TooltipTrigger asChild>{time}</TooltipTrigger>
-        <TooltipContent data-testid="timestamp-tooltip">{full}</TooltipContent>
+        <TooltipContent data-testid="timestamp-tooltip">{full ?? text}</TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );

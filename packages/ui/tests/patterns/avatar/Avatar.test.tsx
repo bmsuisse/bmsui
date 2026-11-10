@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { Avatar, AvatarGroup, avatarColorIndex, getInitials } from "../../../src/patterns/avatar/Avatar";
 
 describe("getInitials / avatarColorIndex", () => {
@@ -33,6 +33,20 @@ describe("Avatar", () => {
     fireEvent.error(container.querySelector("img") as HTMLImageElement);
     expect(container.querySelector("img")).toBeNull();
     expect(screen.getByTestId("avatar")).toHaveTextContent("AM");
+  });
+
+  it("shows an image that already finished loading before mount/hydration (no load event)", () => {
+    const complete = vi.spyOn(HTMLImageElement.prototype, "complete", "get").mockReturnValue(true);
+    const width = vi.spyOn(HTMLImageElement.prototype, "naturalWidth", "get").mockReturnValue(64);
+    try {
+      const { container } = render(<Avatar name="Anna Muster" src="/anna.png" />);
+      const img = container.querySelector("img") as HTMLImageElement;
+      expect(img.className).toContain("opacity-100");
+      expect(screen.getByTestId("avatar")).not.toHaveTextContent("AM");
+    } finally {
+      complete.mockRestore();
+      width.mockRestore();
+    }
   });
 
   it("renders a status dot and folds its label into the name; decorative hides it", () => {

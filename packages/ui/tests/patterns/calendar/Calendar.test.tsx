@@ -123,3 +123,57 @@ describe("Calendar", () => {
     expect(within(screen.getByRole("grid")).getAllByRole("gridcell")).toHaveLength(42);
   });
 });
+
+describe("Calendar review fixes", () => {
+  it("accepts ISO datetimes for min/max/today/value", () => {
+    render(
+      <Calendar
+        value="2026-11-18T12:00:00"
+        onValueChange={() => {}}
+        min="2026-11-05T00:00:00"
+        max="2026-11-25T23:59:59"
+        today="2026-11-10T08:00:00"
+      />,
+    );
+    expect(day("2026-11-05")).not.toHaveAttribute("aria-disabled");
+    expect(day("2026-11-04")).toHaveAttribute("aria-disabled", "true");
+    expect(day("2026-11-25")).not.toHaveAttribute("aria-disabled");
+    expect(day("2026-11-26")).toHaveAttribute("aria-disabled", "true");
+    expect(day("2026-11-10")).toHaveAttribute("aria-current", "date");
+    expect(day("2026-11-18")).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("accepts ISO datetimes in a range value", () => {
+    render(
+      <Calendar
+        mode="range"
+        today="2026-11-10"
+        value={{ from: "2026-11-12T00:00:00", to: "2026-11-14T00:00:00" }}
+        onValueChange={() => {}}
+      />,
+    );
+    expect(day("2026-11-12")).toHaveAttribute("aria-pressed", "true");
+    expect(day("2026-11-13").closest("td")).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("does not steal focus back on a later render after an arrow key hit min", () => {
+    const { rerender } = render(
+      <>
+        <Single initial="2026-11-05" min="2026-11-05" />
+        <button type="button">outside</button>
+      </>,
+    );
+    day("2026-11-05").focus();
+    fireEvent.keyDown(screen.getByRole("grid"), { key: "ArrowLeft" });
+    expect(day("2026-11-05")).toHaveFocus();
+    const outside = screen.getByRole("button", { name: "outside" });
+    outside.focus();
+    rerender(
+      <>
+        <Single initial="2026-11-05" min="2026-11-05" />
+        <button type="button">outside</button>
+      </>,
+    );
+    expect(outside).toHaveFocus();
+  });
+});

@@ -82,7 +82,7 @@ export interface PaginationProps extends Omit<HTMLAttributes<HTMLElement>, "onCh
   /** Hide the "1–25 of 312" text even when `totalItems` is known. */
   hideRange?: boolean;
   disabled?: boolean;
-  /** Number formatting locale for the range text. @default "en-US" */
+  /** Number formatting locale for the range text. @default "de-CH" */
   locale?: string;
   labels?: Partial<PaginationLabels>;
 }
@@ -109,7 +109,7 @@ export function Pagination({
   compact = false,
   hideRange = false,
   disabled = false,
-  locale = "en-US",
+  locale = "de-CH",
   labels,
   className,
   ...props

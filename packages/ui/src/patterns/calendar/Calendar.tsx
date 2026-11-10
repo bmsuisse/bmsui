@@ -86,8 +86,6 @@ const clampIso = (iso: string, min?: string, max?: string) =>
  */
 export function Calendar(props: CalendarProps): ReactElement {
   const {
-    min,
-    max,
     isDateDisabled,
     locale = "de-CH",
     weekStartsOn,
@@ -99,8 +97,11 @@ export function Calendar(props: CalendarProps): ReactElement {
     className,
   } = props;
   const l = { ...defaultCalendarLabels, ...labels };
-  const today = props.today ?? toLocalIsoDay(new Date());
-  const range = props.mode === "range" ? props.value : null;
+  // Compare ISO days only, so ISO datetimes (`2026-11-05T00:00:00`) work too.
+  const min = props.min?.slice(0, 10);
+  const max = props.max?.slice(0, 10);
+  const today = (props.today ?? toLocalIsoDay(new Date())).slice(0, 10);
+  const range = props.mode === "range" ? { from: props.value.from.slice(0, 10), to: props.value.to.slice(0, 10) } : null;
   const single = props.mode === "range" ? "" : props.value.slice(0, 10);
   const anchor = range ? range.from || range.to : single;
 
@@ -143,6 +144,9 @@ export function Calendar(props: CalendarProps): ReactElement {
 
   const moveFocus = (iso: string) => {
     const next = clampIso(iso, min, max);
+    // Clamped onto the day that already has focus: nothing re-renders, so don't leave a
+    // pending focus request that a later, unrelated render would act on.
+    if (next === activeDay) return;
     setFocusDay(next);
     setMonth(next);
     shouldFocus.current = true;
@@ -156,7 +160,7 @@ export function Calendar(props: CalendarProps): ReactElement {
       shouldFocus.current = true;
     }
     if (props.mode === "range") {
-      const { from, to } = props.value;
+      const { from, to } = range ?? { from: "", to: "" };
       if (!from || to) props.onValueChange({ from: iso, to: "" });
       else props.onValueChange(iso < from ? { from: iso, to: from } : { from, to: iso });
     } else {

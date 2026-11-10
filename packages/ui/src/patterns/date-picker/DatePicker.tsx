@@ -48,6 +48,8 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
     const l = { ...defaultDatePickerLabels, ...labels };
     const [open, setOpen] = useState(false);
     const inputRef = useRef<HTMLInputElement | null>(null);
+    // After a pick, focus goes back to the typed field instead of the calendar button.
+    const focusInputOnClose = useRef(false);
     const testId = (props as Record<string, unknown>)["data-testid"];
 
     return (
@@ -85,14 +87,20 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
           className="w-auto p-0"
           align="end"
           onOpenAutoFocus={(e) => e.preventDefault()}
+          onCloseAutoFocus={(e) => {
+            if (!focusInputOnClose.current) return;
+            focusInputOnClose.current = false;
+            e.preventDefault();
+            inputRef.current?.focus();
+          }}
         >
           <Calendar
             autoFocus
             value={value}
             onValueChange={(iso) => {
               onValueChange(iso);
+              focusInputOnClose.current = true;
               setOpen(false);
-              requestAnimationFrame(() => inputRef.current?.focus());
             }}
             locale={locale}
             min={min}
@@ -166,6 +174,7 @@ export function DateRangePicker({
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<DateRange | null>(null);
   const fromRef = useRef<HTMLInputElement>(null);
+  const focusInputOnClose = useRef(false);
   const testId = props["data-testid"];
 
   const commit = (next: DateRange) => {
@@ -225,7 +234,18 @@ export function DateRangePicker({
           </PopoverTrigger>
         </InputGroup>
       </PopoverAnchor>
-      <PopoverContent container={container} className="w-auto p-0" align="end" onOpenAutoFocus={(e) => e.preventDefault()}>
+      <PopoverContent
+        container={container}
+        className="w-auto p-0"
+        align="end"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        onCloseAutoFocus={(e) => {
+          if (!focusInputOnClose.current) return;
+          focusInputOnClose.current = false;
+          e.preventDefault();
+          fromRef.current?.focus();
+        }}
+      >
         <Calendar
           mode="range"
           autoFocus
@@ -234,8 +254,8 @@ export function DateRangePicker({
             if (range.from && range.to) {
               setDraft(null);
               onValueChange(range);
+              focusInputOnClose.current = true;
               setOpen(false);
-              requestAnimationFrame(() => fromRef.current?.focus());
             } else {
               setDraft(range);
             }

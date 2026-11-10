@@ -17,10 +17,10 @@ import {
   isValidElement,
   useCallback,
   useContext,
-  useLayoutEffect,
   useRef,
   useState,
 } from "react";
+import { useIsomorphicLayoutEffect } from "../../lib/useIsomorphicLayoutEffect";
 import { cn } from "../../lib/utils";
 import {
   DropdownMenu,
@@ -44,7 +44,11 @@ export interface ToolbarProps extends HTMLAttributes<HTMLDivElement> {
   orientation?: "horizontal" | "vertical";
   /** `outline` draws a bordered bar; `ghost` is just the row. @default "outline" */
   variant?: "outline" | "ghost";
-  /** Move `ToolbarButton`s that don't fit into a trailing "…" menu (horizontal only). @default false */
+  /**
+   * Move `ToolbarButton`s that don't fit into a trailing "…" menu (horizontal only).
+   * Only `ToolbarButton`s (and the separators between them) overflow; any other
+   * child (a select, a wrapped button) always stays visible. @default false
+   */
   overflow?: boolean;
   labels?: Partial<ToolbarLabels>;
 }
@@ -83,8 +87,10 @@ export function Toolbar({
   const vertical = orientation === "vertical";
   const useOverflow = overflow && !vertical;
   const items = Children.toArray(children);
-  const [visibleCount, setVisibleCount] = useState(items.length);
-  const widths = useRef<number[]>([]);
+  // Items at index >= cutoff that can overflow (ToolbarButton / ToolbarSeparator) are hidden.
+  const [cutoff, setCutoff] = useState(items.length);
+  /** Last measured width per slot; `undefined` = never measured while visible. */
+  const widths = useRef<(number | undefined)[]>([]);
   const [measureKey, setMeasureKey] = useState(0);
 
   const ownItems = useCallback((): HTMLElement[] => {
@@ -96,52 +102,75 @@ export function Toolbar({
   }, []);
 
   // Roving tabindex: exactly one item is tabbable. Runs after every render since children can change.
-  useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const list = ownItems();
     const all = rootRef.current ? Array.from(rootRef.current.querySelectorAll<HTMLElement>(ITEM)) : [];
     const active = activeRef.current && list.includes(activeRef.current) ? activeRef.current : list[0];
     for (const el of all) el.tabIndex = el === active ? 0 : -1;
   });
 
-  // Overflow: measure every slot once while all are shown, then fit from the cached widths on resize.
+  // Overflow: visible slots are re-measured on every fit; hidden ones keep their last width.
+  // When a ToolbarButton's label/icon or the item list changes, show everything and measure again.
   const count = items.length;
-  useLayoutEffect(() => {
+  const overflowable = items.map(canOverflow);
+  const signature = items.map(itemSignature).join("\u0000");
+  useIsomorphicLayoutEffect(() => {
     if (!useOverflow) return;
-    setVisibleCount(count);
+    widths.current = [];
+    setCutoff(count);
     setMeasureKey((k) => k + 1);
-  }, [count, useOverflow]);
+  }, [signature, count, useOverflow]);
 
-  useLayoutEffect(() => {
+  const overflowableRef = useRef(overflowable);
+  overflowableRef.current = overflowable;
+  useIsomorphicLayoutEffect(() => {
     const root = rootRef.current;
     if (!useOverflow || !root) return undefined;
-    const slots = Array.from(root.querySelectorAll<HTMLElement>(":scope > [data-toolbar-slot]"));
-    if (slots.length === count && slots.every((s) => !s.hasAttribute("data-toolbar-hidden"))) {
-      widths.current = slots.map((s) => s.offsetWidth);
-    }
     const fit = (): void => {
+      const slots = Array.from(root.querySelectorAll<HTMLElement>(":scope > [data-toolbar-slot]"));
       const style = window.getComputedStyle(root);
       const gap = Number.parseFloat(style.columnGap) || 0;
       const available = root.clientWidth - (Number.parseFloat(style.paddingLeft) || 0) - (Number.parseFloat(style.paddingRight) || 0);
-      const ws = widths.current;
-      if (!available || ws.length !== count) {
-        setVisibleCount(count);
+      // Not laid out (display: none, detached, jsdom): don't cache zero widths, show everything.
+      if (available <= 0 || slots.length !== count) {
+        setCutoff(count);
         return;
       }
-      const total = ws.reduce((a, b) => a + b, 0) + gap * Math.max(ws.length - 1, 0);
-      if (total <= available) {
-        setVisibleCount(count);
+      const ws = widths.current.length === count ? widths.current : Array.from({ length: count }, () => undefined);
+      slots.forEach((slot, i) => {
+        if (!slot.hasAttribute("data-toolbar-hidden")) ws[i] = slot.offsetWidth;
+      });
+      widths.current = ws;
+      if (ws.some((w) => w === undefined)) {
+        // A hidden slot was never measured: show all, then measure on the next pass.
+        if (slots.some((slot) => slot.hasAttribute("data-toolbar-hidden"))) {
+          setCutoff(count);
+          setMeasureKey((k) => k + 1);
+        }
         return;
       }
-      const more = 32 + gap;
-      let used = 0;
-      let n = 0;
-      for (const w of ws) {
-        const next = used + (n > 0 ? gap : 0) + w;
-        if (next + more > available) break;
-        used = next;
-        n += 1;
-      }
-      setVisibleCount(n);
+      const known = ws as number[];
+      const flags = overflowableRef.current;
+      const more = 32;
+      const widthFor = (c: number): number => {
+        let total = 0;
+        let n = 0;
+        let needsMore = false;
+        for (let i = 0; i < count; i += 1) {
+          if (i < c || !flags[i]) {
+            total += known[i] ?? 0;
+            n += 1;
+          } else if (flags[i] === "button") needsMore = true;
+        }
+        if (needsMore) {
+          total += more;
+          n += 1;
+        }
+        return total + gap * Math.max(n - 1, 0);
+      };
+      let c = count;
+      while (c > 0 && widthFor(c) > available) c -= 1;
+      setCutoff(c);
     };
     fit();
     if (typeof ResizeObserver === "undefined") return undefined;
@@ -183,16 +212,15 @@ export function Toolbar({
 
   const hiddenButtons = useOverflow
     ? items
-        .slice(visibleCount)
+        .slice(cutoff)
         .filter((c): c is ReactElement<ToolbarButtonProps> => isValidElement(c) && c.type === ToolbarButton)
     : [];
-  // A separator right before the "…" button looks stranded; hide it with the overflow.
-  let lastVisible = useOverflow ? visibleCount : items.length;
-  while (useOverflow && lastVisible < items.length && lastVisible > 0) {
-    const prev = items[lastVisible - 1];
-    if (isValidElement(prev) && prev.type === ToolbarSeparator) lastVisible -= 1;
-    else break;
+  // A separator right before the hidden buttons looks stranded; hide it with the overflow.
+  let lastVisible = useOverflow ? cutoff : items.length;
+  while (useOverflow && lastVisible < items.length && lastVisible > 0 && overflowable[lastVisible - 1] === "separator") {
+    lastVisible -= 1;
   }
+  const isHidden = (i: number): boolean => useOverflow && i >= lastVisible && Boolean(overflowable[i]);
 
   return (
     <OrientationContext.Provider value={orientation}>
@@ -217,14 +245,14 @@ export function Toolbar({
             <div
               key={isValidElement(child) && child.key != null ? child.key : i}
               data-toolbar-slot=""
-              data-toolbar-hidden={i >= lastVisible ? "" : undefined}
-              className={cn("flex shrink-0 items-center self-stretch", i >= lastVisible && "hidden")}
+              data-toolbar-hidden={isHidden(i) ? "" : undefined}
+              className={cn("flex shrink-0 items-center self-stretch", isHidden(i) && "hidden")}
             >
               {child}
             </div>
           ))
         : children}
-      {useOverflow && visibleCount < items.length ? (
+      {hiddenButtons.length > 0 ? (
         <DropdownMenu>
           <DropdownMenuTrigger
             data-toolbar-item=""
@@ -260,6 +288,25 @@ export function Toolbar({
     </div>
     </OrientationContext.Provider>
   );
+}
+
+/** Which children may move into the "…" menu: only `ToolbarButton`s (and separators between them). */
+function canOverflow(child: ReturnType<typeof Children.toArray>[number]): "button" | "separator" | false {
+  if (!isValidElement(child)) return false;
+  if (child.type === ToolbarButton) return "button";
+  if (child.type === ToolbarSeparator) return "separator";
+  return false;
+}
+
+/** Changes whenever a slot's measured width may have changed for a reason we can see in props. */
+function itemSignature(child: ReturnType<typeof Children.toArray>[number]): string {
+  if (!isValidElement(child)) return `text:${String(child)}`;
+  if (child.type === ToolbarButton) {
+    const { label, showLabel, icon } = child.props as ToolbarButtonProps;
+    return `button:${String(child.key)}:${label}:${showLabel ? 1 : 0}:${icon ? 1 : 0}`;
+  }
+  const type = child.type as string | { displayName?: string; name?: string };
+  return `el:${String(child.key)}:${typeof type === "string" ? type : (type.displayName ?? type.name ?? "")}`;
 }
 
 const toolbarButtonClass =

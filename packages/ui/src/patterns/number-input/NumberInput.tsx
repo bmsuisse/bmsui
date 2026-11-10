@@ -1,6 +1,6 @@
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
 import { forwardRef, useEffect, useRef, useState } from "react";
-import { addPrecise, clampNumber, formatLocaleNumber, parseLocaleNumber } from "../../lib/numberField";
+import { addPrecise, clampNumber, formatLocaleNumber, parseLocaleNumber, roundTo } from "../../lib/numberField";
 import { cn } from "../../lib/utils";
 import { Input, type InputProps } from "../../primitives/input";
 
@@ -83,6 +83,8 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
     const format = (n: number | null) => formatLocaleNumber(n, locale, { decimals, formatOptions });
     const [text, setText] = useState(() => format(value));
     const [invalid, setInvalidState] = useState(false);
+    // Bumped on every commit so the text re-syncs even when the parent keeps (or clamps back to) the same value.
+    const [commits, setCommits] = useState(0);
     const dirty = useRef(false);
     const focused = useRef(false);
     const invalidRef = useRef(false);
@@ -98,31 +100,32 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
       setText(format(value));
       setInvalid(false);
       // eslint-disable-next-line react-hooks/exhaustive-deps -- re-sync only when the value or its display changes
-    }, [value, locale, decimals, JSON.stringify(formatOptions)]);
+    }, [value, commits, locale, decimals, JSON.stringify(formatOptions)]);
 
     const emit = (next: number | null) => {
       dirty.current = false;
       setInvalid(false);
       setText(format(next));
+      setCommits((n) => n + 1);
       if (next !== value) onValueChange(next);
     };
 
     const commit = () => {
       if (!dirty.current) return;
       if (!text.trim()) return emit(null);
-      const parsed = parseLocaleNumber(text, locale);
+      const parsed = parseLocaleNumber(text, locale, formatOptions);
       if (parsed == null) {
         dirty.current = false;
         setInvalid(true);
         return;
       }
-      const rounded = decimals != null ? Number(parsed.toFixed(decimals)) : parsed;
+      const rounded = decimals != null ? roundTo(parsed, decimals) : parsed;
       emit(clampNumber(rounded, min, max));
     };
 
     const stepBy = (direction: 1 | -1, multiplier = 1) => {
       if (disabled || readOnly) return;
-      const typed = dirty.current ? parseLocaleNumber(text, locale) : value;
+      const typed = dirty.current ? parseLocaleNumber(text, locale, formatOptions) : value;
       const base = typed ?? value;
       const next =
         base == null ? (direction > 0 ? (min ?? 0) : (max ?? 0)) : addPrecise(base, direction * step * multiplier);

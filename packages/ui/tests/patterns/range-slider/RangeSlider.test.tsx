@@ -65,3 +65,25 @@ describe("RangeSlider", () => {
     expect(onChange).toHaveBeenLastCalledWith([1000, 7900]);
   });
 });
+
+describe("RangeSlider inputs re-sync", () => {
+  const Range = () => {
+    const [v, setV] = useState<[number, number]>([0, 50]);
+    return <RangeSlider value={v} onValueChange={setV} min={0} max={100} data-testid="r" />;
+  };
+
+  it("refills a cleared min field and snaps an over-high min back", () => {
+    render(<Range />);
+    const minInput = screen.getByTestId("r-min-input");
+    fireEvent.change(minInput, { target: { value: "" } });
+    fireEvent.blur(minInput);
+    expect(minInput).toHaveValue("0");
+    fireEvent.change(minInput, { target: { value: "90" } });
+    fireEvent.blur(minInput);
+    expect(minInput).toHaveValue("50");
+    expect(minInput).toHaveAttribute("aria-valuenow", "50");
+    fireEvent.change(minInput, { target: { value: "90" } });
+    fireEvent.blur(minInput);
+    expect(minInput).toHaveValue("50");
+  });
+});

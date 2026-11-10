@@ -1,5 +1,6 @@
-import { CheckIcon, ClipboardDocumentIcon } from "@heroicons/react/24/outline";
-import { type CSSProperties, type HTMLAttributes, type ReactElement, type ReactNode, useEffect, useRef, useState } from "react";
+import { CheckIcon, ClipboardDocumentIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import { type CSSProperties, type HTMLAttributes, type ReactElement, type ReactNode, useEffect } from "react";
+import { useClipboard } from "../../hooks/useClipboard";
 import { cn } from "../../lib/utils";
 
 export interface MetadataItem {
@@ -23,12 +24,15 @@ export interface MetadataListLabels {
   copy: string;
   /** Announced after copying. */
   copied: string;
+  /** Announced (and shown as the button's tooltip) when the clipboard refused the copy. */
+  copyFailed: string;
 }
 
 export const defaultMetadataListLabels: MetadataListLabels = {
   empty: "—",
   copy: "Copy",
   copied: "Copied",
+  copyFailed: "Copy failed",
 };
 
 export interface MetadataListProps extends Omit<HTMLAttributes<HTMLDListElement>, "children"> {
@@ -122,6 +126,7 @@ export const MetadataList = ({
                   text={copyText}
                   label={typeof item.label === "string" ? `${l.copy} ${item.label}` : l.copy}
                   copiedLabel={l.copied}
+                  failedLabel={l.copyFailed}
                 />
               ) : null}
             </dd>
@@ -132,34 +137,49 @@ export const MetadataList = ({
   );
 };
 
-const CopyButton = ({ text, label, copiedLabel }: { text: string; label: string; copiedLabel: string }): ReactElement => {
-  const [copied, setCopied] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  useEffect(() => () => clearTimeout(timer.current), []);
+const CopyButton = ({
+  text,
+  label,
+  copiedLabel,
+  failedLabel,
+}: {
+  text: string;
+  label: string;
+  copiedLabel: string;
+  failedLabel: string;
+}): ReactElement => {
+  // useClipboard falls back to execCommand without navigator.clipboard (plain-http intranet) and never rejects.
+  const { copy, copied, error, reset } = useClipboard({ timeout: 1500 });
+  const failed = error !== null;
+  useEffect(() => {
+    if (!failed) return undefined;
+    const handle = setTimeout(reset, 4000);
+    return () => clearTimeout(handle);
+  }, [failed, reset]);
   return (
     <button
       type="button"
       aria-label={label}
+      title={failed ? failedLabel : undefined}
       data-testid="metadata-copy"
+      data-state={failed ? "error" : copied ? "copied" : undefined}
       onClick={() => {
-        void navigator.clipboard?.writeText(text).then(() => {
-          setCopied(true);
-          clearTimeout(timer.current);
-          timer.current = setTimeout(() => setCopied(false), 1500);
-        });
+        void copy(text);
       }}
       className={cn(
         "-my-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-sm text-muted-foreground transition-opacity hover:bg-muted hover:text-foreground focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none",
-        copied ? "opacity-100" : "opacity-0 group-hover/meta:opacity-100 pointer-coarse:opacity-100",
+        copied || failed ? "opacity-100" : "opacity-0 group-hover/meta:opacity-100 pointer-coarse:opacity-100",
       )}
     >
-      {copied ? (
+      {failed ? (
+        <ExclamationTriangleIcon aria-hidden="true" className="h-3.5 w-3.5 text-destructive" />
+      ) : copied ? (
         <CheckIcon aria-hidden="true" className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
       ) : (
         <ClipboardDocumentIcon aria-hidden="true" className="h-3.5 w-3.5" />
       )}
       <span role="status" className="sr-only">
-        {copied ? copiedLabel : ""}
+        {failed ? failedLabel : copied ? copiedLabel : ""}
       </span>
     </button>
   );

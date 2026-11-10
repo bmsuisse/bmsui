@@ -53,6 +53,44 @@ describe("MetadataList", () => {
     expect(writeText).toHaveBeenLastCalledWith("raw-y");
   });
 
+  it("falls back to execCommand without navigator.clipboard and announces a failure", async () => {
+    Object.defineProperty(navigator, "clipboard", { value: undefined, configurable: true });
+    const exec = vi.fn(() => true);
+    Object.defineProperty(document, "execCommand", { value: exec, configurable: true });
+    try {
+      render(<MetadataList copyable labels={{ copyFailed: "Kopieren fehlgeschlagen" }} items={[{ label: "IBAN", value: "CH93" }]} />);
+      const button = screen.getByRole("button", { name: "Copy IBAN" });
+      fireEvent.click(button);
+      expect(exec).toHaveBeenCalledWith("copy");
+      await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Copied"));
+
+      exec.mockReturnValue(false);
+      fireEvent.click(button);
+      await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Kopieren fehlgeschlagen"));
+      expect(button).toHaveAttribute("title", "Kopieren fehlgeschlagen");
+      expect(button).toHaveAttribute("data-state", "error");
+    } finally {
+      Object.defineProperty(document, "execCommand", { value: undefined, configurable: true });
+    }
+  });
+
+  it("does not leave a rejected clipboard write unhandled", async () => {
+    const writeText = vi.fn().mockRejectedValue(new Error("denied"));
+    Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+    const unhandled = vi.fn();
+    process.on("unhandledRejection", unhandled);
+    try {
+      render(<MetadataList copyable items={[{ label: "IBAN", value: "CH93" }]} />);
+      fireEvent.click(screen.getByRole("button", { name: "Copy IBAN" }));
+      await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Copy failed"));
+      await new Promise((r) => setTimeout(r, 0));
+      expect(unhandled).not.toHaveBeenCalled();
+    } finally {
+      process.off("unhandledRejection", unhandled);
+      Object.defineProperty(navigator, "clipboard", { value: undefined, configurable: true });
+    }
+  });
+
   it("lets a single item opt out of copying", () => {
     render(<MetadataList copyable items={[{ label: "A", value: "1", copyable: false }, { label: "B", value: "2" }]} />);
     expect(screen.getAllByTestId("metadata-copy")).toHaveLength(1);

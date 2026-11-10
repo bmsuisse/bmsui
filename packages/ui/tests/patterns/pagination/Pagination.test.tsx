@@ -82,3 +82,11 @@ describe("Pagination", () => {
     expect(screen.getByTestId("pagination-page-size")).toHaveTextContent("25");
   });
 });
+
+describe("Pagination locale", () => {
+  it("defaults to de-CH number formatting", () => {
+    render(<Pagination page={1} onPageChange={() => {}} totalItems={12345} pageSize={25} />);
+    expect(screen.getByTestId("pagination-range")).toHaveTextContent(`1–25 of ${new Intl.NumberFormat("de-CH").format(12345)}`);
+    expect(new Intl.NumberFormat("de-CH").format(12345)).not.toBe("12,345");
+  });
+});

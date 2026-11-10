@@ -107,3 +107,36 @@ describe("FileInput", () => {
     expect(screen.getByTestId("upload-dropzone")).toHaveAttribute("aria-disabled", "true");
   });
 });
+
+describe("FileInput review fixes", () => {
+  it("single mode keeps the first acceptable file and rejects only the other acceptable ones", () => {
+    const onChange = vi.fn();
+    const onReject = vi.fn();
+    render(<Controlled accept=".pdf" onChange={onChange} onReject={onReject} />);
+    drop([file("a.txt"), file("b.pdf"), file("c.pdf")]);
+    expect(onChange.mock.calls.at(-1)?.[0].map((f: File) => f.name)).toEqual(["b.pdf"]);
+    const reasons = onReject.mock.calls.at(-1)?.[0].map((r: { file: File; reason: string }) => [r.file.name, r.reason]);
+    expect(reasons).toEqual([
+      ["a.txt", "wrong-type"],
+      ["c.pdf", "too-many"],
+    ]);
+  });
+
+  it("still prevents the browser default for drops while disabled", () => {
+    const onChange = vi.fn();
+    render(<Controlled disabled onChange={onChange} />);
+    const zone = screen.getByTestId("upload-dropzone");
+    expect(zone.className).not.toContain("pointer-events-none");
+    const dataTransfer = { files: [file("a.pdf")], types: ["Files"], dropEffect: "copy" };
+    expect(fireEvent.dragOver(zone, { dataTransfer })).toBe(false);
+    expect(fireEvent.drop(zone, { dataTransfer })).toBe(false);
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("formats sizes in the given locale and has no half-working name", () => {
+    render(<Controlled locale="de-DE" maxSize={1_572_864} />);
+    drop([file("big.pdf", 2_000_000)]);
+    expect(screen.getByRole("alert")).toHaveTextContent("big.pdf is larger than 1,5 MB.");
+    expect(screen.getByTestId("upload-native")).not.toHaveAttribute("name");
+  });
+});

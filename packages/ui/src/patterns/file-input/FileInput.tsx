@@ -54,8 +54,8 @@ export interface FileInputProps {
   /** Second line in the drop zone, e.g. "PDF or Word, up to 10 MB". */
   hint?: ReactNode;
   disabled?: boolean;
-  /** Form field name on the native file input (only reflects files picked via the dialog, not drops). */
-  name?: string;
+  /** Locale for the file sizes ("1.5 MB" vs "1,5 MB"). @default "de-CH" */
+  locale?: string;
   /** Hide the file list (render your own from `files`). */
   hideFileList?: boolean;
   /** `sm`: a single-row zone (h-9) for tight forms. @default "default" */
@@ -100,7 +100,9 @@ const sameFile = (a: File, b: File) => a.name === b.name && a.size === b.size &&
  * file dialog, files can be dragged in, `accept`/`maxSize`/`maxFiles` refuse
  * files with a visible error, and each selected file has a remove button.
  * Controlled via `files`. Uploading is up to the caller. The native input
- * stays in the tab order through the zone itself (role="button").
+ * stays in the tab order through the zone itself (role="button"). There is no
+ * `name`: the native input is cleared after each pick, so it never carries the
+ * files in a form submit — send `files` yourself (e.g. via `FormData`).
  */
 export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
   (
@@ -114,7 +116,7 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
       onReject,
       hint,
       disabled = false,
-      name,
+      locale = "de-CH",
       hideFileList = false,
       size = "default",
       labels,
@@ -141,7 +143,7 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
           return false;
         }
         if (maxSize != null && file.size > maxSize) {
-          rejections.push({ file, reason: "too-large", message: l.tooLarge(file.name, formatFileSize(maxSize)) });
+          rejections.push({ file, reason: "too-large", message: l.tooLarge(file.name, formatFileSize(maxSize, locale)) });
           return false;
         }
         return true;
@@ -154,13 +156,10 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
           next = next.slice(0, maxFiles);
         }
       } else {
+        // Keep the first acceptable file; only the other acceptable ones are "too many".
+        accepted.slice(1).forEach((file) => rejections.push({ file, reason: "too-many", message: l.tooMany(1) }));
         accepted = accepted.slice(0, 1);
         next = accepted.length ? accepted : files;
-        if (incoming.length > 1 && accepted.length) {
-          incoming.slice(1).forEach((file) => {
-            if (!rejections.some((r) => r.file === file)) rejections.push({ file, reason: "too-many", message: l.tooMany(1) });
-          });
-        }
       }
       // One "too many" line is enough.
       const messages = [...new Set(rejections.map((r) => r.message))];
@@ -175,8 +174,12 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
 
     const onDrag = (e: DragEvent<HTMLDivElement>, kind: "enter" | "over" | "leave" | "drop") => {
       if (!Array.from(e.dataTransfer?.types ?? []).includes("Files")) return;
+      // Prevent default even when disabled, or a dropped file makes the browser navigate to it.
       e.preventDefault();
-      if (disabled) return;
+      if (disabled) {
+        if (kind === "over") e.dataTransfer.dropEffect = "none";
+        return;
+      }
       if (kind === "enter") {
         dragDepth.current += 1;
         setDragOver(true);
@@ -217,13 +220,14 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
           onDragLeave={(e) => onDrag(e, "leave")}
           onDrop={(e) => onDrag(e, "drop")}
           className={cn(
-            "flex cursor-pointer items-center rounded-md border border-dashed border-muted-foreground/35 bg-background text-sm transition-colors",
-            "hover:border-muted-foreground/60 hover:bg-muted-foreground/5",
+            "flex items-center rounded-md border border-dashed border-muted-foreground/35 bg-background text-sm transition-colors",
+            !disabled && "cursor-pointer hover:border-muted-foreground/60 hover:bg-muted-foreground/5",
             "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
             sm ? "h-9 gap-2 px-3" : "flex-col justify-center gap-2 px-6 py-6 text-center",
             dragOver && "border-solid border-ring bg-accent/10 hover:border-ring hover:bg-accent/10",
             errors.length > 0 && !dragOver && "border-destructive/60",
-            disabled && "pointer-events-none cursor-not-allowed opacity-50",
+            // No pointer-events-none: the zone must keep receiving drag events to block drops.
+            disabled && "cursor-not-allowed opacity-50",
           )}
         >
           <span
@@ -248,7 +252,6 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
               else if (ref) ref.current = node;
             }}
             type="file"
-            name={name}
             accept={accept}
             multiple={multiple}
             disabled={disabled}
@@ -281,7 +284,7 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
                 <span className="min-w-0 flex-1 truncate text-foreground" title={file.name}>
                   {file.name}
                 </span>
-                <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{formatFileSize(file.size)}</span>
+                <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{formatFileSize(file.size, locale)}</span>
                 <button
                   type="button"
                   aria-label={`${l.remove} ${file.name}`}

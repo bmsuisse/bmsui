@@ -1,4 +1,4 @@
-import { type HTMLAttributes, type ReactElement, useEffect, useState } from "react";
+import { type HTMLAttributes, type ReactElement, useEffect, useRef, useState } from "react";
 import { cn } from "../../lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../primitives/tooltip";
 import type { StatusTone } from "../status-badge/StatusBadge";
@@ -102,7 +102,13 @@ export const Avatar = ({
   ...props
 }: AvatarProps): ReactElement => {
   const [loaded, setLoaded] = useState<"loading" | "loaded" | "error">("loading");
-  useEffect(() => setLoaded("loading"), [src]);
+  const imgRef = useRef<HTMLImageElement>(null);
+  // An image that finished loading before hydration (or from cache) never fires
+  // `onLoad` for React, so check the element itself whenever `src` changes.
+  useEffect(() => {
+    const img = imgRef.current;
+    setLoaded(img?.complete && img.naturalWidth > 0 ? "loaded" : "loading");
+  }, [src]);
   const round = shape === "circle" ? "rounded-full" : "rounded-md";
   const showImage = Boolean(src) && loaded !== "error";
   const label = statusLabel ? `${name}, ${statusLabel}` : name;
@@ -127,6 +133,7 @@ export const Avatar = ({
         {loaded === "loaded" && showImage ? null : (initials ?? getInitials(name))}
         {showImage ? (
           <img
+            ref={imgRef}
             src={src ?? undefined}
             alt=""
             onLoad={() => setLoaded("loaded")}

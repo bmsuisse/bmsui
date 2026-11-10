@@ -304,7 +304,10 @@ header and pager stay put (give the parent a height).
 No dependency on `@bmsuisse/datagrid`: the body takes any table or list.
 `flush` drops the panel border for a shell inside a card; `fill` (default on
 `TablePage`) makes the body a `min-h-0 flex-1` column. `TableResultCount`
-reads "48 results", "12 of 48" or "48+ loaded" (`labels` translate).
+reads "48 results", "12 of 48" or "48+ loaded" (`labels` translate; numbers
+use `locale`, default `"de-CH"`). `TableShell`, `TableToolbar` and
+`TableResultCount` take `data-testid`; the old `testId` prop still works as a
+deprecated alias for OneSales.
 
 ### `Pagination`
 
@@ -324,7 +327,8 @@ around it with "…" gaps, keeping the slot count constant so the bar doesn't
 jump (Astryx's rules; `getPageRange` is exported). Below `sm` — or always
 with `compact` — it collapses to prev / "3 / 13" / next. Pass `pageCount`
 instead of `totalItems` when the total is unknown; `labels` translate every
-string including the "1–25 of 312" range.
+string including the "1–25 of 312" range; `locale` (default `"de-CH"`)
+formats its numbers.
 
 ### `CommandPalette`
 
@@ -354,8 +358,10 @@ useCommandPaletteHotkey(() => setOpen((o) => !o));
 ```
 
 Registry (the idea from OneDocs's palette): wrap the shell in
-`CommandRegistryProvider` and call `useRegisterCommands(memoizedCommands)` in
-a page — its commands show up in the palette while that page is mounted.
+`CommandRegistryProvider` and call `useRegisterCommands(commands)` in a page —
+its commands show up in the palette while that page is mounted. An inline
+array is fine: it only re-registers when ids/labels/groups (or other display
+fields) change, and `onSelect` always calls the latest handler.
 `onQueryChange` + `loading` let you merge server results into `commands`;
 `filter` replaces the scoring; `groupOrder` fixes the section order.
 
@@ -397,7 +403,8 @@ disabled items skipped.
 Icon-only buttons get `label` as `aria-label` and tooltip. Other controls join
 the arrow-key order with a `data-toolbar-item` attribute. `overflow` measures
 the buttons and folds those that don't fit into a "…" menu (toggles become
-checkbox items). `variant="ghost"` drops the border.
+checkbox items). Only `ToolbarButton`s overflow — selects, wrapped buttons and
+other children always stay visible. `variant="ghost"` drops the border.
 ### `DatePicker` / `DateRangePicker` / `Calendar`
 
 `DatePicker` is `DateInput` plus a calendar button: type `3.2.26` or pick from

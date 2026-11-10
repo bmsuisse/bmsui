@@ -6,6 +6,7 @@ import type {
   ReactNode,
 } from "react";
 import { Children, Fragment, isValidElement, useCallback, useEffect, useId, useRef, useState } from "react";
+import { useIsomorphicLayoutEffect } from "../../lib/useIsomorphicLayoutEffect";
 import { cn } from "../../lib/utils";
 
 /** A pane size limit: a number is a percentage of the container, `"240px"` is pixels. */
@@ -132,7 +133,15 @@ export function SplitPane({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [count, (defaultSizes ?? []).join(",")],
   );
-  const [internal, setInternal] = useState<number[]>(() => readStored(storageKey, count) ?? resetSizes());
+  // Start from the defaults so server and client markup match; the stored layout is
+  // applied before paint on the client (layout effect), so there's no visible jump.
+  const [internal, setInternal] = useState<number[]>(resetSizes);
+  useIsomorphicLayoutEffect(() => {
+    const stored = readStored(storageKey, count);
+    if (stored) setInternal(stored);
+    // Only on mount / when the storage key changes; pane-count changes are handled below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storageKey]);
   // Pane count changed (a pane was added/removed): start over from the defaults.
   useEffect(() => {
     if (internal.length !== count) setInternal(readStored(storageKey, count) ?? resetSizes());

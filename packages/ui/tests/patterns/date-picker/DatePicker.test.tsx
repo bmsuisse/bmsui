@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import type { DateRange } from "../../../src/patterns/calendar/Calendar";
@@ -85,5 +85,36 @@ describe("DateRangePicker", () => {
     expect(changes.at(-1)).toEqual({ from: "2026-11-05", to: "2026-11-09" });
     expect(screen.queryByRole("grid")).not.toBeInTheDocument();
     expect(screen.getByLabelText("To")).toHaveValue("09.11.2026");
+  });
+});
+
+describe("DatePicker focus after a pick", () => {
+  it("returns focus to the input via onCloseAutoFocus, without requestAnimationFrame", async () => {
+    const raf = vi.spyOn(window, "requestAnimationFrame");
+    const Picker = () => {
+      const [v, setV] = useState("2026-11-10");
+      return <DatePicker aria-label="Due" value={v} onValueChange={setV} />;
+    };
+    render(<Picker />);
+    fireEvent.click(screen.getByRole("button", { name: "Choose date" }));
+    await screen.findByRole("grid");
+    raf.mockClear();
+    fireEvent.click(day("2026-11-20"));
+    await waitFor(() => expect(screen.getByLabelText("Due")).toHaveFocus());
+    expect(raf).not.toHaveBeenCalled();
+    raf.mockRestore();
+  });
+
+  it("returns focus to the from field after a range pick", async () => {
+    const Picker = () => {
+      const [v, setV] = useState<DateRange>({ from: "", to: "" });
+      return <DateRangePicker value={v} onValueChange={setV} today="2026-11-10" />;
+    };
+    render(<Picker />);
+    fireEvent.click(screen.getByRole("button", { name: "Choose dates" }));
+    await screen.findByRole("grid");
+    fireEvent.click(day("2026-11-12"));
+    fireEvent.click(day("2026-11-14"));
+    await waitFor(() => expect(screen.getByLabelText("From")).toHaveFocus());
   });
 });

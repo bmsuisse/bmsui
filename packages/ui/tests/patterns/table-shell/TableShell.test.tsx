@@ -56,7 +56,7 @@ describe("TableToolbar / TableSearch", () => {
 describe("TableResultCount", () => {
   it("formats total, filtered and has-more counts", () => {
     const { rerender } = render(<TableResultCount shown={1234} />);
-    expect(screen.getByTestId("table-result-count")).toHaveTextContent("1,234 results");
+    expect(screen.getByTestId("table-result-count")).toHaveTextContent(`${new Intl.NumberFormat("de-CH").format(1234)} results`);
     rerender(<TableResultCount shown={12} total={48} />);
     expect(screen.getByTestId("table-result-count")).toHaveTextContent("12 of 48");
     rerender(<TableResultCount shown={48} hasMore />);
@@ -87,5 +87,27 @@ describe("TablePage", () => {
     );
     expect(screen.getByText("custom header")).toBeInTheDocument();
     expect(screen.queryByTestId("page-header")).toBeNull();
+  });
+});
+
+describe("review regressions", () => {
+  it("defaults to the de-CH locale", () => {
+    render(<TableResultCount shown={1234} />);
+    expect(screen.getByTestId("table-result-count")).toHaveTextContent(`${new Intl.NumberFormat("de-CH").format(1234)} results`);
+  });
+
+  it("accepts data-testid (and testId as a deprecated alias)", () => {
+    render(
+      <>
+        <TableShell data-testid="shell">x</TableShell>
+        <TableToolbar data-testid="tb" />
+        <TableToolbar testId="legacy-tb" />
+        <TableResultCount shown={1} data-testid="count" testId="ignored" />
+      </>,
+    );
+    expect(screen.getByTestId("shell").tagName).toBe("SECTION");
+    expect(screen.getByTestId("tb")).toBeInTheDocument();
+    expect(screen.getByTestId("legacy-tb")).toBeInTheDocument();
+    expect(screen.getByTestId("count")).toBeInTheDocument();
   });
 });
