@@ -14,6 +14,11 @@ import {
   Checkbox,
   Combobox,
   ConfirmDialog,
+  DateInput,
+  EmptyState,
+  FilteredEmptyState,
+  Toaster,
+  toast,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -114,6 +119,7 @@ import {
   Cog6ToothIcon,
   CurrencyDollarIcon,
   FunnelIcon,
+  InboxIcon,
   InformationCircleIcon,
   MagnifyingGlassIcon,
   ReceiptPercentIcon,
@@ -910,6 +916,18 @@ export function App(): ReactElement {
             <SidebarDemo />
           </Section>
 
+          <Section title="EmptyState / FilteredEmptyState">
+            <EmptyStateDemo />
+          </Section>
+
+          <Section title="Toast">
+            <ToastDemo />
+          </Section>
+
+          <Section title="DateInput">
+            <DateInputDemo />
+          </Section>
+
           <Section title="Stepper">
             <StepperDemo />
           </Section>
@@ -1237,6 +1255,73 @@ function SidebarDemo(): ReactElement {
   );
 }
 
+
+function EmptyStateDemo(): ReactElement {
+  return (
+    <div data-testid="demo-empty-state" className="grid w-full gap-4 md:grid-cols-3">
+      <Card>
+        <EmptyState
+          icon={InboxIcon}
+          title="No tasks yet"
+          description="Tasks you create or get assigned show up here."
+          action={<Button size="sm">New task</Button>}
+        />
+      </Card>
+      <Card>
+        <FilteredEmptyState onReset={() => {}} />
+      </Card>
+      <Card className="p-2">
+        <p className="px-2 pt-2 text-sm font-semibold">Open offers</p>
+        <EmptyState size="sm" icon={MagnifyingGlassIcon} title="No open offers" />
+      </Card>
+    </div>
+  );
+}
+
+function ToastDemo(): ReactElement {
+  return (
+    <div className="flex flex-wrap gap-2">
+      <Toaster position="bottom-right" />
+      <Button variant="outline" onClick={() => toast.success("Offer saved", { description: "Version 3 is now active." })}>
+        Success
+      </Button>
+      <Button variant="outline" onClick={() => toast("Contact deleted", { action: { label: "Undo", onClick: () => toast("Restored") } })}>
+        With action
+      </Button>
+      <Button variant="outline" onClick={() => toast.warning("Prices changed since you opened this offer")}>
+        Warning
+      </Button>
+      <Button variant="outline" onClick={() => toast.error("Upload failed", { description: "The file is larger than 20 MB." })}>
+        Error
+      </Button>
+    </div>
+  );
+}
+
+function DateInputDemo(): ReactElement {
+  const [due, setDue] = useState("2026-11-10");
+  const [us, setUs] = useState("2026-11-10");
+  const [bad, setBad] = useState("");
+  return (
+    <div data-testid="demo-date-input" className="grid w-full max-w-2xl gap-4 sm:grid-cols-3">
+      <label className="flex flex-col gap-1 text-sm">
+        Due (de-CH)
+        <DateInput value={due} onValueChange={setDue} />
+        <span className="text-xs text-muted-foreground">value: {due || "—"}</span>
+      </label>
+      <label className="flex flex-col gap-1 text-sm">
+        Due (en-US)
+        <DateInput locale="en-US" value={us} onValueChange={setUs} />
+        <span className="text-xs text-muted-foreground">value: {us || "—"}</span>
+      </label>
+      <label className="flex flex-col gap-1 text-sm">
+        Type 31.02.2026, then Tab
+        <DateInput data-testid="demo-date-invalid" value={bad} onValueChange={setBad} />
+        <span className="text-xs text-muted-foreground">value: {bad || "—"}</span>
+      </label>
+    </div>
+  );
+}
 
 const stepperSteps = [
   { n: 1, label: "Type", phase: "Setup" },

@@ -14,11 +14,20 @@ into aspiration.
 ```
 packages/datagrid/     @bmsuisse/datagrid   — React datagrid (TanStack Table v9)
 packages/ui/           @bmsuisse/ui         — shared shadcn/ui-based primitives + composed patterns
+plugins/bmsui/         Claude Code plugin   — skill telling agents in consuming apps to use the catalog
 python/datagrid/       bmsdna-datagrid   — filter contract -> SQL / Meilisearch
 e2e/server/            FastAPI harness backing packages/datagrid/e2e's Playwright specs
 ```
 
 ## `@bmsuisse/ui` — shared primitives and composed patterns
+
+**Start at `packages/ui/CATALOG.md`** — one line per export saying when to
+use it, shipped in the npm package so agents in consuming apps can read it
+from `node_modules/@bmsuisse/ui/CATALOG.md`. `tests/catalog.test.ts` fails
+when an export is missing from it, so add a line whenever you export
+something new. `plugins/bmsui/` is a Claude Code plugin whose skill points
+agents in consuming apps at that catalog (idea taken from Astryx's
+`plugins/astryx`).
 
 Grew out of a survey of several internal apps' React code looking for
 UI patterns duplicated across those codebases (beyond the datagrid/filter
@@ -449,6 +458,33 @@ logic above, which already had its own extraction). Structure:
     CSS length) restores a wider floor when more spacing is wanted. Also
     additive: `className` on the root, and `StepperStep.phase` is optional
     (omit it for no caption).
+  - `empty-state/` — `EmptyState` + `FilteredEmptyState` (v0.20.0). Merges
+    OneSales's `ui/EmptyState`/`FilteredEmptyState` (43 importers) and
+    OneDocs's `ui/EmptyState`: optional icon in a muted round tile, title,
+    `description`, `action`, `size` `sm`/`md`, `fill` for flex parents.
+    `FilteredEmptyState` is EmptyState + a Reset button (`onReset`) with
+    `labels` for translation, same convention as `ErrorState`. Use
+    `ErrorState` when loading failed, not this.
+  - `toast/` — `toast()` + `<Toaster>` (v0.20.0), ported from OneDocs's
+    zustand toastStore/Toaster but with a dependency-free module store read
+    via `useSyncExternalStore`, so `toast(...)` works from anywhere (query
+    error handlers, plain functions). `toast.success/.warning/.error/.info`,
+    one optional `action` (e.g. Undo), `description`, `duration`
+    (`Infinity` = sticky; errors default to 8s, others 4s), max 3 at once
+    (oldest dropped). Pauses on hover/focus. The progress bar's Web
+    Animations API animation *is* the timer in browsers (so pausing the bar
+    and the countdown can't drift); jsdom has no `element.animate`, so a
+    pausable `setTimeout` stands in there — tests exercise that path. Enter/
+    exit are plain `transition` toggles, no `tailwindcss-animate`.
+  - `date-input/` — `DateInput` (v0.20.0), ported from OneDocs's
+    `DateField` + `lib/dateField`: a text field that shows and parses the
+    given `locale` (default `de-CH`, dd.mm.yyyy) while the value stays an
+    ISO day (`""` = none). Commits on blur/Enter; non-dates set
+    `aria-invalid` and keep the old value. Accepts `3.2.26`, any of `. / -`,
+    and ISO. `toLocalIsoDay` is exported because OneSales hit the
+    `toISOString().slice(0, 10)` UTC-day bug after 22:00 Swiss time. No
+    calendar popover yet — that's the next step (Astryx's `Calendar` is the
+    reference for keyboard behaviour).
 - `packages/ui/demo/` — same pattern as `packages/datagrid/demo`: a Vite
   app aliasing `@bmsuisse/ui` straight to `src/index.ts`, using the same
   reference-app-derived Tailwind v4 tokens, for visual QA.

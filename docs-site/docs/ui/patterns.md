@@ -86,6 +86,52 @@ an explicit `tone` prop → your own `toneMap` → a small built-in English
 status vocabulary (`approved`/`pending`/`rejected`/etc.) → a neutral
 fallback.
 
+### `EmptyState` / `FilteredEmptyState`
+
+"Nothing here" placeholder for a list, table or panel with no data.
+
+```tsx
+<EmptyState icon={InboxIcon} title="No tasks" description="You're all caught up." action={<Button>New task</Button>} />
+<EmptyState size="sm" title="No contacts" />          {/* inside a card */}
+<FilteredEmptyState onReset={clearFilters} labels={{ title: t("noResults"), reset: t("reset") }} />
+```
+
+`fill` makes it grow and center inside a flex column. Use `ErrorState` when
+loading failed.
+
+### `toast` / `Toaster`
+
+Brief, non-blocking notices. Mount `<Toaster />` once near the app root, then
+call `toast` from anywhere — components, query callbacks, plain functions:
+
+```tsx
+toast.success("Saved");
+toast.error("Upload failed", { description: err.message });
+toast("Offer deleted", { action: { label: "Undo", onClick: restore } });
+const id = toast("Syncing…", { duration: Infinity }); toast.dismiss(id);
+```
+
+At most three show at once; errors stay 8s, everything else 4s, and the
+countdown pauses while the toast is hovered or focused. `position` is
+`bottom-center` (default), `bottom-right`, `top-center` or `top-right`;
+`labels` translates the region name and the dismiss button.
+
+### `DateInput`
+
+A day field in the app's locale instead of the browser's own `type="date"`
+format. The value is an ISO day (`"2026-11-10"`, `""` for none).
+
+```tsx
+<DateInput value={due} onValueChange={setDue} />           {/* 10.11.2026 */}
+<DateInput value={due} onValueChange={setDue} locale="en-US" />
+```
+
+Typed text commits on blur or Enter; `3.2.26`, `03/02/2026` and ISO are all
+accepted. Text that is no date marks the field `aria-invalid` and keeps the
+previous value; `onInvalidChange` tells a form so it can block submit. With
+`name`, a hidden input submits the ISO day. `parseIsoDay`, `formatIsoDay`, `datePlaceholder` and
+`toLocalIsoDay` are exported for use outside the field.
+
 ### `LoadingSpinner` / `LoadingOverlay`
 
 `LoadingSpinner` is an inline spinner (`size` + optional `label`);
