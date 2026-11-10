@@ -27,7 +27,8 @@ export interface CollapsibleSectionProps {
 /**
  * A titled section the user can fold away: chevron, title, optional count and
  * actions, with a smooth height transition (CSS grid rows, no measuring, no
- * animation plugin; instant under reduced motion). Use it for secondary blocks
+ * animation plugin; content fades with it and the chevron rotates, 200ms ease-out;
+ * instant under reduced motion). Use it for secondary blocks
  * on detail pages and in side panels ("Attachments (3)", "History"). Closed
  * content stays mounted (so form state survives) but is inert.
  */
@@ -64,18 +65,18 @@ export const CollapsibleSection = ({
       onOpenChange={setOpen}
       disabled={disabled}
       data-testid={testId}
-      className={cn(card && "rounded-md border border-foreground/10 bg-background", className)}
+      className={cn(card && "rounded-lg border border-foreground/10 bg-background dark:border-border", className)}
     >
-      <div className={cn("flex items-center gap-2", card ? "px-3 py-2" : "py-1.5")}>
+      <div className={cn("flex items-center gap-2", card ? "px-3 py-2.5" : "py-1.5")}>
         <CollapsibleTrigger
           data-testid={`${testId}-trigger`}
           className={cn(
-            "group/cs -mx-1 flex min-w-0 flex-1 items-start gap-1.5 rounded-sm px-1 py-0.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60",
+            "group/cs -mx-1 flex min-w-0 flex-1 items-start gap-1.5 rounded-md px-1 py-0.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60",
           )}
         >
           <ChevronRightIcon
             aria-hidden="true"
-            className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]/cs:rotate-90 motion-reduce:transition-none"
+            className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-[rotate,color] duration-200 ease-out group-hover/cs:text-foreground group-disabled/cs:text-muted-foreground group-data-[state=open]/cs:rotate-90 motion-reduce:transition-none"
           />
           <span className="flex min-w-0 flex-col">
             <span className="flex min-w-0 items-center gap-2">
@@ -83,13 +84,13 @@ export const CollapsibleSection = ({
               {count != null ? (
                 <span
                   data-testid={`${testId}-count`}
-                  className="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-foreground/[0.07] px-1.5 text-[11px] font-medium tabular-nums text-muted-foreground dark:bg-foreground/10"
+                  className="inline-flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full bg-foreground/[0.07] px-1.5 text-[11px] font-medium leading-none tabular-nums text-muted-foreground dark:bg-foreground/10"
                 >
                   {count}
                 </span>
               ) : null}
             </span>
-            {description ? <span className="truncate text-xs text-muted-foreground">{description}</span> : null}
+            {description ? <span className="mt-0.5 truncate text-xs text-muted-foreground">{description}</span> : null}
           </span>
         </CollapsibleTrigger>
         {actions ? <div className="flex shrink-0 items-center gap-1">{actions}</div> : null}
@@ -98,10 +99,13 @@ export const CollapsibleSection = ({
         forceMount
         ref={contentRef}
         aria-hidden={!open || undefined}
-        className="grid grid-rows-[0fr] overflow-hidden transition-[grid-template-rows] duration-200 ease-out data-[state=open]:grid-rows-[1fr] motion-reduce:transition-none"
+        className="group/csc grid grid-rows-[0fr] overflow-hidden transition-[grid-template-rows] duration-200 ease-out data-[state=open]:grid-rows-[1fr] motion-reduce:transition-none"
       >
-        <div className="min-h-0">
-          <div className={cn(card ? "border-t border-foreground/10 px-3 py-3" : "pb-2 pl-6 pt-1", contentClassName)}>
+        {/* Content fades with the height: in ease-out, out ease-in (a touch faster, so it
+            is gone before the box finishes closing). */}
+        <div className="min-h-0 transition-opacity duration-200 ease-out group-data-[state=closed]/csc:opacity-0 group-data-[state=closed]/csc:duration-150 group-data-[state=closed]/csc:ease-in motion-reduce:transition-none">
+          <div className={cn(// Plain: indent 22px (16px chevron + 6px gap) so content lines up with the title.
+            card ? "border-t border-foreground/10 px-3 py-3 dark:border-border" : "pb-2 pl-[22px] pt-1", contentClassName)}>
             {children}
           </div>
         </div>

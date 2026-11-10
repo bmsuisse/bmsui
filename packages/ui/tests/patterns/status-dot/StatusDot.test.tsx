@@ -16,7 +16,7 @@ describe("StatusDot", () => {
     const dot = screen.getByTestId("status-dot");
     expect(dot).toHaveAttribute("data-tone", "success");
     expect(screen.getByText("Online")).toHaveClass("sr-only");
-    expect(dot.querySelector(".animate-ping")).not.toBeNull();
+    expect(screen.getByTestId("status-dot-pulse")).toBeInTheDocument();
   });
 
   it("uses a caller toneMap and falls back to neutral", () => {

@@ -106,14 +106,21 @@ export const MetadataList = ({
             className={cn(
               "group/meta min-w-0",
               horizontal
-                ? "grid grid-cols-[minmax(0,var(--metadata-label-width))_minmax(0,1fr)] items-baseline gap-x-4 py-2"
+                ? cn(
+                    "grid grid-cols-[minmax(0,var(--metadata-label-width))_minmax(0,1fr)] items-baseline gap-x-4",
+                    // Hairlines need air around them; without them rows sit closer, like a property sheet.
+                    divided ? "py-2.5" : "py-1.5",
+                  )
                 : "flex flex-col gap-0.5",
-              divided && (horizontal ? "border-b border-foreground/10" : "border-b border-foreground/10 pb-3"),
+              divided &&
+                (horizontal ? "border-b border-foreground/10 dark:border-border" : "border-b border-foreground/10 pb-3 dark:border-border"),
+              // One column: no dangling hairline under the last row (multi-column rows end unevenly, so keep them).
+              divided && columns === 1 && (horizontal ? "last:border-b-0" : "last:border-b-0 last:pb-0"),
               item.fullWidth && FULL_SPAN[columns],
             )}
           >
             <dt className="min-w-0 text-xs font-medium text-muted-foreground">{item.label}</dt>
-            <dd className="flex min-w-0 items-start gap-1 text-foreground">
+            <dd className="flex min-w-0 items-start gap-1.5 text-foreground">
               {empty ? (
                 <span className="text-muted-foreground" data-testid="metadata-empty">
                   {l.empty}
@@ -136,6 +143,11 @@ export const MetadataList = ({
     </dl>
   );
 };
+
+const ICON =
+  "col-start-1 row-start-1 h-3.5 w-3.5 transition-[opacity,scale] duration-150 ease-out motion-reduce:transition-opacity";
+const ICON_ON = "scale-100 opacity-100";
+const ICON_OFF = "scale-50 opacity-0";
 
 const CopyButton = ({
   text,
@@ -171,13 +183,15 @@ const CopyButton = ({
         copied || failed ? "opacity-100" : "opacity-0 group-hover/meta:opacity-100 pointer-coarse:opacity-100",
       )}
     >
-      {failed ? (
-        <ExclamationTriangleIcon aria-hidden="true" className="h-3.5 w-3.5 text-destructive" />
-      ) : copied ? (
-        <CheckIcon aria-hidden="true" className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-      ) : (
-        <ClipboardDocumentIcon aria-hidden="true" className="h-3.5 w-3.5" />
-      )}
+      {/* All three icons share one grid cell; the active one scales/fades in (150ms
+          ease-out) while the others shrink away — the clipboard morphs into a check. */}
+      <ClipboardDocumentIcon aria-hidden="true" className={cn(ICON, failed || copied ? ICON_OFF : ICON_ON)} />
+      <CheckIcon
+        aria-hidden="true"
+        data-testid={copied && !failed ? "metadata-copy-check" : undefined}
+        className={cn(ICON, "text-emerald-600 dark:text-emerald-400", copied && !failed ? ICON_ON : ICON_OFF)}
+      />
+      <ExclamationTriangleIcon aria-hidden="true" className={cn(ICON, "text-destructive", failed ? ICON_ON : ICON_OFF)} />
       <span role="status" className="sr-only">
         {failed ? failedLabel : copied ? copiedLabel : ""}
       </span>

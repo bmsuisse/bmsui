@@ -1,4 +1,4 @@
-import { type HTMLAttributes, type ReactElement, useEffect, useRef, useState } from "react";
+import { type CSSProperties, type HTMLAttributes, type ReactElement, useEffect, useRef, useState } from "react";
 import { cn } from "../../lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../primitives/tooltip";
 import type { StatusTone } from "../status-badge/StatusBadge";
@@ -24,7 +24,7 @@ const DOT_TONE: Record<StatusTone, string> = {
   warning: "bg-amber-500",
   error: "bg-red-500",
   info: "bg-sky-500",
-  neutral: "bg-muted-foreground",
+  neutral: "bg-muted-foreground/70",
 };
 
 /**
@@ -125,12 +125,21 @@ export const Avatar = ({
       <span
         aria-hidden="true"
         className={cn(
-          "flex h-full w-full items-center justify-center overflow-hidden font-semibold leading-none",
+          "flex h-full w-full items-center justify-center overflow-hidden font-semibold leading-none transition-colors duration-200 ease-out motion-reduce:transition-none",
           round,
           loaded === "loaded" && showImage ? "bg-transparent" : PALETTE[avatarColorIndex(name)],
         )}
       >
-        {loaded === "loaded" && showImage ? null : (initials ?? getInitials(name))}
+        {/* Initials stay under the photo and fade out as it fades in (200ms cross-fade). */}
+        <span
+          data-testid="avatar-initials"
+          className={cn(
+            "transition-opacity duration-200 ease-out motion-reduce:transition-none",
+            loaded === "loaded" && showImage && "opacity-0",
+          )}
+        >
+          {initials ?? getInitials(name)}
+        </span>
         {showImage ? (
           <img
             ref={imgRef}
@@ -142,6 +151,7 @@ export const Avatar = ({
               "absolute inset-0 h-full w-full",
               round,
               fit === "cover" ? "object-cover" : "bg-background object-contain",
+              "transition-opacity duration-200 ease-out motion-reduce:transition-none",
               loaded === "loaded" ? "opacity-100" : "opacity-0",
             )}
           />
@@ -187,7 +197,16 @@ export interface AvatarGroupProps extends Omit<HTMLAttributes<HTMLDivElement>, "
   size?: AvatarSize;
   shape?: AvatarProps["shape"];
   labels?: Partial<AvatarGroupLabels>;
+  /**
+   * Fan the stack out slightly (3px per avatar, 200ms ease-out) while the pointer
+   * is over the group or focus is inside it. Off under reduced motion. @default true
+   */
+  animated?: boolean;
 }
+
+/** Spread on hover/focus-within: each item moves right by its index × 3px. */
+const SPREAD =
+  "transition-[translate] duration-200 ease-out motion-safe:group-hover/ag:translate-x-[calc(var(--ag-i)*3px)] motion-safe:group-focus-within/ag:translate-x-[calc(var(--ag-i)*3px)]";
 
 /**
  * Overlapping avatars for a team, assignees or watchers. Shows up to `max` and
@@ -200,6 +219,7 @@ export const AvatarGroup = ({
   size = "md",
   shape = "circle",
   labels,
+  animated = true,
   className,
   ...props
 }: AvatarGroupProps): ReactElement => {
@@ -215,13 +235,20 @@ export const AvatarGroup = ({
         data-testid="avatar-group"
         role="group"
         aria-label={items.map((i) => i.name).join(", ")}
-        className={cn("flex items-center", size === "xs" || size === "sm" ? "-space-x-1.5" : "-space-x-2", className)}
+        className={cn("group/ag flex items-center", size === "xs" || size === "sm" ? "-space-x-1.5" : "-space-x-2", className)}
         {...props}
       >
-        {visible.map((item) => (
+        {visible.map((item, i) => (
           <Tooltip key={item.id ?? item.name}>
             <TooltipTrigger asChild>
-              <span className={cn("relative inline-flex ring-2 ring-background hover:z-10", round)}>
+              {/* Earlier avatars stack on top so each one's status dot (bottom-right) stays
+                  visible instead of being covered by its neighbour. The solid bg-background
+                  under the tile keeps the translucent dark-mode tints from showing the
+                  neighbour through. */}
+              <span
+                className={cn("relative inline-flex bg-background ring-2 ring-background hover:!z-20", round, animated && SPREAD)}
+                style={{ zIndex: visible.length - i, "--ag-i": i } as CSSProperties}
+              >
                 <Avatar name={item.name} src={item.src} status={item.status} size={size} shape={shape} />
               </span>
             </TooltipTrigger>
@@ -237,10 +264,15 @@ export const AvatarGroup = ({
                 role="img"
                 aria-label={`${l.more(hidden.length)}: ${hidden.map((i) => i.name).join(", ")}`}
                 data-testid="avatar-group-overflow"
+                // On top of the last avatar so the "+N" text is never clipped.
+                style={{ zIndex: visible.length + 1, "--ag-i": visible.length } as CSSProperties}
                 className={cn(
-                  "relative inline-flex shrink-0 cursor-default items-center justify-center bg-muted font-semibold text-muted-foreground ring-2 ring-background focus-visible:outline-none focus-visible:ring-ring dark:bg-foreground/15 dark:text-foreground",
+                  // Solid mix rather than bg-muted (invisible on the light surface) or a
+                  // translucent tint (would show the neighbour through).
+                  "relative inline-flex shrink-0 cursor-default items-center justify-center bg-[color-mix(in_oklab,var(--color-foreground)_8%,var(--color-background))] font-semibold tabular-nums text-muted-foreground ring-2 ring-background focus-visible:outline-none focus-visible:ring-ring dark:bg-[color-mix(in_oklab,var(--color-foreground)_14%,var(--color-background))] dark:text-foreground/80",
                   round,
                   SIZE[size],
+                  animated && SPREAD,
                 )}
               >
                 +{hidden.length}

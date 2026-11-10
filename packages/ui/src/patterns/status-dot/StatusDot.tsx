@@ -1,4 +1,4 @@
-import type { HTMLAttributes, ReactElement, ReactNode } from "react";
+import { type HTMLAttributes, type ReactElement, type ReactNode, useEffect, useRef } from "react";
 import { cn } from "../../lib/utils";
 import { deriveStatusLabel, resolveStatusTone, type StatusTone } from "../status-badge/StatusBadge";
 
@@ -12,7 +12,7 @@ const DOT_CLASSES: Record<StatusTone, string> = {
   warning: "bg-amber-500",
   error: "bg-red-500",
   info: "bg-sky-500",
-  neutral: "bg-muted-foreground/60",
+  neutral: "bg-muted-foreground/70",
 };
 
 export interface StatusDotProps extends Omit<HTMLAttributes<HTMLSpanElement>, "children"> {
@@ -26,7 +26,7 @@ export interface StatusDotProps extends Omit<HTMLAttributes<HTMLSpanElement>, "c
   label?: ReactNode;
   /** Render the label visually hidden: a bare dot in a dense table cell or on an avatar. */
   hideLabel?: boolean;
-  /** Soft ping ring around the dot for live states ("Online", "Syncing"). Off under reduced motion. */
+  /** Soft ring that ripples out of the dot and fades for live states ("Online", "Syncing"). Off under reduced motion. */
   pulse?: boolean;
   /** `sm` (default, 8px) or `md` (10px). */
   size?: "sm" | "md";
@@ -51,6 +51,23 @@ export const StatusDot = ({
   const resolved = resolveStatusTone(status ?? "", tone, toneMap);
   const text = label ?? (status ? deriveStatusLabel(status) : null);
   const dot = size === "md" ? "h-2.5 w-2.5" : "h-2 w-2";
+  const ring = useRef<HTMLSpanElement>(null);
+  // Ripple with the Web Animations API (no keyframes CSS): the ring grows to 2.5x
+  // while fading out, ease-out, then rests briefly — a calm heartbeat, not a blink.
+  useEffect(() => {
+    const el = ring.current;
+    if (!pulse || !el || typeof el.animate !== "function") return;
+    if (typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const anim = el.animate(
+      [
+        { transform: "scale(1)", opacity: 0.55 },
+        { transform: "scale(2.6)", opacity: 0, offset: 0.7 },
+        { transform: "scale(2.6)", opacity: 0 },
+      ],
+      { duration: 2000, iterations: Infinity, easing: "cubic-bezier(0, 0, 0.2, 1)" },
+    );
+    return () => anim.cancel();
+  }, [pulse]);
   return (
     <span
       data-testid="status-dot"
@@ -61,10 +78,9 @@ export const StatusDot = ({
       <span aria-hidden="true" className={cn("relative inline-flex shrink-0", dot)}>
         {pulse ? (
           <span
-            className={cn(
-              "absolute inline-flex h-full w-full animate-ping rounded-full opacity-60 motion-reduce:hidden",
-              DOT_CLASSES[resolved],
-            )}
+            ref={ring}
+            data-testid="status-dot-pulse"
+            className={cn("absolute inset-0 rounded-full opacity-0 motion-reduce:hidden", DOT_CLASSES[resolved])}
           />
         ) : null}
         <span className={cn("relative inline-flex rounded-full", dot, DOT_CLASSES[resolved])} />

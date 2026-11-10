@@ -85,14 +85,14 @@ export const ShortcutSheet = ({
                   {group.title}
                 </h3>
                 {group.hint ? <p className="mt-0.5 text-xs text-muted-foreground">{group.hint}</p> : null}
-                <ul className="mt-2 divide-y divide-foreground/10 rounded-md border border-foreground/10">
+                <ul className="mt-2 divide-y divide-foreground/10 rounded-lg border border-foreground/10 dark:divide-border dark:border-border">
                   {group.items.map((item) => {
                     const keys = Array.isArray(item.keys) ? item.keys : [item.keys];
                     return (
                       <li
                         key={item.id ?? keys.join("|")}
                         data-testid="shortcut-row"
-                        className="flex items-center justify-between gap-4 px-3 py-2 text-sm"
+                        className="flex min-h-10 items-center justify-between gap-4 px-3 py-2 text-sm text-foreground"
                       >
                         <span className="min-w-0">{item.label}</span>
                         <KeyCombo keys={keys} mac={mac} labels={{ then: l.then, or: l.or }} className="justify-end" />
