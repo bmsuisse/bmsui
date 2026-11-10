@@ -134,3 +134,19 @@ repo's `AGENTS.md`.
 | `useMediaQuery` | Reactive media query. |
 | `getConfirmButtonPlacement`, `isWindowsPlatform` | Platform-dependent button order. |
 | `isMacPlatform` | Apple platform check (⌘ vs Ctrl spelling). |
+
+## Hooks
+
+| Export | Use for |
+| --- | --- |
+| `useHotkeys` | Keyboard shortcuts: `useHotkeys([{ keys: "mod+k", handler }])`. `mod` = ⌘/Ctrl, chords (`"g i"`), skips inputs unless `allowInInputs`, `enabled`, `preventDefault`. |
+| `formatHotkey` | Shortcut label for the platform: `formatHotkey("mod+k")` → `⌘K` / `Ctrl+K`. Use in menus, tooltips, `DropdownMenuShortcut`. |
+| `useClipboard` | Copy button: `{ copy, copied, error, reset }`; `copied` resets after `timeout`; falls back without `navigator.clipboard`. |
+| `useAnnounce` | Screen-reader announcement: `announce("3 results", { politeness })` through a shared hidden live region. |
+| `announce` | Same as `useAnnounce()`'s function, callable outside React (stores, query callbacks). |
+| `Announcer` | Optional in-tree live regions; mount inside a modal so announcements aren't hidden by it. |
+| `useMergedRefs` | One callback ref from several refs (own ref + forwarded ref). |
+| `useFocusTrap` | Keep Tab focus inside a custom overlay/panel and restore it on close. Radix `Dialog`/`Sheet` already trap. |
+| `useLongPress` | Press-and-hold (touch/mouse/pen) with threshold and move-cancel; spread handlers on the element. |
+| `useScrollOverflow` | `{ ref, top, bottom, left, right }` overflow flags for fade edges on a scroll container. |
+| `useLocalStorageState` | `useState` persisted in `localStorage`: SSR-safe, never throws, synced across hooks and tabs. |

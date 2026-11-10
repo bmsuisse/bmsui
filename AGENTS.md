@@ -589,6 +589,50 @@ logic above, which already had its own extraction). Structure:
   (no `bmsdna/__init__.py` at the root) — mirrors `bmsdna-devtools` in the
   `devtools` repo. Built with hatchling; see `python/datagrid/pyproject.toml`.
 
+### `@bmsuisse/ui` hooks (`packages/ui/src/hooks/`)
+
+Behaviour-only hooks, no styling, React 18 + 19, SSR-safe, no extra
+dependencies. Docs: `docs-site/docs/ui/hooks.md`; tests:
+`packages/ui/tests/hooks/`. Behaviour learned from Astryx's `core/src/hooks`
+(MIT) and OneDocs's `GlobalShortcuts`/`ChordShortcuts`/`LiveAnnouncer`.
+
+- `useHotkeys([{ keys, handler, enabled?, allowInInputs?, preventDefault? }], options?)`
+  — window `keydown`; `mod` = ⌘ on Apple, Ctrl elsewhere; chords `"g i"`
+  (`chordTimeoutMs`, default 1000); skips inputs/textarea/select/
+  contenteditable and IME composition; first match wins; handlers read from a
+  ref (no re-subscribe). `formatHotkey("mod+k")` → `⌘K` / `Ctrl+K` (pass
+  `"mac"`/`"other"` to force). Use the same string for both so shown and
+  handled shortcuts agree.
+- `useClipboard({ timeout })` → `{ copy, copied, error, reset }`;
+  `execCommand` fallback without `navigator.clipboard`.
+- `announce(msg, { politeness })` / `useAnnounce()` — lazily created shared
+  live regions on `body`; `<Announcer />` mounted inside a modal takes over
+  while mounted (Radix hides everything outside an open modal).
+- `useMergedRefs(...refs)`, `useFocusTrap({ enabled, restoreFocus, initialFocus })`
+  (returns a callback ref), `useLongPress(cb, { threshold, moveTolerance })`
+  (pointer events, swallows the following click),
+  `useScrollOverflow()` → `{ ref, top, bottom, left, right }`,
+  `useLocalStorageState(key, default)` → `[value, set, remove]`
+  (`useSyncExternalStore`: hydration-safe, same-key hooks and other tabs stay
+  in sync, never throws).
+
+## Public API reports — `packages/*/api-report.md`
+
+`bun run api-report` (`scripts/api-report.ts`) reads the **built**
+`packages/{ui,datagrid}/dist/index.d.ts` with the TypeScript compiler API
+and writes one sorted, deterministic Markdown file per package: every export
+with its kind (component / hook / function / constant / interface / type /
+re-export) and signature, interfaces and object types expanded one member
+per line (members inherited from non-exported base interfaces are listed with
+`(from Base)`). Idea from Astryx's `scripts/api-report`.
+
+**When you change a public API, regenerate the report and commit it:**
+`bun run build && bun run api-report`. Reviewers read its diff instead of
+reverse-engineering `index.ts` changes — a removed or renamed prop is a
+one-line `-`. CI (`ts-check` job) rebuilds, regenerates and fails when
+`git diff --exit-code packages/*/api-report.md` is dirty.
+`bun run api-report --check` does the same check locally without writing.
+
 ## The shared filter/sort contract — hand-mirrored, not codegen'd
 
 `FilterDescriptor` / `CompositeFilterDescriptor` / `SortDescriptor` /
