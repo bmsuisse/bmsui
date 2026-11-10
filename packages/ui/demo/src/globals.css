@@ -115,3 +115,12 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
 }
+
+/* shadcn/ui's standard base rule, as the consuming apps have it: without it
+   Tailwind v4 borders default to currentColor and Card/Popover/Table outlines
+   render black in this demo. */
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+}

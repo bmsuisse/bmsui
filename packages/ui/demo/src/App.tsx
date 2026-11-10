@@ -1028,6 +1028,8 @@ export function App(): ReactElement {
 
           <Section title="Toolbar">
             <ToolbarDemo />
+          </Section>
+
           <Section title="NumberInput">
             <NumberInputDemo />
           </Section>
@@ -1707,6 +1709,16 @@ function MetadataListDemo(): ReactElement {
   );
 }
 
+function DemoField({ label, children, note }: { label: string; children: ReactElement; note?: string }): ReactElement {
+  return (
+    <div className="flex min-w-0 flex-col gap-1.5 text-sm">
+      <span className="font-medium">{label}</span>
+      {children}
+      {note ? <span className="text-xs text-muted-foreground">{note}</span> : null}
+    </div>
+  );
+}
+
 function ProgressDemo(): ReactElement {
   const [value, setValue] = useState(42);
   return (
@@ -1730,6 +1742,28 @@ function ProgressDemo(): ReactElement {
         <CircularProgress aria-label="Loading" />
         <CircularProgress aria-label="Loading" size={20} strokeWidth={2.5} />
       </div>
+    </div>
+  );
+}
+
+function NumberInputDemo(): ReactElement {
+  const [amount, setAmount] = useState<number | null>(1234.5);
+  const [qty, setQty] = useState<number | null>(3);
+  const [pct, setPct] = useState<number | null>(null);
+  return (
+    <div data-testid="demo-number-input" className="grid w-full max-w-3xl gap-4 sm:grid-cols-4">
+      <DemoField label="Amount (2 decimals)" note={`value: ${amount ?? "null"} — try 1234,5`}>
+        <NumberInput value={amount} onValueChange={setAmount} decimals={2} />
+      </DemoField>
+      <DemoField label="Quantity (stepper, 0–10)" note={`value: ${qty ?? "null"}`}>
+        <NumberInput value={qty} onValueChange={setQty} min={0} max={10} stepper />
+      </DemoField>
+      <DemoField label="Discount (sm)" note={`value: ${pct ?? "null"}`}>
+        <NumberInput value={pct} onValueChange={setPct} size="sm" stepper step={0.5} placeholder="0.0" />
+      </DemoField>
+      <DemoField label="Disabled">
+        <NumberInput value={42} onValueChange={() => {}} stepper disabled />
+      </DemoField>
     </div>
   );
 }
@@ -1811,139 +1845,6 @@ function KbdDemo(): ReactElement {
   );
 }
 
-const TEAM = [
-  { name: "Anna Muster", status: "success" as const },
-  { name: "Ben Keller" },
-  { name: "Carla Rossi", status: "warning" as const },
-  { name: "Dario Frei" },
-  { name: "Eva Graf" },
-  { name: "Fabio Huber" },
-  { name: "Gina Weber" },
-];
-
-function AvatarDemo(): ReactElement {
-  return (
-    <div data-testid="demo-avatar" className="flex w-full flex-col gap-5 pt-16">
-      <div className="flex flex-wrap items-center gap-6">
-        <AvatarGroup items={TEAM} max={4} />
-        <AvatarGroup items={TEAM} max={3} size="sm" />
-        <AvatarGroup items={TEAM.slice(0, 3)} size="lg" />
-      </div>
-      <div className="flex flex-wrap items-end gap-3">
-        <Avatar name="Anna Muster" size="xs" />
-        <Avatar name="Ben Keller" size="sm" />
-        <Avatar name="Carla Rossi" size="md" status="success" statusLabel="online" />
-        <Avatar name="Dario Frei" size="lg" status="warning" statusLabel="away" />
-        <Avatar name="Eva Graf" size="xl" status="neutral" statusLabel="offline" />
-        <Avatar name="Sika Schweiz AG" size="lg" shape="square" />
-        <Avatar name="Broken Image" size="lg" src="/does-not-exist.png" />
-        <Avatar
-          name="Photo"
-          size="lg"
-          src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%2394a3b8'/%3E%3Cstop offset='1' stop-color='%23475569'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='40' height='40' fill='url(%23g)'/%3E%3Ccircle cx='20' cy='16' r='7' fill='%23e2e8f0'/%3E%3Cellipse cx='20' cy='36' rx='13' ry='10' fill='%23e2e8f0'/%3E%3C/svg%3E"
-        />
-      </div>
-    </div>
-  );
-}
-
-function CollapsibleSectionDemo(): ReactElement {
-  return (
-    <div data-testid="demo-collapsible-section" className="grid w-full gap-4 md:grid-cols-2">
-      <Card className="p-3">
-        <CollapsibleSection title="Attachments" count={3} actions={<Button size="xs" variant="ghost">Add</Button>}>
-          <ul className="flex flex-col gap-1 text-sm">
-            <li>offer-2026-114.pdf</li>
-            <li>floor-plan.dwg</li>
-            <li>photo-site.jpg</li>
-          </ul>
-        </CollapsibleSection>
-        <CollapsibleSection title="History" description="Changes in the last 30 days" count={0} defaultOpen={false}>
-          <p className="text-sm text-muted-foreground">Nothing changed.</p>
-        </CollapsibleSection>
-      </Card>
-      <div className="flex flex-col gap-3">
-        <CollapsibleSection variant="card" title="Contacts" count={2}>
-          <MetadataList
-            layout="horizontal"
-            labelWidth="6rem"
-            items={[
-              { label: "Primary", value: "Anna Muster" },
-              { label: "Billing", value: "Ben Keller" },
-            ]}
-          />
-        </CollapsibleSection>
-        <CollapsibleSection variant="card" title="Internal notes" defaultOpen={false}>
-          <p className="text-sm">Call before delivery.</p>
-        </CollapsibleSection>
-      </div>
-    </div>
-  );
-}
-
-function HoverCardDemo(): ReactElement {
-  return (
-    <div data-testid="demo-hover-card" className="flex min-h-48 w-full items-start gap-2 text-sm">
-      <span>Assigned to</span>
-      <HoverCard>
-        <HoverCardTrigger
-          href="#"
-          data-testid="hover-card-trigger"
-          className="rounded-sm font-medium underline decoration-muted-foreground/40 decoration-dotted underline-offset-4 hover:decoration-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          Anna Muster
-        </HoverCardTrigger>
-        <HoverCardContent className="w-80">
-          <div className="flex gap-3">
-            <Avatar name="Anna Muster" size="lg" status="success" statusLabel="online" />
-            <div className="min-w-0">
-              <p className="font-semibold">Anna Muster</p>
-              <p className="text-xs text-muted-foreground">Key account manager · Kriens</p>
-              <MetadataList
-                className="mt-2"
-                layout="horizontal"
-                labelWidth="3.5rem"
-                items={[
-                  { label: "Phone", value: "+41 41 123 45 67" },
-                  { label: "Mail", value: "anna.muster@example.ch" },
-                ]}
-              />
-            </div>
-          </div>
-        </HoverCardContent>
-      </HoverCard>
-function DemoField({ label, children, note }: { label: string; children: ReactElement; note?: string }): ReactElement {
-  return (
-    <div className="flex min-w-0 flex-col gap-1.5 text-sm">
-      <span className="font-medium">{label}</span>
-      {children}
-      {note ? <span className="text-xs text-muted-foreground">{note}</span> : null}
-    </div>
-  );
-}
-
-function NumberInputDemo(): ReactElement {
-  const [amount, setAmount] = useState<number | null>(1234.5);
-  const [qty, setQty] = useState<number | null>(3);
-  const [pct, setPct] = useState<number | null>(null);
-  return (
-    <div data-testid="demo-number-input" className="grid w-full max-w-3xl gap-4 sm:grid-cols-4">
-      <DemoField label="Amount (2 decimals)" note={`value: ${amount ?? "null"} — try 1234,5`}>
-        <NumberInput value={amount} onValueChange={setAmount} decimals={2} />
-      </DemoField>
-      <DemoField label="Quantity (stepper, 0–10)" note={`value: ${qty ?? "null"}`}>
-        <NumberInput value={qty} onValueChange={setQty} min={0} max={10} stepper />
-      </DemoField>
-      <DemoField label="Discount (sm)" note={`value: ${pct ?? "null"}`}>
-        <NumberInput value={pct} onValueChange={setPct} size="sm" stepper step={0.5} placeholder="0.0" />
-      </DemoField>
-      <DemoField label="Disabled">
-        <NumberInput value={42} onValueChange={() => {}} stepper disabled />
-      </DemoField>
-    </div>
-  );
-}
-
 function CalendarDemo(): ReactElement {
   const [day, setDay] = useState("2026-11-18");
   const [range, setRange] = useState({ from: "2026-11-09", to: "2026-11-20" });
@@ -2004,6 +1905,42 @@ function SegmentedControlDemo(): ReactElement {
   );
 }
 
+const TEAM = [
+  { name: "Anna Muster", status: "success" as const },
+  { name: "Ben Keller" },
+  { name: "Carla Rossi", status: "warning" as const },
+  { name: "Dario Frei" },
+  { name: "Eva Graf" },
+  { name: "Fabio Huber" },
+  { name: "Gina Weber" },
+];
+
+function AvatarDemo(): ReactElement {
+  return (
+    <div data-testid="demo-avatar" className="flex w-full flex-col gap-5 pt-16">
+      <div className="flex flex-wrap items-center gap-6">
+        <AvatarGroup items={TEAM} max={4} />
+        <AvatarGroup items={TEAM} max={3} size="sm" />
+        <AvatarGroup items={TEAM.slice(0, 3)} size="lg" />
+      </div>
+      <div className="flex flex-wrap items-end gap-3">
+        <Avatar name="Anna Muster" size="xs" />
+        <Avatar name="Ben Keller" size="sm" />
+        <Avatar name="Carla Rossi" size="md" status="success" statusLabel="online" />
+        <Avatar name="Dario Frei" size="lg" status="warning" statusLabel="away" />
+        <Avatar name="Eva Graf" size="xl" status="neutral" statusLabel="offline" />
+        <Avatar name="Sika Schweiz AG" size="lg" shape="square" />
+        <Avatar name="Broken Image" size="lg" src="/does-not-exist.png" />
+        <Avatar
+          name="Photo"
+          size="lg"
+          src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%2394a3b8'/%3E%3Cstop offset='1' stop-color='%23475569'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='40' height='40' fill='url(%23g)'/%3E%3Ccircle cx='20' cy='16' r='7' fill='%23e2e8f0'/%3E%3Cellipse cx='20' cy='36' rx='13' ry='10' fill='%23e2e8f0'/%3E%3C/svg%3E"
+        />
+      </div>
+    </div>
+  );
+}
+
 function RadioDemo(): ReactElement {
   const [shipping, setShipping] = useState("standard");
   const [plan, setPlan] = useState("team");
@@ -2046,18 +1983,40 @@ function RadioDemo(): ReactElement {
   );
 }
 
-function StatusDotDemo(): ReactElement {
+function CollapsibleSectionDemo(): ReactElement {
   return (
-    <div data-testid="demo-status-dot" className="flex flex-wrap items-center gap-5">
-      <StatusDot status="active" />
-      <StatusDot status="pending" />
-      <StatusDot status="failed" />
-      <StatusDot status="new" />
-      <StatusDot status="archived" />
-      <StatusDot tone="success" label="Online" pulse size="md" />
-      <span className="inline-flex items-center gap-1.5 text-sm">
-        Hidden label <StatusDot tone="error" label="Offline" hideLabel />
-      </span>
+    <div data-testid="demo-collapsible-section" className="grid w-full gap-4 md:grid-cols-2">
+      <Card className="p-3">
+        <CollapsibleSection title="Attachments" count={3} actions={<Button size="xs" variant="ghost">Add</Button>}>
+          <ul className="flex flex-col gap-1 text-sm">
+            <li>offer-2026-114.pdf</li>
+            <li>floor-plan.dwg</li>
+            <li>photo-site.jpg</li>
+          </ul>
+        </CollapsibleSection>
+        <CollapsibleSection title="History" description="Changes in the last 30 days" count={0} defaultOpen={false}>
+          <p className="text-sm text-muted-foreground">Nothing changed.</p>
+        </CollapsibleSection>
+      </Card>
+      <div className="flex flex-col gap-3">
+        <CollapsibleSection variant="card" title="Contacts" count={2}>
+          <MetadataList
+            layout="horizontal"
+            labelWidth="6rem"
+            items={[
+              { label: "Primary", value: "Anna Muster" },
+              { label: "Billing", value: "Ben Keller" },
+            ]}
+          />
+        </CollapsibleSection>
+        <CollapsibleSection variant="card" title="Internal notes" defaultOpen={false}>
+          <p className="text-sm">Call before delivery.</p>
+        </CollapsibleSection>
+      </div>
+    </div>
+  );
+}
+
 function InputGroupDemo(): ReactElement {
   const [show, setShow] = useState(false);
   return (
@@ -2103,6 +2062,41 @@ function InputGroupDemo(): ReactElement {
   );
 }
 
+function HoverCardDemo(): ReactElement {
+  return (
+    <div data-testid="demo-hover-card" className="flex min-h-48 w-full items-start gap-2 text-sm">
+      <span>Assigned to</span>
+      <HoverCard>
+        <HoverCardTrigger
+          href="#"
+          data-testid="hover-card-trigger"
+          className="rounded-sm font-medium underline decoration-muted-foreground/40 decoration-dotted underline-offset-4 hover:decoration-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          Anna Muster
+        </HoverCardTrigger>
+        <HoverCardContent className="w-80">
+          <div className="flex gap-3">
+            <Avatar name="Anna Muster" size="lg" status="success" statusLabel="online" />
+            <div className="min-w-0">
+              <p className="font-semibold">Anna Muster</p>
+              <p className="text-xs text-muted-foreground">Key account manager · Kriens</p>
+              <MetadataList
+                className="mt-2"
+                layout="horizontal"
+                labelWidth="3.5rem"
+                items={[
+                  { label: "Phone", value: "+41 41 123 45 67" },
+                  { label: "Mail", value: "anna.muster@example.ch" },
+                ]}
+              />
+            </div>
+          </div>
+        </HoverCardContent>
+      </HoverCard>
+    </div>
+  );
+}
+
 function SliderDemo(): ReactElement {
   const [volume, setVolume] = useState([40]);
   const [price, setPrice] = useState<[number, number]>([1200, 8500]);
@@ -2117,6 +2111,22 @@ function SliderDemo(): ReactElement {
       <DemoField label="Disabled">
         <Slider defaultValue={[30, 70]} disabled thumbLabels={["From", "To"]} />
       </DemoField>
+    </div>
+  );
+}
+
+function StatusDotDemo(): ReactElement {
+  return (
+    <div data-testid="demo-status-dot" className="flex flex-wrap items-center gap-5">
+      <StatusDot status="active" />
+      <StatusDot status="pending" />
+      <StatusDot status="failed" />
+      <StatusDot status="new" />
+      <StatusDot status="archived" />
+      <StatusDot tone="success" label="Online" pulse size="md" />
+      <span className="inline-flex items-center gap-1.5 text-sm">
+        Hidden label <StatusDot tone="error" label="Offline" hideLabel />
+      </span>
     </div>
   );
 }
