@@ -485,6 +485,26 @@ logic above, which already had its own extraction). Structure:
     `toISOString().slice(0, 10)` UTC-day bug after 22:00 Swiss time. No
     calendar popover yet — that's the next step (Astryx's `Calendar` is the
     reference for keyboard behaviour).
+  - Display set (unreleased): `metadata-list/` `MetadataList` (`<dl>` label/
+    value pairs, vertical or label-column layout, responsive `columns`,
+    optional copy buttons, "—" for empty); `progress/` `ProgressBar` +
+    `CircularProgress` (`role=progressbar`, indeterminate via the Web
+    Animations API — no keyframes CSS shipped); `timestamp/` `Timestamp`
+    (`<time>`, `Intl.RelativeTimeFormat` de-CH "vor 5 Min.", self-scheduling
+    refresh, full date in a Tooltip; logic after Astryx's Timestamp);
+    `kbd/` `Kbd`/`KeyCombo`/`ShortcutSheet` lifted from OneDocs (each key its
+    own cap, `Mod` → ⌘/Ctrl via the new `isMacPlatform`); `avatar/`
+    `Avatar`/`AvatarGroup` from OneSales's avatar/UserAvatar/CustomerAvatar
+    (initials while loading/on error, name-hashed palette color, status dot,
+    "+N" overflow with a tooltip); `collapsible-section/` on the new
+    `Collapsible` primitive (`forceMount` + grid-rows transition, `inert`
+    set imperatively because React 18/19 type `inert` differently);
+    `HoverCard` primitive (OneSales `HoverPopover`, Radix); `status-dot/`
+    `StatusDot` reusing StatusBadge's now-exported `resolveStatusTone`.
+    Two traps found doing it: in the demo theme `--primary` stays navy in dark
+    mode, so the default progress fill is `bg-primary dark:bg-ring`; and
+    `--border` is near-invisible on the light surface, so frames/dividers that
+    must be seen use `border-foreground/10`.
 - `packages/ui/demo/` — same pattern as `packages/datagrid/demo`: a Vite
   app aliasing `@bmsuisse/ui` straight to `src/index.ts`, using the same
   reference-app-derived Tailwind v4 tokens, for visual QA.

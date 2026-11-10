@@ -87,6 +87,8 @@ export {
   sheetVariants,
 } from "./primitives/sheet";
 export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./primitives/tooltip";
+export { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./primitives/collapsible";
+export { HoverCard, HoverCardContent, HoverCardTrigger } from "./primitives/hover-card";
 
 // --- patterns (composed on top of the primitives above) ---------------------
 export type { ModalProps } from "./patterns/modal/Modal";
@@ -203,11 +205,42 @@ export type { DateInputProps } from "./patterns/date-input/DateInput";
 export { DateInput } from "./patterns/date-input/DateInput";
 export { datePlaceholder, formatIsoDay, parseIsoDay, toLocalIsoDay } from "./lib/dateField";
 
+export type { MetadataItem, MetadataListLabels, MetadataListProps } from "./patterns/metadata-list/MetadataList";
+export { defaultMetadataListLabels, MetadataList } from "./patterns/metadata-list/MetadataList";
+
+export type { CircularProgressProps, ProgressBarProps, ProgressTone } from "./patterns/progress/ProgressBar";
+export { CircularProgress, ProgressBar } from "./patterns/progress/ProgressBar";
+
+export type { TimestampFormat, TimestampProps } from "./patterns/timestamp/Timestamp";
+export { Timestamp } from "./patterns/timestamp/Timestamp";
+export type { RelativeTimeStyle } from "./patterns/timestamp/formatRelativeTime";
+export { formatRelativeTime } from "./patterns/timestamp/formatRelativeTime";
+
+export type { KbdProps, KeyComboLabels, KeyComboProps } from "./patterns/kbd/Kbd";
+export { defaultKeyComboLabels, formatKey, Kbd, KeyCombo } from "./patterns/kbd/Kbd";
+export type { Shortcut, ShortcutGroup, ShortcutSheetLabels, ShortcutSheetProps } from "./patterns/kbd/ShortcutSheet";
+export { defaultShortcutSheetLabels, ShortcutSheet } from "./patterns/kbd/ShortcutSheet";
+
+export type {
+  AvatarGroupItem,
+  AvatarGroupLabels,
+  AvatarGroupProps,
+  AvatarProps,
+  AvatarSize,
+} from "./patterns/avatar/Avatar";
+export { Avatar, AvatarGroup, avatarColorIndex, defaultAvatarGroupLabels, getInitials } from "./patterns/avatar/Avatar";
+
+export type { CollapsibleSectionProps } from "./patterns/collapsible-section/CollapsibleSection";
+export { CollapsibleSection } from "./patterns/collapsible-section/CollapsibleSection";
+
+export type { StatusDotProps } from "./patterns/status-dot/StatusDot";
+export { StatusDot } from "./patterns/status-dot/StatusDot";
+
 // --- shared utility -----------------------------------------------------------
 export { cn } from "./lib/utils";
 export { useMediaQuery } from "./lib/useMediaQuery";
 export type { ConfirmButtonPlacement } from "./lib/platform";
-export { getConfirmButtonPlacement, isWindowsPlatform } from "./lib/platform";
+export { getConfirmButtonPlacement, isMacPlatform, isWindowsPlatform } from "./lib/platform";
 
 export type { AnimatedBrandProps } from "./patterns/animated-brand/AnimatedBrand";
 export { AnimatedBrand } from "./patterns/animated-brand/AnimatedBrand";

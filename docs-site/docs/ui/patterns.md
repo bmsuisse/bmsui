@@ -116,6 +116,124 @@ countdown pauses while the toast is hovered or focused. `position` is
 `bottom-center` (default), `bottom-right`, `top-center` or `top-right`;
 `labels` translates the region name and the dismiss button.
 
+### `MetadataList`
+
+Label/value pairs for detail pages and side panels, rendered as a `<dl>`.
+
+```tsx
+<MetadataList
+  columns={2}                       // 1 on phones, 2 from sm
+  copyable                          // copy button on string/number values
+  items={[
+    { label: "Customer no.", value: customer.number },
+    { label: "Phone", value: customer.phone },            // null → "—"
+    { label: "Address", value: address, fullWidth: true },
+    { label: "Owner", value: <Avatar name={owner} size="xs" />, copyable: false },
+  ]}
+/>
+<MetadataList layout="horizontal" divided labelWidth="8rem" items={…} />
+```
+
+`layout="vertical"` (default) stacks label over value; `horizontal` puts the
+label in a fixed column. `copyValue` sets the clipboard text when `value` is a
+node. `labels` translates the placeholder and the copy button.
+
+### `ProgressBar` / `CircularProgress`
+
+```tsx
+<ProgressBar value={42} label="Upload offer.pdf" />                       {/* 42% on the right */}
+<ProgressBar value={18} max={24} label="Files" formatValue={(v, m) => `${v} / ${m}`} tone="success" />
+<ProgressBar label="Preparing export…" />                                 {/* indeterminate */}
+<CircularProgress value={70} aria-label="Import" size={44} showValue />
+```
+
+`role="progressbar"` with `aria-valuenow`/`-valuetext`; no `value` = indeterminate
+(`aria-busy`, sliding segment via the Web Animations API, static under reduced
+motion). Tones `default` `success` `warning` `error`; sizes `sm` `md` `lg`.
+Without a visible `label`, pass `aria-label`.
+
+### `Timestamp`
+
+```tsx
+<Timestamp value={row.modifiedAt} />                      {/* "vor 5 Min.", full date in a tooltip */}
+<Timestamp value={row.createdAt} format="datetime" />      {/* 10.11.2026, 14:05 */}
+<Timestamp value={iso} locale="en-GB" relativeStyle="long" />
+```
+
+Renders `<time dateTime>`. `value` is a `Date`, ISO string or epoch
+milliseconds. Formats: `relative` (default), `date`, `datetime`, `time`.
+`locale` defaults to `de-CH`. Relative text refreshes itself (every 10s while
+under a minute, slowing to hourly); `live={false}` freezes it. `tooltip`
+defaults to on for `relative`. `formatRelativeTime(date, now, locale)` is
+exported for strings outside JSX.
+
+### `Kbd` / `KeyCombo` / `ShortcutSheet`
+
+```tsx
+<KeyCombo keys="Mod+K" />                 {/* ⌘ K on a Mac, Ctrl K elsewhere */}
+<KeyCombo keys="g o" />                   {/* G then O */}
+<KeyCombo keys={["j", "ArrowDown"]} size="sm" labels={{ or: "oder" }} />
+<ShortcutSheet open={open} onOpenChange={setOpen} groups={SHORTCUT_GROUPS} />
+```
+
+`+` joins keys pressed together, a space separates a sequence, an array lists
+alternatives. `Mod` is ⌘ on Apple platforms and Ctrl elsewhere (`mac` forces
+one). `ShortcutSheet` is the "?" dialog: groups with a title, optional hint,
+and rows of `{ label, keys }`. The app owns the open state and the key
+listener; build both from one list so they can't drift.
+
+### `Avatar` / `AvatarGroup`
+
+```tsx
+<Avatar name="Anna Muster" src={photoUrl} status="success" statusLabel="online" />
+<Avatar name="Sika Schweiz AG" shape="square" fit="contain" src={favicon} size="lg" />
+<AvatarGroup items={team} max={4} labels={{ more: (n) => `${n} weitere` }} />
+```
+
+Initials (from the name or an email) show while the image loads and when it
+fails, in a color derived from the name — the same person gets the same color
+everywhere. Sizes `xs` `sm` `md` `lg` `xl`. `AvatarGroup` overlaps up to `max`
+and shows "+N" with a tooltip listing the hidden names (never "+1": the last
+avatar is shown instead).
+
+### `CollapsibleSection`
+
+```tsx
+<CollapsibleSection title="Attachments" count={files.length} actions={<Button size="xs" variant="ghost">Add</Button>}>
+  …
+</CollapsibleSection>
+<CollapsibleSection variant="card" title="Internal notes" defaultOpen={false}>…</CollapsibleSection>
+```
+
+Chevron + title + count pill; `actions` sit outside the toggle. Height
+animates with a CSS grid-rows transition (instant under reduced motion). The
+content stays mounted while closed (form state survives) but is `inert`. For a
+bare toggle use the `Collapsible` primitive.
+
+### `HoverCard`
+
+```tsx
+<HoverCard>
+  <HoverCardTrigger href={`/users/${id}`}>Anna Muster</HoverCardTrigger>
+  <HoverCardContent className="w-80"><UserPreview id={id} /></HoverCardContent>
+</HoverCard>
+```
+
+Radix HoverCard with a 300ms open / 150ms close delay. It opens on hover and
+keyboard focus, not on touch — keep it an extra, never the only way to reach
+the information. Click-to-open content belongs in a `Popover`.
+
+### `StatusDot`
+
+```tsx
+<StatusDot status="active" />                     {/* green dot + "Active" */}
+<StatusDot tone="success" label="Online" pulse />
+<StatusDot status={row.state} toneMap={{ offen: "info" }} hideLabel />
+```
+
+Same tones and status vocabulary as `StatusBadge`, for places where a pill is
+too loud (table cells, presence). `hideLabel` keeps the text for screen readers.
+
 ### `DateInput`
 
 A day field in the app's locale instead of the browser's own `type="date"`

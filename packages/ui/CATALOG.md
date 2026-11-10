@@ -25,6 +25,8 @@ repo's `AGENTS.md`.
 | `Sheet`, `SheetTrigger`, `SheetContent`, `SheetHeader`, `SheetTitle`, `SheetDescription`, `SheetBody`, `SheetFooter`, `SheetClose`, `SheetPortal`, `sheetVariants` | Side or bottom drawer. |
 | `Popover`, `PopoverTrigger`, `PopoverContent`, `PopoverAnchor` | Floating panel anchored to a trigger. |
 | `Tooltip`, `TooltipTrigger`, `TooltipContent`, `TooltipProvider` | Hover/focus hint text. |
+| `HoverCard`, `HoverCardTrigger`, `HoverCardContent` | Rich preview on hover (contact card, linked record). Mouse-only extra; never the only path to info. Click-to-open → `Popover`. |
+| `Collapsible`, `CollapsibleTrigger`, `CollapsibleContent` | Bare show/hide region. For a titled foldable section use `CollapsibleSection`. |
 | `DropdownMenu`, `DropdownMenuTrigger`, `DropdownMenuContent`, `DropdownMenuItem`, `DropdownMenuCheckboxItem`, `DropdownMenuRadioGroup`, `DropdownMenuRadioItem`, `DropdownMenuLabel`, `DropdownMenuSeparator`, `DropdownMenuShortcut`, `DropdownMenuGroup`, `DropdownMenuPortal`, `DropdownMenuSub`, `DropdownMenuSubTrigger`, `DropdownMenuSubContent` | Action menus ("⋯" menus, row actions). |
 | `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent` | Switching between views of one page. |
 | `Table`, `TableHeader`, `TableBody`, `TableFooter`, `TableRow`, `TableHead`, `TableCell`, `TableCaption` | Static HTML table. For sorting/filtering/paging data use `@bmsuisse/datagrid`. |
@@ -70,12 +72,23 @@ repo's `AGENTS.md`.
 | `toast`, `Toaster`, `defaultToasterLabels`, `MAX_TOASTS`, `resetToasts` | Brief notices (`toast.success("Saved")`). Mount `<Toaster />` once. `resetToasts()` clears the queue between tests. |
 | `AlertBox` | Inline error/warning/info/success banner. |
 | `StatusBadge` | Status string → colored badge. |
+| `StatusDot` | Quiet status: colored dot + label (table cells, presence). Same tones/vocabulary as `StatusBadge`. |
+| `ProgressBar`, `CircularProgress` | Determinate or indeterminate progress (`role=progressbar`) with label, value, tones. Ring for tight spots. |
 
 ## Data display
 
 | Export | Use for |
 | --- | --- |
 | `KpiCard`, `Sparkline`, `DonutChart` | KPI tile with trend sparkline or donut. |
+| `MetadataList`, `defaultMetadataListLabels` | Label/value pairs on detail pages (`<dl>`): stacked or label column, responsive columns, copy buttons, "—" for empty. |
+| `Timestamp` | `<time>` with relative text ("vor 5 Min.", live) and the full date in a tooltip; or `date`/`datetime`/`time`. |
+| `formatRelativeTime` | Relative time string outside a component (de-CH default via `Intl.RelativeTimeFormat`). |
+| `Avatar`, `getInitials`, `avatarColorIndex` | Person/company picture with initials fallback in a stable color, optional status dot. |
+| `AvatarGroup`, `defaultAvatarGroupLabels` | Overlapping avatars with "+N" overflow whose tooltip lists the rest. |
+| `CollapsibleSection` | Foldable titled section with chevron, count pill, actions, smooth height. |
+| `Kbd` | A single keycap. |
+| `KeyCombo`, `formatKey`, `defaultKeyComboLabels` | Shortcut as keycaps per platform: `Mod+K` → "⌘ K" / "Ctrl K"; sequences ("g o"). |
+| `ShortcutSheet`, `defaultShortcutSheetLabels` | The "?" dialog listing all shortcuts in groups. |
 
 ## Navigation and shell
 
@@ -99,3 +112,4 @@ repo's `AGENTS.md`.
 | `cn` | `clsx` + `tailwind-merge` class joiner. |
 | `useMediaQuery` | Reactive media query. |
 | `getConfirmButtonPlacement`, `isWindowsPlatform` | Platform-dependent button order. |
+| `isMacPlatform` | Apple platform check (⌘ vs Ctrl spelling). |

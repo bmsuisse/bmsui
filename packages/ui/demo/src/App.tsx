@@ -1,4 +1,20 @@
 import {
+  Avatar,
+  AvatarGroup,
+  CircularProgress,
+  CollapsibleSection,
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+  Kbd,
+  KeyCombo,
+  MetadataList,
+  ProgressBar,
+  ShortcutSheet,
+  StatusDot,
+  Timestamp,
+} from "@bmsuisse/ui";
+import {
   AiButton,
   AiExplainButton,
   AlertBox,
@@ -924,6 +940,38 @@ export function App(): ReactElement {
             <ToastDemo />
           </Section>
 
+          <Section title="MetadataList">
+            <MetadataListDemo />
+          </Section>
+
+          <Section title="ProgressBar / CircularProgress">
+            <ProgressDemo />
+          </Section>
+
+          <Section title="Timestamp">
+            <TimestampDemo />
+          </Section>
+
+          <Section title="Kbd / KeyCombo / ShortcutSheet">
+            <KbdDemo />
+          </Section>
+
+          <Section title="Avatar / AvatarGroup">
+            <AvatarDemo />
+          </Section>
+
+          <Section title="CollapsibleSection">
+            <CollapsibleSectionDemo />
+          </Section>
+
+          <Section title="HoverCard">
+            <HoverCardDemo />
+          </Section>
+
+          <Section title="StatusDot">
+            <StatusDotDemo />
+          </Section>
+
           <Section title="DateInput">
             <DateInputDemo />
           </Section>
@@ -1540,5 +1588,266 @@ function CollapsedStateReadout(): ReactElement {
   const collapsed = useSidebarCollapsed();
   return (
     <p className="text-xs text-muted-foreground">useSidebarCollapsed() → {String(collapsed)}</p>
+  );
+}
+
+function MetadataListDemo(): ReactElement {
+  return (
+    <div data-testid="demo-metadata-list" className="grid w-full gap-4 lg:grid-cols-2">
+      <Card className="p-4">
+        <p className="mb-3 text-sm font-semibold">Vertical, 2 columns, copyable</p>
+        <MetadataList
+          columns={2}
+          copyable
+          items={[
+            { label: "Customer no.", value: "100234" },
+            { label: "VAT no.", value: "CHE-123.456.789 MWST" },
+            { label: "Sales rep", value: <span className="inline-flex items-center gap-1.5"><Avatar name="Anna Muster" size="xs" decorative />Anna Muster</span>, copyable: false },
+            { label: "Phone", value: null },
+            { label: "Address", value: "Industriestrasse 12, 6010 Kriens", fullWidth: true },
+          ]}
+        />
+      </Card>
+      <Card className="p-4">
+        <p className="mb-1 text-sm font-semibold">Horizontal, divided</p>
+        <MetadataList
+          layout="horizontal"
+          divided
+          labelWidth="8rem"
+          items={[
+            { label: "Status", value: <StatusDot status="active" /> },
+            { label: "Created", value: <Timestamp value={Date.now() - 3 * 86400_000} format="datetime" /> },
+            { label: "Modified", value: <Timestamp value={Date.now() - 12 * 60_000} /> },
+            { label: "Owner", value: "" },
+            { label: "Notes", value: "Prefers delivery before 10:00; ramp at the back of the building." },
+          ]}
+        />
+      </Card>
+    </div>
+  );
+}
+
+function ProgressDemo(): ReactElement {
+  const [value, setValue] = useState(42);
+  return (
+    <div data-testid="demo-progress" className="grid w-full gap-6 md:grid-cols-2">
+      <div className="flex flex-col gap-4">
+        <ProgressBar value={value} label="Upload offer.pdf" />
+        <ProgressBar value={18} max={24} label="Files imported" formatValue={(v, m) => `${v} / ${m}`} tone="success" />
+        <ProgressBar value={87} label="Storage quota" tone="warning" size="sm" />
+        <ProgressBar value={100} label="Sync" tone="error" size="lg" formatValue={() => "3 errors"} />
+        <ProgressBar label="Preparing export…" />
+        <div className="flex gap-2">
+          <Button size="xs" variant="outline" onClick={() => setValue((v) => Math.max(0, v - 10))}>−10</Button>
+          <Button size="xs" variant="outline" onClick={() => setValue((v) => Math.min(100, v + 10))}>+10</Button>
+        </div>
+      </div>
+      <div className="flex flex-wrap items-center gap-5">
+        <CircularProgress value={value} aria-label="Upload" />
+        <CircularProgress value={value} aria-label="Upload" size={44} strokeWidth={4} showValue />
+        <CircularProgress value={70} tone="success" aria-label="Done" size={44} strokeWidth={4} showValue />
+        <CircularProgress value={92} tone="warning" aria-label="Quota" size={44} strokeWidth={4} showValue />
+        <CircularProgress aria-label="Loading" />
+        <CircularProgress aria-label="Loading" size={20} strokeWidth={2.5} />
+      </div>
+    </div>
+  );
+}
+
+function TimestampDemo(): ReactElement {
+  const now = Date.now();
+  const rows: Array<[string, ReactElement]> = [
+    ["Just now", <Timestamp key="a" value={now - 4000} />],
+    ["Relative (de-CH)", <Timestamp key="b" value={now - 5 * 60_000} />],
+    ["Relative long", <Timestamp key="c" value={now - 3 * 3600_000} relativeStyle="long" />],
+    ["Yesterday", <Timestamp key="d" value={now - 26 * 3600_000} />],
+    ["English", <Timestamp key="e" value={now - 2 * 86400_000} locale="en-GB" relativeStyle="long" />],
+    ["Future", <Timestamp key="f" value={now + 3 * 86400_000} />],
+    ["date", <Timestamp key="g" value={now} format="date" />],
+    ["datetime", <Timestamp key="h" value={now} format="datetime" />],
+    ["time + tooltip", <Timestamp key="i" value={now} format="time" tooltip />],
+  ];
+  return (
+    <Card data-testid="demo-timestamp" className="w-full max-w-md p-4">
+      <ul className="flex flex-col divide-y divide-border text-sm">
+        {rows.map(([label, node]) => (
+          <li key={label} className="flex items-center justify-between py-1.5">
+            <span className="text-muted-foreground">{label}</span>
+            {node}
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
+const DEMO_SHORTCUTS = [
+  {
+    title: "General",
+    hint: "Work anywhere except while typing in a field.",
+    items: [
+      { label: "Command palette", keys: "Mod+K" },
+      { label: "Show shortcuts", keys: "?" },
+      { label: "New offer", keys: "N" },
+      { label: "Dictate", keys: "Mod+Shift+M" },
+    ],
+  },
+  {
+    title: "Go to",
+    items: [
+      { label: "Offers", keys: "g o" },
+      { label: "Customers", keys: "g c" },
+    ],
+  },
+  {
+    title: "In lists",
+    items: [
+      { label: "Next / previous row", keys: ["j", "ArrowDown"] },
+      { label: "Open row", keys: "Enter" },
+      { label: "Close panel", keys: "Escape" },
+    ],
+  },
+];
+
+function KbdDemo(): ReactElement {
+  const [open, setOpen] = useState(false);
+  return (
+    <div data-testid="demo-kbd" className="flex w-full flex-col gap-3">
+      <div className="flex flex-wrap items-center gap-4 text-sm">
+        <span className="inline-flex items-center gap-2">Search <KeyCombo keys="Mod+K" /></span>
+        <span className="inline-flex items-center gap-2">PC spelling <KeyCombo keys="Mod+Shift+P" mac={false} /></span>
+        <span className="inline-flex items-center gap-2">Mac spelling <KeyCombo keys="Mod+Shift+P" mac /></span>
+        <span className="inline-flex items-center gap-2">Sequence <KeyCombo keys="g o" /></span>
+        <span className="inline-flex items-center gap-2">Small <KeyCombo keys={["j", "ArrowDown"]} size="sm" /></span>
+        <span className="inline-flex items-center gap-2">Single <Kbd>Esc</Kbd></span>
+      </div>
+      <div>
+        <Button variant="outline" size="sm" onClick={() => setOpen(true)} data-testid="open-shortcut-sheet">
+          Show shortcuts <KeyCombo keys="?" size="sm" className="ml-1" />
+        </Button>
+      </div>
+      <ShortcutSheet open={open} onOpenChange={setOpen} groups={DEMO_SHORTCUTS} />
+    </div>
+  );
+}
+
+const TEAM = [
+  { name: "Anna Muster", status: "success" as const },
+  { name: "Ben Keller" },
+  { name: "Carla Rossi", status: "warning" as const },
+  { name: "Dario Frei" },
+  { name: "Eva Graf" },
+  { name: "Fabio Huber" },
+  { name: "Gina Weber" },
+];
+
+function AvatarDemo(): ReactElement {
+  return (
+    <div data-testid="demo-avatar" className="flex w-full flex-col gap-5 pt-16">
+      <div className="flex flex-wrap items-center gap-6">
+        <AvatarGroup items={TEAM} max={4} />
+        <AvatarGroup items={TEAM} max={3} size="sm" />
+        <AvatarGroup items={TEAM.slice(0, 3)} size="lg" />
+      </div>
+      <div className="flex flex-wrap items-end gap-3">
+        <Avatar name="Anna Muster" size="xs" />
+        <Avatar name="Ben Keller" size="sm" />
+        <Avatar name="Carla Rossi" size="md" status="success" statusLabel="online" />
+        <Avatar name="Dario Frei" size="lg" status="warning" statusLabel="away" />
+        <Avatar name="Eva Graf" size="xl" status="neutral" statusLabel="offline" />
+        <Avatar name="Sika Schweiz AG" size="lg" shape="square" />
+        <Avatar name="Broken Image" size="lg" src="/does-not-exist.png" />
+        <Avatar
+          name="Photo"
+          size="lg"
+          src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%2394a3b8'/%3E%3Cstop offset='1' stop-color='%23475569'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='40' height='40' fill='url(%23g)'/%3E%3Ccircle cx='20' cy='16' r='7' fill='%23e2e8f0'/%3E%3Cellipse cx='20' cy='36' rx='13' ry='10' fill='%23e2e8f0'/%3E%3C/svg%3E"
+        />
+      </div>
+    </div>
+  );
+}
+
+function CollapsibleSectionDemo(): ReactElement {
+  return (
+    <div data-testid="demo-collapsible-section" className="grid w-full gap-4 md:grid-cols-2">
+      <Card className="p-3">
+        <CollapsibleSection title="Attachments" count={3} actions={<Button size="xs" variant="ghost">Add</Button>}>
+          <ul className="flex flex-col gap-1 text-sm">
+            <li>offer-2026-114.pdf</li>
+            <li>floor-plan.dwg</li>
+            <li>photo-site.jpg</li>
+          </ul>
+        </CollapsibleSection>
+        <CollapsibleSection title="History" description="Changes in the last 30 days" count={0} defaultOpen={false}>
+          <p className="text-sm text-muted-foreground">Nothing changed.</p>
+        </CollapsibleSection>
+      </Card>
+      <div className="flex flex-col gap-3">
+        <CollapsibleSection variant="card" title="Contacts" count={2}>
+          <MetadataList
+            layout="horizontal"
+            labelWidth="6rem"
+            items={[
+              { label: "Primary", value: "Anna Muster" },
+              { label: "Billing", value: "Ben Keller" },
+            ]}
+          />
+        </CollapsibleSection>
+        <CollapsibleSection variant="card" title="Internal notes" defaultOpen={false}>
+          <p className="text-sm">Call before delivery.</p>
+        </CollapsibleSection>
+      </div>
+    </div>
+  );
+}
+
+function HoverCardDemo(): ReactElement {
+  return (
+    <div data-testid="demo-hover-card" className="flex min-h-48 w-full items-start gap-2 text-sm">
+      <span>Assigned to</span>
+      <HoverCard>
+        <HoverCardTrigger
+          href="#"
+          data-testid="hover-card-trigger"
+          className="rounded-sm font-medium underline decoration-muted-foreground/40 decoration-dotted underline-offset-4 hover:decoration-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          Anna Muster
+        </HoverCardTrigger>
+        <HoverCardContent className="w-80">
+          <div className="flex gap-3">
+            <Avatar name="Anna Muster" size="lg" status="success" statusLabel="online" />
+            <div className="min-w-0">
+              <p className="font-semibold">Anna Muster</p>
+              <p className="text-xs text-muted-foreground">Key account manager · Kriens</p>
+              <MetadataList
+                className="mt-2"
+                layout="horizontal"
+                labelWidth="3.5rem"
+                items={[
+                  { label: "Phone", value: "+41 41 123 45 67" },
+                  { label: "Mail", value: "anna.muster@example.ch" },
+                ]}
+              />
+            </div>
+          </div>
+        </HoverCardContent>
+      </HoverCard>
+    </div>
+  );
+}
+
+function StatusDotDemo(): ReactElement {
+  return (
+    <div data-testid="demo-status-dot" className="flex flex-wrap items-center gap-5">
+      <StatusDot status="active" />
+      <StatusDot status="pending" />
+      <StatusDot status="failed" />
+      <StatusDot status="new" />
+      <StatusDot status="archived" />
+      <StatusDot tone="success" label="Online" pulse size="md" />
+      <span className="inline-flex items-center gap-1.5 text-sm">
+        Hidden label <StatusDot tone="error" label="Offline" hideLabel />
+      </span>
+    </div>
   );
 }
