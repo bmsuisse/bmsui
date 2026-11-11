@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ColumnDef } from "../../src/column/types";
-import { applyColumnOrder, moveColumnBefore } from "../../src/column-selector/ordering";
+import { applyColumnOrder, moveColumnBefore, moveColumnWithinGroup } from "../../src/column-selector/ordering";
 
 interface Row {
   id: string;
@@ -64,5 +64,19 @@ describe("moveColumnBefore", () => {
     // so `indexOf` can't find it and this falls back to "move to the end",
     // same as any other missing `beforeColumnId`.
     expect(moveColumnBefore(order, "name", "name")).toEqual(["id", "email", "name"]);
+  });
+});
+
+describe("moveColumnWithinGroup", () => {
+  it("only permutes the group's own slots, leaving other columns where they are", () => {
+    const group = new Set(["a", "c"]);
+    expect(moveColumnWithinGroup(["a", "b", "c"], group, "c", "a")).toEqual(["c", "b", "a"]);
+    expect(moveColumnWithinGroup(["a", "b", "c"], group, "a", undefined)).toEqual(["c", "b", "a"]);
+  });
+
+  it("keeps a non-contiguous group's first-seen slot so section order can't change", () => {
+    const group = new Set(["a", "c"]);
+    // dropping a onto c is a no-op: a stays in slot 0, ahead of b's group
+    expect(moveColumnWithinGroup(["a", "b", "c"], group, "a", "c")).toEqual(["a", "b", "c"]);
   });
 });

@@ -12,7 +12,7 @@ import {
   DialogTrigger,
 } from "../components/ui/dialog";
 import { cn } from "../lib/utils";
-import { applyColumnOrder, moveColumnBefore } from "./ordering";
+import { applyColumnOrder, moveColumnBefore, moveColumnWithinGroup } from "./ordering";
 import {
   clearPersistedColumnOrder,
   clearPersistedVisibility,
@@ -182,7 +182,18 @@ export function ColumnSelector<TRow>({
     // than let the column's own group visibly "win" a section-order fight
     // its drag was never meant to affect.
     if (groupById.get(draggedId) !== groupById.get(targetId)) return;
-    const next = moveColumnBefore(effectiveOrder, draggedId, targetId);
+    // Base on the order as displayed (stale ids dropped, new columns appended).
+    // A plain splice keeps every other column put, but with a non-contiguous
+    // group it can still shift which group's section comes first; then fall
+    // back to permuting just this group's own slots.
+    const displayed = orderedColumns.map((column) => column.id);
+    const sectionOrder = (order: string[]) =>
+      groupColumns(applyColumnOrder(columns, order)).map((section) => section.group);
+    let next = moveColumnBefore(displayed, draggedId, targetId);
+    if (sectionOrder(next).join("\0") !== sectionOrder(displayed).join("\0")) {
+      const groupIds = new Set(columns.filter((c) => c.group === groupById.get(draggedId)).map((c) => c.id));
+      next = moveColumnWithinGroup(displayed, groupIds, draggedId, targetId);
+    }
     onColumnOrderChange?.(next);
     if (persistKey) writePersistedColumnOrder(persistKey, next);
   }

@@ -110,7 +110,7 @@ export {
   writePersistedColumnSizing,
   clearPersistedVisibility,
 } from "./column-selector/persistence";
-export { applyColumnOrder, moveColumnBefore } from "./column-selector/ordering";
+export { applyColumnOrder, moveColumnBefore, moveColumnWithinGroup } from "./column-selector/ordering";
 
 // --- menus -------------------------------------------------------------------
 export type { MenuItem, MenuItemContext } from "./menu/types";

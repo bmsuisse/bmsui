@@ -1020,6 +1020,10 @@ Notes for extending it:
   persisted order key, and stays enabled while the order differs from it.
   `<TreeDataGrid>` keeps picking its tree column from `treeColumnId`, else
   `columns[0]` (declared, not displayed, order).
+  A drop is a plain splice in the displayed order, unless that would shift a
+  non-contiguous group's section position in the dialog — then only the dragged
+  column's own group *slots* are permuted (`moveColumnWithinGroup`; found by
+  code review).
 
 ## `<DataGrid>` — one component, two `DataSource` modes
 
