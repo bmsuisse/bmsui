@@ -1,10 +1,11 @@
 import { CalendarDaysIcon } from "@heroicons/react/24/outline";
 import type { ReactElement } from "react";
-import { lazy, Suspense, useId, useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { popoverMotion } from "../../lib/popoverMotion";
 import { cn } from "../../lib/utils";
 import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from "../../primitives/popover";
 import type { CalendarProps, DateRange } from "../calendar/Calendar";
+import { CalendarLoader, preloadCalendar } from "../calendar/CalendarLoader";
 import { DateInput } from "../date-input/DateInput";
 import {
   DateInputMessage,
@@ -16,19 +17,15 @@ import {
 } from "../date-input/shared";
 import { InputGroup, InputGroupButton } from "../input-group/InputGroup";
 
-// Loaded when first needed, like `DateInput picker="calendar"`.
-const loadCalendar = () => import("../calendar/Calendar");
-const LazyCalendar = lazy(() => loadCalendar().then((m) => ({ default: m.Calendar })));
-const preloadCalendar = () => {
-  void loadCalendar();
-};
-
 type PassThroughCalendarProps = Pick<CalendarProps, "isDateDisabled" | "weekStartsOn" | "today" | "animated">;
 
 const triggerTestId = (testId: unknown, suffix: string) => (typeof testId === "string" ? `${testId}-${suffix}` : undefined);
 
 export interface DateRangePickerLabels
-  extends Pick<DateInputLabels, "invalid" | "outOfRange" | "unavailable" | "previousMonth" | "nextMonth"> {
+  extends Pick<
+    DateInputLabels,
+    "invalid" | "outOfRange" | "unavailable" | "previousMonth" | "nextMonth" | "calendarLoadFailed" | "retry"
+  > {
   openCalendar: string;
   from: string;
   to: string;
@@ -40,6 +37,8 @@ export const defaultDateRangePickerLabels: DateRangePickerLabels = {
   unavailable: defaultDateInputLabels.unavailable,
   previousMonth: defaultDateInputLabels.previousMonth,
   nextMonth: defaultDateInputLabels.nextMonth,
+  calendarLoadFailed: defaultDateInputLabels.calendarLoadFailed,
+  retry: defaultDateInputLabels.retry,
   openCalendar: "Choose dates",
   from: "From",
   to: "To",
@@ -113,6 +112,10 @@ export function DateRangePicker({
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<DateRange | null>(null);
   const [errors, setErrors] = useState<{ from: DateInputError | null; to: DateInputError | null }>({ from: null, to: null });
+  // Both fields can report in the same tick (e.g. both cleared by an outside reset): merge into the
+  // latest errors, not the ones of the render that created the callback.
+  const errorsRef = useRef(errors);
+  const reported = useRef<DateInputError | null>(null);
   const fromRef = useRef<HTMLInputElement>(null);
   const focusInputOnClose = useRef(false);
   const messageId = useId();
@@ -126,9 +129,13 @@ export function DateRangePicker({
   };
 
   const report = (end: "from" | "to") => (invalid: boolean, reason?: DateInputError) => {
-    const next = { ...errors, [end]: invalid ? (reason ?? "invalid") : null };
+    const next = { ...errorsRef.current, [end]: invalid ? (reason ?? "invalid") : null };
+    errorsRef.current = next;
     setErrors(next);
     const any = next.from ?? next.to;
+    // Only tell the parent when the aggregate changes.
+    if (any === reported.current) return;
+    reported.current = any;
     onInvalidChange?.(any != null, any ?? undefined);
   };
   const message = errorMessage(errors.from ?? errors.to, l);
@@ -244,6 +251,7 @@ export function DateRangePicker({
         </PopoverAnchor>
         <PopoverContent
           container={container}
+          aria-label={l.openCalendar}
           className={popoverMotion(animated)}
           align="end"
           onOpenAutoFocus={(e) => e.preventDefault()}
@@ -254,32 +262,32 @@ export function DateRangePicker({
             fromRef.current?.focus();
           }}
         >
-          <Suspense fallback={<div aria-busy="true" className="h-[20.4rem] w-[17.4rem]" />}>
-            <LazyCalendar
-              mode="range"
-              autoFocus
-              value={draft ?? value}
-              onValueChange={(range) => {
-                if (range.from && range.to) {
-                  setDraft(null);
-                  onValueChange(range);
-                  focusInputOnClose.current = true;
-                  setOpen(false);
-                } else {
-                  setDraft(range);
-                }
-              }}
-              locale={locale}
-              min={min}
-              max={max}
-              isDateDisabled={isDateDisabled}
-              weekStartsOn={weekStartsOn}
-              today={today}
-              animated={animated}
-              labels={{ previousMonth: l.previousMonth, nextMonth: l.nextMonth }}
-              data-testid={triggerTestId(testId, "calendar")}
-            />
-          </Suspense>
+          <CalendarLoader
+          loadFailed={l.calendarLoadFailed}
+          retryLabel={l.retry}
+            mode="range"
+            autoFocus
+            value={draft ?? value}
+            onValueChange={(range) => {
+              if (range.from && range.to) {
+                setDraft(null);
+                onValueChange(range);
+                focusInputOnClose.current = true;
+                setOpen(false);
+              } else {
+                setDraft(range);
+              }
+            }}
+            locale={locale}
+            min={min}
+            max={max}
+            isDateDisabled={isDateDisabled}
+            weekStartsOn={weekStartsOn}
+            today={today}
+            animated={animated}
+            labels={{ previousMonth: l.previousMonth, nextMonth: l.nextMonth }}
+            data-testid={triggerTestId(testId, "calendar")}
+          />
         </PopoverContent>
       </Popover>
       {messageEl}

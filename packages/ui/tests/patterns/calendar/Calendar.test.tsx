@@ -176,4 +176,13 @@ describe("Calendar review fixes", () => {
     );
     expect(outside).toHaveFocus();
   });
+
+describe("Calendar review fixes", () => {
+  it("a value before min opens on the month of min, so a day can take the focus", () => {
+    render(<Calendar value="2026-11-10" onValueChange={() => {}} min="2027-01-01" today="2026-11-10" autoFocus />);
+    expect(screen.getByRole("grid", { name: /Januar 2027/ })).toBeInTheDocument();
+    expect(day("2027-01-01")).toHaveFocus();
+    expect(day("2027-01-01")).toHaveAttribute("tabindex", "0");
+  });
+});
 });

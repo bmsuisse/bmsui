@@ -115,7 +115,7 @@ export function Calendar(props: CalendarProps): ReactElement {
   const anchor = range ? range.from || range.to : single;
 
   const [uncontrolledMonth, setUncontrolledMonth] = useState(() =>
-    startOfMonth(defaultMonth || anchor || clampIso(today, min, max)),
+    startOfMonth(clampIso(defaultMonth || anchor || today, min, max)),
   );
   const shownMonth = controlledMonth ? startOfMonth(controlledMonth) : uncontrolledMonth;
   const setMonth = (iso: string) => {

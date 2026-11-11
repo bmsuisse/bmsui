@@ -529,11 +529,13 @@ interface ConfirmDialogProps
   title: string
   variant?: "default" | "destructive"
 interface DateInputLabels
+  calendarLoadFailed: string
   invalid: string
   nextMonth: string
   openCalendar: string
   outOfRange: string
   previousMonth: string
+  retry: string
   unavailable: string
 interface DateInputProps extends Omit<InputProps, "value" | "defaultValue" | "onChange" | "type" | "min" | "max">
   animated?: boolean
@@ -555,7 +557,7 @@ interface DateInputProps extends Omit<InputProps, "value" | "defaultValue" | "on
 interface DateRange
   from: string
   to: string
-interface DateRangePickerLabels extends Pick<DateInputLabels, "invalid" | "outOfRange" | "unavailable" | "previousMonth" | "nextMonth">
+interface DateRangePickerLabels extends Pick<DateInputLabels, "invalid" | "outOfRange" | "unavailable" | "previousMonth" | "nextMonth" | "calendarLoadFailed" | "retry">
   from: string
   openCalendar: string
   to: string

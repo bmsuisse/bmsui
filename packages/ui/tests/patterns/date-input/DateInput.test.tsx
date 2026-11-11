@@ -515,3 +515,41 @@ describe('DateInput picker="calendar"', () => {
   });
 });
 
+describe("DateInput review fixes (calendar PR)", () => {
+  const weekend = (iso: string) => [0, 6].includes(new Date(`${iso}T12:00:00`).getDay());
+
+  it("native mode: a blocked day sets native validity, so a form can't submit it", () => {
+    render(<DateInput aria-label="d" value="2026-11-10" onValueChange={() => {}} isDateDisabled={weekend} native="always" />);
+    const input = screen.getByLabelText("d") as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "2026-11-14" } });
+    expect(input.validity.customError).toBe(true);
+    expect(input.checkValidity()).toBe(false);
+    fireEvent.change(input, { target: { value: "2026-11-16" } });
+    expect(input.checkValidity()).toBe(true);
+  });
+
+  it("arrow steps clamp to min first, then hop blocked days inside the bounds", () => {
+    const onChange = vi.fn();
+    render(
+      <DateInput aria-label="d" value="" onValueChange={onChange} min="2026-11-14" isDateDisabled={weekend} native="never" />,
+    );
+    fireEvent.keyDown(screen.getByLabelText("d"), { key: "ArrowUp" }); // starts at today <= min -> Sat 14th -> Mon 16th
+    expect(onChange).toHaveBeenCalledWith("2026-11-16");
+  });
+
+  it("arrow steps give up when no allowed day is left before max", () => {
+    const onChange = vi.fn();
+    render(
+      <DateInput aria-label="d" value="2026-11-13" onValueChange={onChange} max="2026-11-14" isDateDisabled={weekend} native="never" />,
+    );
+    fireEvent.keyDown(screen.getByLabelText("d"), { key: "ArrowUp" });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("the calendar popover has an accessible name", async () => {
+    render(<DateInput aria-label="d" value="2026-11-10" onValueChange={() => {}} picker="calendar" native="never" labels={{ openCalendar: "Datum wählen" }} />);
+    fireEvent.click(screen.getByRole("button", { name: "Datum wählen" }));
+    expect(await screen.findByRole("dialog", { name: "Datum wählen" })).toBeInTheDocument();
+  });
+});
+

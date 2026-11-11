@@ -18,6 +18,10 @@ export interface DateInputLabels {
   /** Month navigation in the calendar popover (`picker="calendar"`). */
   previousMonth: string;
   nextMonth: string;
+  /** `picker="calendar"`: shown when the lazily loaded calendar can't be fetched. */
+  calendarLoadFailed: string;
+  /** Retry button next to `calendarLoadFailed`. */
+  retry: string;
 }
 
 export const defaultDateInputLabels: DateInputLabels = {
@@ -27,6 +31,8 @@ export const defaultDateInputLabels: DateInputLabels = {
   openCalendar: "Choose date",
   previousMonth: "Previous month",
   nextMonth: "Next month",
+  calendarLoadFailed: "Calendar could not be loaded",
+  retry: "Retry",
 };
 
 export interface DateInputProps

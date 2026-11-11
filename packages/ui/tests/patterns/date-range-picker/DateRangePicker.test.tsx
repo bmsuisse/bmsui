@@ -135,4 +135,42 @@ describe("DateRangePicker review fixes", () => {
       window.matchMedia = original;
     }
   });
+
+describe("DateRangePicker error aggregation", () => {
+  it("both fields cleared by an outside value change in the same tick leave no stale error", () => {
+    const onInvalidChange = vi.fn();
+    const { rerender } = render(
+      <DateRangePicker value={{ from: "2026-11-10", to: "2026-11-12" }} onValueChange={() => {}} onInvalidChange={onInvalidChange} />,
+    );
+    for (const label of ["From", "To"]) {
+      const input = screen.getByLabelText(label);
+      fireEvent.change(input, { target: { value: "nope" } });
+      fireEvent.blur(input);
+    }
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+    rerender(
+      <DateRangePicker value={{ from: "2026-12-01", to: "2026-12-02" }} onValueChange={() => {}} onInvalidChange={onInvalidChange} />,
+    );
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(onInvalidChange).toHaveBeenLastCalledWith(false, undefined);
+  });
+
+  it("tells the parent only when the aggregate changes", () => {
+    const onInvalidChange = vi.fn();
+    render(<DateRangePicker value={{ from: "", to: "" }} onValueChange={() => {}} onInvalidChange={onInvalidChange} />);
+    for (const label of ["From", "To"]) {
+      const input = screen.getByLabelText(label);
+      fireEvent.change(input, { target: { value: "nope" } });
+      fireEvent.blur(input);
+    }
+    expect(onInvalidChange).toHaveBeenCalledTimes(1);
+    expect(onInvalidChange).toHaveBeenCalledWith(true, "invalid");
+  });
+
+  it("the calendar popover has an accessible name", async () => {
+    render(<DateRangePicker value={{ from: "", to: "" }} onValueChange={() => {}} today="2026-11-10" />);
+    fireEvent.click(screen.getByRole("button", { name: "Choose dates" }));
+    expect(await screen.findByRole("dialog", { name: "Choose dates" })).toBeInTheDocument();
+  });
+});
 });

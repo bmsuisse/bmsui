@@ -1,10 +1,11 @@
 import { CalendarDaysIcon } from "@heroicons/react/24/outline";
-import { forwardRef, lazy, Suspense, useEffect, useId, useImperativeHandle, useRef, useState } from "react";
+import { forwardRef, useEffect, useId, useImperativeHandle, useRef, useState } from "react";
 import { datePlaceholder, formatIsoDay, parseIsoDay, shiftIsoDay, toLocalIsoDay } from "../../lib/dateField";
 import { popoverMotion } from "../../lib/popoverMotion";
 import { cn } from "../../lib/utils";
 import { Input } from "../../primitives/input";
 import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from "../../primitives/popover";
+import { CalendarLoader, preloadCalendar } from "../calendar/CalendarLoader";
 import { NativeDateInput } from "./NativeDateInput";
 import {
   DateInputMessage,
@@ -19,14 +20,6 @@ import {
 
 export type { DateInputError, DateInputLabels, DateInputProps } from "./shared";
 export { defaultDateInputLabels } from "./shared";
-
-// The calendar is only needed once someone opens it: keep it out of the main bundle (consumers'
-// bundlers split it into its own chunk) and warm it up on hover/focus of the button.
-const loadCalendar = () => import("../calendar/Calendar");
-const LazyCalendar = lazy(() => loadCalendar().then((m) => ({ default: m.Calendar })));
-const preloadCalendar = () => {
-  void loadCalendar();
-};
 
 /** `invalid` for non-dates, `range` outside `min`/`max`, `disabled` for blocked days, null when the text is fine (or empty). ISO days sort as strings. */
 function check(
@@ -163,9 +156,16 @@ const TypedDateInput = forwardRef<HTMLInputElement, DateInputProps>(
       const base = parseIsoDay(text, locale) ?? (toDay(value) || toLocalIsoDay(new Date()));
       // An empty field starts at today (or the nearest allowed day) instead of jumping a step away from it.
       let next = text.trim() || value ? shiftIsoDay(base, by) : base;
-      // Day steps hop over blocked days (up to a year of them); a blocked month/year landing is ignored.
-      for (let hops = 0; hops < 366 && isDateDisabled?.(next) && "days" in by; hops++) next = shiftIsoDay(next, by);
-      if ((minDay && next < minDay) || (maxDay && next > maxDay)) next = minDay && next < minDay ? minDay : maxDay;
+      if (minDay && next < minDay) next = minDay;
+      if (maxDay && next > maxDay) next = maxDay;
+      // Day steps then hop over blocked days (up to a year of them), staying inside min/max; a blocked
+      // month/year landing is ignored.
+      if (isDateDisabled?.(next) && "days" in by) {
+        for (let hops = 0; hops < 366 && isDateDisabled(next); hops++) {
+          next = shiftIsoDay(next, by);
+          if ((minDay && next < minDay) || (maxDay && next > maxDay)) return null;
+        }
+      }
       return isDateDisabled?.(next) ? null : next;
     };
 
@@ -320,6 +320,7 @@ const TypedDateInput = forwardRef<HTMLInputElement, DateInputProps>(
         {body}
         <PopoverContent
           container={container}
+          aria-label={l.openCalendar}
           className={popoverMotion(animated)}
           align="end"
           onOpenAutoFocus={(e) => e.preventDefault()}
@@ -330,27 +331,27 @@ const TypedDateInput = forwardRef<HTMLInputElement, DateInputProps>(
             inputRef.current?.focus();
           }}
         >
-          <Suspense fallback={<div aria-busy="true" className="h-[20.4rem] w-[17.4rem]" />}>
-            <LazyCalendar
-              autoFocus
-              value={toDay(value)}
-              onValueChange={(iso) => {
-                dirty.current = false;
-                commitIso(iso);
-                focusInputOnClose.current = true;
-                setCalendarOpen(false);
-              }}
-              locale={locale}
-              min={minDay || undefined}
-              max={maxDay || undefined}
-              isDateDisabled={isDateDisabled}
-              weekStartsOn={weekStartsOn}
-              today={today}
-              animated={animated}
-              labels={{ previousMonth: l.previousMonth, nextMonth: l.nextMonth }}
-              data-testid={typeof testId === "string" ? `${testId}-calendar` : undefined}
-            />
-          </Suspense>
+          <CalendarLoader
+            loadFailed={l.calendarLoadFailed}
+            retryLabel={l.retry}
+            autoFocus
+            value={toDay(value)}
+            onValueChange={(iso) => {
+              dirty.current = false;
+              commitIso(iso);
+              focusInputOnClose.current = true;
+              setCalendarOpen(false);
+            }}
+            locale={locale}
+            min={minDay || undefined}
+            max={maxDay || undefined}
+            isDateDisabled={isDateDisabled}
+            weekStartsOn={weekStartsOn}
+            today={today}
+            animated={animated}
+            labels={{ previousMonth: l.previousMonth, nextMonth: l.nextMonth }}
+            data-testid={typeof testId === "string" ? `${testId}-calendar` : undefined}
+          />
         </PopoverContent>
       </Popover>
     );
