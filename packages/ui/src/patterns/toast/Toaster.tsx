@@ -7,9 +7,15 @@ import {
 } from "@heroicons/react/24/outline";
 import { type ComponentType, type ReactElement, type SVGProps, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { cn } from "../../lib/utils";
-import { dismissToast, getServerToasts, getToasts, subscribeToasts, type ToastItem, type ToastTone } from "./toastStore";
+import { DEFAULT_TOAST_DURATION, dismissToast, getServerToasts, getToasts, subscribeToasts, type ToastItem, type ToastTone } from "./toastStore";
 
-export type ToasterPosition = "bottom-center" | "bottom-right" | "top-center" | "top-right";
+export type ToasterPosition =
+  | "bottom-center"
+  | "bottom-left"
+  | "bottom-right"
+  | "top-center"
+  | "top-left"
+  | "top-right";
 
 export interface ToasterLabels {
   /** Accessible name of the toast region. */
@@ -23,15 +29,21 @@ export const defaultToasterLabels: ToasterLabels = {
 };
 
 export interface ToasterProps {
+  /** Where the stack sits. Defaults to `bottom-center`. */
   position?: ToasterPosition;
+  /** Default lifetime in ms for toasts that don't pass their own `duration`: one number for all tones, or per tone
+   * (`{ error: 12000 }`; missing tones keep their default of 4000, errors 8000). `Infinity` keeps toasts until dismissed. */
+  duration?: number | Partial<Record<ToastTone, number>>;
   labels?: Partial<ToasterLabels>;
   className?: string;
 }
 
 const positionClass: Record<ToasterPosition, string> = {
   "bottom-center": "bottom-4 items-center pb-[env(safe-area-inset-bottom)]",
+  "bottom-left": "bottom-4 items-start pb-[env(safe-area-inset-bottom)]",
   "bottom-right": "bottom-4 items-end pb-[env(safe-area-inset-bottom)]",
   "top-center": "top-4 items-center pt-[env(safe-area-inset-top)]",
+  "top-left": "top-4 items-start pt-[env(safe-area-inset-top)]",
   "top-right": "top-4 items-end pt-[env(safe-area-inset-top)]",
 };
 
@@ -54,7 +66,7 @@ const toneIconClass: Record<ToastTone, string> = {
  * Each toast fades in, shows the time it has left as a thin bar, pauses while
  * hovered or focused, and fades out on dismiss. No CSS or animation plugin needed.
  */
-export const Toaster = ({ position = "bottom-center", labels, className }: ToasterProps): ReactElement => {
+export const Toaster = ({ position = "bottom-center", duration, labels, className }: ToasterProps): ReactElement => {
   const toasts = useSyncExternalStore(subscribeToasts, getToasts, getServerToasts);
   const l = { ...defaultToasterLabels, ...labels };
   const top = position.startsWith("top");
@@ -70,13 +82,25 @@ export const Toaster = ({ position = "bottom-center", labels, className }: Toast
       )}
     >
       {toasts.map((t) => (
-        <ToastCard key={t.id} toast={t} dismissLabel={l.dismiss} />
+        <ToastCard key={t.id} toast={t} duration={resolveDuration(t, duration)} dismissLabel={l.dismiss} />
       ))}
     </section>
   );
 };
 
-const ToastCard = ({ toast, dismissLabel }: { toast: ToastItem; dismissLabel: string }): ReactElement => {
+const resolveDuration = (t: ToastItem, fallback: ToasterProps["duration"]): number =>
+  t.duration ?? (typeof fallback === "number" ? fallback : (fallback?.[t.tone] ?? DEFAULT_TOAST_DURATION[t.tone]));
+
+const ToastCard = ({
+  toast,
+  duration,
+  dismissLabel,
+}: {
+  toast: ToastItem;
+  /** Already resolved from the toast's own `duration` or the Toaster default. */
+  duration: number;
+  dismissLabel: string;
+}): ReactElement => {
   const [entered, setEntered] = useState(false);
   // Hover and focus pause independently: leaving with the mouse must not resume while a button inside has focus.
   const [hovered, setHovered] = useState(false);
@@ -84,7 +108,7 @@ const ToastCard = ({ toast, dismissLabel }: { toast: ToastItem; dismissLabel: st
   const paused = hovered || focused;
   const bar = useRef<HTMLSpanElement>(null);
   const Icon = toneIcon[toast.tone];
-  const timed = Number.isFinite(toast.duration) && toast.duration > 0;
+  const timed = Number.isFinite(duration) && duration > 0;
 
   useEffect(() => {
     const raf = requestAnimationFrame(() => setEntered(true));
@@ -93,14 +117,14 @@ const ToastCard = ({ toast, dismissLabel }: { toast: ToastItem; dismissLabel: st
 
   // The countdown: the progress bar's animation drives the dismissal where the
   // Web Animations API exists; a pausable timeout stands in elsewhere (jsdom).
-  const remaining = useRef(toast.duration);
+  const remaining = useRef(duration);
   const animRef = useRef<Animation | null>(null);
   useEffect(() => {
     if (!timed || toast.leaving) return;
     const el = bar.current;
     if (el && typeof el.animate === "function") {
       const anim = el.animate([{ transform: "scaleX(1)" }, { transform: "scaleX(0)" }], {
-        duration: toast.duration,
+        duration,
         fill: "forwards",
       });
       anim.onfinish = () => dismissToast(toast.id);
@@ -112,7 +136,7 @@ const ToastCard = ({ toast, dismissLabel }: { toast: ToastItem; dismissLabel: st
       };
     }
     return undefined;
-  }, [timed, toast.duration, toast.id, toast.leaving]);
+  }, [timed, duration, toast.id, toast.leaving]);
 
   useEffect(() => {
     if (!timed || toast.leaving) return;

@@ -111,10 +111,12 @@ toast("Offer deleted", { action: { label: "Undo", onClick: restore } });
 const id = toast("Syncing…", { duration: Infinity }); toast.dismiss(id);
 ```
 
-At most three show at once; errors stay 8s, everything else 4s, and the
-countdown pauses while the toast is hovered or focused. `position` is
-`bottom-center` (default), `bottom-right`, `top-center` or `top-right`;
-`labels` translates the region name and the dismiss button.
+At most three show at once, and the countdown pauses while the toast is
+hovered or focused. A toast lasts its own `duration`, else the Toaster's
+`duration` default (a number, or per tone: `duration={{ error: 12000 }}`),
+else 4s (errors 8s). `position` is `bottom-center` (default), `bottom-left`,
+`bottom-right`, `top-center`, `top-left` or `top-right`; `labels` translates
+the region name and the dismiss button.
 
 ### `DateInput`
 
