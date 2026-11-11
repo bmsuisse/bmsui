@@ -1,0 +1,71 @@
+import type { ReactElement } from "react";
+import { useSyncExternalStore } from "react";
+import type { InputProps } from "../../primitives/input";
+
+/** Why the typed text was rejected: it is no date (`invalid`), or a real date outside `min`/`max` (`range`). */
+export type DateInputError = "invalid" | "range";
+
+export interface DateInputLabels {
+  /** Message for text that is no date. */
+  invalid: string;
+  /** Message for a date before `min` or after `max`. */
+  outOfRange: string;
+  /** Accessible name of the calendar button. */
+  openCalendar: string;
+}
+
+export const defaultDateInputLabels: DateInputLabels = {
+  invalid: "Enter a valid date",
+  outOfRange: "Date is out of range",
+  openCalendar: "Choose date",
+};
+
+export interface DateInputProps
+  extends Omit<InputProps, "value" | "defaultValue" | "onChange" | "type" | "min" | "max"> {
+  /** ISO day `yyyy-mm-dd` (the date part of an ISO datetime is accepted too), or `""` for none. */
+  value: string;
+  /** Called with an ISO day (or `""` when cleared). Only real dates within `min`/`max` get here. */
+  onValueChange: (iso: string) => void;
+  /** Called when the field becomes (in)valid, so a form can block submit while it holds a non-date. `reason` is set when `invalid` is true. */
+  onInvalidChange?: (invalid: boolean, reason?: DateInputError) => void;
+  /** Display and parse order of the typed field. Default `de-CH` (dd.mm.yyyy). Ignored by the native control, which follows the device. */
+  locale?: string;
+  /** Earliest allowed ISO day. Typed dates before it are rejected; the calendar greys them out. */
+  min?: string;
+  /** Latest allowed ISO day. Typed dates after it are rejected; the calendar greys them out. */
+  max?: string;
+  /** Shows the error text under the field when the entry is rejected. Turn off to render it yourself (e.g. via `onInvalidChange`). Default `true`. */
+  showError?: boolean;
+  /** Translations for the error messages and the calendar button. */
+  labels?: Partial<DateInputLabels>;
+  /**
+   * `auto` (default) uses the browser's own `<input type="date">` on touch devices
+   * (`pointer: coarse`), where its wheel/calendar is far better than a typed field, and
+   * the typed `locale` field elsewhere. `always` / `never` force one of them.
+   */
+  native?: "auto" | "always" | "never";
+}
+
+export const toDay = (iso: string | undefined): string => iso?.slice(0, 10) ?? "";
+
+const COARSE = "(pointer: coarse)";
+const subscribeCoarse = (listener: () => void): (() => void) => {
+  const mq = typeof window !== "undefined" ? window.matchMedia?.(COARSE) : undefined;
+  mq?.addEventListener("change", listener);
+  return () => mq?.removeEventListener("change", listener);
+};
+const isCoarse = (): boolean => typeof window !== "undefined" && !!window.matchMedia?.(COARSE).matches;
+
+/** True on touch-first devices. Server render and hydration see `false`, then it corrects itself. */
+export const useCoarsePointer = (): boolean => useSyncExternalStore(subscribeCoarse, isCoarse, () => false);
+
+export const errorMessage = (error: DateInputError | null, l: DateInputLabels): string =>
+  error === "invalid" ? l.invalid : error === "range" ? l.outOfRange : "";
+
+export const DateInputMessage = ({ id, message }: { id: string; message: string }): ReactElement => (
+  <p id={id} role="alert" className="mt-1 text-xs text-destructive">
+    {message}
+  </p>
+);
+
+export const invalidClass = "aria-[invalid=true]:border-destructive aria-[invalid=true]:ring-destructive";

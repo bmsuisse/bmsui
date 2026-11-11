@@ -14,6 +14,11 @@ import {
   Checkbox,
   Combobox,
   ConfirmDialog,
+  DateInput,
+  EmptyState,
+  FilteredEmptyState,
+  Toaster,
+  toast,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -114,6 +119,7 @@ import {
   Cog6ToothIcon,
   CurrencyDollarIcon,
   FunnelIcon,
+  InboxIcon,
   InformationCircleIcon,
   MagnifyingGlassIcon,
   ReceiptPercentIcon,
@@ -910,6 +916,18 @@ export function App(): ReactElement {
             <SidebarDemo />
           </Section>
 
+          <Section title="EmptyState / FilteredEmptyState">
+            <EmptyStateDemo />
+          </Section>
+
+          <Section title="Toast">
+            <ToastDemo />
+          </Section>
+
+          <Section title="DateInput">
+            <DateInputDemo />
+          </Section>
+
           <Section title="Stepper">
             <StepperDemo />
           </Section>
@@ -1237,6 +1255,117 @@ function SidebarDemo(): ReactElement {
   );
 }
 
+
+function EmptyStateDemo(): ReactElement {
+  return (
+    <div data-testid="demo-empty-state" className="grid w-full gap-4 md:grid-cols-3">
+      <Card>
+        <EmptyState
+          icon={InboxIcon}
+          title="No tasks yet"
+          description="Tasks you create or get assigned show up here."
+          action={<Button size="sm">New task</Button>}
+        />
+      </Card>
+      <Card>
+        <FilteredEmptyState onReset={() => {}} />
+      </Card>
+      <Card className="p-2">
+        <p className="px-2 pt-2 text-sm font-semibold">Open offers</p>
+        <EmptyState size="sm" icon={MagnifyingGlassIcon} title="No open offers" />
+      </Card>
+    </div>
+  );
+}
+
+function ToastDemo(): ReactElement {
+  return (
+    <div className="flex flex-wrap gap-2">
+      <Toaster position="bottom-right" />
+      <Button variant="outline" onClick={() => toast.success("Offer saved", { description: "Version 3 is now active." })}>
+        Success
+      </Button>
+      <Button variant="outline" onClick={() => toast("Contact deleted", { action: { label: "Undo", onClick: () => toast("Restored") } })}>
+        With action
+      </Button>
+      <Button variant="outline" onClick={() => toast.warning("Prices changed since you opened this offer")}>
+        Warning
+      </Button>
+      <Button variant="outline" onClick={() => toast.error("Upload failed", { description: "The file is larger than 20 MB." })}>
+        Error
+      </Button>
+    </div>
+  );
+}
+
+function DateInputDemo(): ReactElement {
+  const [due, setDue] = useState("2026-11-10");
+  const [us, setUs] = useState("2026-11-10");
+  const [ranged, setRanged] = useState("");
+  const [rangedError, setRangedError] = useState<string>("");
+  const [native, setNative] = useState("");
+  const [submitted, setSubmitted] = useState("");
+  return (
+    <div data-testid="demo-date-input" className="grid w-full max-w-3xl gap-6">
+      <div className="grid gap-4 sm:grid-cols-3">
+        <label className="flex flex-col gap-1 text-sm">
+          Due (de-CH)
+          <DateInput value={due} onValueChange={setDue} native="never" />
+          <span className="text-xs text-muted-foreground">value: {due || "—"}</span>
+        </label>
+        <label className="flex flex-col gap-1 text-sm">
+          Due (en-US)
+          <DateInput locale="en-US" value={us} onValueChange={setUs} native="never" />
+          <span className="text-xs text-muted-foreground">value: {us || "—"}</span>
+        </label>
+        <label className="flex flex-col gap-1 text-sm">
+          Only November 2026 (min/max)
+          <DateInput
+            data-testid="demo-date-ranged"
+            value={ranged}
+            onValueChange={setRanged}
+            onInvalidChange={(invalid, reason) => setRangedError(invalid ? (reason ?? "") : "")}
+            min="2026-11-01"
+            max="2026-11-30"
+            native="never"
+          />
+          <span className="text-xs text-muted-foreground">
+            value: {ranged || "—"} · invalid: {rangedError || "no"}
+          </span>
+        </label>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Try: type <code>31.02.2026</code> or <code>1.12.2026</code> and Tab · ArrowUp/ArrowDown steps a day, PageUp/PageDown a
+        month (Shift: a year) · Alt+ArrowDown or the calendar button opens the browser's picker.
+      </p>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className="flex flex-col gap-1 text-sm">
+          Native control (what phones get automatically), min/max
+          <DateInput value={native} onValueChange={setNative} min="2026-11-01" max="2026-11-30" native="always" />
+          <span className="text-xs text-muted-foreground">value: {native || "—"}</span>
+        </label>
+        <form
+          className="flex flex-col gap-2 text-sm"
+          onSubmit={(e) => {
+            e.preventDefault();
+            setSubmitted(String(new FormData(e.currentTarget).get("start") ?? ""));
+          }}
+        >
+          <label className="flex flex-col gap-1">
+            In a form (type junk, then Submit)
+            <DateInput name="start" value={due} onValueChange={setDue} native="never" required />
+          </label>
+          <Button type="submit" variant="outline" className="w-fit">
+            Submit
+          </Button>
+          <span className="text-xs text-muted-foreground" data-testid="demo-date-submitted">
+            submitted: {submitted || "—"}
+          </span>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 const stepperSteps = [
   { n: 1, label: "Type", phase: "Setup" },

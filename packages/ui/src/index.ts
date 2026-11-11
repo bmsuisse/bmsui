@@ -187,6 +187,22 @@ export { describeSpeechError, useSpeechRecognition } from "./patterns/ai/useSpee
 export type { StepperProps, StepperStep } from "./patterns/stepper/Stepper";
 export { Stepper } from "./patterns/stepper/Stepper";
 
+export type {
+  EmptyStateProps,
+  FilteredEmptyStateLabels,
+  FilteredEmptyStateProps,
+} from "./patterns/empty-state/EmptyState";
+export { defaultFilteredEmptyStateLabels, EmptyState, FilteredEmptyState } from "./patterns/empty-state/EmptyState";
+
+export type { ToastAction, ToastItem, ToastOptions, ToastTone } from "./patterns/toast/toastStore";
+export { MAX_TOASTS, resetToasts, toast } from "./patterns/toast/toastStore";
+export type { ToasterLabels, ToasterPosition, ToasterProps } from "./patterns/toast/Toaster";
+export { defaultToasterLabels, Toaster } from "./patterns/toast/Toaster";
+
+export type { DateInputError, DateInputLabels, DateInputProps } from "./patterns/date-input/DateInput";
+export { DateInput, defaultDateInputLabels } from "./patterns/date-input/DateInput";
+export { datePlaceholder, formatIsoDay, parseIsoDay, shiftIsoDay, toLocalIsoDay } from "./lib/dateField";
+
 // --- shared utility -----------------------------------------------------------
 export { cn } from "./lib/utils";
 export { useMediaQuery } from "./lib/useMediaQuery";

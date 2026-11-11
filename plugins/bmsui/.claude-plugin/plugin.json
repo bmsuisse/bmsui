@@ -1,0 +1,9 @@
+{
+  "name": "bmsui",
+  "version": "0.1.0",
+  "description": "Tells coding agents to use @bmsuisse/ui and @bmsuisse/datagrid instead of building local copies, and where to look up what exists.",
+  "homepage": "https://github.com/bmsuisse/bmsui",
+  "repository": "https://github.com/bmsuisse/bmsui",
+  "license": "MIT",
+  "keywords": ["bmsui", "design-system", "ui", "datagrid"]
+}

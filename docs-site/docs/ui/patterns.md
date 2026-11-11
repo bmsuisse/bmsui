@@ -86,6 +86,65 @@ an explicit `tone` prop → your own `toneMap` → a small built-in English
 status vocabulary (`approved`/`pending`/`rejected`/etc.) → a neutral
 fallback.
 
+### `EmptyState` / `FilteredEmptyState`
+
+"Nothing here" placeholder for a list, table or panel with no data.
+
+```tsx
+<EmptyState icon={InboxIcon} title="No tasks" description="You're all caught up." action={<Button>New task</Button>} />
+<EmptyState size="sm" title="No contacts" />          {/* inside a card */}
+<FilteredEmptyState onReset={clearFilters} labels={{ title: t("noResults"), reset: t("reset") }} />
+```
+
+`fill` makes it grow and center inside a flex column. Use `ErrorState` when
+loading failed.
+
+### `toast` / `Toaster`
+
+Brief, non-blocking notices. Mount `<Toaster />` once near the app root, then
+call `toast` from anywhere — components, query callbacks, plain functions:
+
+```tsx
+toast.success("Saved");
+toast.error("Upload failed", { description: err.message });
+toast("Offer deleted", { action: { label: "Undo", onClick: restore } });
+const id = toast("Syncing…", { duration: Infinity }); toast.dismiss(id);
+```
+
+At most three show at once, and the countdown pauses while the toast is
+hovered or focused. A toast lasts its own `duration`, else the Toaster's
+`duration` default (a number, or per tone: `duration={{ error: 12000 }}`),
+else 4s (errors 8s). `position` is `bottom-center` (default), `bottom-left`,
+`bottom-right`, `top-center`, `top-left` or `top-right`; `labels` translates
+the region name and the dismiss button.
+
+### `DateInput`
+
+A day field in the app's locale instead of the browser's own `type="date"`
+format. The value is an ISO day (`"2026-11-10"`, `""` for none).
+
+```tsx
+<DateInput value={due} onValueChange={setDue} />           {/* 10.11.2026 */}
+<DateInput value={due} onValueChange={setDue} locale="en-US" />
+```
+
+```tsx
+<DateInput value={d} onValueChange={setD} min="2026-01-01" max="2026-12-31" />
+<DateInput value={d} onValueChange={setD} onInvalidChange={(invalid, reason) => ...} />  {/* reason: "invalid" | "range" */}
+```
+
+- **Typing:** `3.2.26`, `03/02/2026`, `03022026` and ISO all work; the text commits on blur or Enter.
+- **Calendar:** the button (or Alt+ArrowDown) opens the browser's own date picker, limited to `min`/`max`. It speaks the
+  browser's language, not `locale`.
+- **Keyboard:** ArrowUp/ArrowDown step a day, PageUp/PageDown a month (Shift: a year), clamped to `min`/`max`.
+- **Touch devices:** with `native="auto"` (default) a `pointer: coarse` device gets the browser's `<input type="date">`
+  right away. `native="always"` / `"never"` force either.
+- **Invalid entries:** only real dates within `min`/`max` reach `onValueChange`. Anything else keeps the previous value,
+  sets `aria-invalid`, shows an error message (translate via `labels`, hide with `showError={false}`), calls
+  `onInvalidChange(true, reason)`, and sets the field's native validity so a surrounding `<form>` won't submit it.
+- With `name`, a hidden input submits the ISO day. `parseIsoDay`, `formatIsoDay`, `shiftIsoDay`, `datePlaceholder` and
+  `toLocalIsoDay` are exported for use outside the field.
+
 ### `LoadingSpinner` / `LoadingOverlay`
 
 `LoadingSpinner` is an inline spinner (`size` + optional `label`);
