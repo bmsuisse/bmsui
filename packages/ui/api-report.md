@@ -7,7 +7,7 @@ Every public export with its kind and signature. Interfaces and object types
 list their own members one per line (inherited members come from the `extends`
 clause), so the diff of this file shows exactly what changed in the public API.
 
-## Components (164)
+## Components (161)
 
 ```text
 const AiButton: react.ForwardRefExoticComponent<AiButtonProps & react.RefAttributes<HTMLButtonElement>>
@@ -22,7 +22,6 @@ const Badge: (props: BadgeProps) => ReactElement
 function Breadcrumbs(props: BreadcrumbsProps): ReactElement
 const Button: react.ForwardRefExoticComponent<ButtonProps & react.RefAttributes<HTMLButtonElement>>
 function ButtonGroup<T extends string = string>(props: ButtonGroupProps<T>): ReactElement
-function Calendar(props: CalendarProps): ReactElement
 const Card: (props: HTMLAttributes<HTMLDivElement>) => ReactElement
 const CardContent: (props: HTMLAttributes<HTMLDivElement>) => ReactElement
 const CardDescription: (props: HTMLAttributes<HTMLDivElement>) => ReactElement
@@ -41,8 +40,6 @@ const CommandPaletteTrigger: react.ForwardRefExoticComponent<CommandPaletteTrigg
 function CommandRegistryProvider(props: { children: ReactNode }): ReactElement
 const ConfirmDialog: (props: ConfirmDialogProps) => ReactElement
 const DateInput: react.ForwardRefExoticComponent<DateInputProps & react.RefAttributes<HTMLInputElement>>
-const DatePicker: react.ForwardRefExoticComponent<DatePickerProps & react.RefAttributes<HTMLInputElement>>
-function DateRangePicker(props: DateRangePickerProps): ReactElement
 const Dialog: react.FC<DialogPrimitive.DialogProps>
 function DialogActions(props: DialogActionsProps): ReactElement
 const DialogBody: react.ForwardRefExoticComponent<HTMLAttributes<HTMLDivElement> & react.RefAttributes<HTMLDivElement>>
@@ -232,18 +229,15 @@ function toLocalIsoDay(d: Date): string
 const toast: typeof show & { info: (message: string, options?: ToneOptions) => number; success: (message: string, options?: ToneOptions) => number; warning: (message: string, options?: ToneOptions) => number; error: (message: string, options?: ToneOptions) => number; dismiss: typeof dismissToast }
 ```
 
-## Constants (23)
+## Constants (20)
 
 ```text
 const BRAND_ANIMATIONS: readonly [{ readonly id: "bounce"; readonly label: "Bounce home" }, { readonly id: "orbit"; readonly label: "Orbit and settle" }, { readonly id: "impact"; readonly label: "Shot in, boom" }, { readonly id: "liquid"; readonly label: "Liquid split" }, { readonly id: "signature"; readonly label: "Solid to signature" }, { readonly id: "burst"; readonly label: "Big bang, small dot" }, { readonly id: "gravity"; readonly label: "Gravity press" }]
 const MAX_TOASTS: 3
 const defaultAvatarGroupLabels: AvatarGroupLabels
 const defaultBreadcrumbsLabels: BreadcrumbsLabels
-const defaultCalendarLabels: CalendarLabels
 const defaultCommandPaletteLabels: CommandPaletteLabels
 const defaultDateInputLabels: DateInputLabels
-const defaultDatePickerLabels: DatePickerLabels
-const defaultDateRangePickerLabels: DateRangePickerLabels
 const defaultErrorStateLabels: ErrorStateLabels
 const defaultFileInputLabels: FileInputLabels
 const defaultFilteredEmptyStateLabels: FilteredEmptyStateLabels
@@ -260,7 +254,7 @@ const defaultToasterLabels: ToasterLabels
 const defaultToolbarLabels: ToolbarLabels
 ```
 
-## Interfaces (136)
+## Interfaces (128)
 
 ```text
 interface AiButtonProps extends Omit<ButtonProps, "variant">
@@ -366,45 +360,6 @@ interface ButtonGroupProps<T extends string = string>
   value: T
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants>
   asChild?: boolean
-interface CalendarLabels
-  nextMonth: string
-  previousMonth: string
-interface CalendarRangeProps extends CalendarBaseProps
-  mode: "range"
-  onValueChange: (range: DateRange) => void
-  value: DateRange
-  "data-testid"?: string  (from CalendarBaseProps)
-  animated?: boolean  (from CalendarBaseProps)
-  autoFocus?: boolean  (from CalendarBaseProps)
-  className?: string  (from CalendarBaseProps)
-  defaultMonth?: string  (from CalendarBaseProps)
-  isDateDisabled?: (iso: string) => boolean  (from CalendarBaseProps)
-  labels?: Partial<CalendarLabels>  (from CalendarBaseProps)
-  locale?: string  (from CalendarBaseProps)
-  max?: string  (from CalendarBaseProps)
-  min?: string  (from CalendarBaseProps)
-  month?: string  (from CalendarBaseProps)
-  onMonthChange?: (month: string) => void  (from CalendarBaseProps)
-  today?: string  (from CalendarBaseProps)
-  weekStartsOn?: number  (from CalendarBaseProps)
-interface CalendarSingleProps extends CalendarBaseProps
-  mode?: "single"
-  onValueChange: (iso: string) => void
-  value: string
-  "data-testid"?: string  (from CalendarBaseProps)
-  animated?: boolean  (from CalendarBaseProps)
-  autoFocus?: boolean  (from CalendarBaseProps)
-  className?: string  (from CalendarBaseProps)
-  defaultMonth?: string  (from CalendarBaseProps)
-  isDateDisabled?: (iso: string) => boolean  (from CalendarBaseProps)
-  labels?: Partial<CalendarLabels>  (from CalendarBaseProps)
-  locale?: string  (from CalendarBaseProps)
-  max?: string  (from CalendarBaseProps)
-  min?: string  (from CalendarBaseProps)
-  month?: string  (from CalendarBaseProps)
-  onMonthChange?: (month: string) => void  (from CalendarBaseProps)
-  today?: string  (from CalendarBaseProps)
-  weekStartsOn?: number  (from CalendarBaseProps)
 interface CircularProgressProps extends Omit<HTMLAttributes<HTMLDivElement>, "children">
   formatValue?: (value: number, max: number) => string
   max?: number
@@ -535,7 +490,6 @@ interface DateInputLabels
   openCalendar: string
   outOfRange: string
 interface DateInputProps extends Omit<InputProps, "value" | "defaultValue" | "onChange" | "type" | "min" | "max">
-  bare?: boolean
   labels?: Partial<DateInputLabels>
   locale?: string
   max?: string
@@ -545,34 +499,6 @@ interface DateInputProps extends Omit<InputProps, "value" | "defaultValue" | "on
   onValueChange: (iso: string) => void
   showError?: boolean
   value: string
-interface DatePickerLabels
-  nextMonth: string
-  openCalendar: string
-  previousMonth: string
-interface DatePickerProps extends Omit<DateInputProps, "size" | "bare" | "native" | "showError" | "labels">, PassThroughCalendarProps
-  container?: HTMLElement | null
-  labels?: Partial<DatePickerLabels>
-  size?: "sm" | "default"
-  wrapperClassName?: string
-interface DateRange
-  from: string
-  to: string
-interface DateRangePickerLabels extends DatePickerLabels
-  from: string
-  to: string
-interface DateRangePickerProps extends PassThroughCalendarProps
-  "data-testid"?: string
-  className?: string
-  container?: HTMLElement | null
-  disabled?: boolean
-  labels?: Partial<DateRangePickerLabels>
-  locale?: string
-  max?: string
-  min?: string
-  name?: { from: string; to: string }
-  onValueChange: (range: DateRange) => void
-  size?: "sm" | "default"
-  value: DateRange
 interface DialogActionsProps
   actions: ReactNode[]
   cancel: ReactNode
@@ -1221,7 +1147,7 @@ interface VoiceTranscriptProps extends Omit<HTMLAttributes<HTMLDivElement>, "onC
   value: string
 ```
 
-## Types (28)
+## Types (27)
 
 ```text
 type AiButtonVariant = "ai" | "ai-subtle" | "ai-ghost"
@@ -1230,7 +1156,6 @@ type AnnouncePoliteness = "polite" | "assertive"
 type AvatarSize = "xs" | "sm" | "md" | "lg" | "xl"
 type BrandAnimation = (typeof BRAND_ANIMATIONS)[number]["id"]
 type BrandMode = "full" | "mark" | "one"
-type CalendarProps = CalendarSingleProps | CalendarRangeProps
 type ComboboxProps = ComboboxSingleProps | ComboboxMultiProps
 type ConfirmButtonPlacement = "leading" | "trailing"
 type DateInputError = "invalid" | "range"

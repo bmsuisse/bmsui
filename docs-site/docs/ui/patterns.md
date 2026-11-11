@@ -418,27 +418,6 @@ the arrow-key order with a `data-toolbar-item` attribute. `overflow` measures
 the buttons and folds those that don't fit into a "…" menu (toggles become
 checkbox items). Only `ToolbarButton`s overflow — selects, wrapped buttons and
 other children always stay visible. `variant="ghost"` drops the border.
-### `DatePicker` / `DateRangePicker` / `Calendar`
-
-`DatePicker` is `DateInput` plus a calendar button: type `3.2.26` or pick from
-a month grid in a popover. Same ISO-day value and commit rules as `DateInput`.
-
-```tsx
-<DatePicker value={due} onValueChange={setDue} min="2026-01-01" />
-<DateRangePicker value={period} onValueChange={setPeriod} />   {/* { from, to } ISO days */}
-<Calendar value={day} onValueChange={setDay} />                 {/* always visible */}
-<Calendar mode="range" value={range} onValueChange={setRange} isDateDisabled={isHoliday} />
-```
-
-`min`/`max` limit typed and picked days (typed days outside are marked
-invalid). The calendar follows `locale` for month/weekday names and week start
-(Monday in de-CH, Sunday in en-US; `weekStartsOn` overrides). Keyboard: arrows
-by day/week, PageUp/PageDown by month (Shift: year), Home/End to the week's
-ends. In a range the first click sets `from`, the second `to` (ordered);
-`DateRangePicker` closes once both are set. Inside a Dialog/Sheet pass
-`container` so the popover stays in the focus trap. `labels` translates the
-button names.
-
 ### `NumberInput`
 
 A number field in the app locale instead of `<input type="number">`. The value

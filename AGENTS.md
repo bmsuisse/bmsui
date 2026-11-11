@@ -493,8 +493,9 @@ logic above, which already had its own extraction). Structure:
     `aria-invalid` and keep the old value. Accepts `3.2.26`, any of `. / -`,
     and ISO. `toLocalIsoDay` is exported because OneSales hit the
     `toISOString().slice(0, 10)` UTC-day bug after 22:00 Swiss time. No
-    calendar popover here — `DatePicker` (v0.21.0) adds it (Astryx's `Calendar` was the
-    reference for keyboard behaviour).
+    calendar popover of its own, but a calendar button that opens the browser's
+    date picker (`showPicker()`), native `<input type="date">` on touch devices,
+    `min`/`max`, and arrow-key stepping.
   - Display set (unreleased): `metadata-list/` `MetadataList` (`<dl>` label/
     value pairs, vertical or label-column layout, responsive `columns`,
     optional copy buttons, "—" for empty); `progress/` `ProgressBar` +
@@ -598,13 +599,6 @@ logic above, which already had its own extraction). Structure:
       locale-group char counts as grouping only before exactly three digits.
       Commit on blur/Enter like `DateInput`, clamp to min/max, ArrowUp/Down
       float-safe stepping, optional `stepper` buttons, `role="spinbutton"`.
-    - `calendar/` — `Calendar` (`mode` single|range, ISO days in/out) +
-      `lib/calendar` (week start via `Intl.Locale#getWeekInfo` with a region
-      fallback, six-week grids). Roving tab stop; blocked days are
-      `aria-disabled` (not `disabled`) so keyboard focus can pass them.
-    - `date-picker/` — `DatePicker` (DateInput + Popover Calendar) and
-      `DateRangePicker` (two DateInputs in one `InputGroup`). `DateInput`
-      gained `min`/`max` (typed days outside → invalid).
     - `input-group/` — `InputGroup`/`InputGroupAddon`/`InputGroupInput`/
       `InputGroupButton`; ring via `focus-within`, invalid via `:has()`.
     - `segmented-control/` — `SegmentedControl`, from OneDocs
@@ -619,18 +613,16 @@ logic above, which already had its own extraction). Structure:
       offer-parser `StepUpload` without pragmatic-drag-and-drop: native drag
       events with an enter/leave depth counter, `accept` checked on drop too.
     - Visual/motion pass (v0.21.x): one focus language for small round
-      controls (`ring-2 ring-ring ring-offset-1`: radio, slider thumb, calendar
-      day); `InputGroupInput`/date fields get `pb-[5px]` because Chrome renders
-      input text ~0.75px below flex-centred addon/button text; `DateRangePicker`
-      fields use `field-sizing: content` (fixed-width fallback) so the dash sits
-      evenly; Calendar range-preview ends no longer lose their fill to `hover:`.
+      controls (`ring-2 ring-ring ring-offset-1`: radio, slider thumb);
+      `InputGroupInput` gets `pb-[5px]` because Chrome renders
+      input text ~0.75px below flex-centred addon/button text.
       Micro-animations use only CSS transitions, Tailwind `starting:` and the
       Web Animations API (`lib/motion.ts`, guarded for jsdom) — 120–200 ms,
       ease-out in / ease-in out, nothing moves under `prefers-reduced-motion`.
       Note Tailwind v4's `scale-*`/`translate-*` set the `scale`/`translate`
       properties, so transition lists must name those, not `transform`.
-      Behavioural motion is opt-out via `animated` (Calendar, DatePicker,
-      DateRangePicker, SegmentedControl, Slider, RangeSlider, FileInput).
+      Behavioural motion is opt-out via `animated` (SegmentedControl, Slider,
+      RangeSlider, FileInput).
       Radix unmounts the popover instantly on close (it only waits for CSS
       keyframe animations, which this package doesn't ship), so only the
       enter is animated. FileInput's remove waits for its 140 ms collapse
