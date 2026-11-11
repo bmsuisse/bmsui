@@ -155,55 +155,60 @@ const TypedDateInput = forwardRef<HTMLInputElement, DateInputProps>(
     const pickable = !disabled && !readOnly;
     const describedBy = [props["aria-describedby"], showMessage ? messageId : undefined].filter(Boolean).join(" ") || undefined;
 
+    const input = (
+      <Input
+        ref={inputRef}
+        {...props}
+        disabled={disabled}
+        readOnly={readOnly}
+        className={cn(invalidClass, pickable && "pr-9")}
+        type="text"
+        autoComplete="off"
+        value={text}
+        placeholder={placeholder ?? datePlaceholder(locale)}
+        aria-invalid={error != null || props["aria-invalid"] || undefined}
+        aria-describedby={describedBy}
+        onChange={(e) => {
+          dirty.current = true;
+          setText(e.target.value);
+          // Don't scold mid-typing: the error clears now and shows again on the next commit.
+          setError(null);
+        }}
+        onFocus={(e) => {
+          focused.current = true;
+          onFocus?.(e);
+        }}
+        onBlur={(e) => {
+          focused.current = false;
+          commit();
+          onBlur?.(e);
+        }}
+        onKeyDown={(e) => {
+          onKeyDown?.(e);
+          if (e.defaultPrevented) return;
+          if (e.key === "Enter") commit();
+          else if (!readOnly && !disabled) {
+            if (e.key === "ArrowDown" && e.altKey) {
+              e.preventDefault();
+              openPicker();
+            } else if (!e.altKey && !e.ctrlKey && !e.metaKey) {
+              const next = step(e.key, e.shiftKey);
+              if (next) {
+                e.preventDefault();
+                dirty.current = false;
+                commitIso(next);
+              }
+            }
+          }
+        }}
+      />
+    );
+    const hidden = name ? <input type="hidden" name={name} value={toDay(value)} /> : null;
+
     return (
       <div className={className}>
         <div className="relative">
-          <Input
-            ref={inputRef}
-            {...props}
-            disabled={disabled}
-            readOnly={readOnly}
-            className={cn(invalidClass, pickable && "pr-9")}
-            type="text"
-            autoComplete="off"
-            value={text}
-            placeholder={placeholder ?? datePlaceholder(locale)}
-            aria-invalid={error != null || props["aria-invalid"] || undefined}
-            aria-describedby={describedBy}
-            onChange={(e) => {
-              dirty.current = true;
-              setText(e.target.value);
-              // Don't scold mid-typing: the error clears now and shows again on the next commit.
-              setError(null);
-            }}
-            onFocus={(e) => {
-              focused.current = true;
-              onFocus?.(e);
-            }}
-            onBlur={(e) => {
-              focused.current = false;
-              commit();
-              onBlur?.(e);
-            }}
-            onKeyDown={(e) => {
-              onKeyDown?.(e);
-              if (e.defaultPrevented) return;
-              if (e.key === "Enter") commit();
-              else if (!readOnly && !disabled) {
-                if (e.key === "ArrowDown" && e.altKey) {
-                  e.preventDefault();
-                  openPicker();
-                } else if (!e.altKey && !e.ctrlKey && !e.metaKey) {
-                  const next = step(e.key, e.shiftKey);
-                  if (next) {
-                    e.preventDefault();
-                    dirty.current = false;
-                    commitIso(next);
-                  }
-                }
-              }
-            }}
-          />
+          {input}
           {pickable ? (
             <>
               <button
@@ -242,7 +247,7 @@ const TypedDateInput = forwardRef<HTMLInputElement, DateInputProps>(
           ) : null}
         </div>
         {showMessage ? <DateInputMessage id={messageId} message={message} /> : null}
-        {name ? <input type="hidden" name={name} value={toDay(value)} /> : null}
+        {hidden}
       </div>
     );
   },

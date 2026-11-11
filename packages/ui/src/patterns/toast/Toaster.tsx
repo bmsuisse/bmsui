@@ -36,16 +36,25 @@ export interface ToasterProps {
   duration?: number | Partial<Record<ToastTone, number>>;
   labels?: Partial<ToasterLabels>;
   className?: string;
+  /**
+   * Slide in from the toaster's edge with a slight scale, fade + shrink out, and let
+   * the stack close the gap smoothly. `false` shows and removes toasts instantly.
+   * Under `prefers-reduced-motion` only the fade remains. @default true
+   */
+  animated?: boolean;
 }
 
 const positionClass: Record<ToasterPosition, string> = {
-  "bottom-center": "bottom-4 items-center pb-[env(safe-area-inset-bottom)]",
-  "bottom-left": "bottom-4 items-start pb-[env(safe-area-inset-bottom)]",
-  "bottom-right": "bottom-4 items-end pb-[env(safe-area-inset-bottom)]",
-  "top-center": "top-4 items-center pt-[env(safe-area-inset-top)]",
-  "top-left": "top-4 items-start pt-[env(safe-area-inset-top)]",
-  "top-right": "top-4 items-end pt-[env(safe-area-inset-top)]",
+  "bottom-center": "bottom-3 items-center pb-[env(safe-area-inset-bottom)]",
+  "bottom-left": "bottom-3 items-start pb-[env(safe-area-inset-bottom)]",
+  "bottom-right": "bottom-3 items-end pb-[env(safe-area-inset-bottom)]",
+  "top-center": "top-3 items-center pt-[env(safe-area-inset-top)]",
+  "top-left": "top-3 items-start pt-[env(safe-area-inset-top)]",
+  "top-right": "top-3 items-end pt-[env(safe-area-inset-top)]",
 };
+
+/** Enter duration; exit is the store's `TOAST_EXIT_MS` (150ms). */
+const ENTER_MS = 200;
 
 const toneIcon: Record<ToastTone, ComponentType<SVGProps<SVGSVGElement>>> = {
   info: InformationCircleIcon,
@@ -58,7 +67,7 @@ const toneIconClass: Record<ToastTone, string> = {
   info: "text-sky-600 dark:text-sky-400",
   success: "text-emerald-600 dark:text-emerald-400",
   warning: "text-amber-600 dark:text-amber-400",
-  error: "text-destructive",
+  error: "text-red-600 dark:text-red-400",
 };
 
 /**
@@ -66,7 +75,7 @@ const toneIconClass: Record<ToastTone, string> = {
  * Each toast fades in, shows the time it has left as a thin bar, pauses while
  * hovered or focused, and fades out on dismiss. No CSS or animation plugin needed.
  */
-export const Toaster = ({ position = "bottom-center", duration, labels, className }: ToasterProps): ReactElement => {
+export const Toaster = ({ position = "bottom-center", duration, labels, className, animated = true }: ToasterProps): ReactElement => {
   const toasts = useSyncExternalStore(subscribeToasts, getToasts, getServerToasts);
   const l = { ...defaultToasterLabels, ...labels };
   const top = position.startsWith("top");
@@ -75,14 +84,14 @@ export const Toaster = ({ position = "bottom-center", duration, labels, classNam
       aria-label={l.region}
       aria-live="polite"
       className={cn(
-        "pointer-events-none fixed inset-x-0 z-[100] flex gap-2 px-4",
+        "pointer-events-none fixed inset-x-0 z-[100] flex px-4",
         top ? "flex-col-reverse" : "flex-col",
         positionClass[position],
         className,
       )}
     >
       {toasts.map((t) => (
-        <ToastCard key={t.id} toast={t} duration={resolveDuration(t, duration)} dismissLabel={l.dismiss} />
+        <ToastCard key={t.id} toast={t} duration={resolveDuration(t, duration)} dismissLabel={l.dismiss} fromTop={top} animated={animated} />
       ))}
     </section>
   );
@@ -95,13 +104,20 @@ const ToastCard = ({
   toast,
   duration,
   dismissLabel,
+  fromTop,
+  animated,
 }: {
   toast: ToastItem;
   /** Already resolved from the toast's own `duration` or the Toaster default. */
   duration: number;
   dismissLabel: string;
+  fromTop: boolean;
+  animated: boolean;
 }): ReactElement => {
   const [entered, setEntered] = useState(false);
+  // The row clips its card only while its height animates (enter/exit), so the
+  // card's shadow isn't cut off while it sits still.
+  const [settled, setSettled] = useState(false);
   // Hover and focus pause independently: leaving with the mouse must not resume while a button inside has focus.
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
@@ -112,7 +128,11 @@ const ToastCard = ({
 
   useEffect(() => {
     const raf = requestAnimationFrame(() => setEntered(true));
-    return () => cancelAnimationFrame(raf);
+    const handle = setTimeout(() => setSettled(true), ENTER_MS + 20);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(handle);
+    };
   }, []);
 
   // The countdown: the progress bar's animation drives the dismissal where the
@@ -156,61 +176,93 @@ const ToastCard = ({
 
   const shown = entered && !toast.leaving;
   return (
+    // Each toast sits in a grid row that grows from 0fr to 1fr and back, so the
+    // stack reflows smoothly when a toast arrives or leaves (no measuring). The
+    // row's padding is the gap between toasts, so it collapses with it.
     <div
-      role={toast.tone === "error" ? "alert" : undefined}
-      data-testid="toast"
-      data-tone={toast.tone}
-      data-state={toast.leaving ? "closed" : "open"}
-      onPointerEnter={(e) => {
-        // A touch tap fires enter without a matching leave; only a real mouse hover pauses.
-        if (e.pointerType === "mouse") setHovered(true);
-      }}
-      onPointerLeave={() => setHovered(false)}
-      onFocus={() => setFocused(true)}
-      onBlur={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setFocused(false);
-      }}
+      data-testid="toast-row"
       className={cn(
-        "pointer-events-auto relative flex w-full max-w-sm items-start gap-2 overflow-hidden rounded-lg border border-border bg-card px-3 py-2.5 text-sm text-card-foreground shadow-lg transition-[opacity,transform] duration-150 ease-out motion-reduce:transition-none",
-        shown ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0",
-        toast.leaving && "pointer-events-none",
+        "grid w-full max-w-sm",
+        animated && "transition-[grid-template-rows] motion-reduce:transition-none",
+        shown || !animated ? "grid-rows-[1fr] duration-200 ease-out" : "grid-rows-[0fr] duration-150 ease-in",
       )}
     >
-      <Icon aria-hidden="true" className={cn("mt-0.5 h-4 w-4 shrink-0", toneIconClass[toast.tone])} />
-      <div className="min-w-0 flex-1">
-        <p className="font-medium">{toast.message}</p>
-        {toast.description ? <p className="mt-0.5 text-xs text-muted-foreground">{toast.description}</p> : null}
+      <div className={cn("min-h-0", animated && (!settled || toast.leaving) && "overflow-hidden")}>
+        <div className="py-1">
+          <div
+            role={toast.tone === "error" ? "alert" : undefined}
+            data-testid="toast"
+            data-tone={toast.tone}
+            data-state={toast.leaving ? "closed" : "open"}
+            onPointerEnter={(e) => {
+              // A touch tap fires enter without a matching leave; only a real mouse hover pauses.
+              if (e.pointerType === "mouse") setHovered(true);
+            }}
+            onPointerLeave={() => setHovered(false)}
+            onFocus={() => setFocused(true)}
+            onBlur={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setFocused(false);
+            }}
+            className={cn(
+              // Popover surface, not `bg-card`: the shared theme has no --card token (see Card), so
+              // bg-card rendered the toast transparent over the page. Hairline is 10% foreground in
+              // light (--border is near-invisible on the light surface), the theme border in dark.
+              "pointer-events-auto relative flex w-full items-start gap-2.5 overflow-hidden rounded-lg border border-foreground/10 bg-popover py-3 pl-3.5 pr-2.5 text-sm text-popover-foreground shadow-lg shadow-black/[0.08] dark:border-border dark:shadow-black/40",
+              // Enter: 200ms ease-out from the toaster's edge (8px) at 97% scale. Exit: 150ms
+              // ease-in fade + shrink in place. Reduced motion keeps only the opacity fade.
+              animated &&
+                "transition-[opacity,translate,scale] motion-reduce:translate-y-0 motion-reduce:scale-100 motion-reduce:transition-opacity",
+              !animated
+                ? "opacity-100"
+                : shown
+                  ? "translate-y-0 scale-100 opacity-100 duration-200 ease-out"
+                  : cn(
+                      "scale-[0.97] opacity-0",
+                      toast.leaving ? "duration-150 ease-in" : fromTop ? "-translate-y-2" : "translate-y-2",
+                    ),
+              toast.leaving && "pointer-events-none",
+            )}
+          >
+            <Icon aria-hidden="true" className={cn("mt-0.5 h-4 w-4 shrink-0", toneIconClass[toast.tone])} strokeWidth={2} />
+            <div className="min-w-0 flex-1">
+              <p className="font-medium leading-5">{toast.message}</p>
+              {toast.description ? (
+                <p className="mt-0.5 text-[13px] leading-[18px] text-muted-foreground">{toast.description}</p>
+              ) : null}
+            </div>
+            {toast.action ? (
+              <button
+                type="button"
+                data-testid="toast-action"
+                onClick={() => {
+                  if (toast.leaving) return;
+                  toast.action?.onClick();
+                  dismissToast(toast.id);
+                }}
+                className="-my-0.5 inline-flex h-6 shrink-0 items-center rounded-md border border-foreground/15 px-2 text-xs font-medium text-foreground transition-colors hover:bg-foreground/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none"
+              >
+                {toast.action.label}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              aria-label={dismissLabel}
+              onClick={() => dismissToast(toast.id)}
+              className="-my-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none"
+            >
+              <XMarkIcon aria-hidden="true" className="h-4 w-4" />
+            </button>
+            {timed && !toast.leaving ? (
+              <span
+                ref={bar}
+                aria-hidden="true"
+                data-testid="toast-progress"
+                className="absolute inset-x-0 bottom-0 h-0.5 origin-left bg-foreground/15 motion-reduce:opacity-0"
+              />
+            ) : null}
+          </div>
+        </div>
       </div>
-      {toast.action ? (
-        <button
-          type="button"
-          data-testid="toast-action"
-          onClick={() => {
-            if (toast.leaving) return;
-            toast.action?.onClick();
-            dismissToast(toast.id);
-          }}
-          className="shrink-0 rounded-sm px-1.5 py-0.5 font-semibold text-foreground underline-offset-2 hover:bg-accent hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          {toast.action.label}
-        </button>
-      ) : null}
-      <button
-        type="button"
-        aria-label={dismissLabel}
-        onClick={() => dismissToast(toast.id)}
-        className="grid h-5 w-5 shrink-0 place-items-center rounded-sm text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      >
-        <XMarkIcon aria-hidden="true" className="h-3.5 w-3.5" />
-      </button>
-      {timed && !toast.leaving ? (
-        <span
-          ref={bar}
-          aria-hidden="true"
-          data-testid="toast-progress"
-          className="absolute inset-x-0 bottom-0 h-0.5 origin-left bg-foreground/25 motion-reduce:opacity-0"
-        />
-      ) : null}
     </div>
   );
 };

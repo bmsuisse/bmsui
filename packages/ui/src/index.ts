@@ -87,6 +87,11 @@ export {
   sheetVariants,
 } from "./primitives/sheet";
 export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./primitives/tooltip";
+export { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./primitives/collapsible";
+export { HoverCard, HoverCardContent, HoverCardTrigger } from "./primitives/hover-card";
+export { RadioGroup, RadioGroupItem } from "./primitives/radio-group";
+export type { SliderProps } from "./primitives/slider";
+export { Slider } from "./primitives/slider";
 
 // --- patterns (composed on top of the primitives above) ---------------------
 export type { ModalProps } from "./patterns/modal/Modal";
@@ -203,13 +208,142 @@ export type { DateInputError, DateInputLabels, DateInputProps } from "./patterns
 export { DateInput, defaultDateInputLabels } from "./patterns/date-input/DateInput";
 export { datePlaceholder, formatIsoDay, parseIsoDay, shiftIsoDay, toLocalIsoDay } from "./lib/dateField";
 
+export type { MetadataItem, MetadataListLabels, MetadataListProps } from "./patterns/metadata-list/MetadataList";
+export { defaultMetadataListLabels, MetadataList } from "./patterns/metadata-list/MetadataList";
+
+export type { CircularProgressProps, ProgressBarProps, ProgressTone } from "./patterns/progress/ProgressBar";
+export { CircularProgress, ProgressBar } from "./patterns/progress/ProgressBar";
+
+export type { TimestampFormat, TimestampProps } from "./patterns/timestamp/Timestamp";
+export { Timestamp } from "./patterns/timestamp/Timestamp";
+export type { RelativeTimeStyle } from "./patterns/timestamp/formatRelativeTime";
+export { formatRelativeTime } from "./patterns/timestamp/formatRelativeTime";
+
+export type { KbdProps, KeyComboLabels, KeyComboProps } from "./patterns/kbd/Kbd";
+export { defaultKeyComboLabels, formatKey, Kbd, KeyCombo } from "./patterns/kbd/Kbd";
+export type { Shortcut, ShortcutGroup, ShortcutSheetLabels, ShortcutSheetProps } from "./patterns/kbd/ShortcutSheet";
+export { defaultShortcutSheetLabels, ShortcutSheet } from "./patterns/kbd/ShortcutSheet";
+
+export type {
+  AvatarGroupItem,
+  AvatarGroupLabels,
+  AvatarGroupProps,
+  AvatarProps,
+  AvatarSize,
+} from "./patterns/avatar/Avatar";
+export { Avatar, AvatarGroup, avatarColorIndex, defaultAvatarGroupLabels, getInitials } from "./patterns/avatar/Avatar";
+
+export type { CollapsibleSectionProps } from "./patterns/collapsible-section/CollapsibleSection";
+export { CollapsibleSection } from "./patterns/collapsible-section/CollapsibleSection";
+
+export type { StatusDotProps } from "./patterns/status-dot/StatusDot";
+export { StatusDot } from "./patterns/status-dot/StatusDot";
+export type { BreadcrumbItem, BreadcrumbLinkRenderProps, BreadcrumbsLabels, BreadcrumbsProps } from "./patterns/breadcrumbs/Breadcrumbs";
+export { Breadcrumbs, defaultBreadcrumbsLabels } from "./patterns/breadcrumbs/Breadcrumbs";
+
+export type { PageHeaderBadge, PageHeaderLabels, PageHeaderProps } from "./patterns/page-header/PageHeader";
+export { defaultPageHeaderLabels, PageHeader } from "./patterns/page-header/PageHeader";
+
+export type {
+  TablePageProps,
+  TableResultCountLabels,
+  TableResultCountProps,
+  TableSearchProps,
+  TableShellProps,
+  TableToolbarProps,
+} from "./patterns/table-shell/TableShell";
+export {
+  defaultTableResultCountLabels,
+  TablePage,
+  TableResultCount,
+  TableSearch,
+  TableShell,
+  TableToolbar,
+} from "./patterns/table-shell/TableShell";
+
+export type { PageRangeItem, PaginationLabels, PaginationProps } from "./patterns/pagination/Pagination";
+export { defaultPaginationLabels, getPageRange, Pagination } from "./patterns/pagination/Pagination";
+
+export type { CommandItem } from "./patterns/command-palette/types";
+export type {
+  CommandPaletteLabels,
+  CommandPaletteProps,
+  CommandPaletteTriggerProps,
+  UseCommandPaletteHotkeyOptions,
+} from "./patterns/command-palette/CommandPalette";
+export {
+  CommandPalette,
+  CommandPaletteTrigger,
+  defaultCommandPaletteLabels,
+  formatCommandPaletteShortcut,
+  useCommandPaletteHotkey,
+  useRecentCommands,
+} from "./patterns/command-palette/CommandPalette";
+export { scoreCommand } from "./patterns/command-palette/commandFilter";
+export {
+  CommandRegistryProvider,
+  useRegisterCommands,
+  useRegisteredCommands,
+} from "./patterns/command-palette/registry";
+
+export type {
+  SplitPaneLabels,
+  SplitPaneLimit,
+  SplitPanePanelProps,
+  SplitPaneProps,
+} from "./patterns/split-pane/SplitPane";
+export { defaultSplitPaneLabels, SplitPane, SplitPanePanel } from "./patterns/split-pane/SplitPane";
+
+export type { ToolbarButtonProps, ToolbarLabels, ToolbarProps } from "./patterns/toolbar/Toolbar";
+export { defaultToolbarLabels, Toolbar, ToolbarButton, ToolbarSeparator } from "./patterns/toolbar/Toolbar";
+
+export type { NumberInputLabels, NumberInputProps } from "./patterns/number-input/NumberInput";
+export { defaultNumberInputLabels, NumberInput } from "./patterns/number-input/NumberInput";
+export type { FormatNumberOptions } from "./lib/numberField";
+export { formatLocaleNumber, parseLocaleNumber } from "./lib/numberField";
+
+export type { InputGroupProps } from "./patterns/input-group/InputGroup";
+export { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "./patterns/input-group/InputGroup";
+
+export type {
+  SegmentedControlOption,
+  SegmentedControlProps,
+} from "./patterns/segmented-control/SegmentedControl";
+export { SegmentedControl } from "./patterns/segmented-control/SegmentedControl";
+
+export type { RadioListOption, RadioListProps } from "./patterns/radio-list/RadioList";
+export { RadioList } from "./patterns/radio-list/RadioList";
+
+export type { RangeSliderLabels, RangeSliderProps } from "./patterns/range-slider/RangeSlider";
+export { defaultRangeSliderLabels, RangeSlider } from "./patterns/range-slider/RangeSlider";
+
+export type { FileInputLabels, FileInputProps, FileRejection } from "./patterns/file-input/FileInput";
+export { defaultFileInputLabels, FileInput, formatFileSize, matchesAccept } from "./patterns/file-input/FileInput";
+
 // --- shared utility -----------------------------------------------------------
 export { cn } from "./lib/utils";
 export { useMediaQuery } from "./lib/useMediaQuery";
 export type { ConfirmButtonPlacement } from "./lib/platform";
-export { getConfirmButtonPlacement, isWindowsPlatform } from "./lib/platform";
+export { getConfirmButtonPlacement, isMacPlatform, isWindowsPlatform } from "./lib/platform";
 
 export type { AnimatedBrandProps } from "./patterns/animated-brand/AnimatedBrand";
 export { AnimatedBrand } from "./patterns/animated-brand/AnimatedBrand";
 export type { BrandAnimation, BrandMode } from "./patterns/animated-brand/brandMotion";
 export { BRAND_ANIMATIONS } from "./patterns/animated-brand/brandMotion";
+
+// --- hooks --------------------------------------------------------------------
+export type { Hotkey, UseHotkeysOptions } from "./hooks/useHotkeys";
+export { formatHotkey, useHotkeys } from "./hooks/useHotkeys";
+export type { UseClipboardOptions, UseClipboardResult } from "./hooks/useClipboard";
+export { useClipboard } from "./hooks/useClipboard";
+export type { AnnounceOptions, AnnouncePoliteness } from "./hooks/useAnnounce";
+export { announce, Announcer, useAnnounce } from "./hooks/useAnnounce";
+export { useMergedRefs } from "./hooks/useMergedRefs";
+export type { UseFocusTrapOptions } from "./hooks/useFocusTrap";
+export { useFocusTrap } from "./hooks/useFocusTrap";
+export type { LongPressHandlers, UseLongPressOptions } from "./hooks/useLongPress";
+export { useLongPress } from "./hooks/useLongPress";
+export type { ScrollOverflow, UseScrollOverflowResult } from "./hooks/useScrollOverflow";
+export { useScrollOverflow } from "./hooks/useScrollOverflow";
+export type { SetLocalStorageState, UseLocalStorageStateOptions } from "./hooks/useLocalStorageState";
+export { useLocalStorageState } from "./hooks/useLocalStorageState";

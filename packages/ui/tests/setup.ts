@@ -67,3 +67,33 @@ if (typeof window.matchMedia !== "function") {
     dispatchEvent: () => false,
   });
 }
+
+// Newer Node versions ship their own global `localStorage` that is undefined
+// unless Node runs with --localstorage-file, and it shadows jsdom's. Install a
+// small in-memory Storage so persistence code (SplitPane, useRecentCommands) is testable.
+function hasWorkingStorage(): boolean {
+  try {
+    return typeof window.localStorage?.getItem === "function";
+  } catch {
+    return false;
+  }
+}
+if (!hasWorkingStorage()) {
+  const data = new Map<string, string>();
+  const memoryStorage: Storage = {
+    get length() {
+      return data.size;
+    },
+    clear: () => data.clear(),
+    getItem: (key) => data.get(key) ?? null,
+    key: (index) => Array.from(data.keys())[index] ?? null,
+    removeItem: (key) => {
+      data.delete(key);
+    },
+    setItem: (key, value) => {
+      data.set(key, String(value));
+    },
+  };
+  Object.defineProperty(window, "localStorage", { configurable: true, value: memoryStorage });
+  Object.defineProperty(globalThis, "localStorage", { configurable: true, value: memoryStorage });
+}
