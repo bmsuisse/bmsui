@@ -1,6 +1,7 @@
 import { ArrowUpTrayIcon, DocumentIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import type { DragEvent, KeyboardEvent, ReactNode } from "react";
 import { forwardRef, useId, useRef, useState } from "react";
+import { animate, EASE_IN, prefersReducedMotion } from "../../lib/motion";
 import { cn } from "../../lib/utils";
 
 export interface FileInputLabels {
@@ -60,6 +61,8 @@ export interface FileInputProps {
   hideFileList?: boolean;
   /** `sm`: a single-row zone (h-9) for tight forms. @default "default" */
   size?: "sm" | "default";
+  /** Rows fade/slide in when added and collapse out when removed; the zone lifts on drag-over. @default true */
+  animated?: boolean;
   labels?: Partial<FileInputLabels>;
   className?: string;
   id?: string;
@@ -93,6 +96,15 @@ export function matchesAccept(file: File, accept?: string): boolean {
     );
 }
 
+// Stable per-File row keys: rows after a removed one must not remount (and replay their enter).
+const fileKeys = new WeakMap<File, number>();
+let nextFileKey = 0;
+const fileKey = (file: File) => {
+  let key = fileKeys.get(file);
+  if (key == null) fileKeys.set(file, (key = nextFileKey++));
+  return key;
+};
+
 const sameFile = (a: File, b: File) => a.name === b.name && a.size === b.size && a.lastModified === b.lastModified;
 
 /**
@@ -103,6 +115,12 @@ const sameFile = (a: File, b: File) => a.name === b.name && a.size === b.size &&
  * stays in the tab order through the zone itself (role="button"). There is no
  * `name`: the native input is cleared after each pick, so it never carries the
  * files in a form submit — send `files` yourself (e.g. via `FormData`).
+ *
+ * Motion (`animated`, default on): the zone's border/tint cross-fade and it
+ * lifts 2px with a soft ring while files are dragged over, the upload arrow
+ * nudges up on hover, new rows fade and slide in (150 ms ease-out) and a
+ * removed row fades and collapses (140 ms ease-in) before `onFilesChange`
+ * fires. With `prefers-reduced-motion` nothing moves and removal is instant.
  */
 export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
   (
@@ -119,6 +137,7 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
       locale = "de-CH",
       hideFileList = false,
       size = "default",
+      animated = true,
       labels,
       className,
       id,
@@ -133,6 +152,41 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
     const [errors, setErrors] = useState<string[]>([]);
     const errorId = useId();
     const testId = props["data-testid"];
+    const filesRef = useRef(files);
+    filesRef.current = files;
+    const [leaving, setLeaving] = useState<File[]>([]);
+
+    const remove = (file: File, row: HTMLElement | null) => {
+      setErrors([]);
+      const finish = () => {
+        setLeaving((l) => l.filter((f) => f !== file));
+        const at = filesRef.current.indexOf(file);
+        if (at >= 0) onFilesChange(filesRef.current.filter((_, i) => i !== at));
+      };
+      const list = filesRef.current;
+      const index = list.indexOf(file);
+      const animation =
+        animated && !prefersReducedMotion()
+          ? animate(
+              row,
+              [
+                { opacity: 1, height: `${row?.offsetHeight ?? 36}px` },
+                {
+                  opacity: 0,
+                  height: "0px",
+                  // Swallow the 6px list gap next to the row as it collapses.
+                  marginTop: index > 0 ? "-6px" : "0px",
+                  marginBottom: index === 0 && list.length > 1 ? "-6px" : "0px",
+                },
+              ],
+              { duration: 140, easing: EASE_IN, fill: "forwards" },
+            )
+          : null;
+      if (!animation) return finish();
+      setLeaving((l) => [...l, file]);
+      animation.onfinish = finish;
+      animation.oncancel = finish;
+    };
 
     const add = (incoming: File[]) => {
       if (disabled || incoming.length === 0) return;
@@ -220,11 +274,12 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
           onDragLeave={(e) => onDrag(e, "leave")}
           onDrop={(e) => onDrag(e, "drop")}
           className={cn(
-            "flex items-center rounded-md border border-dashed border-muted-foreground/35 bg-background text-sm transition-colors",
+            "group flex items-center rounded-md border border-dashed border-muted-foreground/35 bg-background text-sm transition-[color,background-color,border-color,box-shadow,translate] duration-150 ease-out",
             !disabled && "cursor-pointer hover:border-muted-foreground/60 hover:bg-muted-foreground/5",
-            "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+            "focus-visible:border-solid focus-visible:border-ring focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
             sm ? "h-9 gap-2 px-3" : "flex-col justify-center gap-2 px-6 py-6 text-center",
-            dragOver && "border-solid border-ring bg-accent/10 hover:border-ring hover:bg-accent/10",
+            dragOver && "border-solid border-ring bg-accent/10 ring-4 ring-ring/10 hover:border-ring hover:bg-accent/10",
+            dragOver && animated && "-translate-y-0.5 shadow-md motion-reduce:translate-none!",
             errors.length > 0 && !dragOver && "border-destructive/60",
             // No pointer-events-none: the zone must keep receiving drag events to block drops.
             disabled && "cursor-not-allowed opacity-50",
@@ -232,9 +287,11 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
         >
           <span
             className={cn(
-              "flex shrink-0 items-center justify-center rounded-full transition-colors",
+              "flex shrink-0 items-center justify-center rounded-full transition-[color,background-color,translate] duration-150 ease-out",
+              animated && !disabled && "group-hover:-translate-y-0.5 motion-reduce:translate-none!",
+              animated && dragOver && "-translate-y-0.5 motion-reduce:translate-none!",
               sm ? "" : "h-10 w-10 bg-muted-foreground/10",
-              dragOver ? "text-foreground" : "text-muted-foreground",
+              dragOver ? "text-foreground" : "text-muted-foreground group-hover:text-foreground",
             )}
           >
             <ArrowUpTrayIcon aria-hidden="true" className={sm ? "h-4 w-4" : "h-5 w-5"} />
@@ -277,8 +334,12 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
           <ul className="grid grid-cols-[minmax(0,1fr)] gap-1.5" data-testid={testId ? `${testId}-list` : undefined}>
             {files.map((file, index) => (
               <li
-                key={`${file.name}-${file.size}-${file.lastModified}-${index}`}
-                className="flex h-9 items-center gap-2 rounded-md border border-input bg-background pl-3 pr-1 text-sm shadow-sm"
+                key={files.indexOf(file) === index ? fileKey(file) : `${fileKey(file)}-${index}`}
+                className={cn(
+                  "flex h-9 items-center gap-2 overflow-hidden rounded-md border border-input bg-background pl-3 pr-1 text-sm shadow-sm",
+                  animated &&
+                    "transition-[opacity,translate] duration-150 ease-out starting:-translate-y-1 starting:opacity-0 motion-reduce:transition-none",
+                )}
               >
                 <DocumentIcon aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" />
                 <span className="min-w-0 flex-1 truncate text-foreground" title={file.name}>
@@ -288,12 +349,9 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
                 <button
                   type="button"
                   aria-label={`${l.remove} ${file.name}`}
-                  disabled={disabled}
-                  onClick={() => {
-                    setErrors([]);
-                    onFilesChange(files.filter((_, i) => i !== index));
-                  }}
-                  className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted-foreground/10 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+                  disabled={disabled || leaving.includes(file)}
+                  onClick={(e) => remove(file, e.currentTarget.closest("li"))}
+                  className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-[color,background-color,scale] duration-150 ease-out hover:bg-muted-foreground/10 hover:text-foreground active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 motion-reduce:scale-none!"
                 >
                   <XMarkIcon aria-hidden="true" className="h-4 w-4" />
                 </button>

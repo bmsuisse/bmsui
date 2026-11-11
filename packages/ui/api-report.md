@@ -371,6 +371,7 @@ interface CalendarRangeProps extends CalendarBaseProps
   onValueChange: (range: DateRange) => void
   value: DateRange
   "data-testid"?: string  (from CalendarBaseProps)
+  animated?: boolean  (from CalendarBaseProps)
   autoFocus?: boolean  (from CalendarBaseProps)
   className?: string  (from CalendarBaseProps)
   defaultMonth?: string  (from CalendarBaseProps)
@@ -388,6 +389,7 @@ interface CalendarSingleProps extends CalendarBaseProps
   onValueChange: (iso: string) => void
   value: string
   "data-testid"?: string  (from CalendarBaseProps)
+  animated?: boolean  (from CalendarBaseProps)
   autoFocus?: boolean  (from CalendarBaseProps)
   className?: string  (from CalendarBaseProps)
   defaultMonth?: string  (from CalendarBaseProps)
@@ -598,6 +600,7 @@ interface FileInputProps
   "aria-describedby"?: string
   "data-testid"?: string
   accept?: string
+  animated?: boolean
   className?: string
   disabled?: boolean
   files: File[]
@@ -844,6 +847,7 @@ interface RangeSliderLabels
   min: string
 interface RangeSliderProps
   "data-testid"?: string
+  animated?: boolean
   className?: string
   decimals?: number
   disabled?: boolean
@@ -916,6 +920,7 @@ interface SegmentedControlOption<T extends string = string>
 interface SegmentedControlProps<T extends string = string>
   "aria-label"?: string
   "data-testid"?: string
+  animated?: boolean
   className?: string
   disabled?: boolean
   fullWidth?: boolean
@@ -961,6 +966,7 @@ interface SidebarProps
   resizable?: boolean
   width?: number
 interface SliderProps extends ComponentPropsWithoutRef<typeof SliderPrimitive.Root>
+  animated?: boolean
   getValueText?: (value: number, index: number) => string
   thumbLabels?: string | string[]
 interface SpeechRecognitionEngine

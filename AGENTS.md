@@ -567,6 +567,23 @@ logic above, which already had its own extraction). Structure:
     - `file-input/` — `FileInput`, the drop behaviour of OneSales'
       offer-parser `StepUpload` without pragmatic-drag-and-drop: native drag
       events with an enter/leave depth counter, `accept` checked on drop too.
+    - Visual/motion pass (v0.21.x): one focus language for small round
+      controls (`ring-2 ring-ring ring-offset-1`: radio, slider thumb, calendar
+      day); `InputGroupInput`/date fields get `pb-[5px]` because Chrome renders
+      input text ~0.75px below flex-centred addon/button text; `DateRangePicker`
+      fields use `field-sizing: content` (fixed-width fallback) so the dash sits
+      evenly; Calendar range-preview ends no longer lose their fill to `hover:`.
+      Micro-animations use only CSS transitions, Tailwind `starting:` and the
+      Web Animations API (`lib/motion.ts`, guarded for jsdom) — 120–200 ms,
+      ease-out in / ease-in out, nothing moves under `prefers-reduced-motion`.
+      Note Tailwind v4's `scale-*`/`translate-*` set the `scale`/`translate`
+      properties, so transition lists must name those, not `transform`.
+      Behavioural motion is opt-out via `animated` (Calendar, DatePicker,
+      DateRangePicker, SegmentedControl, Slider, RangeSlider, FileInput).
+      Radix unmounts the popover instantly on close (it only waits for CSS
+      keyframe animations, which this package doesn't ship), so only the
+      enter is animated. FileInput's remove waits for its 140 ms collapse
+      before `onFilesChange` (instant without WAAPI / with reduced motion).
 - `packages/ui/demo/` — same pattern as `packages/datagrid/demo`: a Vite
   app aliasing `@bmsuisse/ui` straight to `src/index.ts`, using the same
   reference-app-derived Tailwind v4 tokens, for visual QA.

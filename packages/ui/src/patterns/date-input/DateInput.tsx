@@ -23,6 +23,7 @@ export interface DateInputProps extends Omit<InputProps, "value" | "defaultValue
  * the browser's own `type="date"` format. The value is an ISO day. Text is committed
  * on blur or Enter; text that is no date marks the field `aria-invalid` and keeps
  * the previous value. With `name`, a hidden input submits the ISO day in forms.
+ * Digits are tabular so dates line up in columns; the focus ring fades in (150 ms).
  */
 export const DateInput = forwardRef<HTMLInputElement, DateInputProps>(
   (
@@ -71,7 +72,7 @@ export const DateInput = forwardRef<HTMLInputElement, DateInputProps>(
         <Input
           ref={ref}
           {...props}
-          className={cn("aria-[invalid=true]:border-destructive aria-[invalid=true]:ring-destructive", className)}
+          className={cn("tabular-nums transition-[color,background-color,border-color,box-shadow] duration-150 ease-out aria-[invalid=true]:border-destructive aria-[invalid=true]:ring-destructive", className)}
           type="text"
           autoComplete="off"
           value={text}

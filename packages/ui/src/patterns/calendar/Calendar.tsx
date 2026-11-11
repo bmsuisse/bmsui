@@ -1,6 +1,6 @@
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/20/solid";
 import type { KeyboardEvent, ReactElement } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   addDays,
   addMonths,
@@ -13,6 +13,7 @@ import {
   weekStartOf,
 } from "../../lib/calendar";
 import { toLocalIsoDay } from "../../lib/dateField";
+import { animate, EASE_OUT, prefersReducedMotion } from "../../lib/motion";
 import { cn } from "../../lib/utils";
 
 /** A day range as ISO days; `""` for an open end. */
@@ -53,6 +54,8 @@ interface CalendarBaseProps {
   /** "Today" for the marker and the default month. @default local today */
   today?: string;
   labels?: Partial<CalendarLabels>;
+  /** Slide the grid in on month change and pop in a newly selected day (opacity-only with reduced motion). @default true */
+  animated?: boolean;
   className?: string;
   "data-testid"?: string;
 }
@@ -83,6 +86,11 @@ const clampIso = (iso: string, min?: string, max?: string) =>
  * names follow `locale` (Monday first in de-CH). Usually you want `DatePicker`
  * / `DateRangePicker`, which put this in a popover next to a typed field; use
  * `Calendar` directly for an always-visible picker.
+ *
+ * Motion (`animated`, default on): changing month slides the days 12px in the
+ * direction of travel while fading in (180 ms ease-out), a newly selected day
+ * scales in from 85 %, days press to 95 % and the range band fades as the
+ * hover preview moves. With `prefers-reduced-motion` only fades remain.
  */
 export function Calendar(props: CalendarProps): ReactElement {
   const {
@@ -94,6 +102,7 @@ export function Calendar(props: CalendarProps): ReactElement {
     defaultMonth,
     autoFocus,
     labels,
+    animated = true,
     className,
   } = props;
   const l = { ...defaultCalendarLabels, ...labels };
@@ -133,6 +142,46 @@ export function Calendar(props: CalendarProps): ReactElement {
     shouldFocus.current = false;
     gridRef.current?.querySelector<HTMLButtonElement>(`[data-day="${activeDay}"]`)?.focus();
   });
+
+  // Month change: slide the new days in from the side we navigated towards.
+  const bodyRef = useRef<HTMLTableSectionElement>(null);
+  const titleRef = useRef<HTMLDivElement>(null);
+  const prevMonth = useRef(shownMonth);
+  useLayoutEffect(() => {
+    const prev = prevMonth.current;
+    prevMonth.current = shownMonth;
+    if (!animated || prev === shownMonth) return;
+    const reduce = prefersReducedMotion();
+    const dir = shownMonth > prev ? 1 : -1;
+    const timing = { duration: 180, easing: EASE_OUT };
+    animate(
+      bodyRef.current,
+      reduce ? [{ opacity: 0.4 }, { opacity: 1 }] : [{ opacity: 0, transform: `translateX(${dir * 12}px)` }, { opacity: 1, transform: "none" }],
+      timing,
+    );
+    animate(
+      titleRef.current,
+      reduce ? [{ opacity: 0.4 }, { opacity: 1 }] : [{ opacity: 0, transform: `translateX(${dir * 6}px)` }, { opacity: 1, transform: "none" }],
+      timing,
+    );
+  }, [shownMonth, animated]);
+
+  // A newly selected day (or range end) scales in.
+  const selectedKey = range ? `${range.from}|${range.to}` : single;
+  const prevSelected = useRef(selectedKey);
+  useLayoutEffect(() => {
+    const prev = prevSelected.current.split("|");
+    prevSelected.current = selectedKey;
+    if (!animated || prefersReducedMotion()) return;
+    for (const iso of selectedKey.split("|")) {
+      if (!iso || prev.includes(iso)) continue;
+      animate(
+        gridRef.current?.querySelector(`[data-day="${iso}"]`),
+        [{ transform: "scale(0.85)" }, { transform: "scale(1)" }],
+        { duration: 160, easing: EASE_OUT },
+      );
+    }
+  }, [selectedKey, animated]);
 
   const weekStart = weekStartsOn ?? weekStartOf(locale);
   const weeks = useMemo(() => monthGrid(shownMonth, weekStart), [shownMonth, weekStart]);
@@ -194,7 +243,7 @@ export function Calendar(props: CalendarProps): ReactElement {
   const prevDisabled = Boolean(min && addDays(shownMonth, -1) < min);
   const nextDisabled = Boolean(max && addMonths(shownMonth, 1) > max);
   const navButton =
-    "inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted-foreground/10 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40";
+    "inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-[color,background-color,scale] duration-150 ease-out hover:bg-muted-foreground/10 active:scale-95 motion-reduce:scale-none! hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40";
 
   return (
     <div
@@ -212,7 +261,7 @@ export function Calendar(props: CalendarProps): ReactElement {
         >
           <ChevronLeftIcon aria-hidden="true" className="h-4 w-4" />
         </button>
-        <div aria-live="polite" className="text-sm font-semibold text-foreground">
+        <div ref={titleRef} aria-live="polite" className="text-sm font-semibold tabular-nums text-foreground">
           {monthTitle(shownMonth, locale)}
         </div>
         <button
@@ -240,7 +289,7 @@ export function Calendar(props: CalendarProps): ReactElement {
             ))}
           </tr>
         </thead>
-        <tbody>
+        <tbody ref={bodyRef}>
           {weeks.map((week) => (
             <tr key={week[0]}>
               {week.map((iso, col) => {
@@ -259,7 +308,7 @@ export function Calendar(props: CalendarProps): ReactElement {
                     role="gridcell"
                     aria-selected={selected || inRange || undefined}
                     className={cn(
-                      "p-0 text-center",
+                      "p-0 text-center transition-colors duration-150 ease-out motion-reduce:transition-none",
                       // The range band is drawn per row: rounded where a week starts or ends, and
                       // running from the middle of the start/end chip so it tucks in behind it.
                       inRange && "bg-accent/15",
@@ -286,15 +335,16 @@ export function Calendar(props: CalendarProps): ReactElement {
                         if (range) setHoverDay(iso);
                       }}
                       className={cn(
-                        "relative inline-flex h-9 w-9 items-center justify-center rounded-md text-sm tabular-nums transition-colors",
+                        "relative inline-flex h-9 w-9 items-center justify-center rounded-md text-sm tabular-nums transition-[color,background-color,box-shadow,scale] duration-150 ease-out",
+                        !disabled && "active:scale-95 motion-reduce:scale-none!",
                         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                         disabled && "cursor-not-allowed text-muted-foreground/40",
                         blocked && "line-through",
                         !disabled && (outside ? "text-muted-foreground/60" : "text-foreground"),
-                        !selected && !disabled && "hover:bg-muted-foreground/10",
+                        !selected && !isStart && !isEnd && !disabled && "hover:bg-muted-foreground/10",
                         isToday && "font-semibold",
                         selected && "bg-primary font-medium text-primary-foreground hover:bg-primary/90 dark:bg-accent dark:hover:bg-accent/90",
-                        (isStart || isEnd) && !selected && "bg-primary/80 text-primary-foreground dark:bg-accent/80",
+                        (isStart || isEnd) && !selected && "bg-primary/80 font-medium text-primary-foreground dark:bg-accent/80",
                       )}
                     >
                       {Number(iso.slice(8, 10))}

@@ -19,6 +19,8 @@ export interface SegmentedControlProps<T extends string = string> {
   /** Stretch to the parent's width with equal segments. */
   fullWidth?: boolean;
   disabled?: boolean;
+  /** Slide the thumb to the new segment (soft spring-like ease, 200 ms; instant with reduced motion). @default true */
+  animated?: boolean;
   /** Accessible name of the radiogroup. */
   "aria-label"?: string;
   className?: string;
@@ -31,7 +33,8 @@ export interface SegmentedControlProps<T extends string = string> {
  * Radiogroup semantics — one tab stop, arrow keys move and select. Use
  * `ButtonGroup` for a row of connected *action-like* choices with outline
  * styling, `Tabs` when the segments switch whole panels, `RadioList` for
- * choices that need descriptions.
+ * choices that need descriptions. The thumb glides to the chosen segment
+ * with a slight overshoot and labels cross-fade their colour (`animated`).
  */
 export function SegmentedControl<T extends string = string>({
   options,
@@ -40,6 +43,7 @@ export function SegmentedControl<T extends string = string>({
   size = "default",
   fullWidth = false,
   disabled = false,
+  animated = true,
   className,
   ...props
 }: SegmentedControlProps<T>): ReactElement {
@@ -106,7 +110,10 @@ export function SegmentedControl<T extends string = string>({
       {thumb ? (
         <span
           aria-hidden="true"
-          className="absolute inset-y-0.5 left-0 -z-10 rounded-[calc(var(--radius-md,0.375rem)-2px)] bg-background shadow-sm ring-1 ring-black/5 transition-[transform,width] duration-200 ease-out motion-reduce:transition-none dark:bg-muted-foreground/25 dark:ring-white/10"
+          className={cn(
+            "absolute inset-y-0.5 left-0 -z-10 rounded-[calc(var(--radius-md,0.375rem)-2px)] bg-background shadow-sm ring-1 ring-black/5 dark:bg-muted-foreground/25 dark:ring-white/10",
+            animated && "transition-[transform,width] duration-200 ease-[cubic-bezier(0.3,1.25,0.5,1)] motion-reduce:transition-none",
+          )}
           style={{ width: thumb.width, transform: `translateX(${thumb.left}px)` }}
         />
       ) : null}
@@ -127,7 +134,7 @@ export function SegmentedControl<T extends string = string>({
             data-testid={testId ? `${testId}-option-${option.value}` : undefined}
             onClick={() => onValueChange(option.value)}
             className={cn(
-              "inline-flex h-full items-center justify-center gap-1.5 whitespace-nowrap rounded-[calc(var(--radius-md,0.375rem)-2px)] font-medium transition-colors",
+              "inline-flex h-full items-center justify-center gap-1.5 whitespace-nowrap rounded-[calc(var(--radius-md,0.375rem)-2px)] font-medium transition-[color,box-shadow] duration-150 ease-out",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               "disabled:cursor-not-allowed disabled:opacity-50",
               sm ? "px-2.5 text-xs [&_svg]:size-3.5" : "px-3 text-sm [&_svg]:size-4",
