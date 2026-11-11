@@ -28,11 +28,12 @@ describe("Avatar", () => {
     const img = container.querySelector("img") as HTMLImageElement;
     expect(screen.getByTestId("avatar")).toHaveTextContent("AM");
     fireEvent.load(img);
-    expect(screen.getByTestId("avatar")).not.toHaveTextContent("AM");
+    // Initials stay mounted under the photo for the cross-fade, faded out.
+    expect(screen.getByTestId("avatar-initials")).toHaveClass("opacity-0");
     rerender(<Avatar name="Anna Muster" src="/broken.png" />);
     fireEvent.error(container.querySelector("img") as HTMLImageElement);
     expect(container.querySelector("img")).toBeNull();
-    expect(screen.getByTestId("avatar")).toHaveTextContent("AM");
+    expect(screen.getByTestId("avatar-initials")).not.toHaveClass("opacity-0");
   });
 
   it("shows an image that already finished loading before mount/hydration (no load event)", () => {
@@ -42,7 +43,7 @@ describe("Avatar", () => {
       const { container } = render(<Avatar name="Anna Muster" src="/anna.png" />);
       const img = container.querySelector("img") as HTMLImageElement;
       expect(img.className).toContain("opacity-100");
-      expect(screen.getByTestId("avatar")).not.toHaveTextContent("AM");
+      expect(screen.getByTestId("avatar-initials")).toHaveClass("opacity-0");
     } finally {
       complete.mockRestore();
       width.mockRestore();

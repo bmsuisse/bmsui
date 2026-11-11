@@ -74,7 +74,7 @@ const FileInput: react.ForwardRefExoticComponent<FileInputProps & react.RefAttri
 const FilteredEmptyState: (props: FilteredEmptyStateProps) => ReactElement
 function FormField(props: FormFieldProps): ReactElement
 const FormModal: (props: FormModalProps) => ReactElement
-const HoverCard: (props: ComponentPropsWithoutRef<typeof HoverCardPrimitive.Root>) => react.JSX.Element
+const HoverCard: (props: ComponentPropsWithoutRef<typeof HoverCardPrimitive.Root> & { animated?: boolean }) => react.JSX.Element
 const HoverCardContent: react.ForwardRefExoticComponent<Omit<HoverCardPrimitive.HoverCardContentProps & react.RefAttributes<HTMLDivElement>, "ref"> & { container?: ComponentPropsWithoutRef<typeof HoverCardPrimitive.Portal>["container"] } & react.RefAttributes<HTMLDivElement>>
 const HoverCardTrigger: react.ForwardRefExoticComponent<HoverCardPrimitive.HoverCardTriggerProps & react.RefAttributes<HTMLAnchorElement>>
 const InlineError: (props: InlineErrorProps) => ReactElement | null
@@ -311,6 +311,7 @@ interface AvatarGroupItem
 interface AvatarGroupLabels
   more: (count: number) => string
 interface AvatarGroupProps extends Omit<HTMLAttributes<HTMLDivElement>, "children">
+  animated?: boolean
   items: AvatarGroupItem[]
   labels?: Partial<AvatarGroupLabels>
   max?: number
@@ -569,6 +570,7 @@ interface DonutSegment
   value: number
 interface EmptyStateProps extends Omit<HTMLAttributes<HTMLDivElement>, "title">
   action?: ReactNode
+  animated?: boolean
   description?: ReactNode
   fill?: boolean
   icon?: ComponentType<SVGProps<SVGSVGElement>>
@@ -661,6 +663,7 @@ interface InlineErrorProps extends Omit<HTMLAttributes<HTMLSpanElement>, "title"
 interface InputGroupProps extends HTMLAttributes<HTMLDivElement>
   size?: InputGroupSize
 interface KbdProps extends HTMLAttributes<HTMLElement>
+  pressed?: boolean
   size?: "sm" | "md"
 interface KeyComboLabels
   or: string
@@ -669,6 +672,7 @@ interface KeyComboProps extends Omit<HTMLAttributes<HTMLSpanElement>, "children"
   keys: string | string[]
   labels?: Partial<KeyComboLabels>
   mac?: boolean
+  pressed?: boolean
   size?: KbdProps["size"]
 interface KpiCardProps
   background?: string
@@ -1095,6 +1099,7 @@ interface TagComboboxProps
   placeholder?: string
   value: string[]
 interface TimestampProps extends Omit<HTMLAttributes<HTMLElement>, "children">
+  animated?: boolean
   format?: TimestampFormat
   invalidLabel?: string
   live?: boolean
@@ -1122,6 +1127,7 @@ interface ToasterLabels
   dismiss: string
   region: string
 interface ToasterProps
+  animated?: boolean
   className?: string
   labels?: Partial<ToasterLabels>
   position?: ToasterPosition

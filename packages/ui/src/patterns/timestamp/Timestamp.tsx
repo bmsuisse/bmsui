@@ -1,4 +1,4 @@
-import { type HTMLAttributes, type ReactElement, useEffect, useMemo, useState } from "react";
+import { type HTMLAttributes, type ReactElement, useEffect, useMemo, useRef, useState } from "react";
 import { useHydrated } from "../../lib/useHydrated";
 import { cn } from "../../lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../primitives/tooltip";
@@ -44,6 +44,12 @@ export interface TimestampProps extends Omit<HTMLAttributes<HTMLElement>, "child
   tooltip?: boolean;
   /** Shown when `value` is not a valid date. @default "—" */
   invalidLabel?: string;
+  /**
+   * Cross-fade the text when a live relative value ticks ("vor 4 Min." → "vor 5 Min."):
+   * a 200ms ease-out fade-in from 40%, no movement. Skipped under reduced motion.
+   * @default true
+   */
+  animated?: boolean;
 }
 
 /**
@@ -60,6 +66,7 @@ export const Timestamp = ({
   live = true,
   tooltip,
   invalidLabel = "—",
+  animated = true,
   className,
   ...props
 }: TimestampProps): ReactElement => {
@@ -83,6 +90,21 @@ export const Timestamp = ({
     return () => clearTimeout(handle);
   }, [relative, live, valid, date]);
 
+  // Text after hydration, before the early return so the hook order stays stable.
+  const tickText =
+    hydrated && valid && relative ? formatRelativeTime(date, now ?? new Date(), locale, relativeStyle) : null;
+  const timeRef = useRef<HTMLTimeElement>(null);
+  const lastText = useRef<string | null>(null);
+  useEffect(() => {
+    const previous = lastText.current;
+    lastText.current = tickText;
+    const el = timeRef.current;
+    if (!animated || previous == null || tickText == null || previous === tickText) return;
+    if (!el || typeof el.animate !== "function") return;
+    if (typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    el.animate([{ opacity: 0.4 }, { opacity: 1 }], { duration: 200, easing: "ease-out" });
+  }, [tickText, animated]);
+
   if (!valid) {
     return (
       <span data-testid="timestamp" className={cn("text-muted-foreground", className)} {...props}>
@@ -96,12 +118,13 @@ export const Timestamp = ({
   const text = !hydrated
     ? stableText(date, format)
     : relative
-      ? formatRelativeTime(date, now ?? new Date(), locale, relativeStyle)
+      ? (tickText ?? formatRelativeTime(date, now ?? new Date(), locale, relativeStyle))
       : new Intl.DateTimeFormat(locale, ABSOLUTE[format]).format(date);
   const withTooltip = tooltip ?? relative;
 
   const time = (
     <time
+      ref={timeRef}
       dateTime={date.toISOString()}
       data-testid="timestamp"
       aria-label={withTooltip ? (full ? `${text} (${full})` : text) : undefined}

@@ -1917,7 +1917,7 @@ const TEAM = [
 
 function AvatarDemo(): ReactElement {
   return (
-    <div data-testid="demo-avatar" className="flex w-full flex-col gap-5 pt-16">
+    <div data-testid="demo-avatar" className="flex w-full flex-col gap-5">
       <div className="flex flex-wrap items-center gap-6">
         <AvatarGroup items={TEAM} max={4} />
         <AvatarGroup items={TEAM} max={3} size="sm" />
@@ -2075,22 +2075,22 @@ function HoverCardDemo(): ReactElement {
           Anna Muster
         </HoverCardTrigger>
         <HoverCardContent className="w-80">
-          <div className="flex gap-3">
+          <div className="flex items-center gap-3">
             <Avatar name="Anna Muster" size="lg" status="success" statusLabel="online" />
             <div className="min-w-0">
-              <p className="font-semibold">Anna Muster</p>
-              <p className="text-xs text-muted-foreground">Key account manager · Kriens</p>
-              <MetadataList
-                className="mt-2"
-                layout="horizontal"
-                labelWidth="3.5rem"
-                items={[
-                  { label: "Phone", value: "+41 41 123 45 67" },
-                  { label: "Mail", value: "anna.muster@example.ch" },
-                ]}
-              />
+              <p className="truncate font-semibold leading-5">Anna Muster</p>
+              <p className="truncate text-xs text-muted-foreground">Key account manager · Kriens</p>
             </div>
           </div>
+          <MetadataList
+            className="mt-3 border-t border-foreground/10 pt-1 dark:border-border"
+            layout="horizontal"
+            labelWidth="3.5rem"
+            items={[
+              { label: "Phone", value: "+41 41 123 45 67" },
+              { label: "Mail", value: "anna.muster@example.ch" },
+            ]}
+          />
         </HoverCardContent>
       </HoverCard>
     </div>

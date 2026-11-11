@@ -464,7 +464,10 @@ logic above, which already had its own extraction). Structure:
     `description`, `action`, `size` `sm`/`md`, `fill` for flex parents.
     `FilteredEmptyState` is EmptyState + a Reset button (`onReset`) with
     `labels` for translation, same convention as `ErrorState`. Use
-    `ErrorState` when loading failed, not this.
+    `ErrorState` when loading failed, not this. The icon tile (hairline ring +
+    faint foreground tint, since `bg-muted` vanishes on the light surface)
+    fades and rises 4px in once on mount via Tailwind's `starting:` variant
+    (200ms ease-out, fade only under reduced motion; `animated={false}` = static).
   - `toast/` — `toast()` + `<Toaster>` (v0.20.0), ported from OneDocs's
     zustand toastStore/Toaster but with a dependency-free module store read
     via `useSyncExternalStore`, so `toast(...)` works from anywhere (query
@@ -475,7 +478,14 @@ logic above, which already had its own extraction). Structure:
     Animations API animation *is* the timer in browsers (so pausing the bar
     and the countdown can't drift); jsdom has no `element.animate`, so a
     pausable `setTimeout` stands in there — tests exercise that path. Enter/
-    exit are plain `transition` toggles, no `tailwindcss-animate`.
+    exit are plain `transition` toggles, no `tailwindcss-animate`: a toast
+    slides 8px in from the toaster's edge at 97% scale (200ms ease-out) and
+    fades/shrinks out (150ms ease-in, = `TOAST_EXIT_MS`); each sits in a
+    `grid-rows-[0fr→1fr]` row whose padding is the gap, so the stack reflows
+    smoothly when one arrives or leaves. Reduced motion keeps only the fade;
+    `<Toaster animated={false}>` is instant. Surface is `bg-popover` — the
+    theme has no `--card` token, so the earlier `bg-card` rendered the toast
+    transparent over the page.
   - `date-input/` — `DateInput` (v0.20.0), ported from OneDocs's
     `DateField` + `lib/dateField`: a text field that shows and parses the
     given `locale` (default `de-CH`, dd.mm.yyyy) while the value stays an
@@ -505,6 +515,26 @@ logic above, which already had its own extraction). Structure:
     mode, so the default progress fill is `bg-primary dark:bg-ring`; and
     `--border` is near-invisible on the light surface, so frames/dividers that
     must be seen use `border-foreground/10`.
+    Motion (CSS transitions, `starting:` and Radix `data-*` attributes or the Web
+    Animations API only — no keyframes CSS shipped, 100–200ms, ease-out in /
+    ease-in out, transform/opacity, `motion-reduce:` drops all movement):
+    ProgressBar fill animates width/colour (300ms), indeterminate slides via
+    WAAPI, CircularProgress animates its stroke offset; `StatusDot` `pulse` is a
+    WAAPI ring ripple (scale 1→2.6 while fading, 2s loop with a rest — replaces
+    `animate-ping`); `CollapsibleSection` chevron rotates and content fades
+    with the grid-rows height (in 200ms ease-out, out 150ms ease-in);
+    `HoverCard` fades + scales from 96% and nudges 4px from its side via
+    `starting:`, and gets a real 120ms exit — Radix's Presence only waits for
+    CSS keyframe animations, so the `HoverCard` root keeps Radix `open` for
+    120ms after closing and marks the content `data-exiting` (`animated={false}`
+    skips both); `Avatar` cross-fades the photo over its initials (initials stay
+    mounted, faded); `AvatarGroup` stacks earlier avatars on top (status dots
+    stay visible) and fans out 3px per avatar on hover/focus-within
+    (`animated`); `Kbd` caps press down 1px inside an `:active` button/link or
+    with the new `pressed` prop (also on `KeyCombo`); `MetadataList`'s copy
+    button morphs clipboard → check (stacked icons, scale+fade 150ms);
+    `Timestamp` cross-fades its text (WAAPI, 40%→100% opacity) when a live
+    relative value ticks (`animated`).
   - Layout set (v0.21.0): `page-header/` — `PageHeader`, OneSales's
     `ui/PageHeader` API (45 importers: `title`/`badge`/`description`/
     `actions`/`onBack`, same `page-header-*` test ids) rendered inline instead

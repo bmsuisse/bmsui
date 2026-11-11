@@ -119,7 +119,7 @@ export const ProgressBar = ({
         ) : (
           <div
             className={cn(
-              "h-full rounded-full transition-[width] duration-300 ease-out motion-reduce:transition-none",
+              "h-full rounded-full transition-[width,background-color] duration-300 ease-out motion-reduce:transition-none",
               FILL[tone],
             )}
             style={{ width: `${percent}%` }}
@@ -200,7 +200,7 @@ export const CircularProgress = ({
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={circumference * (1 - percent / 100)}
-          className={cn("transition-[stroke-dashoffset] duration-300 ease-out motion-reduce:transition-none", STROKE[tone])}
+          className={cn("transition-[stroke-dashoffset,stroke] duration-300 ease-out motion-reduce:transition-none", STROKE[tone])}
         />
       </svg>
       {showValue && valueText ? (

@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../../src/primitives/collapsible";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "../../src/primitives/hover-card";
 
@@ -26,6 +26,48 @@ describe("HoverCard", () => {
     );
     fireEvent.focus(screen.getByText("Anna"));
     expect(await screen.findByText("Details")).toBeInTheDocument();
+  });
+});
+
+describe("HoverCard exit", () => {
+  it("keeps the card mounted with data-exiting for the exit fade, then unmounts it", () => {
+    vi.useFakeTimers();
+    try {
+      const { rerender } = render(
+        <HoverCard open>
+          <HoverCardTrigger href="#">Anna</HoverCardTrigger>
+          <HoverCardContent>Details</HoverCardContent>
+        </HoverCard>,
+      );
+      expect(screen.getByTestId("hover-card")).not.toHaveAttribute("data-exiting");
+      rerender(
+        <HoverCard open={false}>
+          <HoverCardTrigger href="#">Anna</HoverCardTrigger>
+          <HoverCardContent>Details</HoverCardContent>
+        </HoverCard>,
+      );
+      expect(screen.getByTestId("hover-card")).toHaveAttribute("data-exiting");
+      act(() => vi.advanceTimersByTime(200));
+      expect(screen.queryByTestId("hover-card")).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("closes instantly when animated is false", () => {
+    const { rerender } = render(
+      <HoverCard open animated={false}>
+        <HoverCardTrigger href="#">Anna</HoverCardTrigger>
+        <HoverCardContent>Details</HoverCardContent>
+      </HoverCard>,
+    );
+    rerender(
+      <HoverCard open={false} animated={false}>
+        <HoverCardTrigger href="#">Anna</HoverCardTrigger>
+        <HoverCardContent>Details</HoverCardContent>
+      </HoverCard>,
+    );
+    expect(screen.queryByTestId("hover-card")).toBeNull();
   });
 });
 
