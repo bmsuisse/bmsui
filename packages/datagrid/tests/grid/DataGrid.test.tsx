@@ -363,6 +363,21 @@ describe("DataGrid (row/header actions)", () => {
   });
 });
 
+describe("DataGrid (columnOrder)", () => {
+  it("renders headers in columnOrder's order instead of columns' order", () => {
+    render(
+      <DataGrid
+        columns={columns}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        columnOrder={["age", "name"]}
+      />,
+    );
+    const headers = screen.getAllByRole("columnheader").map((h) => h.textContent ?? "");
+    expect(headers.findIndex((h) => /Age/.test(h))).toBeLessThan(headers.findIndex((h) => /Name/.test(h)));
+  });
+});
+
 describe("DataGrid (columnVisibility)", () => {
   it("renders every column when columnVisibility is omitted", () => {
     render(

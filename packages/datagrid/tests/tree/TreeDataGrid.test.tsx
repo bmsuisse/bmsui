@@ -526,6 +526,22 @@ describe("TreeDataGrid (selection)", () => {
   });
 });
 
+describe("TreeDataGrid (columnOrder)", () => {
+  it("renders headers in columnOrder's order, keeping the tree column by id", () => {
+    render(
+      <TreeDataGrid
+        columns={twoColumns}
+        data={eagerTree}
+        getRowId={(row) => row.id}
+        getChildren={(row) => row.children}
+        columnOrder={["id", "name"]}
+      />,
+    );
+    const headers = screen.getAllByRole("columnheader").map((h) => h.textContent ?? "");
+    expect(headers.indexOf("ID")).toBeLessThan(headers.indexOf("Name"));
+  });
+});
+
 describe("TreeDataGrid (columnVisibility)", () => {
   it("renders every column when columnVisibility is omitted", () => {
     render(

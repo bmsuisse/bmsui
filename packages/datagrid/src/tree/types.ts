@@ -73,6 +73,14 @@ export interface TreeDataGridProps<TRow> extends TreeAccessors<TRow> {
    */
   columnVisibility?: ColumnVisibility;
   /**
+   * Column ids in display order -- same contract as `<DataGrid>`'s own
+   * `columnOrder`. Reordering the `treeColumnId` column (or, when that's
+   * omitted, whichever column ends up first) is not special-cased: the tree
+   * column is looked up by id, so it keeps its indentation wherever it lands;
+   * without `treeColumnId`, the first column *in `columns`* stays the tree one.
+   */
+  columnOrder?: string[];
+  /**
    * Fetches a node's children on demand. Omit this entirely for a fully
    * eager tree (all children already present via `getChildren`) — a node
    * with `hasChildren(row)` true but no `onLoadChildren` is treated as a

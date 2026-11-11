@@ -149,6 +149,7 @@ export function TreeDataGrid<TRow>({
   statusLabels,
   treeColumnId,
   columnVisibility,
+  columnOrder,
   getRowId,
   getChildren,
   hasChildren,
@@ -286,7 +287,7 @@ export function TreeDataGrid<TRow>({
   // convention as `<DataGrid>`'s own `visibleColumns` — every other
   // representation below (the header/body column loops, `bodyTdClassByColumn`,
   // `totalColumnCount`) derives from this, not from `columns` directly.
-  const visibleColumns = useVisibleColumns(columns, columnVisibility);
+  const visibleColumns = useVisibleColumns(columns, columnVisibility, columnOrder);
 
   // Needed before `groupedRender` below — which buckets count as "currently
   // visible" depends on which groups are expanded. Shared with `<DataGrid>`'s

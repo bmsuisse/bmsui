@@ -271,6 +271,7 @@ export function DataGrid<TRow extends RowData>({
   enableMultiSort = false,
   initialState,
   columnVisibility,
+  columnOrder,
   renderDetail,
   enableColumnResizing = false,
   columnResizeMode = "onChange",
@@ -393,7 +394,7 @@ export function DataGrid<TRow extends RowData>({
   // directly — otherwise two derived views of the same visibility could
   // disagree with each other. Shared with `<TreeDataGrid>`'s own
   // `columnVisibility` support via `useVisibleColumns`.
-  const visibleColumns = useVisibleColumns(columns, columnVisibility);
+  const visibleColumns = useVisibleColumns(columns, columnVisibility, columnOrder);
 
   // Depend on dataSource.mode/.data (and .rowCount, only in server mode)
   // rather than on `dataSource` itself — a caller that inlines

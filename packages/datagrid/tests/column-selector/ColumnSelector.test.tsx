@@ -432,6 +432,42 @@ describe("ColumnSelector: reset", () => {
     expect(screen.getByRole("button", { name: "Reset columns" })).toBeEnabled();
   });
 
+  it("also restores the declared column order, clearing the persisted order", async () => {
+    writePersistedColumnOrder("orders", ["phone", "id"]);
+    const onColumnOrderChange = vi.fn();
+    render(
+      <ColumnSelector
+        columns={columns}
+        visibility={{}}
+        onVisibilityChange={vi.fn()}
+        persistKey="orders"
+        defaultVisibility={{}}
+        columnOrder={["phone", "id", "name", "email"]}
+        onColumnOrderChange={onColumnOrderChange}
+      />,
+    );
+    await openDialog();
+    onColumnOrderChange.mockClear();
+    await userEvent.click(screen.getByRole("button", { name: "Reset columns" }));
+    expect(onColumnOrderChange).toHaveBeenCalledWith(columns.map((c) => c.id));
+    expect(window.localStorage.getItem(orderStorageKeyFor("orders"))).toBeNull();
+  });
+
+  it("stays enabled while the column order differs from the declared one", async () => {
+    render(
+      <ColumnSelector
+        columns={columns}
+        visibility={{}}
+        onVisibilityChange={vi.fn()}
+        defaultVisibility={{}}
+        columnOrder={["email", "name"]}
+        onColumnOrderChange={vi.fn()}
+      />,
+    );
+    await openDialog();
+    expect(screen.getByRole("button", { name: "Reset columns" })).toBeEnabled();
+  });
+
   it("restores the defaults, clears the persisted entry and calls onReset", async () => {
     writePersistedVisibility("orders", { email: false });
     const onVisibilityChange = vi.fn();
