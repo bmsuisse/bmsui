@@ -37,7 +37,8 @@ export interface RadioListProps<T extends string = string> {
  * move the selection. `variant="card"` for prominent choices (plans, shipping
  * methods). Use `SegmentedControl` for short view switches without
  * descriptions, `Select`/`Combobox` for more than ~6 options. For your own
- * layout use the `RadioGroup` + `RadioGroupItem` primitives.
+ * layout use the `RadioGroup` + `RadioGroupItem` primitives. The dot scales in
+ * on select; cards cross-fade their border and tint (150 ms ease-out).
  */
 export function RadioList<T extends string = string>({
   options,
@@ -86,7 +87,7 @@ export function RadioList<T extends string = string>({
               "group flex items-start gap-3 text-sm",
               optionDisabled ? "cursor-not-allowed opacity-50" : "cursor-pointer",
               card &&
-                "rounded-md border border-input bg-background p-3 shadow-sm transition-colors has-[:focus-visible]:ring-1 has-[:focus-visible]:ring-ring has-[[data-state=checked]]:border-ring has-[[data-state=checked]]:bg-accent/5",
+                "rounded-md border border-input bg-background p-3 shadow-sm transition-[color,background-color,border-color,box-shadow] duration-150 ease-out has-[:focus-visible]:ring-1 has-[:focus-visible]:ring-ring has-[[data-state=checked]]:border-ring has-[[data-state=checked]]:bg-accent/5",
               card && !optionDisabled && "hover:border-muted-foreground/40",
               card && orientation === "horizontal" && "min-w-40 flex-1",
             )}
@@ -98,7 +99,7 @@ export function RadioList<T extends string = string>({
               aria-labelledby={labelId}
               aria-describedby={descriptionId}
               // The label already fades disabled options; don't fade the circle twice.
-              className={cn("mt-0.5 disabled:opacity-100", card && "focus-visible:ring-0 focus-visible:ring-offset-0")}
+              className={cn("mt-0.5 disabled:opacity-100 group-hover:enabled:border-muted-foreground", card && "focus-visible:ring-0 focus-visible:ring-offset-0")}
             />
             <span className="grid gap-0.5">
               <span id={labelId} className="font-medium leading-5 text-foreground">

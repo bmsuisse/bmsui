@@ -1860,10 +1860,10 @@ function CalendarDemo(): ReactElement {
       </Card>
       <div className="grid w-72 gap-4">
         <DemoField label="DatePicker" note={`value: ${due || "—"}`}>
-          <DatePicker value={due} onValueChange={setDue} data-testid="demo-date-picker" />
+          <DatePicker value={due} onValueChange={setDue} today="2026-11-10" data-testid="demo-date-picker" />
         </DemoField>
         <DemoField label="DateRangePicker" note={`${period.from || "…"} → ${period.to || "…"}`}>
-          <DateRangePicker value={period} onValueChange={setPeriod} data-testid="demo-date-range-picker" />
+          <DateRangePicker value={period} onValueChange={setPeriod} today="2026-11-10" data-testid="demo-date-range-picker" />
         </DemoField>
         <DemoField label="DatePicker (sm, disabled)">
           <DatePicker value="2026-12-24" onValueChange={() => {}} size="sm" disabled />

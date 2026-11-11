@@ -19,7 +19,17 @@ export const defaultDatePickerLabels: DatePickerLabels = {
   nextMonth: "Next month",
 };
 
-type PassThroughCalendarProps = Pick<CalendarProps, "isDateDisabled" | "weekStartsOn" | "today">;
+type PassThroughCalendarProps = Pick<CalendarProps, "isDateDisabled" | "weekStartsOn" | "today" | "animated">;
+
+// Enter: fade + scale from the trigger side (Radix sets the transform origin). The exit is
+// instant — Radix unmounts on close and only waits for CSS keyframe animations, which this
+// package doesn't ship.
+const popoverMotion = (animated: boolean) =>
+  cn(
+    "w-auto p-0",
+    animated &&
+      "origin-(--radix-popover-content-transform-origin) transition-[opacity,scale] duration-150 ease-out starting:scale-95 starting:opacity-0 motion-reduce:starting:scale-100",
+  );
 
 export interface DatePickerProps extends Omit<DateInputProps, "size">, PassThroughCalendarProps {
   /** `sm` = h-8. @default "default" */
@@ -39,10 +49,13 @@ const triggerTestId = (testId: unknown, suffix: string) => (typeof testId === "s
  * `DateInput`; `min`/`max` limit both the typed and the picked day. Use it for
  * any date field where people may not know the exact date by heart; keep plain
  * `DateInput` for dense tables. `ref` and input props go to the `<input>`.
+ * The calendar popover fades and scales in from the button (150 ms ease-out,
+ * no scale with reduced motion); `animated={false}` turns this and the
+ * calendar's own motion off.
  */
 export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
   (
-    { value, onValueChange, locale = "de-CH", min, max, isDateDisabled, weekStartsOn, today, size = "default", wrapperClassName, container, labels, className, disabled, ...props },
+    { value, onValueChange, locale = "de-CH", min, max, isDateDisabled, weekStartsOn, today, animated = true, size = "default", wrapperClassName, container, labels, className, disabled, ...props },
     ref,
   ) => {
     const l = { ...defaultDatePickerLabels, ...labels };
@@ -70,7 +83,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
               max={max}
               disabled={disabled}
               className={cn(
-                "h-full flex-1 rounded-none border-0 bg-transparent pr-1 shadow-none focus-visible:ring-0",
+                "h-full flex-1 rounded-none border-0 bg-transparent pb-[5px] pr-1 shadow-none focus-visible:ring-0",
                 size === "sm" && "px-2.5 text-xs",
                 className,
               )}
@@ -84,7 +97,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
         </PopoverAnchor>
         <PopoverContent
           container={container}
-          className="w-auto p-0"
+          className={popoverMotion(animated)}
           align="end"
           onOpenAutoFocus={(e) => e.preventDefault()}
           onCloseAutoFocus={(e) => {
@@ -108,6 +121,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
             isDateDisabled={isDateDisabled}
             weekStartsOn={weekStartsOn}
             today={today}
+            animated={animated}
             labels={{ previousMonth: l.previousMonth, nextMonth: l.nextMonth }}
             data-testid={triggerTestId(testId, "calendar")}
           />
@@ -151,7 +165,7 @@ export interface DateRangePickerProps extends PassThroughCalendarProps {
  * Two typed day fields ("from – to") in one box plus a calendar popover that
  * picks the range with two clicks. Each end commits like `DateInput`; a typed
  * `from` after `to` (or the reverse) swaps them. Use it for period filters and
- * validity ranges.
+ * validity ranges. Same popover/calendar motion as `DatePicker` (`animated`).
  */
 export function DateRangePicker({
   value,
@@ -168,6 +182,7 @@ export function DateRangePicker({
   isDateDisabled,
   weekStartsOn,
   today,
+  animated = true,
   ...props
 }: DateRangePickerProps): ReactElement {
   const l = { ...defaultDateRangePickerLabels, ...labels };
@@ -181,10 +196,11 @@ export function DateRangePicker({
     const ordered = next.from && next.to && next.to < next.from ? { from: next.to, to: next.from } : next;
     onValueChange(ordered);
   };
-  // Fixed widths (fit dd.mm.yyyy) keep "from – to" together; the spacer pushes the button right.
+  // Each field is as wide as its text (`field-sizing: content`, else a fixed width that fits
+  // dd.mm.yyyy), so the dash sits evenly between the two dates; the spacer pushes the button right.
   const field = cn(
-    "h-full min-w-0 flex-none rounded-none border-0 bg-transparent shadow-none focus-visible:ring-0",
-    "tabular-nums",
+    "h-full min-w-0 flex-none rounded-none border-0 bg-transparent pb-[5px] shadow-none focus-visible:ring-0",
+    "tabular-nums supports-[field-sizing:content]:w-auto supports-[field-sizing:content]:[field-sizing:content]",
     size === "sm" ? "px-2.5 text-xs" : "px-3",
   );
 
@@ -208,7 +224,7 @@ export function DateRangePicker({
             max={max}
             disabled={disabled}
             name={name?.from}
-            className={cn(field, "w-[calc(10ch+1rem)] pr-1", size === "sm" && "w-[calc(10ch+0.875rem)]")}
+            className={cn(field, "w-[calc(9.5ch+1.25rem)] pr-1.5", size === "sm" && "w-[calc(9.5ch+1rem)]")}
             data-testid={triggerTestId(testId, "from")}
           />
           <span aria-hidden="true" className="shrink-0 text-muted-foreground">
@@ -223,7 +239,7 @@ export function DateRangePicker({
             max={max}
             disabled={disabled}
             name={name?.to}
-            className={cn(field, "w-[calc(10ch+1rem)] pl-1.5 pr-1", size === "sm" && "w-[calc(10ch+0.75rem)] pl-1.5")}
+            className={cn(field, "w-[calc(9.5ch+0.75rem)] pl-1.5 pr-1.5", size === "sm" && "w-[calc(9.5ch+0.75rem)] pl-1.5")}
             data-testid={triggerTestId(testId, "to")}
           />
           <span className="flex-1" />
@@ -236,7 +252,7 @@ export function DateRangePicker({
       </PopoverAnchor>
       <PopoverContent
         container={container}
-        className="w-auto p-0"
+        className={popoverMotion(animated)}
         align="end"
         onOpenAutoFocus={(e) => e.preventDefault()}
         onCloseAutoFocus={(e) => {
@@ -266,6 +282,7 @@ export function DateRangePicker({
           isDateDisabled={isDateDisabled}
           weekStartsOn={weekStartsOn}
           today={today}
+          animated={animated}
           labels={{ previousMonth: l.previousMonth, nextMonth: l.nextMonth }}
           data-testid={triggerTestId(testId, "calendar")}
         />

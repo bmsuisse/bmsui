@@ -25,7 +25,8 @@ export interface InputGroupProps extends HTMLAttributes<HTMLDivElement> {
  * </InputGroup>
  * ```
  * Use it instead of absolutely positioning icons over an `Input`. For a
- * stand-alone search field use `SearchBar`.
+ * stand-alone search field use `SearchBar`. The group's focus ring and
+ * border fade in over 150 ms; buttons press to 95 %.
  */
 export const InputGroup = forwardRef<HTMLDivElement, InputGroupProps>(({ size = "default", className, onClick, ...props }, ref) => (
   <SizeContext.Provider value={size}>
@@ -35,7 +36,7 @@ export const InputGroup = forwardRef<HTMLDivElement, InputGroupProps>(({ size = 
       data-testid="input-group"
       data-size={size}
       className={cn(
-        "flex w-full min-w-0 items-center rounded-md border border-input bg-transparent shadow-sm transition-colors",
+        "flex w-full min-w-0 items-center rounded-md border border-input bg-transparent shadow-sm transition-[color,background-color,border-color,box-shadow] duration-150 ease-out",
         "focus-within:ring-1 focus-within:ring-ring",
         "has-[input:disabled]:cursor-not-allowed has-[input:disabled]:opacity-50",
         "has-[[aria-invalid=true]]:border-destructive has-[[aria-invalid=true]]:ring-destructive",
@@ -80,6 +81,9 @@ export const InputGroupInput = forwardRef<HTMLInputElement, InputProps>(({ class
       ref={ref}
       className={cn(
         "h-full flex-1 rounded-none border-0 bg-transparent shadow-none focus-visible:ring-0",
+        // 1px more at the bottom lifts the text half a pixel so it shares a baseline with
+        // addon text and button labels (input text otherwise renders ~1px lower).
+        "pb-[5px]",
         "[&:not(:first-child)]:pl-2 [&:not(:last-child)]:pr-2",
         size === "sm" ? "px-2.5 text-xs" : "",
         className,
@@ -101,10 +105,11 @@ export const InputGroupButton = forwardRef<HTMLButtonElement, ButtonProps>(
         variant={variant}
         size={size ?? (groupSize === "sm" ? "icon-xs" : "icon-sm")}
         className={cn(
-          "shrink-0 first:ml-0.5 last:mr-0.5",
+          "shrink-0 transition-[color,background-color,scale] duration-150 ease-out first:ml-0.5 last:mr-0.5 active:scale-95 motion-reduce:scale-none!",
           groupSize === "sm" ? "h-6 [&_svg]:size-3.5" : "h-7",
           size == null && (groupSize === "sm" ? "w-6" : "w-7"),
-          variant === "ghost" && "text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground",
+          variant === "ghost" &&
+            "text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground data-[state=open]:bg-muted-foreground/10 data-[state=open]:text-foreground",
           className,
         )}
         {...props}

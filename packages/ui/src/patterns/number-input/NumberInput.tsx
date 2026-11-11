@@ -49,7 +49,8 @@ export interface NumberInputProps
  * number marks the field `aria-invalid` and keeps the previous value.
  * ArrowUp/ArrowDown (and the optional `stepper` buttons) step by `step`.
  * `ref`, `data-testid` and other input props go to the `<input>`; with `name`, a
- * hidden input submits the plain number.
+ * hidden input submits the plain number. The focus ring fades in (150 ms);
+ * stepper buttons darken and nudge their chevron 1px while pressed.
  */
 export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
   (
@@ -142,7 +143,7 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
           ref={ref}
           {...props}
           className={cn(
-            "tabular-nums aria-[invalid=true]:border-destructive aria-[invalid=true]:ring-destructive",
+            "tabular-nums transition-[color,background-color,border-color,box-shadow] duration-150 ease-out aria-[invalid=true]:border-destructive aria-[invalid=true]:ring-destructive",
             sm && "h-8 px-2.5 text-xs",
             stepper && (sm ? "pr-7" : "pr-8"),
             inputClassName,
@@ -194,6 +195,7 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
             className={cn(
               "absolute inset-y-px right-px flex flex-col overflow-hidden rounded-r-[calc(var(--radius-md,0.375rem)-1px)] border-l border-input",
               sm ? "w-6" : "w-7",
+              // The whole field fades once (like the input); the buttons don't fade again on top.
               disabled && "opacity-50",
             )}
           >
@@ -214,7 +216,11 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={(e) => stepBy(direction, e.shiftKey ? 10 : 1)}
                 className={cn(
-                  "flex flex-1 items-center justify-center text-muted-foreground transition-colors hover:bg-muted-foreground/10 hover:text-foreground disabled:pointer-events-none disabled:opacity-40",
+                  "flex flex-1 items-center justify-center text-muted-foreground transition-colors duration-150 ease-out hover:bg-muted-foreground/10 hover:text-foreground active:bg-muted-foreground/20 disabled:pointer-events-none",
+                  // Press feedback: the chevron nudges 1px in the step direction.
+                  "[&>svg]:transition-transform [&>svg]:duration-100 [&>svg]:ease-out motion-reduce:[&>svg]:transition-none",
+                  direction > 0 ? "active:[&>svg]:-translate-y-px" : "active:[&>svg]:translate-y-px",
+                  !disabled && "disabled:opacity-40",
                   direction < 0 && "border-t border-input",
                 )}
               >

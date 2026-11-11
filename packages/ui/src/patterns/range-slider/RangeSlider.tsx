@@ -35,6 +35,8 @@ export interface RangeSliderProps {
   /** Unit shown after each input (`CHF`, `%`). */
   unit?: string;
   disabled?: boolean;
+  /** Let the fill and thumbs glide to typed or keyboard-stepped bounds (see `Slider`). @default true */
+  animated?: boolean;
   labels?: Partial<RangeSliderLabels>;
   className?: string;
   "data-testid"?: string;
@@ -44,7 +46,8 @@ export interface RangeSliderProps {
  * Two-thumb slider for a numeric range filter (price, area, quantity) with
  * typed min/max fields underneath, kept in sync: drag for a rough range, type
  * for an exact bound. A typed low above the high (or the reverse) is clamped to
- * the other bound. For a single value use the `Slider` primitive.
+ * the other bound. For a single value use the `Slider` primitive. A typed
+ * bound glides the thumb to its new place (`animated`).
  */
 export function RangeSlider({
   value,
@@ -59,6 +62,7 @@ export function RangeSlider({
   decimals,
   unit,
   disabled,
+  animated = true,
   labels,
   className,
   ...props
@@ -104,6 +108,7 @@ export function RangeSlider({
         step={step}
         minStepsBetweenThumbs={minStepsBetween}
         disabled={disabled}
+        animated={animated}
         thumbLabels={[l.min, l.max]}
         getValueText={(v) => formatLocaleNumber(v, locale, { decimals })}
         onValueChange={(v) => onValueChange([v[0] ?? min, v[1] ?? max])}
