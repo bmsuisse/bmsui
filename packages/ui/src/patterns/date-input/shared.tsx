@@ -68,4 +68,6 @@ export const DateInputMessage = ({ id, message }: { id: string; message: string 
   </p>
 );
 
-export const invalidClass = "aria-[invalid=true]:border-destructive aria-[invalid=true]:ring-destructive";
+/** Tabular digits so dates line up in columns, a 150 ms focus-ring fade, and the invalid look. */
+export const invalidClass =
+  "tabular-nums transition-[color,background-color,border-color,box-shadow] duration-150 ease-out aria-[invalid=true]:border-destructive aria-[invalid=true]:ring-destructive";

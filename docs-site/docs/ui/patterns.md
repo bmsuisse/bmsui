@@ -118,6 +118,124 @@ else 4s (errors 8s). `position` is `bottom-center` (default), `bottom-left`,
 `bottom-right`, `top-center`, `top-left` or `top-right`; `labels` translates
 the region name and the dismiss button.
 
+### `MetadataList`
+
+Label/value pairs for detail pages and side panels, rendered as a `<dl>`.
+
+```tsx
+<MetadataList
+  columns={2}                       // 1 on phones, 2 from sm
+  copyable                          // copy button on string/number values
+  items={[
+    { label: "Customer no.", value: customer.number },
+    { label: "Phone", value: customer.phone },            // null → "—"
+    { label: "Address", value: address, fullWidth: true },
+    { label: "Owner", value: <Avatar name={owner} size="xs" />, copyable: false },
+  ]}
+/>
+<MetadataList layout="horizontal" divided labelWidth="8rem" items={…} />
+```
+
+`layout="vertical"` (default) stacks label over value; `horizontal` puts the
+label in a fixed column. `copyValue` sets the clipboard text when `value` is a
+node. `labels` translates the placeholder and the copy button.
+
+### `ProgressBar` / `CircularProgress`
+
+```tsx
+<ProgressBar value={42} label="Upload offer.pdf" />                       {/* 42% on the right */}
+<ProgressBar value={18} max={24} label="Files" formatValue={(v, m) => `${v} / ${m}`} tone="success" />
+<ProgressBar label="Preparing export…" />                                 {/* indeterminate */}
+<CircularProgress value={70} aria-label="Import" size={44} showValue />
+```
+
+`role="progressbar"` with `aria-valuenow`/`-valuetext`; no `value` = indeterminate
+(`aria-busy`, sliding segment via the Web Animations API, static under reduced
+motion). Tones `default` `success` `warning` `error`; sizes `sm` `md` `lg`.
+Without a visible `label`, pass `aria-label`.
+
+### `Timestamp`
+
+```tsx
+<Timestamp value={row.modifiedAt} />                      {/* "vor 5 Min.", full date in a tooltip */}
+<Timestamp value={row.createdAt} format="datetime" />      {/* 10.11.2026, 14:05 */}
+<Timestamp value={iso} locale="en-GB" relativeStyle="long" />
+```
+
+Renders `<time dateTime>`. `value` is a `Date`, ISO string or epoch
+milliseconds. Formats: `relative` (default), `date`, `datetime`, `time`.
+`locale` defaults to `de-CH`. Relative text refreshes itself (every 10s while
+under a minute, slowing to hourly); `live={false}` freezes it. `tooltip`
+defaults to on for `relative`. `formatRelativeTime(date, now, locale)` is
+exported for strings outside JSX.
+
+### `Kbd` / `KeyCombo` / `ShortcutSheet`
+
+```tsx
+<KeyCombo keys="Mod+K" />                 {/* ⌘ K on a Mac, Ctrl K elsewhere */}
+<KeyCombo keys="g o" />                   {/* G then O */}
+<KeyCombo keys={["j", "ArrowDown"]} size="sm" labels={{ or: "oder" }} />
+<ShortcutSheet open={open} onOpenChange={setOpen} groups={SHORTCUT_GROUPS} />
+```
+
+`+` joins keys pressed together, a space separates a sequence, an array lists
+alternatives. `Mod` is ⌘ on Apple platforms and Ctrl elsewhere (`mac` forces
+one). `ShortcutSheet` is the "?" dialog: groups with a title, optional hint,
+and rows of `{ label, keys }`. The app owns the open state and the key
+listener; build both from one list so they can't drift.
+
+### `Avatar` / `AvatarGroup`
+
+```tsx
+<Avatar name="Anna Muster" src={photoUrl} status="success" statusLabel="online" />
+<Avatar name="Sika Schweiz AG" shape="square" fit="contain" src={favicon} size="lg" />
+<AvatarGroup items={team} max={4} labels={{ more: (n) => `${n} weitere` }} />
+```
+
+Initials (from the name or an email) show while the image loads and when it
+fails, in a color derived from the name — the same person gets the same color
+everywhere. Sizes `xs` `sm` `md` `lg` `xl`. `AvatarGroup` overlaps up to `max`
+and shows "+N" with a tooltip listing the hidden names (never "+1": the last
+avatar is shown instead).
+
+### `CollapsibleSection`
+
+```tsx
+<CollapsibleSection title="Attachments" count={files.length} actions={<Button size="xs" variant="ghost">Add</Button>}>
+  …
+</CollapsibleSection>
+<CollapsibleSection variant="card" title="Internal notes" defaultOpen={false}>…</CollapsibleSection>
+```
+
+Chevron + title + count pill; `actions` sit outside the toggle. Height
+animates with a CSS grid-rows transition (instant under reduced motion). The
+content stays mounted while closed (form state survives) but is `inert`. For a
+bare toggle use the `Collapsible` primitive.
+
+### `HoverCard`
+
+```tsx
+<HoverCard>
+  <HoverCardTrigger href={`/users/${id}`}>Anna Muster</HoverCardTrigger>
+  <HoverCardContent className="w-80"><UserPreview id={id} /></HoverCardContent>
+</HoverCard>
+```
+
+Radix HoverCard with a 300ms open / 150ms close delay. It opens on hover and
+keyboard focus, not on touch — keep it an extra, never the only way to reach
+the information. Click-to-open content belongs in a `Popover`.
+
+### `StatusDot`
+
+```tsx
+<StatusDot status="active" />                     {/* green dot + "Active" */}
+<StatusDot tone="success" label="Online" pulse />
+<StatusDot status={row.state} toneMap={{ offen: "info" }} hideLabel />
+```
+
+Same tones and status vocabulary as `StatusBadge`, for places where a pill is
+too loud (table cells, presence). `hideLabel` keeps the text for screen readers.
+
 ### `DateInput`
 
 A day field in the app's locale instead of the browser's own `type="date"`
@@ -144,6 +262,245 @@ format. The value is an ISO day (`"2026-11-10"`, `""` for none).
   `onInvalidChange(true, reason)`, and sets the field's native validity so a surrounding `<form>` won't submit it.
 - With `name`, a hidden input submits the ISO day. `parseIsoDay`, `formatIsoDay`, `shiftIsoDay`, `datePlaceholder` and
   `toLocalIsoDay` are exported for use outside the field.
+
+### `PageHeader` / `Breadcrumbs`
+
+The top of a page. Same props as OneSales's `ui/PageHeader` (`title`,
+`badge`, `description`, `actions`, `onBack`) plus `backHref`, `breadcrumbs`,
+`tabs` and `divider`; it renders inline instead of publishing into a shell
+store. Actions wrap below the title on narrow screens.
+
+```tsx
+<PageHeader
+  breadcrumbs={<Breadcrumbs items={[{ label: "Customers", href: "/customers" }, { label: customer.name }]} />}
+  onBack={() => navigate(-1)}
+  title={customer.name}
+  badge="beta"
+  description="Key account since 2014"
+  actions={<Button size="sm">New offer</Button>}
+  tabs={<TabsList>…</TabsList>}
+  labels={{ back: t("common.back") }}
+/>
+```
+
+`Breadcrumbs` is a `nav` > `ol` with the last item as `aria-current="page"`.
+Past `maxItems` (default 4) the middle crumbs fold into a "…" dropdown
+(`itemsBeforeCollapse`/`itemsAfterCollapse` choose what stays). Pass
+`renderLink={({ href, className, children }) => <Link to={href} className={className}>{children}</Link>}`
+for router links.
+
+### `TablePage` / `TableShell` / `TableToolbar`
+
+Lifted from OneSales's `ui/TableShell`: one panel in bands — toolbar → muted
+meta strip → body → footer. `TablePage` puts a `PageHeader` on top and makes
+the shell fill the remaining height, so the grid scrolls inside the panel and
+header and pager stay put (give the parent a height).
+
+```tsx
+<TablePage
+  title="Offers"
+  actions={<Button size="sm">New offer</Button>}
+  toolbar={
+    <TableToolbar
+      search={<TableSearch value={q} onChange={setQ} placeholder="Search offers…" />}
+      filters={<StatusFilter />}
+      actions={<RefreshButton />}
+    />
+  }
+  meta={<TableResultCount shown={rows.length} total={total} />}
+  footer={<Pagination page={page} onPageChange={setPage} totalItems={total} pageSize={25} />}
+>
+  <DataGrid … />
+</TablePage>
+```
+
+No dependency on `@bmsuisse/datagrid`: the body takes any table or list.
+`flush` drops the panel border for a shell inside a card; `fill` (default on
+`TablePage`) makes the body a `min-h-0 flex-1` column. `TableResultCount`
+reads "48 results", "12 of 48" or "48+ loaded" (`labels` translate; numbers
+use `locale`, default `"de-CH"`). `TableShell`, `TableToolbar` and
+`TableResultCount` take `data-testid`; the old `testId` prop still works as a
+deprecated alias for OneSales.
+
+### `Pagination`
+
+```tsx
+<Pagination
+  page={page}
+  onPageChange={setPage}
+  totalItems={312}
+  pageSize={pageSize}
+  pageSizeOptions={[25, 50, 100]}
+  onPageSizeChange={setPageSize}
+/>
+```
+
+Shows first/last page, the current page and `siblingCount` (default 1) pages
+around it with "…" gaps, keeping the slot count constant so the bar doesn't
+jump (Astryx's rules; `getPageRange` is exported). Below `sm` — or always
+with `compact` — it collapses to prev / "3 / 13" / next. Pass `pageCount`
+instead of `totalItems` when the total is unknown; `labels` translate every
+string including the "1–25 of 312" range; `locale` (default `"de-CH"`)
+formats its numbers.
+
+### `CommandPalette`
+
+⌘K / Ctrl+K dialog for "do anything": grouped commands with icon, label,
+description, shortcut hint and `keywords`, a fuzzy-ish filter (prefix > word
+start > substring > all words in label/keywords > letters in order,
+accent-insensitive), recent commands, arrow keys/Enter/Esc and an empty
+state. Built on `Dialog` with its own list (no cmdk); the input drives the
+list via `aria-activedescendant`, like `Combobox`.
+
+```tsx
+const [open, setOpen] = useState(false);
+const { recent, push } = useRecentCommands("app");
+useCommandPaletteHotkey(() => setOpen((o) => !o));
+
+<CommandPaletteTrigger onClick={() => setOpen(true)} />   {/* top-bar pill with ⌘K hint */}
+<CommandPalette
+  open={open}
+  onOpenChange={setOpen}
+  commands={[
+    { id: "new-offer", group: "Create", label: "New offer", icon: DocumentPlusIcon, shortcut: ["⌘", "N"], keywords: ["angebot"], onSelect: createOffer },
+    { id: "delete", group: "Offer", label: "Delete offer", disabled: "Approved offers are locked", onSelect: remove },
+  ]}
+  recent={recent}
+  onCommandRun={push}
+/>
+```
+
+Registry (the idea from OneDocs's palette): wrap the shell in
+`CommandRegistryProvider` and call `useRegisterCommands(commands)` in a page —
+its commands show up in the palette while that page is mounted. An inline
+array is fine: it only re-registers when ids/labels/groups (or other display
+fields) change, and `onSelect` always calls the latest handler.
+`onQueryChange` + `loading` let you merge server results into `commands`;
+`filter` replaces the scoring; `groupOrder` fixes the section order.
+
+### `SplitPane`
+
+Two or more panes with draggable separators, lifted from OneDocs's
+`layout/Splitter`. Sizes are percentages; limits are percentages or `"240px"`.
+
+```tsx
+<SplitPane defaultSizes={[30, 70]} storageKey="offers-master-detail">
+  <SplitPanePanel minSize="200px" maxSize={50}><OfferList /></SplitPanePanel>
+  <SplitPanePanel minSize="320px"><OfferDetail /></SplitPanePanel>
+</SplitPane>
+```
+
+Separators are `role="separator"` with `aria-valuenow/min/max`; arrows move
+them by `keyboardStep` (Shift ×5), Home/End jump to the limits, Enter or
+double-click resets. Only the two neighbouring panes change. Pointer events
+are disabled inside panes while dragging, so iframes don't swallow the drag.
+`storageKey` stores the layout in `localStorage` (try/catch — blocked storage
+just doesn't persist); `onSizesCommit` fires once per drag/keypress for
+server-side persistence. `direction="vertical"` stacks the panes.
+
+### `Toolbar`
+
+A row of related controls that is one Tab stop: `role="toolbar"`, roving
+tabindex, arrow keys (up/down when `orientation="vertical"`), Home/End,
+disabled items skipped.
+
+```tsx
+<Toolbar aria-label="Text formatting">
+  <ToolbarButton label="Bold" icon={BoldIcon} pressed={bold} onClick={toggleBold} />
+  <ToolbarButton label="Italic" icon={ItalicIcon} pressed={italic} onClick={toggleItalic} />
+  <ToolbarSeparator />
+  <ToolbarButton label="Export" icon={ArrowDownTrayIcon} showLabel />
+</Toolbar>
+```
+
+Icon-only buttons get `label` as `aria-label` and tooltip. Other controls join
+the arrow-key order with a `data-toolbar-item` attribute. `overflow` measures
+the buttons and folds those that don't fit into a "…" menu (toggles become
+checkbox items). Only `ToolbarButton`s overflow — selects, wrapped buttons and
+other children always stay visible. `variant="ghost"` drops the border.
+### `NumberInput`
+
+A number field in the app locale instead of `<input type="number">`. The value
+is `number | null`.
+
+```tsx
+<NumberInput value={amount} onValueChange={setAmount} decimals={2} />       {/* 1’234.50 */}
+<NumberInput value={qty} onValueChange={setQty} min={0} max={99} stepper />
+```
+
+Reads `1234,5`, `1'234.50`, `1 234` and `1.234,56` alike; commits on blur or
+Enter; out-of-range numbers are clamped; junk sets `aria-invalid` and keeps the
+old value (`onInvalidChange`). ArrowUp/ArrowDown step by `step` (Shift ×10,
+float-safe). `size="sm"` is h-8. `parseLocaleNumber`/`formatLocaleNumber` are
+exported.
+
+### `InputGroup`
+
+Icons, units or small buttons around an input, with one border and focus ring.
+
+```tsx
+<InputGroup>
+  <InputGroupAddon>CHF</InputGroupAddon>
+  <InputGroupInput aria-label="Price" />
+  <InputGroupButton aria-label="Copy"><ClipboardDocumentIcon /></InputGroupButton>
+</InputGroup>
+```
+
+Clicking an addon focuses the input; an invalid input reddens the group.
+
+### `SegmentedControl`
+
+Compact switch between 2–5 views or modes with a sliding thumb. Radiogroup
+semantics: one tab stop, arrow keys move and select.
+
+```tsx
+<SegmentedControl aria-label="View" value={view} onValueChange={setView}
+  options={[{ value: "list", label: "List", icon: ListBulletIcon }, { value: "board", label: "Board" }]} />
+```
+
+`size="sm"`, `fullWidth`, per-option `disabled`. Use `ButtonGroup` for
+outlined connected buttons, `Tabs` when segments switch whole panels.
+
+### `RadioList` / `RadioGroup`
+
+```tsx
+<RadioList aria-label="Shipping" value={shipping} onValueChange={setShipping}
+  options={[{ value: "standard", label: "Standard", description: "3–5 days" }, …]} />
+<RadioList variant="card" orientation="horizontal" … />
+```
+
+Each radio is named by its label and described by its description.
+`RadioGroup` + `RadioGroupItem` are the bare Radix primitives for your own
+layout.
+
+### `Slider` / `RangeSlider`
+
+`Slider` is the Radix primitive (one thumb per value). `RangeSlider` is a
+two-thumb range with typed min/max `NumberInput`s:
+
+```tsx
+<Slider value={[volume]} onValueChange={([v]) => setVolume(v)} thumbLabels="Volume" />
+<RangeSlider min={0} max={10000} step={100} value={price} onValueChange={setPrice}
+  onValueCommit={refetch} unit="CHF" />
+```
+
+A typed low above the high is clamped to it. `onValueCommit` fires when a drag
+ends or a typed bound commits — use it for expensive refetches.
+
+### `FileInput`
+
+Drop zone + file dialog + removable file list. Controlled; uploading is up to
+you.
+
+```tsx
+<FileInput files={files} onFilesChange={setFiles} multiple accept=".pdf,.docx"
+  maxSize={10 * 1024 * 1024} hint="PDF or Word, up to 10 MB" />
+```
+
+Files that don't match `accept` (also enforced on drop), exceed `maxSize`, or
+go beyond `maxFiles` are refused with a visible error and passed to
+`onReject`. Without `multiple` a new file replaces the old one. `size="sm"`
+is a one-row zone. `labels` translates every string.
 
 ### `LoadingSpinner` / `LoadingOverlay`
 

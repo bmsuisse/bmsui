@@ -22,3 +22,14 @@ export type ConfirmButtonPlacement = "leading" | "trailing";
 export function getConfirmButtonPlacement(): ConfirmButtonPlacement {
   return isWindowsPlatform() ? "leading" : "trailing";
 }
+
+/**
+ * Whether the current runtime is Apple (macOS, iOS, iPadOS), where shortcuts
+ * are spelled with ⌘/⌥/⇧. `false` outside a browser.
+ */
+export function isMacPlatform(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const nav = navigator as Navigator & { userAgentData?: { platform?: string } };
+  const platform = nav.userAgentData?.platform ?? nav.platform ?? "";
+  return /mac|iphone|ipad|ipod/i.test(platform) || /Mac OS X|iPhone|iPad/i.test(nav.userAgent);
+}

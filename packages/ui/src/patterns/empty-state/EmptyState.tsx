@@ -15,6 +15,11 @@ export interface EmptyStateProps extends Omit<HTMLAttributes<HTMLDivElement>, "t
   size?: "sm" | "md";
   /** Grow to fill a flex parent and center vertically in it. */
   fill?: boolean;
+  /**
+   * The icon tile fades and rises 4px into place once on mount (200ms ease-out,
+   * fade only under reduced motion). `false` renders it static. @default true
+   */
+  animated?: boolean;
 }
 
 /**
@@ -29,6 +34,7 @@ export const EmptyState = ({
   action,
   size = "md",
   fill = false,
+  animated = true,
   className,
   ...props
 }: EmptyStateProps): ReactElement => {
@@ -38,27 +44,32 @@ export const EmptyState = ({
       data-testid="empty-state"
       className={cn(
         "flex flex-col items-center text-center",
-        sm ? "gap-1 px-4 py-4" : "gap-1.5 px-6 py-8",
+        sm ? "gap-1 px-4 py-5" : "gap-1 px-6 py-10",
         fill && "min-h-0 flex-1 justify-center",
         className,
       )}
       {...props}
     >
       {Icon ? (
+        // bg-muted alone is near-invisible on the light surface (#f8f8f8 on #fcfcfc), so the
+        // tile gets a hairline ring and a faint foreground tint that reads in both modes.
         <div
           className={cn(
-            "mb-1 flex items-center justify-center rounded-full bg-muted",
-            sm ? "h-8 w-8" : "h-12 w-12",
+            "flex items-center justify-center rounded-full bg-foreground/[0.04] ring-1 ring-inset ring-foreground/10 dark:bg-foreground/[0.06]",
+            sm ? "mb-1 h-8 w-8" : "mb-2 h-11 w-11",
+            // One-shot entrance via @starting-style: no keyframes, no JS.
+            animated &&
+              "transition-[opacity,translate] duration-200 ease-out starting:opacity-0 motion-safe:starting:translate-y-1 motion-reduce:transition-opacity",
           )}
         >
-          <Icon aria-hidden="true" className={cn("text-muted-foreground", sm ? "h-4 w-4" : "h-6 w-6")} />
+          <Icon aria-hidden="true" className={cn("text-muted-foreground", sm ? "h-4 w-4" : "h-5 w-5")} />
         </div>
       ) : null}
-      <p className={cn("font-semibold text-foreground", sm ? "text-xs" : "text-sm")}>{title}</p>
+      <p className={cn("text-balance font-semibold text-foreground", sm ? "text-xs" : "text-sm")}>{title}</p>
       {description ? (
-        <p className={cn("max-w-prose text-muted-foreground", sm ? "text-xs" : "text-sm")}>{description}</p>
+        <p className={cn("max-w-sm text-balance text-muted-foreground", sm ? "text-xs" : "text-sm")}>{description}</p>
       ) : null}
-      {action ? <div className="mt-2 flex justify-center gap-2">{action}</div> : null}
+      {action ? <div className={cn("flex flex-wrap justify-center gap-2", sm ? "mt-2" : "mt-3")}>{action}</div> : null}
     </div>
   );
 };

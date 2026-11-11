@@ -84,9 +84,9 @@ describe("Toaster", () => {
   });
 
   it.each([
-    ["top-left", "top-4", "items-start"],
-    ["bottom-left", "bottom-4", "items-start"],
-    ["top-right", "top-4", "items-end"],
+    ["top-left", "top-3", "items-start"],
+    ["bottom-left", "bottom-3", "items-start"],
+    ["top-right", "top-3", "items-end"],
   ] as const)("positions the stack at %s", (position, edge, align) => {
     render(<Toaster position={position} />);
     const region = screen.getByRole("region");
