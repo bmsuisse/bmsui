@@ -197,7 +197,7 @@ function useSidebarCollapsed(): boolean
 function useSpeechRecognition(props?: UseSpeechRecognitionOptions): SpeechRecognitionState
 ```
 
-## Functions (29)
+## Functions (30)
 
 ```text
 function announce(message: string, options?: AnnounceOptions): void
@@ -226,12 +226,13 @@ function parseLocaleNumber(text: string, locale: string, formatOptions?: Intl.Nu
 function resetToasts(): void
 function scoreCommand(query: string, label: string, keywords?: readonly string[]): number
 const sheetVariants: (props?: ({ side?: "top" | "right" | "bottom" | "left" | null | undefined } & class_variance_authority_types.ClassProp) | undefined) => string
+function shiftIsoDay(iso: string, by: { days?: number; months?: number }): string
 function toErrorInfo(error: unknown): ErrorInfo | undefined
 function toLocalIsoDay(d: Date): string
 const toast: typeof show & { info: (message: string, options?: ToneOptions) => number; success: (message: string, options?: ToneOptions) => number; warning: (message: string, options?: ToneOptions) => number; error: (message: string, options?: ToneOptions) => number; dismiss: typeof dismissToast }
 ```
 
-## Constants (22)
+## Constants (23)
 
 ```text
 const BRAND_ANIMATIONS: readonly [{ readonly id: "bounce"; readonly label: "Bounce home" }, { readonly id: "orbit"; readonly label: "Orbit and settle" }, { readonly id: "impact"; readonly label: "Shot in, boom" }, { readonly id: "liquid"; readonly label: "Liquid split" }, { readonly id: "signature"; readonly label: "Solid to signature" }, { readonly id: "burst"; readonly label: "Big bang, small dot" }, { readonly id: "gravity"; readonly label: "Gravity press" }]
@@ -240,6 +241,7 @@ const defaultAvatarGroupLabels: AvatarGroupLabels
 const defaultBreadcrumbsLabels: BreadcrumbsLabels
 const defaultCalendarLabels: CalendarLabels
 const defaultCommandPaletteLabels: CommandPaletteLabels
+const defaultDateInputLabels: DateInputLabels
 const defaultDatePickerLabels: DatePickerLabels
 const defaultDateRangePickerLabels: DateRangePickerLabels
 const defaultErrorStateLabels: ErrorStateLabels
@@ -258,7 +260,7 @@ const defaultToasterLabels: ToasterLabels
 const defaultToolbarLabels: ToolbarLabels
 ```
 
-## Interfaces (135)
+## Interfaces (136)
 
 ```text
 interface AiButtonProps extends Omit<ButtonProps, "variant">
@@ -528,18 +530,26 @@ interface ConfirmDialogProps
   open: boolean
   title: string
   variant?: "default" | "destructive"
+interface DateInputLabels
+  invalid: string
+  openCalendar: string
+  outOfRange: string
 interface DateInputProps extends Omit<InputProps, "value" | "defaultValue" | "onChange" | "type" | "min" | "max">
+  bare?: boolean
+  labels?: Partial<DateInputLabels>
   locale?: string
   max?: string
   min?: string
-  onInvalidChange?: (invalid: boolean) => void
+  native?: "auto" | "always" | "never"
+  onInvalidChange?: (invalid: boolean, reason?: DateInputError) => void
   onValueChange: (iso: string) => void
+  showError?: boolean
   value: string
 interface DatePickerLabels
   nextMonth: string
   openCalendar: string
   previousMonth: string
-interface DatePickerProps extends Omit<DateInputProps, "size">, PassThroughCalendarProps
+interface DatePickerProps extends Omit<DateInputProps, "size" | "bare" | "native" | "showError" | "labels">, PassThroughCalendarProps
   container?: HTMLElement | null
   labels?: Partial<DatePickerLabels>
   size?: "sm" | "default"
@@ -1119,7 +1129,7 @@ interface ToastAction
 interface ToastItem
   action?: ToastAction
   description?: string
-  duration: number
+  duration?: number
   id: number
   leaving: boolean
   message: string
@@ -1135,6 +1145,7 @@ interface ToasterLabels
 interface ToasterProps
   animated?: boolean
   className?: string
+  duration?: number | Partial<Record<ToastTone, number>>
   labels?: Partial<ToasterLabels>
   position?: ToasterPosition
 interface ToolbarButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "onClick" | "children">
@@ -1210,7 +1221,7 @@ interface VoiceTranscriptProps extends Omit<HTMLAttributes<HTMLDivElement>, "onC
   value: string
 ```
 
-## Types (27)
+## Types (28)
 
 ```text
 type AiButtonVariant = "ai" | "ai-subtle" | "ai-ghost"
@@ -1222,6 +1233,7 @@ type BrandMode = "full" | "mark" | "one"
 type CalendarProps = CalendarSingleProps | CalendarRangeProps
 type ComboboxProps = ComboboxSingleProps | ComboboxMultiProps
 type ConfirmButtonPlacement = "leading" | "trailing"
+type DateInputError = "invalid" | "range"
 type ErrorInput = ErrorInfo | Error | string | null | undefined | false
 type InputProps = InputHTMLAttributes<HTMLInputElement>
 type NavItemProps<T extends ElementType = "a"> = Omit<ComponentPropsWithoutRef<T>, "as" | "className"> & {…}
@@ -1247,5 +1259,5 @@ type TableSearchProps = SearchBarProps
 type TextareaProps = TextareaHTMLAttributes<HTMLTextAreaElement>
 type TimestampFormat = "relative" | "date" | "datetime" | "time"
 type ToastTone = "info" | "success" | "warning" | "error"
-type ToasterPosition = "bottom-center" | "bottom-right" | "top-center" | "top-right"
+type ToasterPosition = "bottom-center" | "bottom-left" | "bottom-right" | "top-center" | "top-left" | "top-right"
 ```

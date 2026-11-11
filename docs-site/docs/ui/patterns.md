@@ -111,10 +111,12 @@ toast("Offer deleted", { action: { label: "Undo", onClick: restore } });
 const id = toast("Syncing…", { duration: Infinity }); toast.dismiss(id);
 ```
 
-At most three show at once; errors stay 8s, everything else 4s, and the
-countdown pauses while the toast is hovered or focused. `position` is
-`bottom-center` (default), `bottom-right`, `top-center` or `top-right`;
-`labels` translates the region name and the dismiss button.
+At most three show at once, and the countdown pauses while the toast is
+hovered or focused. A toast lasts its own `duration`, else the Toaster's
+`duration` default (a number, or per tone: `duration={{ error: 12000 }}`),
+else 4s (errors 8s). `position` is `bottom-center` (default), `bottom-left`,
+`bottom-right`, `top-center`, `top-left` or `top-right`; `labels` translates
+the region name and the dismiss button.
 
 ### `MetadataList`
 
@@ -244,11 +246,22 @@ format. The value is an ISO day (`"2026-11-10"`, `""` for none).
 <DateInput value={due} onValueChange={setDue} locale="en-US" />
 ```
 
-Typed text commits on blur or Enter; `3.2.26`, `03/02/2026` and ISO are all
-accepted. Text that is no date marks the field `aria-invalid` and keeps the
-previous value; `onInvalidChange` tells a form so it can block submit. With
-`name`, a hidden input submits the ISO day. `parseIsoDay`, `formatIsoDay`, `datePlaceholder` and
-`toLocalIsoDay` are exported for use outside the field.
+```tsx
+<DateInput value={d} onValueChange={setD} min="2026-01-01" max="2026-12-31" />
+<DateInput value={d} onValueChange={setD} onInvalidChange={(invalid, reason) => ...} />  {/* reason: "invalid" | "range" */}
+```
+
+- **Typing:** `3.2.26`, `03/02/2026`, `03022026` and ISO all work; the text commits on blur or Enter.
+- **Calendar:** the button (or Alt+ArrowDown) opens the browser's own date picker, limited to `min`/`max`. It speaks the
+  browser's language, not `locale`.
+- **Keyboard:** ArrowUp/ArrowDown step a day, PageUp/PageDown a month (Shift: a year), clamped to `min`/`max`.
+- **Touch devices:** with `native="auto"` (default) a `pointer: coarse` device gets the browser's `<input type="date">`
+  right away. `native="always"` / `"never"` force either.
+- **Invalid entries:** only real dates within `min`/`max` reach `onValueChange`. Anything else keeps the previous value,
+  sets `aria-invalid`, shows an error message (translate via `labels`, hide with `showError={false}`), calls
+  `onInvalidChange(true, reason)`, and sets the field's native validity so a surrounding `<form>` won't submit it.
+- With `name`, a hidden input submits the ISO day. `parseIsoDay`, `formatIsoDay`, `shiftIsoDay`, `datePlaceholder` and
+  `toLocalIsoDay` are exported for use outside the field.
 
 ### `PageHeader` / `Breadcrumbs`
 

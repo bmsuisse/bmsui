@@ -52,8 +52,8 @@ repo's `AGENTS.md`.
 | Export | Use for |
 | --- | --- |
 | `FormField` | Label + control + error/description with ids wired. Wrap every form control. |
-| `DateInput` | Day field in the app locale (dd.mm.yyyy), ISO value. Instead of `<input type="date">`. |
-| `parseIsoDay`, `formatIsoDay`, `datePlaceholder`, `toLocalIsoDay` | Date helpers. `toLocalIsoDay(new Date())` instead of `toISOString().slice(0, 10)` (UTC day bug). |
+| `DateInput`, `defaultDateInputLabels` | Day field in the app locale (dd.mm.yyyy), ISO value, `min`/`max`, calendar button, native `<input type="date">` on touch devices. Instead of `<input type="date">`. |
+| `parseIsoDay`, `formatIsoDay`, `shiftIsoDay`, `datePlaceholder`, `toLocalIsoDay` | Date helpers. `toLocalIsoDay(new Date())` instead of `toISOString().slice(0, 10)` (UTC day bug). |
 | `DatePicker`, `defaultDatePickerLabels` | `DateInput` + calendar popover button. Default choice for date fields in forms. |
 | `DateRangePicker`, `defaultDateRangePickerLabels` | "from – to" day fields in one box + range calendar popover. Period filters, validity ranges. |
 | `Calendar`, `defaultCalendarLabels` | Always-visible month grid, `mode` single or `range`, min/max, keyboard nav, locale week start. ISO days. |

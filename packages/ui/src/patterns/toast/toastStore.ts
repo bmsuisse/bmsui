@@ -15,7 +15,7 @@ export interface ToastOptions {
   tone?: ToastTone;
   /** One inline button, e.g. "Undo". Clicking it also dismisses the toast. */
   action?: ToastAction;
-  /** Milliseconds before it hides (default 4000; errors default 8000). `Infinity` keeps it until dismissed. */
+  /** Milliseconds before it hides. Falls back to the `<Toaster duration>` default (4000; errors 8000). `Infinity` keeps it until dismissed. */
   duration?: number;
 }
 
@@ -25,10 +25,14 @@ export interface ToastItem {
   description?: string;
   tone: ToastTone;
   action?: ToastAction;
-  duration: number;
+  /** Set only when the caller passed one; otherwise `<Toaster>` resolves it from its own default. */
+  duration?: number;
   /** Dismissed and playing its exit transition before removal. */
   leaving: boolean;
 }
+
+/** Used when neither the toast nor `<Toaster duration>` sets one. */
+export const DEFAULT_TOAST_DURATION: Record<ToastTone, number> = { info: 4000, success: 4000, warning: 4000, error: 8000 };
 
 /** Toasts kept at once; showing a 4th drops the oldest. */
 export const MAX_TOASTS = 3;
@@ -77,13 +81,13 @@ function show(message: string, options: ToastOptions = {}): number {
     description: options.description,
     tone,
     action: options.action,
-    duration: options.duration ?? (tone === "error" ? 8000 : 4000),
+    duration: options.duration,
     leaving: false,
   };
   const active = toasts.filter((t) => !t.leaving);
   if (active.length >= MAX_TOASTS) {
     // Make room by dropping the oldest timed toast; sticky ones (`Infinity`) go only when nothing else can.
-    const victim = active.find((t) => Number.isFinite(t.duration)) ?? active[0];
+    const victim = active.find((t) => t.duration !== Infinity) ?? active[0];
     if (victim) dismissToast(victim.id);
   }
   emit([...toasts, item]);

@@ -31,7 +31,7 @@ const popoverMotion = (animated: boolean) =>
       "origin-(--radix-popover-content-transform-origin) transition-[opacity,scale] duration-150 ease-out starting:scale-95 starting:opacity-0 motion-reduce:starting:scale-100",
   );
 
-export interface DatePickerProps extends Omit<DateInputProps, "size">, PassThroughCalendarProps {
+export interface DatePickerProps extends Omit<DateInputProps, "size" | "bare" | "native" | "showError" | "labels">, PassThroughCalendarProps {
   /** `sm` = h-8. @default "default" */
   size?: "sm" | "default";
   /** Class for the wrapping group. `className` styles the `<input>`. */
@@ -70,6 +70,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
         <PopoverAnchor asChild>
           <InputGroup size={size} className={wrapperClassName} data-testid={triggerTestId(testId, "group") ?? "date-picker"}>
             <DateInput
+              bare
               ref={(node) => {
                 inputRef.current = node;
                 if (typeof ref === "function") ref(node);
@@ -215,6 +216,7 @@ export function DateRangePicker({
       <PopoverAnchor asChild>
         <InputGroup size={size} className={className} data-testid={testId ?? "date-range-picker"}>
           <DateInput
+            bare
             ref={fromRef}
             aria-label={l.from}
             value={value.from}
@@ -231,6 +233,7 @@ export function DateRangePicker({
             –
           </span>
           <DateInput
+            bare
             aria-label={l.to}
             value={value.to}
             onValueChange={(to) => commit({ ...value, to })}

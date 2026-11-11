@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { useState } from "react";
+import { type ComponentProps, useState } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { datePlaceholder, formatIsoDay, parseIsoDay, toLocalIsoDay } from "../../../src/lib/dateField";
+import { datePlaceholder, formatIsoDay, parseIsoDay, shiftIsoDay, toLocalIsoDay } from "../../../src/lib/dateField";
 import { DateInput } from "../../../src/patterns/date-input/DateInput";
 
 describe("dateField", () => {
@@ -57,6 +57,25 @@ const Controlled = ({ initial = "", onChange = () => {} }: { initial?: string; o
     />
   );
 };
+
+describe("shiftIsoDay", () => {
+  it("moves by days across month and year ends", () => {
+    expect(shiftIsoDay("2026-11-30", { days: 1 })).toBe("2026-12-01");
+    expect(shiftIsoDay("2026-01-01", { days: -1 })).toBe("2025-12-31");
+  });
+
+  it("moves by months, clamping to the month's last day", () => {
+    expect(shiftIsoDay("2026-01-31", { months: 1 })).toBe("2026-02-28");
+    expect(shiftIsoDay("2024-01-31", { months: 1 })).toBe("2024-02-29");
+    expect(shiftIsoDay("2026-01-15", { months: -1 })).toBe("2025-12-15");
+    expect(shiftIsoDay("2026-03-15", { months: 12 })).toBe("2027-03-15");
+  });
+
+  it("leaves non-ISO input and out-of-range years alone", () => {
+    expect(shiftIsoDay("junk", { days: 1 })).toBe("junk");
+    expect(shiftIsoDay("1000-01-01", { days: -1 })).toBe("1000-01-01");
+  });
+});
 
 describe("DateInput", () => {
   it("shows the value in de-CH by default with a placeholder", () => {
@@ -139,9 +158,9 @@ describe("DateInput", () => {
     const input = screen.getByLabelText("d");
     fireEvent.change(input, { target: { value: "nope" } });
     fireEvent.blur(input);
-    expect(onInvalidChange).toHaveBeenLastCalledWith(true);
+    expect(onInvalidChange).toHaveBeenLastCalledWith(true, "invalid");
     fireEvent.change(input, { target: { value: "1.1.2026" } });
-    expect(onInvalidChange).toHaveBeenLastCalledWith(false);
+    expect(onInvalidChange).toHaveBeenLastCalledWith(false, undefined);
   });
 
   it("with name, submits the ISO day via a hidden input", () => {
@@ -150,3 +169,239 @@ describe("DateInput", () => {
     expect(screen.getByLabelText("d")).not.toHaveAttribute("name");
   });
 });
+
+describe("DateInput min/max and invalid state", () => {
+  const setup = (props: Partial<ComponentProps<typeof DateInput>> = {}) => {
+    const onChange = vi.fn();
+    const onInvalidChange = vi.fn();
+    render(
+      <form data-testid="form">
+        <DateInput
+          aria-label="d"
+          value="2026-11-10"
+          onValueChange={onChange}
+          onInvalidChange={onInvalidChange}
+          min="2026-11-01"
+          max="2026-11-30"
+          native="never"
+          {...props}
+        />
+      </form>,
+    );
+    return { input: screen.getByLabelText("d") as HTMLInputElement, onChange, onInvalidChange };
+  };
+
+  it("rejects dates outside min/max: not reported, flagged, with a message", () => {
+    const { input, onChange, onInvalidChange } = setup();
+    fireEvent.change(input, { target: { value: "1.12.2026" } });
+    fireEvent.blur(input);
+    expect(onChange).not.toHaveBeenCalled();
+    expect(input).toHaveAttribute("aria-invalid", "true");
+    expect(onInvalidChange).toHaveBeenLastCalledWith(true, "range");
+    expect(screen.getByRole("alert")).toHaveTextContent("Date is out of range");
+    expect(input).toHaveAttribute("aria-describedby", screen.getByRole("alert").id);
+  });
+
+  it("accepts the bounds themselves", () => {
+    const { input, onChange } = setup();
+    fireEvent.change(input, { target: { value: "30.11.2026" } });
+    fireEvent.blur(input);
+    expect(onChange).toHaveBeenCalledWith("2026-11-30");
+  });
+
+  it("shows a message for non-dates, translatable, and can hide it", () => {
+    const { input } = setup({ labels: { invalid: "Kein Datum" } });
+    fireEvent.change(input, { target: { value: "nope" } });
+    fireEvent.blur(input);
+    expect(screen.getByRole("alert")).toHaveTextContent("Kein Datum");
+  });
+
+  it("showError={false} renders no message but still flags the field", () => {
+    const { input } = setup({ showError: false });
+    fireEvent.change(input, { target: { value: "nope" } });
+    fireEvent.blur(input);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(input).toHaveAttribute("aria-invalid", "true");
+  });
+
+  it("clears the message once the text is fixed", () => {
+    const { input } = setup();
+    fireEvent.change(input, { target: { value: "nope" } });
+    fireEvent.blur(input);
+    fireEvent.change(input, { target: { value: "5.11.2026" } });
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("sets native validity while the text is unusable, so a form can't submit it", () => {
+    const { input } = setup();
+    expect(input.validity.valid).toBe(true);
+    fireEvent.change(input, { target: { value: "31.02.2026" } });
+    expect(input.validity.customError).toBe(true);
+    expect(input.checkValidity()).toBe(false);
+    fireEvent.change(input, { target: { value: "5.11.2026" } });
+    expect(input.checkValidity()).toBe(true);
+    fireEvent.change(input, { target: { value: "5.12.2026" } });
+    expect(input.checkValidity()).toBe(false);
+  });
+
+  it("the calendar picker gets min/max and doesn't take part in form validation", () => {
+    setup();
+    const picker = screen.getByTestId("date-input-picker");
+    expect(picker).toHaveAttribute("min", "2026-11-01");
+    expect(picker).toHaveAttribute("max", "2026-11-30");
+    expect(picker).toHaveAttribute("form", "bmsui-date-input-picker");
+  });
+
+  it("the calendar button opens the native picker; picking a day commits it", () => {
+    const { input, onChange } = setup();
+    const picker = screen.getByTestId("date-input-picker") as HTMLInputElement;
+    const showPicker = vi.fn();
+    picker.showPicker = showPicker;
+    fireEvent.click(screen.getByRole("button", { name: "Choose date" }));
+    expect(showPicker).toHaveBeenCalledOnce();
+    fireEvent.change(picker, { target: { value: "2026-11-24" } });
+    expect(onChange).toHaveBeenCalledWith("2026-11-24");
+    expect(input).toHaveValue("24.11.2026");
+  });
+
+  it("falls back to a click when showPicker is missing or throws", () => {
+    setup();
+    const picker = screen.getByTestId("date-input-picker") as HTMLInputElement;
+    picker.showPicker = () => {
+      throw new Error("nope");
+    };
+    const click = vi.spyOn(picker, "click");
+    fireEvent.click(screen.getByRole("button", { name: "Choose date" }));
+    expect(click).toHaveBeenCalledOnce();
+  });
+
+  it("has no calendar button when disabled or read-only", () => {
+    setup({ disabled: true });
+    expect(screen.queryByRole("button", { name: "Choose date" })).not.toBeInTheDocument();
+  });
+
+  it("steps with the arrow keys and clamps to min/max", () => {
+    const { input, onChange } = setup();
+    fireEvent.keyDown(input, { key: "ArrowUp" });
+    expect(onChange).toHaveBeenLastCalledWith("2026-11-11");
+    fireEvent.keyDown(input, { key: "PageDown" });
+    expect(onChange).toHaveBeenLastCalledWith("2026-11-01");
+    fireEvent.keyDown(input, { key: "PageUp", shiftKey: true });
+    expect(onChange).toHaveBeenLastCalledWith("2026-11-30");
+  });
+
+  it("an empty field starts at today on the first arrow press", () => {
+    const { input, onChange } = setup({ value: "", min: undefined, max: undefined });
+    fireEvent.keyDown(input, { key: "ArrowUp" });
+    const d = new Date();
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    expect(onChange).toHaveBeenCalledWith(today);
+  });
+
+  it("Alt+ArrowDown opens the picker and doesn't step", () => {
+    const { input, onChange } = setup();
+    const picker = screen.getByTestId("date-input-picker") as HTMLInputElement;
+    picker.showPicker = vi.fn();
+    fireEvent.keyDown(input, { key: "ArrowDown", altKey: true });
+    expect(picker.showPicker).toHaveBeenCalledOnce();
+    expect(onChange).not.toHaveBeenCalled();
+  });
+});
+
+describe("DateInput native mode", () => {
+  const setup = (props: Partial<ComponentProps<typeof DateInput>> = {}) => {
+    const onChange = vi.fn();
+    const onInvalidChange = vi.fn();
+    const utils = render(
+      <DateInput
+        aria-label="d"
+        value="2026-11-10"
+        onValueChange={onChange}
+        onInvalidChange={onInvalidChange}
+        min="2026-11-01"
+        max="2026-11-30"
+        native="always"
+        {...props}
+      />,
+    );
+    return { input: screen.getByLabelText("d") as HTMLInputElement, onChange, onInvalidChange, ...utils };
+  };
+
+  it("renders a native date input with the ISO value and bounds", () => {
+    const { input } = setup();
+    expect(input).toHaveAttribute("type", "date");
+    expect(input).toHaveValue("2026-11-10");
+    expect(input).toHaveAttribute("min", "2026-11-01");
+    expect(input).toHaveAttribute("max", "2026-11-30");
+    expect(screen.queryByRole("button", { name: "Choose date" })).not.toBeInTheDocument();
+  });
+
+  it("reports picked days", () => {
+    const { input, onChange } = setup();
+    fireEvent.change(input, { target: { value: "2026-11-20" } });
+    expect(onChange).toHaveBeenCalledWith("2026-11-20");
+  });
+
+  it("reports a cleared field", () => {
+    const { input, onChange } = setup();
+    fireEvent.change(input, { target: { value: "" } });
+    expect(onChange).toHaveBeenCalledWith("");
+  });
+
+  it("doesn't report out-of-range days; flags them with a message", () => {
+    const { input, onChange, onInvalidChange } = setup();
+    fireEvent.change(input, { target: { value: "2026-12-05" } });
+    expect(onChange).not.toHaveBeenCalled();
+    expect(input).toHaveAttribute("aria-invalid", "true");
+    expect(onInvalidChange).toHaveBeenLastCalledWith(true, "range");
+    expect(screen.getByRole("alert")).toHaveTextContent("Date is out of range");
+    fireEvent.change(input, { target: { value: "2026-11-05" } });
+    expect(onChange).toHaveBeenCalledWith("2026-11-05");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("follows outside value changes", () => {
+    const { input, rerender } = setup();
+    rerender(<DateInput aria-label="d" value="2026-11-22" onValueChange={() => {}} native="always" />);
+    expect(input).toHaveValue("2026-11-22");
+  });
+
+  it("with name, submits the ISO day via a hidden input", () => {
+    const { container } = setup({ name: "due" });
+    expect(container.querySelector('input[type="hidden"][name="due"]')).toHaveValue("2026-11-10");
+  });
+
+  it("auto: native on touch devices, typed otherwise", () => {
+    const original = window.matchMedia;
+    const stub = (matches: boolean) => {
+      window.matchMedia = ((query: string) => ({
+        matches: query === "(pointer: coarse)" && matches,
+        addEventListener: () => {},
+        removeEventListener: () => {},
+      })) as unknown as typeof window.matchMedia;
+    };
+    try {
+      stub(true);
+      const touch = render(<DateInput aria-label="t" value="2026-11-10" onValueChange={() => {}} />);
+      expect(screen.getByLabelText("t")).toHaveAttribute("type", "date");
+      touch.unmount();
+      stub(false);
+      render(<DateInput aria-label="m" value="2026-11-10" onValueChange={() => {}} />);
+      expect(screen.getByLabelText("m")).toHaveAttribute("type", "text");
+    } finally {
+      window.matchMedia = original;
+    }
+  });
+
+  it("native=never stays typed even on touch devices", () => {
+    const original = window.matchMedia;
+    window.matchMedia = (() => ({ matches: true, addEventListener: () => {}, removeEventListener: () => {} })) as unknown as typeof window.matchMedia;
+    try {
+      render(<DateInput aria-label="n" value="" onValueChange={() => {}} native="never" />);
+      expect(screen.getByLabelText("n")).toHaveAttribute("type", "text");
+    } finally {
+      window.matchMedia = original;
+    }
+  });
+});
+

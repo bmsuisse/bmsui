@@ -204,9 +204,9 @@ export { MAX_TOASTS, resetToasts, toast } from "./patterns/toast/toastStore";
 export type { ToasterLabels, ToasterPosition, ToasterProps } from "./patterns/toast/Toaster";
 export { defaultToasterLabels, Toaster } from "./patterns/toast/Toaster";
 
-export type { DateInputProps } from "./patterns/date-input/DateInput";
-export { DateInput } from "./patterns/date-input/DateInput";
-export { datePlaceholder, formatIsoDay, parseIsoDay, toLocalIsoDay } from "./lib/dateField";
+export type { DateInputError, DateInputLabels, DateInputProps } from "./patterns/date-input/DateInput";
+export { DateInput, defaultDateInputLabels } from "./patterns/date-input/DateInput";
+export { datePlaceholder, formatIsoDay, parseIsoDay, shiftIsoDay, toLocalIsoDay } from "./lib/dateField";
 
 export type { MetadataItem, MetadataListLabels, MetadataListProps } from "./patterns/metadata-list/MetadataList";
 export { defaultMetadataListLabels, MetadataList } from "./patterns/metadata-list/MetadataList";

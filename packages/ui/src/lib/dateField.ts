@@ -111,3 +111,24 @@ export function parseIsoDay(text: string, locale: string): string | null {
 export function toLocalIsoDay(d: Date): string {
   return `${pad(d.getFullYear(), 4)}-${pad(d.getMonth() + 1, 2)}-${pad(d.getDate(), 2)}`;
 }
+
+const daysInMonth = (year: number, month: number): number => new Date(year, month, 0).getDate();
+
+/**
+ * Moves an ISO day by whole months (the day of month is kept, or clamped to the
+ * month's last day: Jan 31 + 1 month = Feb 28/29) and then by days. Returns the
+ * input unchanged when it isn't an ISO day or the result leaves years 1000-9999.
+ */
+export function shiftIsoDay(iso: string, by: { days?: number; months?: number }): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  if (!match) return iso;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const total = year * 12 + (month - 1) + (by.months ?? 0);
+  const nextYear = Math.floor(total / 12);
+  const nextMonth = (total % 12) + 1;
+  const moved = new Date(nextYear, nextMonth - 1, Math.min(day, daysInMonth(nextYear, nextMonth)) + (by.days ?? 0));
+  const result = moved.getFullYear();
+  return result < 1000 || result > 9999 ? iso : toLocalIsoDay(moved);
+}

@@ -58,6 +58,41 @@ describe("Toaster", () => {
     expect(screen.queryByText("Done")).not.toBeInTheDocument();
   });
 
+  it("uses the Toaster duration default; a toast's own duration wins", () => {
+    render(<Toaster duration={{ error: 1000, success: 2000 }} />);
+    act(() => {
+      toast.error("Bad");
+      toast.success("Good");
+      toast.success("Own", { duration: 500 });
+    });
+    act(() => vi.advanceTimersByTime(500 + TOAST_EXIT_MS));
+    expect(screen.queryByText("Own")).not.toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(500));
+    expect(screen.queryByText("Bad")).not.toBeInTheDocument();
+    expect(screen.getByText("Good")).toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(1000));
+    expect(screen.queryByText("Good")).not.toBeInTheDocument();
+  });
+
+  it("a numeric Toaster duration applies to every tone", () => {
+    render(<Toaster duration={1000} />);
+    act(() => {
+      toast.error("Bad");
+    });
+    act(() => vi.advanceTimersByTime(1000 + TOAST_EXIT_MS));
+    expect(screen.queryByText("Bad")).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ["top-left", "top-3", "items-start"],
+    ["bottom-left", "bottom-3", "items-start"],
+    ["top-right", "top-3", "items-end"],
+  ] as const)("positions the stack at %s", (position, edge, align) => {
+    render(<Toaster position={position} />);
+    const region = screen.getByRole("region");
+    expect(region).toHaveClass(edge, align);
+  });
+
   it("pauses while hovered", () => {
     render(<Toaster />);
     act(() => {

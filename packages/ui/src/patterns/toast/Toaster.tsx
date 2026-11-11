@@ -7,9 +7,15 @@ import {
 } from "@heroicons/react/24/outline";
 import { type ComponentType, type ReactElement, type SVGProps, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { cn } from "../../lib/utils";
-import { dismissToast, getServerToasts, getToasts, subscribeToasts, type ToastItem, type ToastTone } from "./toastStore";
+import { DEFAULT_TOAST_DURATION, dismissToast, getServerToasts, getToasts, subscribeToasts, type ToastItem, type ToastTone } from "./toastStore";
 
-export type ToasterPosition = "bottom-center" | "bottom-right" | "top-center" | "top-right";
+export type ToasterPosition =
+  | "bottom-center"
+  | "bottom-left"
+  | "bottom-right"
+  | "top-center"
+  | "top-left"
+  | "top-right";
 
 export interface ToasterLabels {
   /** Accessible name of the toast region. */
@@ -23,7 +29,11 @@ export const defaultToasterLabels: ToasterLabels = {
 };
 
 export interface ToasterProps {
+  /** Where the stack sits. Defaults to `bottom-center`. */
   position?: ToasterPosition;
+  /** Default lifetime in ms for toasts that don't pass their own `duration`: one number for all tones, or per tone
+   * (`{ error: 12000 }`; missing tones keep their default of 4000, errors 8000). `Infinity` keeps toasts until dismissed. */
+  duration?: number | Partial<Record<ToastTone, number>>;
   labels?: Partial<ToasterLabels>;
   className?: string;
   /**
@@ -36,8 +46,10 @@ export interface ToasterProps {
 
 const positionClass: Record<ToasterPosition, string> = {
   "bottom-center": "bottom-3 items-center pb-[env(safe-area-inset-bottom)]",
+  "bottom-left": "bottom-3 items-start pb-[env(safe-area-inset-bottom)]",
   "bottom-right": "bottom-3 items-end pb-[env(safe-area-inset-bottom)]",
   "top-center": "top-3 items-center pt-[env(safe-area-inset-top)]",
+  "top-left": "top-3 items-start pt-[env(safe-area-inset-top)]",
   "top-right": "top-3 items-end pt-[env(safe-area-inset-top)]",
 };
 
@@ -63,7 +75,7 @@ const toneIconClass: Record<ToastTone, string> = {
  * Each toast fades in, shows the time it has left as a thin bar, pauses while
  * hovered or focused, and fades out on dismiss. No CSS or animation plugin needed.
  */
-export const Toaster = ({ position = "bottom-center", labels, className, animated = true }: ToasterProps): ReactElement => {
+export const Toaster = ({ position = "bottom-center", duration, labels, className, animated = true }: ToasterProps): ReactElement => {
   const toasts = useSyncExternalStore(subscribeToasts, getToasts, getServerToasts);
   const l = { ...defaultToasterLabels, ...labels };
   const top = position.startsWith("top");
@@ -79,19 +91,25 @@ export const Toaster = ({ position = "bottom-center", labels, className, animate
       )}
     >
       {toasts.map((t) => (
-        <ToastCard key={t.id} toast={t} dismissLabel={l.dismiss} fromTop={top} animated={animated} />
+        <ToastCard key={t.id} toast={t} duration={resolveDuration(t, duration)} dismissLabel={l.dismiss} fromTop={top} animated={animated} />
       ))}
     </section>
   );
 };
 
+const resolveDuration = (t: ToastItem, fallback: ToasterProps["duration"]): number =>
+  t.duration ?? (typeof fallback === "number" ? fallback : (fallback?.[t.tone] ?? DEFAULT_TOAST_DURATION[t.tone]));
+
 const ToastCard = ({
   toast,
+  duration,
   dismissLabel,
   fromTop,
   animated,
 }: {
   toast: ToastItem;
+  /** Already resolved from the toast's own `duration` or the Toaster default. */
+  duration: number;
   dismissLabel: string;
   fromTop: boolean;
   animated: boolean;
@@ -106,7 +124,7 @@ const ToastCard = ({
   const paused = hovered || focused;
   const bar = useRef<HTMLSpanElement>(null);
   const Icon = toneIcon[toast.tone];
-  const timed = Number.isFinite(toast.duration) && toast.duration > 0;
+  const timed = Number.isFinite(duration) && duration > 0;
 
   useEffect(() => {
     const raf = requestAnimationFrame(() => setEntered(true));
@@ -119,14 +137,14 @@ const ToastCard = ({
 
   // The countdown: the progress bar's animation drives the dismissal where the
   // Web Animations API exists; a pausable timeout stands in elsewhere (jsdom).
-  const remaining = useRef(toast.duration);
+  const remaining = useRef(duration);
   const animRef = useRef<Animation | null>(null);
   useEffect(() => {
     if (!timed || toast.leaving) return;
     const el = bar.current;
     if (el && typeof el.animate === "function") {
       const anim = el.animate([{ transform: "scaleX(1)" }, { transform: "scaleX(0)" }], {
-        duration: toast.duration,
+        duration,
         fill: "forwards",
       });
       anim.onfinish = () => dismissToast(toast.id);
@@ -138,7 +156,7 @@ const ToastCard = ({
       };
     }
     return undefined;
-  }, [timed, toast.duration, toast.id, toast.leaving]);
+  }, [timed, duration, toast.id, toast.leaving]);
 
   useEffect(() => {
     if (!timed || toast.leaving) return;
