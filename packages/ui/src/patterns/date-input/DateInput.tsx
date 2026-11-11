@@ -1,8 +1,11 @@
 import { CalendarDaysIcon } from "@heroicons/react/24/outline";
 import { forwardRef, useEffect, useId, useImperativeHandle, useRef, useState } from "react";
 import { datePlaceholder, formatIsoDay, parseIsoDay, shiftIsoDay, toLocalIsoDay } from "../../lib/dateField";
+import { popoverMotion } from "../../lib/popoverMotion";
 import { cn } from "../../lib/utils";
 import { Input } from "../../primitives/input";
+import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from "../../primitives/popover";
+import { CalendarLoader, preloadCalendar } from "../calendar/CalendarLoader";
 import { NativeDateInput } from "./NativeDateInput";
 import {
   DateInputMessage,
@@ -18,12 +21,19 @@ import {
 export type { DateInputError, DateInputLabels, DateInputProps } from "./shared";
 export { defaultDateInputLabels } from "./shared";
 
-/** `invalid` for non-dates, `range` outside `min`/`max`, null when the text is fine (or empty). ISO days sort as strings. */
-function check(text: string, locale: string, min: string, max: string): DateInputError | null {
+/** `invalid` for non-dates, `range` outside `min`/`max`, `disabled` for blocked days, null when the text is fine (or empty). ISO days sort as strings. */
+function check(
+  text: string,
+  locale: string,
+  min: string,
+  max: string,
+  isDateDisabled?: (iso: string) => boolean,
+): DateInputError | null {
   if (!text.trim()) return null;
   const iso = parseIsoDay(text, locale);
   if (iso == null) return "invalid";
   if ((min && iso < min) || (max && iso > max)) return "range";
+  if (isDateDisabled?.(iso)) return "disabled";
   return null;
 }
 
@@ -32,7 +42,8 @@ function check(text: string, locale: string, min: string, max: string): DateInpu
  * the browser's own `type="date"` format. The value is an ISO day. Text is committed
  * on blur or Enter. The calendar button opens the browser's own date picker
  * (`showPicker()`), restricted to `min`/`max`; the picker itself uses the browser's
- * language, not `locale`.
+ * language, not `locale`. With `picker="calendar"` it opens our `Calendar` in a popover
+ * instead (loaded lazily): app language and look, `isDateDisabled` days greyed out.
  *
  * Only real dates within `min`/`max` reach `onValueChange`. Rejected text keeps the
  * previous value, marks the field `aria-invalid` with an error message, and sets
@@ -41,7 +52,7 @@ function check(text: string, locale: string, min: string, max: string): DateInpu
  */
 export const DateInput = forwardRef<HTMLInputElement, DateInputProps>((props, ref) => {
   const coarse = useCoarsePointer();
-  const useNative = props.native === "always" || (props.native !== "never" && coarse);
+  const useNative = !props.bare && (props.native === "always" || (props.native !== "never" && coarse));
   return useNative ? <NativeDateInput ref={ref} {...props} /> : <TypedDateInput ref={ref} {...props} />;
 });
 DateInput.displayName = "DateInput";
@@ -65,7 +76,14 @@ const TypedDateInput = forwardRef<HTMLInputElement, DateInputProps>(
       name,
       disabled,
       readOnly,
+      isDateDisabled,
       native: _native,
+      bare = false,
+      picker = "native",
+      container,
+      weekStartsOn,
+      today,
+      animated = true,
       ...props
     },
     ref,
@@ -80,6 +98,10 @@ const TypedDateInput = forwardRef<HTMLInputElement, DateInputProps>(
     const focused = useRef(false);
     const inputRef = useRef<HTMLInputElement>(null);
     const pickerRef = useRef<HTMLInputElement>(null);
+    const testId = (props as Record<string, unknown>)["data-testid"];
+    const [calendarOpen, setCalendarOpen] = useState(false);
+    // After a pick, focus goes back to the typed field instead of the calendar button.
+    const focusInputOnClose = useRef(false);
     const messageId = useId();
     useImperativeHandle(ref, () => inputRef.current as HTMLInputElement);
 
@@ -100,8 +122,8 @@ const TypedDateInput = forwardRef<HTMLInputElement, DateInputProps>(
 
     // Native validity follows the text as it is typed, not only once committed: a form must not submit
     // (Enter, submit button) with text that is no date while `value` still holds the previous day.
-    const live = check(text, locale, minDay, maxDay);
-    const liveMessage = live === "invalid" ? l.invalid : live === "range" ? l.outOfRange : "";
+    const live = check(text, locale, minDay, maxDay, isDateDisabled);
+    const liveMessage = errorMessage(live, l);
     useEffect(() => {
       inputRef.current?.setCustomValidity(liveMessage);
     }, [liveMessage]);
@@ -120,7 +142,7 @@ const TypedDateInput = forwardRef<HTMLInputElement, DateInputProps>(
         if (value) onValueChange("");
         return;
       }
-      const problem = check(text, locale, minDay, maxDay);
+      const problem = check(text, locale, minDay, maxDay, isDateDisabled);
       setError(problem);
       if (problem) return;
       commitIso(parseIsoDay(text, locale) as string);
@@ -136,10 +158,23 @@ const TypedDateInput = forwardRef<HTMLInputElement, DateInputProps>(
       let next = text.trim() || value ? shiftIsoDay(base, by) : base;
       if (minDay && next < minDay) next = minDay;
       if (maxDay && next > maxDay) next = maxDay;
-      return next;
+      // Day steps then hop over blocked days (up to a year of them), staying inside min/max; a blocked
+      // month/year landing is ignored.
+      if (isDateDisabled?.(next) && "days" in by) {
+        for (let hops = 0; hops < 366 && isDateDisabled(next); hops++) {
+          next = shiftIsoDay(next, by);
+          if ((minDay && next < minDay) || (maxDay && next > maxDay)) return null;
+        }
+      }
+      return isDateDisabled?.(next) ? null : next;
     };
 
     const openPicker = () => {
+      if (calendarMode) {
+        preloadCalendar();
+        setCalendarOpen(true);
+        return;
+      }
       const el = pickerRef.current;
       if (!el) return;
       try {
@@ -151,8 +186,9 @@ const TypedDateInput = forwardRef<HTMLInputElement, DateInputProps>(
     };
 
     const message = errorMessage(error, l);
-    const showMessage = showError && message !== "";
-    const pickable = !disabled && !readOnly;
+    const showMessage = !bare && showError && message !== "";
+    const pickable = !bare && !disabled && !readOnly;
+    const calendarMode = pickable && picker === "calendar";
     const describedBy = [props["aria-describedby"], showMessage ? messageId : undefined].filter(Boolean).join(" ") || undefined;
 
     const input = (
@@ -161,7 +197,7 @@ const TypedDateInput = forwardRef<HTMLInputElement, DateInputProps>(
         {...props}
         disabled={disabled}
         readOnly={readOnly}
-        className={cn(invalidClass, pickable && "pr-9")}
+        className={cn(invalidClass, pickable && "pr-9", bare && className)}
         type="text"
         autoComplete="off"
         value={text}
@@ -205,21 +241,36 @@ const TypedDateInput = forwardRef<HTMLInputElement, DateInputProps>(
     );
     const hidden = name ? <input type="hidden" name={name} value={toDay(value)} /> : null;
 
-    return (
-      <div className={className}>
-        <div className="relative">
+    if (bare) {
+      return (
+        <>
           {input}
-          {pickable ? (
-            <>
-              <button
-                type="button"
-                aria-label={l.openCalendar}
-                onClick={openPicker}
-                className="absolute inset-y-0 right-0 grid w-9 place-items-center rounded-r-md text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              >
-                <CalendarDaysIcon aria-hidden="true" className="h-4 w-4" />
-              </button>
-              {/* Invisible but the size of the field (not display:none), so the browser anchors its picker right under it. */}
+          {hidden}
+        </>
+      );
+    }
+
+    const calendarButton = (
+      <button
+        type="button"
+        aria-label={l.openCalendar}
+        onClick={calendarMode ? undefined : openPicker}
+        onPointerEnter={calendarMode ? preloadCalendar : undefined}
+        onFocus={calendarMode ? preloadCalendar : undefined}
+        className="absolute inset-y-0 right-0 grid w-9 place-items-center rounded-r-md text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+      >
+        <CalendarDaysIcon aria-hidden="true" className="h-4 w-4" />
+      </button>
+    );
+
+    const field = (
+      <div className="relative">
+        {input}
+        {pickable ? (
+          <>
+            {calendarMode ? <PopoverTrigger asChild>{calendarButton}</PopoverTrigger> : calendarButton}
+            {calendarMode ? null : (
+              // Invisible but the size of the field (not display:none), so the browser anchors its picker right under it.
               <input
                 ref={pickerRef}
                 type="date"
@@ -234,8 +285,14 @@ const TypedDateInput = forwardRef<HTMLInputElement, DateInputProps>(
                 onChange={(e) => {
                   const iso = e.target.value;
                   dirty.current = false;
-                  if (iso) commitIso(iso);
-                  else {
+                  if (iso) {
+                    // The browser's picker can't grey out single days: judge the pick like typed text.
+                    const problem = check(formatIsoDay(iso, locale), locale, minDay, maxDay, isDateDisabled);
+                    if (problem) {
+                      setText(formatIsoDay(iso, locale));
+                      setError(problem);
+                    } else commitIso(iso);
+                  } else {
                     setText("");
                     setError(null);
                     if (value) onValueChange("");
@@ -243,12 +300,60 @@ const TypedDateInput = forwardRef<HTMLInputElement, DateInputProps>(
                 }}
                 className="pointer-events-none absolute inset-0 h-full w-full opacity-0"
               />
-            </>
-          ) : null}
-        </div>
+            )}
+          </>
+        ) : null}
+      </div>
+    );
+
+    const body = (
+      <div className={className}>
+        {calendarMode ? <PopoverAnchor asChild>{field}</PopoverAnchor> : field}
         {showMessage ? <DateInputMessage id={messageId} message={message} /> : null}
         {hidden}
       </div>
+    );
+    if (!calendarMode) return body;
+
+    return (
+      <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+        {body}
+        <PopoverContent
+          container={container}
+          aria-label={l.openCalendar}
+          className={popoverMotion(animated)}
+          align="end"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          onCloseAutoFocus={(e) => {
+            if (!focusInputOnClose.current) return;
+            focusInputOnClose.current = false;
+            e.preventDefault();
+            inputRef.current?.focus();
+          }}
+        >
+          <CalendarLoader
+            loadFailed={l.calendarLoadFailed}
+            retryLabel={l.retry}
+            autoFocus
+            value={toDay(value)}
+            onValueChange={(iso) => {
+              dirty.current = false;
+              commitIso(iso);
+              focusInputOnClose.current = true;
+              setCalendarOpen(false);
+            }}
+            locale={locale}
+            min={minDay || undefined}
+            max={maxDay || undefined}
+            isDateDisabled={isDateDisabled}
+            weekStartsOn={weekStartsOn}
+            today={today}
+            animated={animated}
+            labels={{ previousMonth: l.previousMonth, nextMonth: l.nextMonth }}
+            data-testid={typeof testId === "string" ? `${testId}-calendar` : undefined}
+          />
+        </PopoverContent>
+      </Popover>
     );
   },
 );

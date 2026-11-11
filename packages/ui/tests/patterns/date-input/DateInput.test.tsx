@@ -1,8 +1,13 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { type ComponentProps, useState } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 import { datePlaceholder, formatIsoDay, parseIsoDay, shiftIsoDay, toLocalIsoDay } from "../../../src/lib/dateField";
 import { DateInput } from "../../../src/patterns/date-input/DateInput";
+
+// The calendar is loaded with a dynamic import; a cold first import can outlast findBy's 1s default under load.
+beforeAll(async () => {
+  await import("../../../src/patterns/calendar/Calendar");
+});
 
 describe("dateField", () => {
   it("formats ISO days in the locale's order", () => {
@@ -402,6 +407,149 @@ describe("DateInput native mode", () => {
     } finally {
       window.matchMedia = original;
     }
+  });
+});
+
+describe("DateInput isDateDisabled", () => {
+  const weekend = (iso: string) => [0, 6].includes(new Date(`${iso}T12:00:00`).getDay());
+
+  it("rejects blocked typed days with a message and the 'disabled' reason", () => {
+    const onChange = vi.fn();
+    const onInvalidChange = vi.fn();
+    render(
+      <DateInput
+        aria-label="d"
+        value="2026-11-10"
+        onValueChange={onChange}
+        onInvalidChange={onInvalidChange}
+        isDateDisabled={weekend}
+        native="never"
+      />,
+    );
+    const input = screen.getByLabelText("d");
+    fireEvent.change(input, { target: { value: "14.11.2026" } }); // Saturday
+    fireEvent.blur(input);
+    expect(onChange).not.toHaveBeenCalled();
+    expect(onInvalidChange).toHaveBeenLastCalledWith(true, "disabled");
+    expect(screen.getByRole("alert")).toHaveTextContent("Date is not available");
+    expect((input as HTMLInputElement).checkValidity()).toBe(false);
+  });
+
+  it("arrow steps hop over blocked days", () => {
+    const onChange = vi.fn();
+    render(<DateInput aria-label="d" value="2026-11-13" onValueChange={onChange} isDateDisabled={weekend} native="never" />);
+    fireEvent.keyDown(screen.getByLabelText("d"), { key: "ArrowUp" }); // Fri -> (Sat, Sun) -> Mon
+    expect(onChange).toHaveBeenCalledWith("2026-11-16");
+  });
+
+  it("a day picked in the browser's calendar is judged like typed text", () => {
+    const onChange = vi.fn();
+    render(<DateInput aria-label="d" value="2026-11-10" onValueChange={onChange} isDateDisabled={weekend} native="never" />);
+    const picker = screen.getByTestId("date-input-picker");
+    fireEvent.change(picker, { target: { value: "2026-11-14" } });
+    expect(onChange).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("d")).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByLabelText("d")).toHaveValue("14.11.2026");
+  });
+
+  it("native mode rejects blocked days too", () => {
+    const onChange = vi.fn();
+    render(<DateInput aria-label="d" value="2026-11-10" onValueChange={onChange} isDateDisabled={weekend} native="always" />);
+    fireEvent.change(screen.getByLabelText("d"), { target: { value: "2026-11-14" } });
+    expect(onChange).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert")).toHaveTextContent("Date is not available");
+  });
+});
+
+describe('DateInput picker="calendar"', () => {
+  const day = (iso: string) => document.querySelector<HTMLButtonElement>(`[data-day="${iso}"]`) as HTMLButtonElement;
+  const Picker = ({ initial = "2026-11-10", ...props }: { initial?: string } & Partial<ComponentProps<typeof DateInput>>) => {
+    const [v, setV] = useState(initial);
+    return <DateInput aria-label="Due" picker="calendar" native="never" today="2026-11-10" value={v} onValueChange={setV} {...props} />;
+  };
+
+  it("opens our calendar (loaded lazily) instead of the browser's picker", async () => {
+    render(<Picker />);
+    expect(screen.queryByTestId("date-input-picker")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Choose date" }));
+    expect(await screen.findByRole("grid", { name: "November 2026" })).toBeInTheDocument();
+  });
+
+  it("types, then picks a day: the input follows and focus returns to it", async () => {
+    render(<Picker />);
+    const input = screen.getByLabelText("Due");
+    fireEvent.change(input, { target: { value: "1.12.26" } });
+    fireEvent.blur(input);
+    fireEvent.click(screen.getByRole("button", { name: "Choose date" }));
+    await screen.findByRole("grid");
+    expect(day("2026-12-01")).toHaveFocus();
+    fireEvent.click(day("2026-12-24"));
+    expect(input).toHaveValue("24.12.2026");
+    expect(screen.queryByRole("grid")).not.toBeInTheDocument();
+    await waitFor(() => expect(input).toHaveFocus());
+  });
+
+  it("greys out blocked days and min/max days in the calendar", async () => {
+    render(<Picker min="2026-11-03" isDateDisabled={(iso) => iso === "2026-11-25"} />);
+    fireEvent.click(screen.getByRole("button", { name: "Choose date" }));
+    await screen.findByRole("grid");
+    expect(day("2026-11-25")).toHaveAttribute("aria-disabled", "true");
+    expect(day("2026-11-02")).toHaveAttribute("aria-disabled", "true");
+    expect(day("2026-11-26")).not.toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("Alt+ArrowDown opens it; read-only and disabled have no button", async () => {
+    const { unmount } = render(<Picker />);
+    fireEvent.keyDown(screen.getByLabelText("Due"), { key: "ArrowDown", altKey: true });
+    expect(await screen.findByRole("grid")).toBeInTheDocument();
+    unmount();
+    render(<Picker readOnly />);
+    expect(screen.queryByRole("button", { name: "Choose date" })).not.toBeInTheDocument();
+  });
+
+  it("translates the month navigation via labels", async () => {
+    render(<Picker labels={{ nextMonth: "Nächster Monat" }} />);
+    fireEvent.click(screen.getByRole("button", { name: "Choose date" }));
+    await screen.findByRole("grid");
+    expect(screen.getByRole("button", { name: "Nächster Monat" })).toBeInTheDocument();
+  });
+});
+
+describe("DateInput review fixes (calendar PR)", () => {
+  const weekend = (iso: string) => [0, 6].includes(new Date(`${iso}T12:00:00`).getDay());
+
+  it("native mode: a blocked day sets native validity, so a form can't submit it", () => {
+    render(<DateInput aria-label="d" value="2026-11-10" onValueChange={() => {}} isDateDisabled={weekend} native="always" />);
+    const input = screen.getByLabelText("d") as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "2026-11-14" } });
+    expect(input.validity.customError).toBe(true);
+    expect(input.checkValidity()).toBe(false);
+    fireEvent.change(input, { target: { value: "2026-11-16" } });
+    expect(input.checkValidity()).toBe(true);
+  });
+
+  it("arrow steps clamp to min first, then hop blocked days inside the bounds", () => {
+    const onChange = vi.fn();
+    render(
+      <DateInput aria-label="d" value="" onValueChange={onChange} min="2026-11-14" isDateDisabled={weekend} native="never" />,
+    );
+    fireEvent.keyDown(screen.getByLabelText("d"), { key: "ArrowUp" }); // starts at today <= min -> Sat 14th -> Mon 16th
+    expect(onChange).toHaveBeenCalledWith("2026-11-16");
+  });
+
+  it("arrow steps give up when no allowed day is left before max", () => {
+    const onChange = vi.fn();
+    render(
+      <DateInput aria-label="d" value="2026-11-13" onValueChange={onChange} max="2026-11-14" isDateDisabled={weekend} native="never" />,
+    );
+    fireEvent.keyDown(screen.getByLabelText("d"), { key: "ArrowUp" });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("the calendar popover has an accessible name", async () => {
+    render(<DateInput aria-label="d" value="2026-11-10" onValueChange={() => {}} picker="calendar" native="never" labels={{ openCalendar: "Datum wählen" }} />);
+    fireEvent.click(screen.getByRole("button", { name: "Datum wählen" }));
+    expect(await screen.findByRole("dialog", { name: "Datum wählen" })).toBeInTheDocument();
   });
 });
 

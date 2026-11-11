@@ -296,6 +296,16 @@ export { defaultSplitPaneLabels, SplitPane, SplitPanePanel } from "./patterns/sp
 
 export type { ToolbarButtonProps, ToolbarLabels, ToolbarProps } from "./patterns/toolbar/Toolbar";
 export { defaultToolbarLabels, Toolbar, ToolbarButton, ToolbarSeparator } from "./patterns/toolbar/Toolbar";
+export type {
+  CalendarLabels,
+  CalendarProps,
+  CalendarRangeProps,
+  CalendarSingleProps,
+  DateRange,
+} from "./patterns/calendar/Calendar";
+export { Calendar, defaultCalendarLabels } from "./patterns/calendar/Calendar";
+export type { DateRangePickerLabels, DateRangePickerProps } from "./patterns/date-range-picker/DateRangePicker";
+export { DateRangePicker, defaultDateRangePickerLabels } from "./patterns/date-range-picker/DateRangePicker";
 
 export type { NumberInputLabels, NumberInputProps } from "./patterns/number-input/NumberInput";
 export { defaultNumberInputLabels, NumberInput } from "./patterns/number-input/NumberInput";

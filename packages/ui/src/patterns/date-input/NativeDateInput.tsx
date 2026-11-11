@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useId, useRef, useState } from "react";
+import { forwardRef, useEffect, useId, useImperativeHandle, useRef, useState } from "react";
 import { Input } from "../../primitives/input";
 import {
   DateInputMessage,
@@ -25,8 +25,14 @@ export const NativeDateInput = forwardRef<HTMLInputElement, DateInputProps>(
       onInvalidChange,
       locale: _locale,
       native: _native,
+      picker: _picker,
+      container: _container,
+      weekStartsOn: _weekStartsOn,
+      today: _today,
+      animated: _animated,
       min,
       max,
+      isDateDisabled,
       showError = true,
       labels,
       onBlur,
@@ -45,6 +51,8 @@ export const NativeDateInput = forwardRef<HTMLInputElement, DateInputProps>(
     const [error, setErrorState] = useState<DateInputError | null>(null);
     const errorRef = useRef<DateInputError | null>(null);
     const messageId = useId();
+    const inputRef = useRef<HTMLInputElement>(null);
+    useImperativeHandle(ref, () => inputRef.current as HTMLInputElement);
 
     const setError = (next: DateInputError | null) => {
       if (errorRef.current === next) return;
@@ -60,13 +68,18 @@ export const NativeDateInput = forwardRef<HTMLInputElement, DateInputProps>(
     }, [value]);
 
     const message = errorMessage(error, l);
+    // A blocked day is valid to the browser (only min/max and bad input are): tell the form, or it would submit
+    // the previous day while the field shows the blocked one.
+    useEffect(() => {
+      inputRef.current?.setCustomValidity(error === "disabled" ? message : "");
+    }, [error, message]);
     const showMessage = showError && message !== "";
     const describedBy = [props["aria-describedby"], showMessage ? messageId : undefined].filter(Boolean).join(" ") || undefined;
 
     return (
       <div className={className}>
         <Input
-          ref={ref}
+          ref={inputRef}
           {...props}
           className={invalidClass}
           type="date"
@@ -86,6 +99,10 @@ export const NativeDateInput = forwardRef<HTMLInputElement, DateInputProps>(
             }
             if (next && ((minDay && next < minDay) || (maxDay && next > maxDay))) {
               setError("range");
+              return;
+            }
+            if (next && isDateDisabled?.(next)) {
+              setError("disabled");
               return;
             }
             setError(null);

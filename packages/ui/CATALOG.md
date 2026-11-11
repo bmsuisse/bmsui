@@ -52,8 +52,10 @@ repo's `AGENTS.md`.
 | Export | Use for |
 | --- | --- |
 | `FormField` | Label + control + error/description with ids wired. Wrap every form control. |
-| `DateInput`, `defaultDateInputLabels` | Day field in the app locale (dd.mm.yyyy), ISO value, `min`/`max`, calendar button, native `<input type="date">` on touch devices. Instead of `<input type="date">`. |
+| `DateInput`, `defaultDateInputLabels` | Day field in the app locale (dd.mm.yyyy), ISO value, `min`/`max`, `isDateDisabled`, calendar button (`picker="calendar"` for the app-styled lazy `Calendar`), native `<input type="date">` on touch devices. Instead of `<input type="date">`. |
 | `parseIsoDay`, `formatIsoDay`, `shiftIsoDay`, `datePlaceholder`, `toLocalIsoDay` | Date helpers. `toLocalIsoDay(new Date())` instead of `toISOString().slice(0, 10)` (UTC day bug). |
+| `DateRangePicker`, `defaultDateRangePickerLabels` | "from – to" day fields in one box + range calendar popover; native inputs on touch. Period filters, validity ranges. |
+| `Calendar`, `defaultCalendarLabels` | Always-visible month grid, `mode` single or `range`, min/max, keyboard nav, locale week start. ISO days. |
 | `NumberInput`, `defaultNumberInputLabels` | Locale number field (`1’234.50`, reads `1234,5`), commit on blur/Enter, min/max clamp, ArrowUp/Down, optional `stepper`. Instead of `type="number"`. |
 | `parseLocaleNumber`, `formatLocaleNumber` | The number parse/format behind `NumberInput`, for use outside the field. |
 | `InputGroup`, `InputGroupAddon`, `InputGroupInput`, `InputGroupButton` | Input with leading/trailing icon, unit text (`CHF`) or small buttons; one border + focus ring. |
