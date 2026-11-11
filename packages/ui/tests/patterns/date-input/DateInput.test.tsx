@@ -1,8 +1,13 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { type ComponentProps, useState } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 import { datePlaceholder, formatIsoDay, parseIsoDay, shiftIsoDay, toLocalIsoDay } from "../../../src/lib/dateField";
 import { DateInput } from "../../../src/patterns/date-input/DateInput";
+
+// The calendar is loaded with a dynamic import; a cold first import can outlast findBy's 1s default under load.
+beforeAll(async () => {
+  await import("../../../src/patterns/calendar/Calendar");
+});
 
 describe("dateField", () => {
   it("formats ISO days in the locale's order", () => {

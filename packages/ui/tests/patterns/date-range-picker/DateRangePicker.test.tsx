@@ -1,10 +1,15 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useState } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 import type { DateRange } from "../../../src/patterns/calendar/Calendar";
 import { DateRangePicker } from "../../../src/patterns/date-range-picker/DateRangePicker";
 
 const day = (iso: string) => document.querySelector<HTMLButtonElement>(`[data-day="${iso}"]`) as HTMLButtonElement;
+
+// The calendar is loaded with a dynamic import; a cold first import can outlast findBy's 1s default under load.
+beforeAll(async () => {
+  await import("../../../src/patterns/calendar/Calendar");
+});
 
 describe("DateRangePicker", () => {
   it("edits each end by typing (swapping a reversed range) and picks a range in the popover", async () => {
