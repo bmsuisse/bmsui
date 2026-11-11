@@ -31,7 +31,6 @@ import {
   Combobox,
   ConfirmDialog,
   DateInput,
-  DatePicker,
   DateRangePicker,
   Calendar,
   NumberInput,
@@ -1034,7 +1033,7 @@ export function App(): ReactElement {
             <NumberInputDemo />
           </Section>
 
-          <Section title="Calendar / DatePicker / DateRangePicker">
+          <Section title="Calendar / DateInput calendar / DateRangePicker">
             <CalendarDemo />
           </Section>
 
@@ -1903,14 +1902,22 @@ function CalendarDemo(): ReactElement {
         <Calendar mode="range" value={range} onValueChange={setRange} today="2026-11-10" />
       </Card>
       <div className="grid w-72 gap-4">
-        <DemoField label="DatePicker" note={`value: ${due || "—"}`}>
-          <DatePicker value={due} onValueChange={setDue} today="2026-11-10" data-testid="demo-date-picker" />
+        <DemoField label={'DateInput picker="calendar"'} note={`value: ${due || "—"}`}>
+          <DateInput
+            picker="calendar"
+            native="never"
+            value={due}
+            onValueChange={setDue}
+            today="2026-11-10"
+            isDateDisabled={(iso) => [0, 6].includes(new Date(`${iso}T12:00:00`).getDay())}
+            data-testid="demo-date-picker"
+          />
         </DemoField>
         <DemoField label="DateRangePicker" note={`${period.from || "…"} → ${period.to || "…"}`}>
           <DateRangePicker value={period} onValueChange={setPeriod} today="2026-11-10" data-testid="demo-date-range-picker" />
         </DemoField>
-        <DemoField label="DatePicker (sm, disabled)">
-          <DatePicker value="2026-12-24" onValueChange={() => {}} size="sm" disabled />
+        <DemoField label="DateRangePicker (sm, native=never)">
+          <DateRangePicker value={{ from: "2026-12-21", to: "2026-12-24" }} onValueChange={() => {}} size="sm" native="never" />
         </DemoField>
       </div>
     </div>

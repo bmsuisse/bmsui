@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 import { useSyncExternalStore } from "react";
 import type { InputProps } from "../../primitives/input";
+import type { CalendarProps } from "../calendar/Calendar";
 
 /** Why the entry was rejected: it is no date (`invalid`), a real date outside `min`/`max` (`range`), or one `isDateDisabled` blocks (`disabled`). */
 export type DateInputError = "invalid" | "range" | "disabled";
@@ -14,6 +15,9 @@ export interface DateInputLabels {
   unavailable: string;
   /** Accessible name of the calendar button. */
   openCalendar: string;
+  /** Month navigation in the calendar popover (`picker="calendar"`). */
+  previousMonth: string;
+  nextMonth: string;
 }
 
 export const defaultDateInputLabels: DateInputLabels = {
@@ -21,6 +25,8 @@ export const defaultDateInputLabels: DateInputLabels = {
   outOfRange: "Date is out of range",
   unavailable: "Date is not available",
   openCalendar: "Choose date",
+  previousMonth: "Previous month",
+  nextMonth: "Next month",
 };
 
 export interface DateInputProps
@@ -39,6 +45,21 @@ export interface DateInputProps
   max?: string;
   /** Blocks single days (weekends, holidays, booked days): typed, stepped or picked ones are rejected like out-of-range dates. The browser's own picker can't grey them out; `DatePicker`'s calendar does. */
   isDateDisabled?: (iso: string) => boolean;
+  /**
+   * What the calendar button opens. `native` (default): the browser's own date picker, restricted
+   * to `min`/`max`, in the browser's language. `calendar`: our `Calendar` in a popover, in `locale`,
+   * with `isDateDisabled` days greyed out and the week starting like `locale` says. It is loaded
+   * only when first needed. Touch devices get the native control either way (see `native`).
+   */
+  picker?: "native" | "calendar";
+  /** `picker="calendar"`: portal target of the popover. Pass the Dialog/Sheet content element when used inside one. */
+  container?: HTMLElement | null;
+  /** `picker="calendar"`: first weekday, 0 = Sunday. Defaults to the locale's. */
+  weekStartsOn?: CalendarProps["weekStartsOn"];
+  /** `picker="calendar"`: "today" for the marker and the default month. Defaults to the local day. */
+  today?: CalendarProps["today"];
+  /** `picker="calendar"`: popover and calendar motion. `false` turns it off. @default true */
+  animated?: boolean;
   /** Shows the error text under the field when the entry is rejected. Turn off to render it yourself (e.g. via `onInvalidChange`). Default `true`. */
   showError?: boolean;
   /** Translations for the error messages and the calendar button. */

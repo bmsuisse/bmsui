@@ -493,8 +493,11 @@ logic above, which already had its own extraction). Structure:
     `aria-invalid` and keep the old value. Accepts `3.2.26`, any of `. / -`,
     and ISO. `toLocalIsoDay` is exported because OneSales hit the
     `toISOString().slice(0, 10)` UTC-day bug after 22:00 Swiss time. No
-    calendar popover here — `DatePicker` (v0.22.0) adds it (Astryx's `Calendar` was the
-    reference for keyboard behaviour).
+    calendar popover of its own by default, but a calendar button that opens the
+    browser's date picker (`showPicker()`), native `<input type="date">` on touch
+    devices, `min`/`max`, `isDateDisabled` and arrow-key stepping; `picker="calendar"`
+    (v0.22.0) opens our `Calendar` instead, lazily loaded (`React.lazy` + a
+    tsup `splitting: true` chunk).
   - Display set (unreleased): `metadata-list/` `MetadataList` (`<dl>` label/
     value pairs, vertical or label-column layout, responsive `columns`,
     optional copy buttons, "—" for empty); `progress/` `ProgressBar` +
@@ -602,9 +605,9 @@ logic above, which already had its own extraction). Structure:
       `lib/calendar` (week start via `Intl.Locale#getWeekInfo` with a region
       fallback, six-week grids). Roving tab stop; blocked days are
       `aria-disabled` (not `disabled`) so keyboard focus can pass them.
-    - `date-picker/` — `DatePicker` (DateInput + Popover Calendar) and
-      `DateRangePicker` (two DateInputs in one `InputGroup`). `DateInput`
-      gained `min`/`max` (typed days outside → invalid).
+    - `date-range-picker/` — `DateRangePicker` (two `bare` DateInputs in one
+      `InputGroup` + range Calendar popover; native date inputs on touch).
+      There is no single-date `DatePicker`: that is `DateInput picker="calendar"`.
     - `input-group/` — `InputGroup`/`InputGroupAddon`/`InputGroupInput`/
       `InputGroupButton`; ring via `focus-within`, invalid via `:has()`.
     - `segmented-control/` — `SegmentedControl`, from OneDocs
@@ -629,7 +632,7 @@ logic above, which already had its own extraction). Structure:
       ease-out in / ease-in out, nothing moves under `prefers-reduced-motion`.
       Note Tailwind v4's `scale-*`/`translate-*` set the `scale`/`translate`
       properties, so transition lists must name those, not `transform`.
-      Behavioural motion is opt-out via `animated` (Calendar, DatePicker,
+      Behavioural motion is opt-out via `animated` (Calendar, DateInput,
       DateRangePicker, SegmentedControl, Slider, RangeSlider, FileInput).
       Radix unmounts the popover instantly on close (it only waits for CSS
       keyframe animations, which this package doesn't ship), so only the

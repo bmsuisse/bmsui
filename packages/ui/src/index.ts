@@ -304,18 +304,8 @@ export type {
   DateRange,
 } from "./patterns/calendar/Calendar";
 export { Calendar, defaultCalendarLabels } from "./patterns/calendar/Calendar";
-export type {
-  DatePickerLabels,
-  DatePickerProps,
-  DateRangePickerLabels,
-  DateRangePickerProps,
-} from "./patterns/date-picker/DatePicker";
-export {
-  DatePicker,
-  DateRangePicker,
-  defaultDatePickerLabels,
-  defaultDateRangePickerLabels,
-} from "./patterns/date-picker/DatePicker";
+export type { DateRangePickerLabels, DateRangePickerProps } from "./patterns/date-range-picker/DateRangePicker";
+export { DateRangePicker, defaultDateRangePickerLabels } from "./patterns/date-range-picker/DateRangePicker";
 
 export type { NumberInputLabels, NumberInputProps } from "./patterns/number-input/NumberInput";
 export { defaultNumberInputLabels, NumberInput } from "./patterns/number-input/NumberInput";

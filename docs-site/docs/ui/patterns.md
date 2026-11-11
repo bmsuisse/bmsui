@@ -248,12 +248,16 @@ format. The value is an ISO day (`"2026-11-10"`, `""` for none).
 
 ```tsx
 <DateInput value={d} onValueChange={setD} min="2026-01-01" max="2026-12-31" />
+<DateInput value={d} onValueChange={setD} picker="calendar" isDateDisabled={isHoliday} />  {/* our calendar instead of the browser's */}
 <DateInput value={d} onValueChange={setD} onInvalidChange={(invalid, reason) => ...} />  {/* reason: "invalid" | "range" */}
 ```
 
 - **Typing:** `3.2.26`, `03/02/2026`, `03022026` and ISO all work; the text commits on blur or Enter.
 - **Calendar:** the button (or Alt+ArrowDown) opens the browser's own date picker, limited to `min`/`max`. It speaks the
-  browser's language, not `locale`.
+  browser's language, not `locale`, and can't grey out `isDateDisabled` days. With `picker="calendar"` it opens our
+  `Calendar` in a popover instead: app language and look, week start per `locale` (`weekStartsOn` overrides), blocked
+  days greyed out. The calendar is loaded lazily (own chunk, warmed up on hover/focus of the button); pass `container`
+  inside a Dialog/Sheet. Touch devices get the native control either way.
 - **Keyboard:** ArrowUp/ArrowDown step a day, PageUp/PageDown a month (Shift: a year), clamped to `min`/`max`.
 - **Touch devices:** with `native="auto"` (default) a `pointer: coarse` device gets the browser's `<input type="date">`
   right away. `native="always"` / `"never"` force either.
@@ -419,23 +423,20 @@ the arrow-key order with a `data-toolbar-item` attribute. `overflow` measures
 the buttons and folds those that don't fit into a "…" menu (toggles become
 checkbox items). Only `ToolbarButton`s overflow — selects, wrapped buttons and
 other children always stay visible. `variant="ghost"` drops the border.
-### `DatePicker` / `DateRangePicker` / `Calendar`
+### `DateRangePicker` / `Calendar`
 
-`DatePicker` is `DateInput` plus a calendar button: type `3.2.26` or pick from
-a month grid in a popover. Same ISO-day value and commit rules as `DateInput`.
+`DateRangePicker` is two `DateInput` fields ("from – to") plus a range calendar in a popover. Each end
+parses, validates and reports like `DateInput` (`min`/`max`, `isDateDisabled`, error message, `onInvalidChange`),
+a reversed range is swapped, `readOnly` locks the calendar too, and touch devices get the browser's own date
+inputs (`native`). For a single day use `DateInput` (with `picker="calendar"` for the app-styled calendar).
 
 ```tsx
-<DatePicker value={due} onValueChange={setDue} min="2026-01-01" />
 <DateRangePicker value={period} onValueChange={setPeriod} />   {/* { from, to } ISO days */}
 <Calendar value={day} onValueChange={setDay} />                 {/* always visible */}
 <Calendar mode="range" value={range} onValueChange={setRange} isDateDisabled={isHoliday} />
 ```
 
-`min`/`max` and `isDateDisabled` limit typed and picked days alike (a typed day
-outside is marked invalid); `readOnly` also keeps the calendar from opening.
-Plain `DateInput` already has a calendar button (the browser's own picker) and
-`min`/`max`: reach for `DatePicker` when you need blocked days, a range, or a
-calendar that matches the app's look and language. The calendar follows `locale` for month/weekday names and week start
+The calendar follows `locale` for month/weekday names and week start
 (Monday in de-CH, Sunday in en-US; `weekStartsOn` overrides). Keyboard: arrows
 by day/week, PageUp/PageDown by month (Shift: year), Home/End to the week's
 ends. In a range the first click sets `from`, the second `to` (ordered);

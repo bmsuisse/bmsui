@@ -7,7 +7,7 @@ Every public export with its kind and signature. Interfaces and object types
 list their own members one per line (inherited members come from the `extends`
 clause), so the diff of this file shows exactly what changed in the public API.
 
-## Components (164)
+## Components (163)
 
 ```text
 const AiButton: react.ForwardRefExoticComponent<AiButtonProps & react.RefAttributes<HTMLButtonElement>>
@@ -41,7 +41,6 @@ const CommandPaletteTrigger: react.ForwardRefExoticComponent<CommandPaletteTrigg
 function CommandRegistryProvider(props: { children: ReactNode }): ReactElement
 const ConfirmDialog: (props: ConfirmDialogProps) => ReactElement
 const DateInput: react.ForwardRefExoticComponent<DateInputProps & react.RefAttributes<HTMLInputElement>>
-const DatePicker: react.ForwardRefExoticComponent<DatePickerProps & react.RefAttributes<HTMLInputElement>>
 function DateRangePicker(props: DateRangePickerProps): ReactElement
 const Dialog: react.FC<DialogPrimitive.DialogProps>
 function DialogActions(props: DialogActionsProps): ReactElement
@@ -232,7 +231,7 @@ function toLocalIsoDay(d: Date): string
 const toast: typeof show & { info: (message: string, options?: ToneOptions) => number; success: (message: string, options?: ToneOptions) => number; warning: (message: string, options?: ToneOptions) => number; error: (message: string, options?: ToneOptions) => number; dismiss: typeof dismissToast }
 ```
 
-## Constants (23)
+## Constants (22)
 
 ```text
 const BRAND_ANIMATIONS: readonly [{ readonly id: "bounce"; readonly label: "Bounce home" }, { readonly id: "orbit"; readonly label: "Orbit and settle" }, { readonly id: "impact"; readonly label: "Shot in, boom" }, { readonly id: "liquid"; readonly label: "Liquid split" }, { readonly id: "signature"; readonly label: "Solid to signature" }, { readonly id: "burst"; readonly label: "Big bang, small dot" }, { readonly id: "gravity"; readonly label: "Gravity press" }]
@@ -242,7 +241,6 @@ const defaultBreadcrumbsLabels: BreadcrumbsLabels
 const defaultCalendarLabels: CalendarLabels
 const defaultCommandPaletteLabels: CommandPaletteLabels
 const defaultDateInputLabels: DateInputLabels
-const defaultDatePickerLabels: DatePickerLabels
 const defaultDateRangePickerLabels: DateRangePickerLabels
 const defaultErrorStateLabels: ErrorStateLabels
 const defaultFileInputLabels: FileInputLabels
@@ -260,7 +258,7 @@ const defaultToasterLabels: ToasterLabels
 const defaultToolbarLabels: ToolbarLabels
 ```
 
-## Interfaces (136)
+## Interfaces (134)
 
 ```text
 interface AiButtonProps extends Omit<ButtonProps, "variant">
@@ -532,11 +530,15 @@ interface ConfirmDialogProps
   variant?: "default" | "destructive"
 interface DateInputLabels
   invalid: string
+  nextMonth: string
   openCalendar: string
   outOfRange: string
+  previousMonth: string
   unavailable: string
 interface DateInputProps extends Omit<InputProps, "value" | "defaultValue" | "onChange" | "type" | "min" | "max">
+  animated?: boolean
   bare?: boolean
+  container?: HTMLElement | null
   isDateDisabled?: (iso: string) => boolean
   labels?: Partial<DateInputLabels>
   locale?: string
@@ -545,22 +547,17 @@ interface DateInputProps extends Omit<InputProps, "value" | "defaultValue" | "on
   native?: "auto" | "always" | "never"
   onInvalidChange?: (invalid: boolean, reason?: DateInputError) => void
   onValueChange: (iso: string) => void
+  picker?: "native" | "calendar"
   showError?: boolean
+  today?: CalendarProps["today"]
   value: string
-interface DatePickerLabels
-  nextMonth: string
-  openCalendar: string
-  previousMonth: string
-interface DatePickerProps extends Omit<DateInputProps, "size" | "bare" | "native" | "showError" | "labels">, PassThroughCalendarProps
-  container?: HTMLElement | null
-  labels?: Partial<DatePickerLabels>
-  size?: "sm" | "default"
-  wrapperClassName?: string
+  weekStartsOn?: CalendarProps["weekStartsOn"]
 interface DateRange
   from: string
   to: string
-interface DateRangePickerLabels extends DatePickerLabels
+interface DateRangePickerLabels extends Pick<DateInputLabels, "invalid" | "outOfRange" | "unavailable" | "previousMonth" | "nextMonth">
   from: string
+  openCalendar: string
   to: string
 interface DateRangePickerProps extends PassThroughCalendarProps
   "data-testid"?: string
@@ -572,7 +569,11 @@ interface DateRangePickerProps extends PassThroughCalendarProps
   max?: string
   min?: string
   name?: { from: string; to: string }
+  native?: "auto" | "always" | "never"
+  onInvalidChange?: (invalid: boolean, reason?: DateInputError) => void
   onValueChange: (range: DateRange) => void
+  readOnly?: boolean
+  showError?: boolean
   size?: "sm" | "default"
   value: DateRange
 interface DialogActionsProps
