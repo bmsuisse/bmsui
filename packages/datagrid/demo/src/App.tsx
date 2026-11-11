@@ -854,25 +854,29 @@ function PinnedColumnsDemo(): ReactElement {
 
 // --- persisted widths + reset: the table is narrower than its container, so
 // a dragged edge must follow the pointer instead of the spare width being
-// spread over every column. Widths and visibility survive a reload; "Reset
-// columns" in the selector puts both back.
+// spread over every column. Widths, visibility and column order (drag the rows
+// in the dialog) survive a reload; "Reset columns" in the selector puts all
+// back.
 const persistedColumns: ColumnDef<WideRow>[] = wideColumns.map(({ pinned: _pinned, ...column }) => column);
 const PERSISTED_DEFAULT_VISIBILITY: ColumnVisibility = { lastRestocked: false };
 
 export function PersistedColumnsDemo(): ReactElement {
   const sizing = usePersistedColumnSizing("demo-persisted-columns", persistedColumns);
   const [visibility, setVisibility] = useState<ColumnVisibility>(PERSISTED_DEFAULT_VISIBILITY);
+  const [columnOrder, setColumnOrder] = useState<string[]>(() => persistedColumns.map((c) => c.id));
   return (
     <div data-testid="persisted-columns-demo">
       <div className="mb-2 flex items-center justify-between gap-2">
         <p className="text-sm text-muted-foreground">
-          Resize a column, hide one, then reload — both come back. Reset lives in the Columns dialog.
+          Resize, hide or reorder (drag in the dialog) a column, then reload — it all comes back. Reset lives in the Columns dialog.
         </p>
         <ColumnSelector
           columns={persistedColumns}
           visibility={visibility}
           onVisibilityChange={setVisibility}
           persistKey="demo-persisted-columns"
+          columnOrder={columnOrder}
+          onColumnOrderChange={setColumnOrder}
           defaultVisibility={PERSISTED_DEFAULT_VISIBILITY}
           isCustomized={sizing.isCustomized}
           onReset={sizing.reset}
@@ -888,6 +892,7 @@ export function PersistedColumnsDemo(): ReactElement {
         dataSource={{ mode: "client", data: WIDE_ROWS }}
         getRowId={(row) => row.id}
         columnVisibility={visibility}
+        columnOrder={columnOrder}
         enableColumnResizing
         columnSizing={sizing.columnSizing}
         onColumnSizingChange={sizing.onColumnSizingChange}

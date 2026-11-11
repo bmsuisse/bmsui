@@ -44,6 +44,39 @@ test.describe("persisted column widths + reset", () => {
   });
 });
 
+test.describe("column order", () => {
+  test("dragging a column row in the Columns dialog reorders the grid, survives a reload, and Reset restores it", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await page.evaluate(() => window.localStorage.clear());
+    await page.reload();
+    const demo = page.getByTestId("persisted-columns-demo");
+    await demo.scrollIntoViewIfNeeded();
+    const headerNames = async () => (await demo.getByRole("columnheader").allTextContents()).map((t) => t.trim());
+    const before = await headerNames();
+    expect(before.length).toBeGreaterThan(2);
+
+    await demo.getByRole("button", { name: "Table layout" }).click();
+    const dialog = page.getByRole("dialog");
+    // Drop the last visible column's row onto the first one.
+    await dialog.getByLabel(before[before.length - 1]).locator("xpath=ancestor::label").dragTo(
+      dialog.getByLabel(before[0]).locator("xpath=ancestor::label"),
+    );
+    await page.keyboard.press("Escape");
+    const moved = await headerNames();
+    expect(moved[0]).toBe(before[before.length - 1]);
+
+    await page.reload();
+    expect(await headerNames()).toEqual(moved);
+
+    await demo.getByRole("button", { name: "Table layout" }).click();
+    await page.getByRole("button", { name: "Reset columns" }).click();
+    await page.keyboard.press("Escape");
+    expect(await headerNames()).toEqual(before);
+  });
+});
+
 test.describe("row styling", () => {
   test("the active wash shows on odd and even rows", async ({ page }) => {
     await page.goto("/");

@@ -72,6 +72,14 @@ export function clearPersistedVisibility(persistKey: string): void {
   }
 }
 
+export function clearPersistedColumnOrder(persistKey: string): void {
+  try {
+    window.localStorage.removeItem(orderStorageKeyFor(persistKey));
+  } catch {
+    // storage unavailable: nothing to clear
+  }
+}
+
 // Own namespace segment, same reasoning as `orderStorageKeyFor` above.
 export function sizingStorageKeyFor(persistKey: string): string {
   return `bmsui-datagrid:column-sizing:${persistKey}`;

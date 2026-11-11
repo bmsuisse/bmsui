@@ -1010,6 +1010,20 @@ Notes for extending it:
   this is a small, mouse-only reorder list inside a dialog, not a use case
   that justifies pulling in a DnD library; no touch fallback yet (a real gap
   for tablet/phone use, follow up if it's ever asked for).
+- **Order drives the grids** (0.43.0, [#88](https://github.com/bmsuisse/bmsui/issues/88)):
+  `<DataGrid>` and `<TreeDataGrid>` take `columnOrder?: string[]` and apply it
+  in `useVisibleColumns` (`applyColumnOrder`, then the visibility filter), so
+  the order a `<ColumnSelector>` emits can be fed straight back in — before,
+  callers had to pre-sort `columns` themselves, and then Reset had no declared
+  order to return to. Pass `columns` in their *declared* order. "Reset columns"
+  now also calls `onColumnOrderChange` with that declared order and clears the
+  persisted order key, and stays enabled while the order differs from it.
+  `<TreeDataGrid>` keeps picking its tree column from `treeColumnId`, else
+  `columns[0]` (declared, not displayed, order).
+  A drop is a plain splice in the displayed order, unless that would shift a
+  non-contiguous group's section position in the dialog — then only the dragged
+  column's own group *slots* are permuted (`moveColumnWithinGroup`; found by
+  code review).
 
 ## `<DataGrid>` — one component, two `DataSource` modes
 

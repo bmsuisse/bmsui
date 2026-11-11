@@ -432,6 +432,42 @@ describe("ColumnSelector: reset", () => {
     expect(screen.getByRole("button", { name: "Reset columns" })).toBeEnabled();
   });
 
+  it("also restores the declared column order, clearing the persisted order", async () => {
+    writePersistedColumnOrder("orders", ["phone", "id"]);
+    const onColumnOrderChange = vi.fn();
+    render(
+      <ColumnSelector
+        columns={columns}
+        visibility={{}}
+        onVisibilityChange={vi.fn()}
+        persistKey="orders"
+        defaultVisibility={{}}
+        columnOrder={["phone", "id", "name", "email"]}
+        onColumnOrderChange={onColumnOrderChange}
+      />,
+    );
+    await openDialog();
+    onColumnOrderChange.mockClear();
+    await userEvent.click(screen.getByRole("button", { name: "Reset columns" }));
+    expect(onColumnOrderChange).toHaveBeenCalledWith(columns.map((c) => c.id));
+    expect(window.localStorage.getItem(orderStorageKeyFor("orders"))).toBeNull();
+  });
+
+  it("stays enabled while the column order differs from the declared one", async () => {
+    render(
+      <ColumnSelector
+        columns={columns}
+        visibility={{}}
+        onVisibilityChange={vi.fn()}
+        defaultVisibility={{}}
+        columnOrder={["email", "name"]}
+        onColumnOrderChange={vi.fn()}
+      />,
+    );
+    await openDialog();
+    expect(screen.getByRole("button", { name: "Reset columns" })).toBeEnabled();
+  });
+
   it("restores the defaults, clears the persisted entry and calls onReset", async () => {
     writePersistedVisibility("orders", { email: false });
     const onVisibilityChange = vi.fn();
@@ -452,5 +488,33 @@ describe("ColumnSelector: reset", () => {
     expect(onVisibilityChange).toHaveBeenLastCalledWith({ phone: false });
     expect(window.localStorage.getItem(storageKeyFor("orders"))).toBeNull();
     expect(onReset).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("ColumnSelector: drag-to-reorder with a non-contiguous group", () => {
+  it("never changes which group section renders first", async () => {
+    const cols: ColumnDef<Row>[] = [
+      { id: "id", type: "string", header: "ID", group: "G1" },
+      { id: "name", type: "string", header: "Name", group: "G2" },
+      { id: "email", type: "string", header: "Email", group: "G1" },
+    ];
+    const onColumnOrderChange = vi.fn();
+    render(
+      <ColumnSelector
+        columns={cols}
+        visibility={{}}
+        onVisibilityChange={vi.fn()}
+        columnOrder={["id", "name", "email"]}
+        onColumnOrderChange={onColumnOrderChange}
+      />,
+    );
+    await openDialog();
+    // Dragging "ID" onto "Email" would splice to [name, id, email] and flip G2 ahead of G1.
+    fireEvent.dragStart(screen.getByText("ID").closest("label")!);
+    const target = screen.getByText("Email").closest("label")!;
+    fireEvent.dragOver(target);
+    fireEvent.drop(target);
+    const next = onColumnOrderChange.mock.calls[0]![0] as string[];
+    expect(next.indexOf("id")).toBeLessThan(next.indexOf("name"));
   });
 });

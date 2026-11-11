@@ -56,3 +56,34 @@ export function moveColumnBefore(
   else next.splice(insertAt, 0, columnId);
   return next;
 }
+
+/**
+ * Like `moveColumnBefore`, but only permutes the positions already occupied by
+ * `groupIds` (the dragged column's own group): every other column keeps its
+ * exact index. `groupColumns` derives each group *section's* display position
+ * from the first-seen index of its columns, so a plain splice across a
+ * non-contiguous group (e.g. `[A(g1), B(g2), C(g1)]`, dragging C before A or A
+ * before C's slot) could otherwise move whole sections around.
+ */
+export function moveColumnWithinGroup(
+  order: readonly string[],
+  groupIds: ReadonlySet<string>,
+  columnId: string,
+  beforeColumnId: string | undefined,
+): string[] {
+  const slots: number[] = [];
+  const members: string[] = [];
+  order.forEach((id, index) => {
+    if (groupIds.has(id)) {
+      slots.push(index);
+      members.push(id);
+    }
+  });
+  const moved = moveColumnBefore(members, columnId, beforeColumnId);
+  const next = [...order];
+  slots.forEach((slot, i) => {
+    const id = moved[i];
+    if (id !== undefined) next[slot] = id;
+  });
+  return next;
+}

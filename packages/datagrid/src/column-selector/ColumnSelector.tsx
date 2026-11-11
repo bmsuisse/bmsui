@@ -12,8 +12,9 @@ import {
   DialogTrigger,
 } from "../components/ui/dialog";
 import { cn } from "../lib/utils";
-import { applyColumnOrder, moveColumnBefore } from "./ordering";
+import { applyColumnOrder, moveColumnBefore, moveColumnWithinGroup } from "./ordering";
 import {
+  clearPersistedColumnOrder,
   clearPersistedVisibility,
   readPersistedColumnOrder,
   readPersistedVisibility,
@@ -58,7 +59,10 @@ export interface ColumnSelectorProps<TRow> {
   /**
    * The visibility a "Reset columns" button restores. The button only renders
    * when this is set; it also clears the persisted entry (`persistKey`) and
-   * calls `onReset`, e.g. wired to `usePersistedColumnSizing`'s `reset`.
+   * calls `onReset`, e.g. wired to `usePersistedColumnSizing`'s `reset`. With
+   * drag-to-reorder enabled it also restores the order of `columns` as declared
+   * (via `onColumnOrderChange`), so pass `columns` unsorted and let the grid
+   * apply `columnOrder`.
    */
   defaultVisibility?: ColumnVisibility;
   onReset?: () => void;
@@ -143,12 +147,20 @@ export function ColumnSelector<TRow>({
     if (!defaultVisibility) return;
     onVisibilityChange(defaultVisibility);
     if (persistKey) clearPersistedVisibility(persistKey);
+    if (onColumnOrderChange) {
+      onColumnOrderChange(declaredOrder);
+      if (persistKey) clearPersistedColumnOrder(persistKey);
+    }
     onReset?.();
   }
 
   const totalVisible = countVisible(columns, visibility);
   const canReorder = Boolean(onColumnOrderChange);
-  const effectiveOrder = columnOrder ?? columns.map((column) => column.id);
+  // `columns` as declared (not yet reordered) is what "Reset columns" restores.
+  const declaredOrder = columns.map((column) => column.id);
+  const effectiveOrder = columnOrder ?? declaredOrder;
+  const orderCustomized =
+    canReorder && applyColumnOrder(columns, effectiveOrder).some((column, i) => column.id !== declaredOrder[i]);
   const orderedColumns = columnOrder ? applyColumnOrder(columns, columnOrder) : columns;
   const groups = groupColumns(orderedColumns);
   const groupById = new Map(columns.map((column) => [column.id, column.group] as const));
@@ -170,7 +182,18 @@ export function ColumnSelector<TRow>({
     // than let the column's own group visibly "win" a section-order fight
     // its drag was never meant to affect.
     if (groupById.get(draggedId) !== groupById.get(targetId)) return;
-    const next = moveColumnBefore(effectiveOrder, draggedId, targetId);
+    // Base on the order as displayed (stale ids dropped, new columns appended).
+    // A plain splice keeps every other column put, but with a non-contiguous
+    // group it can still shift which group's section comes first; then fall
+    // back to permuting just this group's own slots.
+    const displayed = orderedColumns.map((column) => column.id);
+    const sectionOrder = (order: string[]) =>
+      groupColumns(applyColumnOrder(columns, order)).map((section) => section.group);
+    let next = moveColumnBefore(displayed, draggedId, targetId);
+    if (sectionOrder(next).join("\0") !== sectionOrder(displayed).join("\0")) {
+      const groupIds = new Set(columns.filter((c) => c.group === groupById.get(draggedId)).map((c) => c.id));
+      next = moveColumnWithinGroup(displayed, groupIds, draggedId, targetId);
+    }
     onColumnOrderChange?.(next);
     if (persistKey) writePersistedColumnOrder(persistKey, next);
   }
@@ -273,7 +296,7 @@ export function ColumnSelector<TRow>({
               variant="ghost"
               size="sm"
               data-testid="column-selector-reset"
-              disabled={!isCustomized && sameVisibility(columns, visibility, defaultVisibility)}
+              disabled={!isCustomized && !orderCustomized && sameVisibility(columns, visibility, defaultVisibility)}
               onClick={reset}
             >
               <ArrowUturnLeftIcon className="h-3.5 w-3.5" aria-hidden />

@@ -124,6 +124,14 @@ export interface DataGridProps<TRow> {
   columnVisibility?: ColumnVisibility;
   onColumnVisibilityChange?: (visibility: ColumnVisibility) => void;
   /**
+   * Column ids in display order, e.g. the `columnOrder` a `<ColumnSelector>`
+   * with drag-to-reorder emits through `onColumnOrderChange`. Keep passing
+   * `columns` in their declared order -- the grid reorders them itself. An id
+   * that matches no column is ignored; a column missing from the list keeps
+   * its declared position after the listed ones. Omit for `columns` order.
+   */
+  columnOrder?: string[];
+  /**
    * Enables an expand/collapse chevron in a dedicated leftmost column; when
    * a row is expanded, its result is rendered directly below that row, in
    * its own full-width `<tr>`. Omit entirely to disable — no chevron column

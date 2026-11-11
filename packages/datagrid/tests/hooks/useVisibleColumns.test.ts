@@ -30,6 +30,13 @@ describe("useVisibleColumns", () => {
     expect(result.current.map((c) => c.id)).toEqual(["name", "age"]);
   });
 
+  it("reorders columns by columnOrder, then applies visibility", () => {
+    const { result } = renderHook(() => useVisibleColumns(columns, { name: false }, ["age", "name"]));
+    expect(result.current.map((c) => c.id)).toEqual(["age"]);
+    const { result: all } = renderHook(() => useVisibleColumns(columns, undefined, ["age", "name"]));
+    expect(all.current.map((c) => c.id)).toEqual(["age", "name"]);
+  });
+
   it("returns a stable reference across re-renders when columns/columnVisibility don't change identity", () => {
     const visibility = { age: false };
     const { result, rerender } = renderHook(() => useVisibleColumns(columns, visibility));
