@@ -46,7 +46,7 @@ const DEFAULT_TONE_MAP: Record<string, StatusTone> = {
 };
 
 /** Title-cases a raw status value and replaces underscores/hyphens with spaces, e.g. `"in_review"` -> `"In Review"`. */
-function deriveLabel(status: string): string {
+export function deriveStatusLabel(status: string): string {
   return status
     .replace(/[_-]+/g, " ")
     .trim()
@@ -62,7 +62,11 @@ function deriveLabel(status: string): string {
  * Resolution order: explicit `tone` prop > caller's `toneMap` (case-insensitive
  * key match) > built-in default map (case-insensitive) > `neutral` fallback.
  */
-function resolveTone(status: string, tone?: StatusTone, toneMap?: Record<string, StatusTone>): StatusTone {
+export function resolveStatusTone(
+  status: string,
+  tone?: StatusTone,
+  toneMap?: Record<string, StatusTone>,
+): StatusTone {
   if (tone) {
     return tone;
   }
@@ -100,8 +104,8 @@ export interface StatusBadgeProps extends Omit<HTMLAttributes<HTMLDivElement>, "
  * outright.
  */
 export const StatusBadge = ({ status, label, tone, toneMap, className, ...props }: StatusBadgeProps): ReactElement => {
-  const resolvedTone = resolveTone(status, tone, toneMap);
-  const displayLabel = label ?? deriveLabel(status);
+  const resolvedTone = resolveStatusTone(status, tone, toneMap);
+  const displayLabel = label ?? deriveStatusLabel(status);
 
   return (
     <Badge variant="outline" className={cn(TONE_CLASSES[resolvedTone], className)} {...props}>

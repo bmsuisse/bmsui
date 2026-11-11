@@ -1,4 +1,20 @@
 import {
+  Avatar,
+  AvatarGroup,
+  CircularProgress,
+  CollapsibleSection,
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+  Kbd,
+  KeyCombo,
+  MetadataList,
+  ProgressBar,
+  ShortcutSheet,
+  StatusDot,
+  Timestamp,
+} from "@bmsuisse/ui";
+import {
   AiButton,
   AiExplainButton,
   AlertBox,
@@ -15,6 +31,18 @@ import {
   Combobox,
   ConfirmDialog,
   DateInput,
+  NumberInput,
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+  SegmentedControl,
+  RadioGroup,
+  RadioGroupItem,
+  RadioList,
+  Slider,
+  RangeSlider,
+  FileInput,
   EmptyState,
   FilteredEmptyState,
   Toaster,
@@ -114,7 +142,14 @@ import {
   useSidebarCollapsed,
 } from "@bmsuisse/ui";
 import {
+  AtSymbolIcon,
   BookOpenIcon,
+  ClipboardDocumentIcon,
+  EyeIcon,
+  EyeSlashIcon,
+  ListBulletIcon,
+  TableCellsIcon,
+  ViewColumnsIcon,
   ClipboardDocumentCheckIcon,
   Cog6ToothIcon,
   CurrencyDollarIcon,
@@ -129,6 +164,14 @@ import {
   UsersIcon,
 } from "@heroicons/react/24/outline";
 import type { ReactElement } from "react";
+import {
+  CommandPaletteDemo,
+  PageHeaderDemo,
+  PaginationDemo,
+  SplitPaneDemo,
+  TablePageDemo,
+  ToolbarDemo,
+} from "./LayoutDemos";
 import { useEffect, useState } from "react";
 
 function Section({ title, children }: { title: string; children: ReactElement }): ReactElement {
@@ -924,8 +967,88 @@ export function App(): ReactElement {
             <ToastDemo />
           </Section>
 
+          <Section title="MetadataList">
+            <MetadataListDemo />
+          </Section>
+
+          <Section title="ProgressBar / CircularProgress">
+            <ProgressDemo />
+          </Section>
+
+          <Section title="Timestamp">
+            <TimestampDemo />
+          </Section>
+
+          <Section title="Kbd / KeyCombo / ShortcutSheet">
+            <KbdDemo />
+          </Section>
+
+          <Section title="Avatar / AvatarGroup">
+            <AvatarDemo />
+          </Section>
+
+          <Section title="CollapsibleSection">
+            <CollapsibleSectionDemo />
+          </Section>
+
+          <Section title="HoverCard">
+            <HoverCardDemo />
+          </Section>
+
+          <Section title="StatusDot">
+            <StatusDotDemo />
+          </Section>
+
           <Section title="DateInput">
             <DateInputDemo />
+          </Section>
+
+          <Section title="PageHeader / Breadcrumbs">
+            <PageHeaderDemo />
+          </Section>
+
+          <Section title="TablePage / TableShell / TableToolbar">
+            <TablePageDemo />
+          </Section>
+
+          <Section title="Pagination">
+            <PaginationDemo />
+          </Section>
+
+          <Section title="CommandPalette">
+            <CommandPaletteDemo />
+          </Section>
+
+          <Section title="SplitPane">
+            <SplitPaneDemo />
+          </Section>
+
+          <Section title="Toolbar">
+            <ToolbarDemo />
+          </Section>
+
+          <Section title="NumberInput">
+            <NumberInputDemo />
+          </Section>
+
+          <Section title="SegmentedControl">
+            <SegmentedControlDemo />
+          </Section>
+
+          <Section title="RadioGroup / RadioList">
+            <RadioDemo />
+          </Section>
+
+          <Section title="InputGroup">
+            <InputGroupDemo />
+          </Section>
+
+          <Section title="Slider / RangeSlider">
+            <SliderDemo />
+          </Section>
+
+          <Section title="FileInput">
+            <FileInputDemo />
           </Section>
 
           <Section title="Stepper">
@@ -1584,5 +1707,453 @@ function CollapsedStateReadout(): ReactElement {
   const collapsed = useSidebarCollapsed();
   return (
     <p className="text-xs text-muted-foreground">useSidebarCollapsed() → {String(collapsed)}</p>
+  );
+}
+
+function MetadataListDemo(): ReactElement {
+  return (
+    <div data-testid="demo-metadata-list" className="grid w-full gap-4 lg:grid-cols-2">
+      <Card className="p-4">
+        <p className="mb-3 text-sm font-semibold">Vertical, 2 columns, copyable</p>
+        <MetadataList
+          columns={2}
+          copyable
+          items={[
+            { label: "Customer no.", value: "100234" },
+            { label: "VAT no.", value: "CHE-123.456.789 MWST" },
+            { label: "Sales rep", value: <span className="inline-flex items-center gap-1.5"><Avatar name="Anna Muster" size="xs" decorative />Anna Muster</span>, copyable: false },
+            { label: "Phone", value: null },
+            { label: "Address", value: "Industriestrasse 12, 6010 Kriens", fullWidth: true },
+          ]}
+        />
+      </Card>
+      <Card className="p-4">
+        <p className="mb-1 text-sm font-semibold">Horizontal, divided</p>
+        <MetadataList
+          layout="horizontal"
+          divided
+          labelWidth="8rem"
+          items={[
+            { label: "Status", value: <StatusDot status="active" /> },
+            { label: "Created", value: <Timestamp value={Date.now() - 3 * 86400_000} format="datetime" /> },
+            { label: "Modified", value: <Timestamp value={Date.now() - 12 * 60_000} /> },
+            { label: "Owner", value: "" },
+            { label: "Notes", value: "Prefers delivery before 10:00; ramp at the back of the building." },
+          ]}
+        />
+      </Card>
+    </div>
+  );
+}
+
+function DemoField({ label, children, note }: { label: string; children: ReactElement; note?: string }): ReactElement {
+  return (
+    <div className="flex min-w-0 flex-col gap-1.5 text-sm">
+      <span className="font-medium">{label}</span>
+      {children}
+      {note ? <span className="text-xs text-muted-foreground">{note}</span> : null}
+    </div>
+  );
+}
+
+function ProgressDemo(): ReactElement {
+  const [value, setValue] = useState(42);
+  return (
+    <div data-testid="demo-progress" className="grid w-full gap-6 md:grid-cols-2">
+      <div className="flex flex-col gap-4">
+        <ProgressBar value={value} label="Upload offer.pdf" />
+        <ProgressBar value={18} max={24} label="Files imported" formatValue={(v, m) => `${v} / ${m}`} tone="success" />
+        <ProgressBar value={87} label="Storage quota" tone="warning" size="sm" />
+        <ProgressBar value={100} label="Sync" tone="error" size="lg" formatValue={() => "3 errors"} />
+        <ProgressBar label="Preparing export…" />
+        <div className="flex gap-2">
+          <Button size="xs" variant="outline" onClick={() => setValue((v) => Math.max(0, v - 10))}>−10</Button>
+          <Button size="xs" variant="outline" onClick={() => setValue((v) => Math.min(100, v + 10))}>+10</Button>
+        </div>
+      </div>
+      <div className="flex flex-wrap items-center gap-5">
+        <CircularProgress value={value} aria-label="Upload" />
+        <CircularProgress value={value} aria-label="Upload" size={44} strokeWidth={4} showValue />
+        <CircularProgress value={70} tone="success" aria-label="Done" size={44} strokeWidth={4} showValue />
+        <CircularProgress value={92} tone="warning" aria-label="Quota" size={44} strokeWidth={4} showValue />
+        <CircularProgress aria-label="Loading" />
+        <CircularProgress aria-label="Loading" size={20} strokeWidth={2.5} />
+      </div>
+    </div>
+  );
+}
+
+function NumberInputDemo(): ReactElement {
+  const [amount, setAmount] = useState<number | null>(1234.5);
+  const [qty, setQty] = useState<number | null>(3);
+  const [pct, setPct] = useState<number | null>(null);
+  return (
+    <div data-testid="demo-number-input" className="grid w-full max-w-3xl gap-4 sm:grid-cols-4">
+      <DemoField label="Amount (2 decimals)" note={`value: ${amount ?? "null"} — try 1234,5`}>
+        <NumberInput value={amount} onValueChange={setAmount} decimals={2} />
+      </DemoField>
+      <DemoField label="Quantity (stepper, 0–10)" note={`value: ${qty ?? "null"}`}>
+        <NumberInput value={qty} onValueChange={setQty} min={0} max={10} stepper />
+      </DemoField>
+      <DemoField label="Discount (sm)" note={`value: ${pct ?? "null"}`}>
+        <NumberInput value={pct} onValueChange={setPct} size="sm" stepper step={0.5} placeholder="0.0" />
+      </DemoField>
+      <DemoField label="Disabled">
+        <NumberInput value={42} onValueChange={() => {}} stepper disabled />
+      </DemoField>
+    </div>
+  );
+}
+
+function TimestampDemo(): ReactElement {
+  const now = Date.now();
+  const rows: Array<[string, ReactElement]> = [
+    ["Just now", <Timestamp key="a" value={now - 4000} />],
+    ["Relative (de-CH)", <Timestamp key="b" value={now - 5 * 60_000} />],
+    ["Relative long", <Timestamp key="c" value={now - 3 * 3600_000} relativeStyle="long" />],
+    ["Yesterday", <Timestamp key="d" value={now - 26 * 3600_000} />],
+    ["English", <Timestamp key="e" value={now - 2 * 86400_000} locale="en-GB" relativeStyle="long" />],
+    ["Future", <Timestamp key="f" value={now + 3 * 86400_000} />],
+    ["date", <Timestamp key="g" value={now} format="date" />],
+    ["datetime", <Timestamp key="h" value={now} format="datetime" />],
+    ["time + tooltip", <Timestamp key="i" value={now} format="time" tooltip />],
+  ];
+  return (
+    <Card data-testid="demo-timestamp" className="w-full max-w-md p-4">
+      <ul className="flex flex-col divide-y divide-border text-sm">
+        {rows.map(([label, node]) => (
+          <li key={label} className="flex items-center justify-between py-1.5">
+            <span className="text-muted-foreground">{label}</span>
+            {node}
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
+const DEMO_SHORTCUTS = [
+  {
+    title: "General",
+    hint: "Work anywhere except while typing in a field.",
+    items: [
+      { label: "Command palette", keys: "Mod+K" },
+      { label: "Show shortcuts", keys: "?" },
+      { label: "New offer", keys: "N" },
+      { label: "Dictate", keys: "Mod+Shift+M" },
+    ],
+  },
+  {
+    title: "Go to",
+    items: [
+      { label: "Offers", keys: "g o" },
+      { label: "Customers", keys: "g c" },
+    ],
+  },
+  {
+    title: "In lists",
+    items: [
+      { label: "Next / previous row", keys: ["j", "ArrowDown"] },
+      { label: "Open row", keys: "Enter" },
+      { label: "Close panel", keys: "Escape" },
+    ],
+  },
+];
+
+function KbdDemo(): ReactElement {
+  const [open, setOpen] = useState(false);
+  return (
+    <div data-testid="demo-kbd" className="flex w-full flex-col gap-3">
+      <div className="flex flex-wrap items-center gap-4 text-sm">
+        <span className="inline-flex items-center gap-2">Search <KeyCombo keys="Mod+K" /></span>
+        <span className="inline-flex items-center gap-2">PC spelling <KeyCombo keys="Mod+Shift+P" mac={false} /></span>
+        <span className="inline-flex items-center gap-2">Mac spelling <KeyCombo keys="Mod+Shift+P" mac /></span>
+        <span className="inline-flex items-center gap-2">Sequence <KeyCombo keys="g o" /></span>
+        <span className="inline-flex items-center gap-2">Small <KeyCombo keys={["j", "ArrowDown"]} size="sm" /></span>
+        <span className="inline-flex items-center gap-2">Single <Kbd>Esc</Kbd></span>
+      </div>
+      <div>
+        <Button variant="outline" size="sm" onClick={() => setOpen(true)} data-testid="open-shortcut-sheet">
+          Show shortcuts <KeyCombo keys="?" size="sm" className="ml-1" />
+        </Button>
+      </div>
+      <ShortcutSheet open={open} onOpenChange={setOpen} groups={DEMO_SHORTCUTS} />
+    </div>
+  );
+}
+
+function SegmentedControlDemo(): ReactElement {
+  const [view, setView] = useState("list");
+  const [period, setPeriod] = useState("month");
+  return (
+    <div data-testid="demo-segmented-control" className="flex flex-wrap items-center gap-6">
+      <SegmentedControl
+        aria-label="View"
+        value={view}
+        onValueChange={setView}
+        options={[
+          { value: "list", label: "List", icon: ListBulletIcon },
+          { value: "board", label: "Board", icon: ViewColumnsIcon },
+          { value: "table", label: "Table", icon: TableCellsIcon },
+        ]}
+      />
+      <SegmentedControl
+        aria-label="Period"
+        size="sm"
+        value={period}
+        onValueChange={setPeriod}
+        options={[
+          { value: "week", label: "Week" },
+          { value: "month", label: "Month" },
+          { value: "quarter", label: "Quarter" },
+          { value: "year", label: "Year", disabled: true },
+        ]}
+      />
+      <SegmentedControl aria-label="Disabled" disabled value="a" onValueChange={() => {}} options={[{ value: "a", label: "On" }, { value: "b", label: "Off" }]} />
+    </div>
+  );
+}
+
+const TEAM = [
+  { name: "Anna Muster", status: "success" as const },
+  { name: "Ben Keller" },
+  { name: "Carla Rossi", status: "warning" as const },
+  { name: "Dario Frei" },
+  { name: "Eva Graf" },
+  { name: "Fabio Huber" },
+  { name: "Gina Weber" },
+];
+
+function AvatarDemo(): ReactElement {
+  return (
+    <div data-testid="demo-avatar" className="flex w-full flex-col gap-5">
+      <div className="flex flex-wrap items-center gap-6">
+        <AvatarGroup items={TEAM} max={4} />
+        <AvatarGroup items={TEAM} max={3} size="sm" />
+        <AvatarGroup items={TEAM.slice(0, 3)} size="lg" />
+      </div>
+      <div className="flex flex-wrap items-end gap-3">
+        <Avatar name="Anna Muster" size="xs" />
+        <Avatar name="Ben Keller" size="sm" />
+        <Avatar name="Carla Rossi" size="md" status="success" statusLabel="online" />
+        <Avatar name="Dario Frei" size="lg" status="warning" statusLabel="away" />
+        <Avatar name="Eva Graf" size="xl" status="neutral" statusLabel="offline" />
+        <Avatar name="Sika Schweiz AG" size="lg" shape="square" />
+        <Avatar name="Broken Image" size="lg" src="/does-not-exist.png" />
+        <Avatar
+          name="Photo"
+          size="lg"
+          src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%2394a3b8'/%3E%3Cstop offset='1' stop-color='%23475569'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='40' height='40' fill='url(%23g)'/%3E%3Ccircle cx='20' cy='16' r='7' fill='%23e2e8f0'/%3E%3Cellipse cx='20' cy='36' rx='13' ry='10' fill='%23e2e8f0'/%3E%3C/svg%3E"
+        />
+      </div>
+    </div>
+  );
+}
+
+function RadioDemo(): ReactElement {
+  const [shipping, setShipping] = useState("standard");
+  const [plan, setPlan] = useState("team");
+  const [size, setSize] = useState("m");
+  return (
+    <div data-testid="demo-radio" className="grid w-full max-w-4xl gap-6 md:grid-cols-[1fr_2fr]">
+      <div className="grid gap-4">
+        <RadioList
+          aria-label="Shipping"
+          value={shipping}
+          onValueChange={setShipping}
+          options={[
+            { value: "standard", label: "Standard", description: "3–5 working days, free" },
+            { value: "express", label: "Express", description: "Next working day, CHF 12.–" },
+            { value: "pickup", label: "Pick-up", description: "Not available for this order", disabled: true },
+          ]}
+        />
+        <RadioGroup aria-label="Size" value={size} onValueChange={setSize} className="flex gap-4">
+          {["s", "m", "l"].map((s) => (
+            <div key={s} className="flex items-center gap-2">
+              <RadioGroupItem id={`size-${s}`} value={s} />
+              <Label htmlFor={`size-${s}`}>{s.toUpperCase()}</Label>
+            </div>
+          ))}
+        </RadioGroup>
+      </div>
+      <RadioList
+        aria-label="Plan"
+        variant="card"
+        orientation="horizontal"
+        value={plan}
+        onValueChange={setPlan}
+        options={[
+          { value: "solo", label: "Solo", description: "One user, basic reports" },
+          { value: "team", label: "Team", description: "Up to 20 users, shared views" },
+          { value: "org", label: "Organisation", description: "SSO, audit log, support" },
+        ]}
+      />
+    </div>
+  );
+}
+
+function CollapsibleSectionDemo(): ReactElement {
+  return (
+    <div data-testid="demo-collapsible-section" className="grid w-full gap-4 md:grid-cols-2">
+      <Card className="p-3">
+        <CollapsibleSection title="Attachments" count={3} actions={<Button size="xs" variant="ghost">Add</Button>}>
+          <ul className="flex flex-col gap-1 text-sm">
+            <li>offer-2026-114.pdf</li>
+            <li>floor-plan.dwg</li>
+            <li>photo-site.jpg</li>
+          </ul>
+        </CollapsibleSection>
+        <CollapsibleSection title="History" description="Changes in the last 30 days" count={0} defaultOpen={false}>
+          <p className="text-sm text-muted-foreground">Nothing changed.</p>
+        </CollapsibleSection>
+      </Card>
+      <div className="flex flex-col gap-3">
+        <CollapsibleSection variant="card" title="Contacts" count={2}>
+          <MetadataList
+            layout="horizontal"
+            labelWidth="6rem"
+            items={[
+              { label: "Primary", value: "Anna Muster" },
+              { label: "Billing", value: "Ben Keller" },
+            ]}
+          />
+        </CollapsibleSection>
+        <CollapsibleSection variant="card" title="Internal notes" defaultOpen={false}>
+          <p className="text-sm">Call before delivery.</p>
+        </CollapsibleSection>
+      </div>
+    </div>
+  );
+}
+
+function InputGroupDemo(): ReactElement {
+  const [show, setShow] = useState(false);
+  return (
+    <div data-testid="demo-input-group" className="grid w-full max-w-3xl gap-4 sm:grid-cols-2">
+      <DemoField label="Leading icon">
+        <InputGroup>
+          <InputGroupAddon>
+            <MagnifyingGlassIcon />
+          </InputGroupAddon>
+          <InputGroupInput placeholder="Search customers" />
+        </InputGroup>
+      </DemoField>
+      <DemoField label="Units">
+        <InputGroup>
+          <InputGroupAddon>CHF</InputGroupAddon>
+          <InputGroupInput defaultValue="1'250.00" className="tabular-nums" />
+          <InputGroupAddon>/ month</InputGroupAddon>
+        </InputGroup>
+      </DemoField>
+      <DemoField label="Trailing buttons">
+        <InputGroup>
+          <InputGroupInput type={show ? "text" : "password"} defaultValue="hunter22" />
+          <InputGroupButton aria-label={show ? "Hide password" : "Show password"} onClick={() => setShow((v) => !v)}>
+            {show ? <EyeSlashIcon /> : <EyeIcon />}
+          </InputGroupButton>
+          <InputGroupButton aria-label="Copy">
+            <ClipboardDocumentIcon />
+          </InputGroupButton>
+        </InputGroup>
+      </DemoField>
+      <DemoField label="sm, text button">
+        <InputGroup size="sm">
+          <InputGroupAddon>
+            <AtSymbolIcon />
+          </InputGroupAddon>
+          <InputGroupInput placeholder="name@company.ch" />
+          <InputGroupButton size="xs" variant="outline" className="h-6">
+            Invite
+          </InputGroupButton>
+        </InputGroup>
+      </DemoField>
+    </div>
+  );
+}
+
+function HoverCardDemo(): ReactElement {
+  return (
+    <div data-testid="demo-hover-card" className="flex min-h-48 w-full items-start gap-2 text-sm">
+      <span>Assigned to</span>
+      <HoverCard>
+        <HoverCardTrigger
+          href="#"
+          data-testid="hover-card-trigger"
+          className="rounded-sm font-medium underline decoration-muted-foreground/40 decoration-dotted underline-offset-4 hover:decoration-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          Anna Muster
+        </HoverCardTrigger>
+        <HoverCardContent className="w-80">
+          <div className="flex items-center gap-3">
+            <Avatar name="Anna Muster" size="lg" status="success" statusLabel="online" />
+            <div className="min-w-0">
+              <p className="truncate font-semibold leading-5">Anna Muster</p>
+              <p className="truncate text-xs text-muted-foreground">Key account manager · Kriens</p>
+            </div>
+          </div>
+          <MetadataList
+            className="mt-3 border-t border-foreground/10 pt-1 dark:border-border"
+            layout="horizontal"
+            labelWidth="3.5rem"
+            items={[
+              { label: "Phone", value: "+41 41 123 45 67" },
+              { label: "Mail", value: "anna.muster@example.ch" },
+            ]}
+          />
+        </HoverCardContent>
+      </HoverCard>
+    </div>
+  );
+}
+
+function SliderDemo(): ReactElement {
+  const [volume, setVolume] = useState([40]);
+  const [price, setPrice] = useState<[number, number]>([1200, 8500]);
+  return (
+    <div data-testid="demo-slider" className="grid w-full max-w-3xl gap-8 sm:grid-cols-3">
+      <DemoField label={`Volume: ${volume[0]}%`}>
+        <Slider value={volume} onValueChange={setVolume} max={100} thumbLabels="Volume" />
+      </DemoField>
+      <DemoField label="Price range">
+        <RangeSlider value={price} onValueChange={setPrice} min={0} max={10000} step={100} unit="CHF" />
+      </DemoField>
+      <DemoField label="Disabled">
+        <Slider defaultValue={[30, 70]} disabled thumbLabels={["From", "To"]} />
+      </DemoField>
+    </div>
+  );
+}
+
+function StatusDotDemo(): ReactElement {
+  return (
+    <div data-testid="demo-status-dot" className="flex flex-wrap items-center gap-5">
+      <StatusDot status="active" />
+      <StatusDot status="pending" />
+      <StatusDot status="failed" />
+      <StatusDot status="new" />
+      <StatusDot status="archived" />
+      <StatusDot tone="success" label="Online" pulse size="md" />
+      <span className="inline-flex items-center gap-1.5 text-sm">
+        Hidden label <StatusDot tone="error" label="Offline" hideLabel />
+      </span>
+    </div>
+  );
+}
+
+function FileInputDemo(): ReactElement {
+  const [files, setFiles] = useState<File[]>(() => [
+    new File(["x".repeat(184_320)], "Offerte_2026-114.pdf", { type: "application/pdf" }),
+    new File(["x".repeat(2_400_000)], "Leistungsverzeichnis Haus Seeblick.docx"),
+  ]);
+  const [single, setSingle] = useState<File[]>([]);
+  return (
+    <div data-testid="demo-file-input" className="grid w-full max-w-3xl gap-6 sm:grid-cols-2">
+      <DemoField label="Multiple, PDF/Word, max 5 MB">
+        <FileInput files={files} onFilesChange={setFiles} multiple accept=".pdf,.docx,.doc" maxSize={5 * 1024 * 1024} hint="PDF or Word, up to 5 MB" />
+      </DemoField>
+      <DemoField label="Single, compact (sm)">
+        <FileInput files={single} onFilesChange={setSingle} size="sm" accept="image/*" hint="PNG, JPG" />
+      </DemoField>
+    </div>
   );
 }

@@ -464,7 +464,10 @@ logic above, which already had its own extraction). Structure:
     `description`, `action`, `size` `sm`/`md`, `fill` for flex parents.
     `FilteredEmptyState` is EmptyState + a Reset button (`onReset`) with
     `labels` for translation, same convention as `ErrorState`. Use
-    `ErrorState` when loading failed, not this.
+    `ErrorState` when loading failed, not this. The icon tile (hairline ring +
+    faint foreground tint, since `bg-muted` vanishes on the light surface)
+    fades and rises 4px in once on mount via Tailwind's `starting:` variant
+    (200ms ease-out, fade only under reduced motion; `animated={false}` = static).
   - `toast/` — `toast()` + `<Toaster>` (v0.20.0), ported from OneDocs's
     zustand toastStore/Toaster but with a dependency-free module store read
     via `useSyncExternalStore`, so `toast(...)` works from anywhere (query
@@ -475,7 +478,14 @@ logic above, which already had its own extraction). Structure:
     Animations API animation *is* the timer in browsers (so pausing the bar
     and the countdown can't drift); jsdom has no `element.animate`, so a
     pausable `setTimeout` stands in there — tests exercise that path. Enter/
-    exit are plain `transition` toggles, no `tailwindcss-animate`.
+    exit are plain `transition` toggles, no `tailwindcss-animate`: a toast
+    slides 8px in from the toaster's edge at 97% scale (200ms ease-out) and
+    fades/shrinks out (150ms ease-in, = `TOAST_EXIT_MS`); each sits in a
+    `grid-rows-[0fr→1fr]` row whose padding is the gap, so the stack reflows
+    smoothly when one arrives or leaves. Reduced motion keeps only the fade;
+    `<Toaster animated={false}>` is instant. Surface is `bg-popover` — the
+    theme has no `--card` token, so the earlier `bg-card` rendered the toast
+    transparent over the page.
   - `date-input/` — `DateInput` (v0.20.0), ported from OneDocs's
     `DateField` + `lib/dateField`: a text field that shows and parses the
     given `locale` (default `de-CH`, dd.mm.yyyy) while the value stays an
@@ -483,8 +493,140 @@ logic above, which already had its own extraction). Structure:
     `aria-invalid` and keep the old value. Accepts `3.2.26`, any of `. / -`,
     and ISO. `toLocalIsoDay` is exported because OneSales hit the
     `toISOString().slice(0, 10)` UTC-day bug after 22:00 Swiss time. No
-    calendar popover yet — that's the next step (Astryx's `Calendar` is the
-    reference for keyboard behaviour).
+    calendar popover of its own, but a calendar button that opens the browser's
+    date picker (`showPicker()`), native `<input type="date">` on touch devices,
+    `min`/`max`, and arrow-key stepping.
+  - Display set (unreleased): `metadata-list/` `MetadataList` (`<dl>` label/
+    value pairs, vertical or label-column layout, responsive `columns`,
+    optional copy buttons, "—" for empty); `progress/` `ProgressBar` +
+    `CircularProgress` (`role=progressbar`, indeterminate via the Web
+    Animations API — no keyframes CSS shipped); `timestamp/` `Timestamp`
+    (`<time>`, `Intl.RelativeTimeFormat` de-CH "vor 5 Min.", self-scheduling
+    refresh, full date in a Tooltip; logic after Astryx's Timestamp);
+    `kbd/` `Kbd`/`KeyCombo`/`ShortcutSheet` lifted from OneDocs (each key its
+    own cap, `Mod` → ⌘/Ctrl via the new `isMacPlatform`); `avatar/`
+    `Avatar`/`AvatarGroup` from OneSales's avatar/UserAvatar/CustomerAvatar
+    (initials while loading/on error, name-hashed palette color, status dot,
+    "+N" overflow with a tooltip); `collapsible-section/` on the new
+    `Collapsible` primitive (`forceMount` + grid-rows transition, `inert`
+    set imperatively because React 18/19 type `inert` differently);
+    `HoverCard` primitive (OneSales `HoverPopover`, Radix); `status-dot/`
+    `StatusDot` reusing StatusBadge's now-exported `resolveStatusTone`.
+    Two traps found doing it: in the demo theme `--primary` stays navy in dark
+    mode, so the default progress fill is `bg-primary dark:bg-ring`; and
+    `--border` is near-invisible on the light surface, so frames/dividers that
+    must be seen use `border-foreground/10`.
+    Motion (CSS transitions, `starting:` and Radix `data-*` attributes or the Web
+    Animations API only — no keyframes CSS shipped, 100–200ms, ease-out in /
+    ease-in out, transform/opacity, `motion-reduce:` drops all movement):
+    ProgressBar fill animates width/colour (300ms), indeterminate slides via
+    WAAPI, CircularProgress animates its stroke offset; `StatusDot` `pulse` is a
+    WAAPI ring ripple (scale 1→2.6 while fading, 2s loop with a rest — replaces
+    `animate-ping`); `CollapsibleSection` chevron rotates and content fades
+    with the grid-rows height (in 200ms ease-out, out 150ms ease-in);
+    `HoverCard` fades + scales from 96% and nudges 4px from its side via
+    `starting:`, and gets a real 120ms exit — Radix's Presence only waits for
+    CSS keyframe animations, so the `HoverCard` root keeps Radix `open` for
+    120ms after closing and marks the content `data-exiting` (`animated={false}`
+    skips both); `Avatar` cross-fades the photo over its initials (initials stay
+    mounted, faded); `AvatarGroup` stacks earlier avatars on top (status dots
+    stay visible) and fans out 3px per avatar on hover/focus-within
+    (`animated`); `Kbd` caps press down 1px inside an `:active` button/link or
+    with the new `pressed` prop (also on `KeyCombo`); `MetadataList`'s copy
+    button morphs clipboard → check (stacked icons, scale+fade 150ms);
+    `Timestamp` cross-fades its text (WAAPI, 40%→100% opacity) when a live
+    relative value ticks (`animated`).
+  - Layout set (v0.21.0): `page-header/` — `PageHeader`, OneSales's
+    `ui/PageHeader` API (45 importers: `title`/`badge`/`description`/
+    `actions`/`onBack`, same `page-header-*` test ids) rendered inline instead
+    of via its shell store, plus `backHref`/`breadcrumbs`/`tabs`/`divider`.
+    `breadcrumbs/` — `Breadcrumbs`, `nav`>`ol`, middle crumbs fold into a
+    DropdownMenu past `maxItems`, `renderLink` for routers. `table-shell/` —
+    `TableShell`/`TableToolbar`/`TableResultCount` lifted from OneSales (its
+    `ToolbarSearch` is `TableSearch` here, to avoid clashing with `Toolbar`;
+    OneSales's `[data-table-shell]` grid restyle lived in its index.css and is
+    not shipped — the attribute is kept so the app CSS still applies) and
+    `TablePage` = PageHeader + filling TableShell; no datagrid dependency.
+    `pagination/` — `Pagination` + `getPageRange` (Astryx's constant-slot
+    ellipsis rules), CSS-only collapse to prev / "3 / 13" / next below `sm`.
+    `command-palette/` — `CommandPalette` on `Dialog` with its own list (no
+    cmdk), input-driven `aria-activedescendant` like `Combobox`;
+    `scoreCommand` tiers; `useCommandPaletteHotkey`, `useRecentCommands`
+    (localStorage, try/catch), `CommandPaletteTrigger`, and OneDocs's
+    registry idea as `CommandRegistryProvider`/`useRegisterCommands`.
+    Highlight is `bg-foreground/6` rather than `bg-accent` (accent is a
+    saturated blue with white text in the reference theme — too loud for a
+    list you arrow through). `split-pane/` — `SplitPane`/`SplitPanePanel`
+    from OneDocs's `Splitter`: percentage sizes, px-or-% limits, neighbour-only
+    resize, role=separator + aria values, arrows/Home/End/Enter, pointer
+    capture with `pointer-events-none` panes while dragging. `toolbar/` —
+    `Toolbar`/`ToolbarButton`/`ToolbarSeparator`: roving tabindex managed on
+    the DOM after each render (items are `[data-toolbar-item]`), optional
+    measured `overflow` into a "…" DropdownMenu (widths cached while all
+    items are visible, refit on ResizeObserver). Hover/pressed states use
+    `foreground` alpha tints, since `--muted` is almost the page colour in the
+    light reference theme. Visual pass (v0.21.x): frames/dividers that must
+    show in light mode use `border-foreground/10` (`dark:border-border`);
+    `TableShell` insets the first/last cell of a plain `<table>` to the
+    toolbar's 12/16px edge; Pagination/Breadcrumbs/PageHeader hover tints are
+    `foreground/6`; palette group headings are sentence case like Sidebar's.
+    Motion (CSS transitions, Tailwind `starting:` and WAAPI only — no
+    keyframes, no tailwindcss-animate; 150ms ease-out, `motion-reduce:` drops
+    movement): `CommandPalette` fades/scales in from slightly above (Radix
+    unmounts on close, so exit is instant), its selected-row highlight is one
+    shared element that glides between rows, and the list eases to its new
+    height while filtering (WAAPI); `Pagination`'s current-page marker slides;
+    `PageHeader` slides one pill between a `TabsList`'s tabs (it hides the
+    active trigger's own surface only while the pill is placed,
+    `[data-indicator]`); `SplitPane` panes ease on keyboard steps/reset but
+    never while pointer-dragging, and the grip grows on hover/drag; Breadcrumbs'
+    "…" and Toolbar's overflow menus fade/scale from their Radix
+    transform-origin; `TableToolbar` filter chips fade/scale in; Toolbar
+    pressed/hover states transition. `CommandPalette`, `Pagination`,
+    `PageHeader` and `SplitPane` take `animated` (default `true`). The
+    gliding indicators share `lib/useSlidingIndicator` (internal): measured
+    with `offsetLeft/Top` (not client rects, so a dialog scaling in can't skew
+    them), first placement and resizes instant, later moves transition. `tests/setup.ts` gained an in-memory `localStorage`:
+    Node ≥ 25's own global `localStorage` (undefined without
+    `--localstorage-file`) shadows jsdom's.
+  - Input set (v0.21.0), behaviour learned from Astryx (MIT) and the apps'
+    local versions, styled with theme tokens only (`--primary` stays navy in
+    dark mode, so selected fills use `dark:bg-accent`, never `text-primary`):
+    - `number-input/` — `NumberInput` + `lib/numberField`
+      (`parseLocaleNumber`/`formatLocaleNumber`). de-CH display `1’234.50`
+      (Intl's group mark; ICU versions differ between `'` and `’`, both
+      parse). Accepts decimal comma, apostrophes/spaces as grouping; a lone
+      locale-group char counts as grouping only before exactly three digits.
+      Commit on blur/Enter like `DateInput`, clamp to min/max, ArrowUp/Down
+      float-safe stepping, optional `stepper` buttons, `role="spinbutton"`.
+    - `input-group/` — `InputGroup`/`InputGroupAddon`/`InputGroupInput`/
+      `InputGroupButton`; ring via `focus-within`, invalid via `:has()`.
+    - `segmented-control/` — `SegmentedControl`, from OneDocs
+      `common/Segmented`; thumb measured from the checked button
+      (layout effect + ResizeObserver).
+    - `radio-list/` — `RadioList` over the new `RadioGroup`/`RadioGroupItem`
+      primitives (`@radix-ui/react-radio-group`).
+    - `range-slider/` — `RangeSlider` over the new `Slider` primitive
+      (`@radix-ui/react-slider`), the typed-bounds idea from OneSales
+      `RangeSliderFilter` (without its histogram/log scale).
+    - `file-input/` — `FileInput`, the drop behaviour of OneSales'
+      offer-parser `StepUpload` without pragmatic-drag-and-drop: native drag
+      events with an enter/leave depth counter, `accept` checked on drop too.
+    - Visual/motion pass (v0.21.x): one focus language for small round
+      controls (`ring-2 ring-ring ring-offset-1`: radio, slider thumb);
+      `InputGroupInput` gets `pb-[5px]` because Chrome renders
+      input text ~0.75px below flex-centred addon/button text.
+      Micro-animations use only CSS transitions, Tailwind `starting:` and the
+      Web Animations API (`lib/motion.ts`, guarded for jsdom) — 120–200 ms,
+      ease-out in / ease-in out, nothing moves under `prefers-reduced-motion`.
+      Note Tailwind v4's `scale-*`/`translate-*` set the `scale`/`translate`
+      properties, so transition lists must name those, not `transform`.
+      Behavioural motion is opt-out via `animated` (SegmentedControl, Slider,
+      RangeSlider, FileInput).
+      Radix unmounts the popover instantly on close (it only waits for CSS
+      keyframe animations, which this package doesn't ship), so only the
+      enter is animated. FileInput's remove waits for its 140 ms collapse
+      before `onFilesChange` (instant without WAAPI / with reduced motion).
 - `packages/ui/demo/` — same pattern as `packages/datagrid/demo`: a Vite
   app aliasing `@bmsuisse/ui` straight to `src/index.ts`, using the same
   reference-app-derived Tailwind v4 tokens, for visual QA.
@@ -506,6 +648,50 @@ logic above, which already had its own extraction). Structure:
 - `python/datagrid/bmsdna/datagrid/` is a PEP 420 implicit namespace package
   (no `bmsdna/__init__.py` at the root) — mirrors `bmsdna-devtools` in the
   `devtools` repo. Built with hatchling; see `python/datagrid/pyproject.toml`.
+
+### `@bmsuisse/ui` hooks (`packages/ui/src/hooks/`)
+
+Behaviour-only hooks, no styling, React 18 + 19, SSR-safe, no extra
+dependencies. Docs: `docs-site/docs/ui/hooks.md`; tests:
+`packages/ui/tests/hooks/`. Behaviour learned from Astryx's `core/src/hooks`
+(MIT) and OneDocs's `GlobalShortcuts`/`ChordShortcuts`/`LiveAnnouncer`.
+
+- `useHotkeys([{ keys, handler, enabled?, allowInInputs?, preventDefault? }], options?)`
+  — window `keydown`; `mod` = ⌘ on Apple, Ctrl elsewhere; chords `"g i"`
+  (`chordTimeoutMs`, default 1000); skips inputs/textarea/select/
+  contenteditable and IME composition; first match wins; handlers read from a
+  ref (no re-subscribe). `formatHotkey("mod+k")` → `⌘K` / `Ctrl+K` (pass
+  `"mac"`/`"other"` to force). Use the same string for both so shown and
+  handled shortcuts agree.
+- `useClipboard({ timeout })` → `{ copy, copied, error, reset }`;
+  `execCommand` fallback without `navigator.clipboard`.
+- `announce(msg, { politeness })` / `useAnnounce()` — lazily created shared
+  live regions on `body`; `<Announcer />` mounted inside a modal takes over
+  while mounted (Radix hides everything outside an open modal).
+- `useMergedRefs(...refs)`, `useFocusTrap({ enabled, restoreFocus, initialFocus })`
+  (returns a callback ref), `useLongPress(cb, { threshold, moveTolerance })`
+  (pointer events, swallows the following click),
+  `useScrollOverflow()` → `{ ref, top, bottom, left, right }`,
+  `useLocalStorageState(key, default)` → `[value, set, remove]`
+  (`useSyncExternalStore`: hydration-safe, same-key hooks and other tabs stay
+  in sync, never throws).
+
+## Public API reports — `packages/*/api-report.md`
+
+`bun run api-report` (`scripts/api-report.ts`) reads the **built**
+`packages/{ui,datagrid}/dist/index.d.ts` with the TypeScript compiler API
+and writes one sorted, deterministic Markdown file per package: every export
+with its kind (component / hook / function / constant / interface / type /
+re-export) and signature, interfaces and object types expanded one member
+per line (members inherited from non-exported base interfaces are listed with
+`(from Base)`). Idea from Astryx's `scripts/api-report`.
+
+**When you change a public API, regenerate the report and commit it:**
+`bun run build && bun run api-report`. Reviewers read its diff instead of
+reverse-engineering `index.ts` changes — a removed or renamed prop is a
+one-line `-`. CI (`ts-check` job) rebuilds, regenerates and fails when
+`git diff --exit-code packages/*/api-report.md` is dirty.
+`bun run api-report --check` does the same check locally without writing.
 
 ## The shared filter/sort contract — hand-mirrored, not codegen'd
 
