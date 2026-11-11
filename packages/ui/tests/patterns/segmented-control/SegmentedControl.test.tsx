@@ -74,4 +74,10 @@ describe("SegmentedControl without a matching value", () => {
     fireEvent.keyDown(group, { key: "ArrowRight" });
     expect(onChange).toHaveBeenLastCalledWith("list");
   });
+
+  it("the Tab stop moves to the first enabled option when the selected one is disabled", () => {
+    render(<SegmentedControl aria-label="View" options={options} value="board" onValueChange={() => {}} />);
+    const stops = screen.getAllByRole("radio").filter((r) => r.getAttribute("tabindex") === "0");
+    expect(stops.map((r) => r.textContent)).toEqual(["List"]);
+  });
 });

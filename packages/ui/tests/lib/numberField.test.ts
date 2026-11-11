@@ -77,4 +77,13 @@ describe("review fixes: formatted displays, Swiss dash, rounding", () => {
     expect(roundTo(1234.5, 0)).toBe(1235);
     expect(roundTo(1e-7, 2)).toBe(0);
   });
+
+  it("reads accounting negatives in parentheses as negative", () => {
+    const accounting: Intl.NumberFormatOptions = { style: "currency", currency: "USD", currencySign: "accounting" };
+    expect(parseLocaleNumber("($1,234.50)", "en-US", accounting)).toBe(-1234.5);
+    expect(parseLocaleNumber("$1,234.50", "en-US", accounting)).toBe(1234.5);
+    expect(parseLocaleNumber("(0)", "en-US", accounting)).toBe(0);
+    // Without accounting, parentheses stay formatting noise: no surprise sign flip.
+    expect(parseLocaleNumber("(5)", "en-US")).toBeNull();
+  });
 });

@@ -47,15 +47,20 @@ export function parseLocaleNumber(
   formatOptions?: Intl.NumberFormatOptions,
 ): number | null {
   let s = text.normalize("NFKC");
+  // Accounting style shows negatives as `($1,234.50)`; read the parentheses as a minus sign
+  // before they are stripped as formatting literals.
+  const accounting = formatOptions?.currencySign === "accounting" && /^\s*\(.*\)\s*$/.test(s);
+  if (accounting) s = s.trim().slice(1, -1);
   for (const affix of formatAffixes(locale, formatOptions)) s = s.split(affix).join(" ");
   s = s.trim().replace(/[−–—]/g, "-");
   // Swiss whole amounts: `50.-` / `50.–` mean 50.
   s = s.replace(/[.,]-+$/, "");
   if (!s) return null;
   const parsed = parsePlainNumber(s, locale);
-  if (parsed == null || formatOptions?.style !== "percent") return parsed;
+  if (parsed == null) return parsed;
+  const signed = accounting && parsed > 0 ? -parsed : parsed;
   // The field shows `12%` for 0.12: read it back the same way.
-  return shiftDecimal(parsed, -2);
+  return formatOptions?.style === "percent" ? shiftDecimal(signed, -2) : signed;
 }
 
 const affixCache = new Map<string, string[]>();

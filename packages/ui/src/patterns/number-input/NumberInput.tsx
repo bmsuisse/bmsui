@@ -180,10 +180,10 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
             else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
               e.preventDefault();
               stepBy(e.key === "ArrowUp" ? 1 : -1, e.shiftKey ? 10 : 1);
-            } else if (e.key === "Home" && min != null && e.ctrlKey) {
+            } else if (e.key === "Home" && min != null && e.ctrlKey && !readOnly && !disabled) {
               e.preventDefault();
               emit(min);
-            } else if (e.key === "End" && max != null && e.ctrlKey) {
+            } else if (e.key === "End" && max != null && e.ctrlKey && !readOnly && !disabled) {
               e.preventDefault();
               emit(max);
             }

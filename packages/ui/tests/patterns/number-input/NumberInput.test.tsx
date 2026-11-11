@@ -153,4 +153,16 @@ describe("NumberInput review fixes", () => {
     fireEvent.blur(input);
     expect(onChange).toHaveBeenLastCalledWith(1.01);
   });
+
+  it("Ctrl+Home / Ctrl+End don't change a read-only or disabled field", () => {
+    const onChange = vi.fn();
+    const { rerender } = render(<Controlled initial={50} min={0} max={100} readOnly onChange={onChange} />);
+    const input = screen.getByLabelText("Amount");
+    fireEvent.keyDown(input, { key: "Home", ctrlKey: true });
+    fireEvent.keyDown(input, { key: "End", ctrlKey: true });
+    expect(onChange).not.toHaveBeenCalled();
+    rerender(<Controlled initial={50} min={0} max={100} onChange={onChange} />);
+    fireEvent.keyDown(screen.getByLabelText("Amount"), { key: "Home", ctrlKey: true });
+    expect(onChange).toHaveBeenCalledWith(0);
+  });
 });

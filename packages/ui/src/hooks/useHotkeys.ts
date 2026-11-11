@@ -123,8 +123,10 @@ function matchesCombo(combo: Combo, event: KeySnapshot, isApple: boolean): boole
 
   const key = event.key.toLowerCase();
   if (key === combo.key) return true;
-  // Alt (Option on a Mac) and some layouts change event.key ("alt+k" → "˚"):
-  // fall back to the physical key for letters and digits.
+  // Alt (Option on a Mac) and non-Latin layouts change event.key ("alt+k" → "˚", "я" for Z):
+  // fall back to the physical key, but only when the key is not already a Latin letter or
+  // digit. Otherwise QWERTZ Ctrl+Z (key "z", code "KeyY") would also match a `mod+y` shortcut.
+  if (/^[a-z0-9]$/.test(key)) return false;
   if (/^[a-z]$/.test(combo.key)) return event.code === `Key${combo.key.toUpperCase()}`;
   if (/^[0-9]$/.test(combo.key)) return event.code === `Digit${combo.key}`;
   return false;

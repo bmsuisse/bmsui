@@ -54,6 +54,12 @@ export function useLongPress(
 
   useEffect(() => clear, [clear]);
 
+  // Disabled while a press is pending: drop it instead of firing later.
+  const disabled = options.disabled;
+  useEffect(() => {
+    if (disabled) clear();
+  }, [disabled, clear]);
+
   const cancel = useCallback(
     (event: ReactPointerEvent<Element>) => {
       if (press.current === null || press.current.pointerId !== event.pointerId) return;
@@ -77,6 +83,7 @@ export function useLongPress(
         opts.onStart?.(event);
         timer.current = setTimeout(() => {
           timer.current = null;
+          if (latest.current.options.disabled) return;
           fired.current = true;
           latest.current.callback(event);
         }, opts.threshold ?? 500);

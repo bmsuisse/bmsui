@@ -84,4 +84,23 @@ describe("useFocusTrap", () => {
     render(<Trap options={{ enabled: false }} />);
     expect(document.body).toHaveFocus();
   });
+
+  it("skips disabled controls with an explicit tabindex and controls inside hidden ancestors", async () => {
+    const user = userEvent.setup();
+    render(
+      <Trap>
+        <button type="button">first</button>
+        <button type="button">last</button>
+        <button type="button" tabIndex={0} disabled>
+          disabled-with-tabindex
+        </button>
+        <div style={{ display: "none" }}>
+          <button type="button">in-hidden-ancestor</button>
+        </div>
+      </Trap>,
+    );
+    screen.getByText("first").focus();
+    await user.tab({ shift: true });
+    expect(screen.getByText("last")).toHaveFocus();
+  });
 });

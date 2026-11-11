@@ -185,4 +185,31 @@ describe("formatHotkey", () => {
     expect(formatHotkey("mod+k")).toBe("⌘K");
     vi.restoreAllMocks();
   });
+
+  it("physical-key fallback doesn't make QWERTZ Ctrl+Z trigger mod+y", () => {
+    setPlatform("Win32");
+    const redo = vi.fn();
+    const undo = vi.fn();
+    setup([
+      { keys: "mod+y", handler: redo },
+      { keys: "mod+z", handler: undo },
+    ]);
+    // QWERTZ: the key labelled Z sits where Y is on QWERTY, so code is KeyY but key is "z".
+    press("z", { ctrlKey: true, code: "KeyY" });
+    expect(redo).not.toHaveBeenCalled();
+    expect(undo).toHaveBeenCalledTimes(1);
+  });
+
+  it("still falls back to the physical key when event.key is no Latin letter (Option, Cyrillic)", () => {
+    setPlatform("MacIntel");
+    const handler = vi.fn();
+    setup([{ keys: "alt+k", handler }]);
+    press("˚", { altKey: true, code: "KeyK" });
+    expect(handler).toHaveBeenCalledTimes(1);
+    setPlatform("Win32");
+    const undo = vi.fn();
+    setup([{ keys: "mod+z", handler: undo }]);
+    press("я", { ctrlKey: true, code: "KeyZ" });
+    expect(undo).toHaveBeenCalledTimes(1);
+  });
 });

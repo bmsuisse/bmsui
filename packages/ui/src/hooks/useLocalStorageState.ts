@@ -100,8 +100,10 @@ export function useLocalStorageState<T>(
     }
   }, []);
 
-  // Re-parse only when the stored string changes; `defaultValue` literals don't churn identity.
-  const value = useMemo(() => parse(raw), [parse, raw]);
+  // Re-parse only when the stored string or the key changes (two unset keys both read `null`, but
+  // their defaults may differ); `defaultValue` literals don't churn identity.
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- `key` re-runs the parse for a new key
+  const value = useMemo(() => parse(raw), [parse, raw, key]);
 
   const setValue = useCallback<SetLocalStorageState<T>>(
     (next) => {

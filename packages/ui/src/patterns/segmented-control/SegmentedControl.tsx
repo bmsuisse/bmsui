@@ -89,7 +89,11 @@ export function SegmentedControl<T extends string = string>({
   };
 
   const sm = size === "sm";
-  const hasChecked = options.some((o) => o.value === value);
+  // The one Tab stop: the selected option, or the first enabled one when the selection is
+  // missing or disabled (otherwise a disabled stop would make the group unreachable by Tab).
+  const enabledAt = options.flatMap((o, i) => (disabled || o.disabled ? [] : [i]));
+  const checkedAt = options.findIndex((o) => o.value === value);
+  const tabStop = enabledAt.includes(checkedAt) ? checkedAt : (enabledAt[0] ?? -1);
 
   return (
     <div
@@ -130,7 +134,7 @@ export function SegmentedControl<T extends string = string>({
             data-value={option.value}
             data-state={checked ? "checked" : "unchecked"}
             disabled={optionDisabled}
-            tabIndex={checked || (!hasChecked && index === 0) ? 0 : -1}
+            tabIndex={index === tabStop ? 0 : -1}
             data-testid={testId ? `${testId}-option-${option.value}` : undefined}
             onClick={() => onValueChange(option.value)}
             className={cn(

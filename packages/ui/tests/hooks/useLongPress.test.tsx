@@ -85,4 +85,14 @@ describe("useLongPress", () => {
     vi.advanceTimersByTime(1000);
     expect(onLongPress).not.toHaveBeenCalled();
   });
+
+  it("drops a pending press when disabled flips on during the hold", () => {
+    const onLongPress = vi.fn();
+    const { rerender } = render(<Target onLongPress={onLongPress} options={{ threshold: 400 }} />);
+    down(screen.getByText("hold"));
+    vi.advanceTimersByTime(200);
+    rerender(<Target onLongPress={onLongPress} options={{ threshold: 400, disabled: true }} />);
+    vi.advanceTimersByTime(1000);
+    expect(onLongPress).not.toHaveBeenCalled();
+  });
 });

@@ -28,14 +28,26 @@ const TABBABLE = [
   "[tabindex]",
 ].join(",");
 
+/** Rendered, i.e. no ancestor (or itself) is `display: none` / `visibility: hidden`. */
+function isRendered(el: HTMLElement): boolean {
+  if (typeof el.checkVisibility === "function") return el.checkVisibility({ visibilityProperty: true });
+  const view = el.ownerDocument.defaultView;
+  if (!view) return true;
+  if (view.getComputedStyle(el).visibility === "hidden") return false;
+  for (let node: HTMLElement | null = el; node; node = node.parentElement) {
+    if (view.getComputedStyle(node).display === "none") return false;
+  }
+  return true;
+}
+
 /** Tabbable descendants of `container` in DOM order (positive `tabIndex` ordering is not modelled). */
 export function getTabbable(container: HTMLElement): HTMLElement[] {
   return Array.from(container.querySelectorAll<HTMLElement>(TABBABLE)).filter((el) => {
     if (el.tabIndex < 0) return false;
+    // `[tabindex]` also matches disabled controls, which the browser skips.
+    if (el.matches(":disabled")) return false;
     if (el.closest("[hidden],[inert]")) return false;
-    const view = el.ownerDocument.defaultView;
-    const style = view?.getComputedStyle(el);
-    return !style || (style.display !== "none" && style.visibility !== "hidden");
+    return isRendered(el);
   });
 }
 

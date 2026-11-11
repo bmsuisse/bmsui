@@ -106,4 +106,13 @@ describe("useLocalStorageState", () => {
     expect(window.localStorage.getItem("date")).toBe("2026-01-02T00:00:00.000Z");
     expect(result.current[0].getUTCDate()).toBe(2);
   });
+
+  it("switching between two unset keys re-reads the default for the new key", () => {
+    const { result, rerender } = renderHook(({ id }) => useLocalStorageState(`draft:${id}`, { owner: id }), {
+      initialProps: { id: "a" },
+    });
+    expect(result.current[0]).toEqual({ owner: "a" });
+    rerender({ id: "b" });
+    expect(result.current[0]).toEqual({ owner: "b" });
+  });
 });
