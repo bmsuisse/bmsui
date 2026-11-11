@@ -47,10 +47,10 @@ function useGroupExpansion(defaultGroupsExpanded: boolean, controlledExpandedGro
 function usePersistedColumnSizing(persistKey: string, columns: readonly SizedColumn[]): PersistedColumnSizing
 function useStickyGroupHeaderTop(enabled: boolean): StickyGroupHeaderTop
 function useTreeState<TRow>(props: UseTreeStateOptions<TRow>): TreeStateController<TRow>
-function useVisibleColumns<TRow>(columns: ColumnDef<TRow>[], columnVisibility: ColumnVisibility | undefined): ColumnDef<TRow>[]
+function useVisibleColumns<TRow>(columns: ColumnDef<TRow>[], columnVisibility: ColumnVisibility | undefined, columnOrder?: readonly string[]): ColumnDef<TRow>[]
 ```
 
-## Functions (55)
+## Functions (56)
 
 ```text
 function alignClassName<TRow>(column: ColumnDef<TRow>): string
@@ -89,6 +89,7 @@ function leafFilters(node: FilterDescriptor | CompositeFilterDescriptor | null |
 function mergeFilterLabels(base: FilterLabels, overrides: Partial<FilterLabels> | undefined): FilterLabels
 function mergeSizing(overrides: ColumnSizingState, next: ColumnSizingState, defaults: ColumnSizingState): ColumnSizingState
 function moveColumnBefore(order: readonly string[], columnId: string, beforeColumnId: string | undefined): string[]
+function moveColumnWithinGroup(order: readonly string[], groupIds: ReadonlySet<string>, columnId: string, beforeColumnId: string | undefined): string[]
 function normalizeRange(range: CellRange, rowIndex: Map<string, number>, columnIndex: Map<string, number>): NormalizedRange | undefined
 function orderStorageKeyFor(persistKey: string): string
 function parseStoredWidths(raw: string | null, minWidth?: number): Record<string, number>
@@ -235,6 +236,7 @@ interface CompositeFilterDescriptor
 interface DataGridProps<TRow>
   activeRowId?: string | null
   cellEditing?: CellEditingOptions<TRow>
+  columnOrder?: string[]
   columnResizeMode?: "onChange" | "onEnd"
   columnSizing?: ColumnSizingState
   columnVisibility?: ColumnVisibility
@@ -469,6 +471,7 @@ interface TreeAccessors<TRow>
 interface TreeDataGridProps<TRow> extends TreeAccessors<TRow>
   activeRowId?: string | null
   childrenMap?: ReadonlyMap<string, TRow[]>
+  columnOrder?: string[]
   columnSizing?: ColumnSizingState
   columnVisibility?: ColumnVisibility
   columns: ColumnDef<TRow>[]
