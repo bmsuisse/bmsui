@@ -44,6 +44,12 @@ export interface DateInputProps
    * the typed `locale` field elsewhere. `always` / `never` force one of them.
    */
   native?: "auto" | "always" | "never";
+  /**
+   * Renders just the typed `<input>`: no wrapper, calendar button or error message, and `className`
+   * goes on the input. For embedding in a group that brings its own calendar (`DatePicker`,
+   * `DateRangePicker`); pair it with `onInvalidChange` to show the error yourself. Implies `native="never"`.
+   */
+  bare?: boolean;
 }
 
 export const toDay = (iso: string | undefined): string => iso?.slice(0, 10) ?? "";

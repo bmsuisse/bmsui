@@ -41,7 +41,7 @@ function check(text: string, locale: string, min: string, max: string): DateInpu
  */
 export const DateInput = forwardRef<HTMLInputElement, DateInputProps>((props, ref) => {
   const coarse = useCoarsePointer();
-  const useNative = props.native === "always" || (props.native !== "never" && coarse);
+  const useNative = !props.bare && (props.native === "always" || (props.native !== "never" && coarse));
   return useNative ? <NativeDateInput ref={ref} {...props} /> : <TypedDateInput ref={ref} {...props} />;
 });
 DateInput.displayName = "DateInput";
@@ -66,6 +66,7 @@ const TypedDateInput = forwardRef<HTMLInputElement, DateInputProps>(
       disabled,
       readOnly,
       native: _native,
+      bare = false,
       ...props
     },
     ref,
@@ -151,8 +152,8 @@ const TypedDateInput = forwardRef<HTMLInputElement, DateInputProps>(
     };
 
     const message = errorMessage(error, l);
-    const showMessage = showError && message !== "";
-    const pickable = !disabled && !readOnly;
+    const showMessage = !bare && showError && message !== "";
+    const pickable = !bare && !disabled && !readOnly;
     const describedBy = [props["aria-describedby"], showMessage ? messageId : undefined].filter(Boolean).join(" ") || undefined;
 
     const input = (
@@ -161,7 +162,7 @@ const TypedDateInput = forwardRef<HTMLInputElement, DateInputProps>(
         {...props}
         disabled={disabled}
         readOnly={readOnly}
-        className={cn(invalidClass, pickable && "pr-9")}
+        className={cn(invalidClass, pickable && "pr-9", bare && className)}
         type="text"
         autoComplete="off"
         value={text}
@@ -204,6 +205,15 @@ const TypedDateInput = forwardRef<HTMLInputElement, DateInputProps>(
       />
     );
     const hidden = name ? <input type="hidden" name={name} value={toDay(value)} /> : null;
+
+    if (bare) {
+      return (
+        <>
+          {input}
+          {hidden}
+        </>
+      );
+    }
 
     return (
       <div className={className}>

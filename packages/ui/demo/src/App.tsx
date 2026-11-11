@@ -31,6 +31,9 @@ import {
   Combobox,
   ConfirmDialog,
   DateInput,
+  DatePicker,
+  DateRangePicker,
+  Calendar,
   NumberInput,
   InputGroup,
   InputGroupAddon,
@@ -1031,6 +1034,10 @@ export function App(): ReactElement {
             <NumberInputDemo />
           </Section>
 
+          <Section title="Calendar / DatePicker / DateRangePicker">
+            <CalendarDemo />
+          </Section>
+
           <Section title="SegmentedControl">
             <SegmentedControlDemo />
           </Section>
@@ -1878,6 +1885,34 @@ function KbdDemo(): ReactElement {
         </Button>
       </div>
       <ShortcutSheet open={open} onOpenChange={setOpen} groups={DEMO_SHORTCUTS} />
+    </div>
+  );
+}
+
+function CalendarDemo(): ReactElement {
+  const [day, setDay] = useState("2026-11-18");
+  const [range, setRange] = useState({ from: "2026-11-09", to: "2026-11-20" });
+  const [due, setDue] = useState("2026-11-10");
+  const [period, setPeriod] = useState({ from: "2026-11-02", to: "2026-11-27" });
+  return (
+    <div data-testid="demo-calendar" className="flex w-full flex-wrap items-start gap-6">
+      <Card className="border-input p-0">
+        <Calendar value={day} onValueChange={setDay} today="2026-11-10" min="2026-11-03" isDateDisabled={(iso) => iso === "2026-11-25"} />
+      </Card>
+      <Card className="border-input p-0">
+        <Calendar mode="range" value={range} onValueChange={setRange} today="2026-11-10" />
+      </Card>
+      <div className="grid w-72 gap-4">
+        <DemoField label="DatePicker" note={`value: ${due || "—"}`}>
+          <DatePicker value={due} onValueChange={setDue} today="2026-11-10" data-testid="demo-date-picker" />
+        </DemoField>
+        <DemoField label="DateRangePicker" note={`${period.from || "…"} → ${period.to || "…"}`}>
+          <DateRangePicker value={period} onValueChange={setPeriod} today="2026-11-10" data-testid="demo-date-range-picker" />
+        </DemoField>
+        <DemoField label="DatePicker (sm, disabled)">
+          <DatePicker value="2026-12-24" onValueChange={() => {}} size="sm" disabled />
+        </DemoField>
+      </div>
     </div>
   );
 }
