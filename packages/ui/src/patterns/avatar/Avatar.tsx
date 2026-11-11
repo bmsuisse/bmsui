@@ -235,7 +235,7 @@ export const AvatarGroup = ({
         data-testid="avatar-group"
         role="group"
         aria-label={items.map((i) => i.name).join(", ")}
-        className={cn("group/ag flex items-center", size === "xs" || size === "sm" ? "-space-x-1.5" : "-space-x-2", className)}
+        className={cn("group/ag flex items-center", size === "xs" || size === "sm" ? "-space-x-1" : "-space-x-1.5", className)}
         {...props}
       >
         {visible.map((item, i) => (

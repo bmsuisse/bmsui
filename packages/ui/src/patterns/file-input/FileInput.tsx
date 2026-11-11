@@ -119,8 +119,8 @@ const sameFile = (a: File, b: File) => a.name === b.name && a.size === b.size &&
  * Motion (`animated`, default on): the zone's border/tint cross-fade and it
  * lifts 2px with a soft ring while files are dragged over, the upload arrow
  * nudges up on hover, new rows fade and slide in (150 ms ease-out) and a
- * removed row fades and collapses (140 ms ease-in) before `onFilesChange`
- * fires. With `prefers-reduced-motion` nothing moves and removal is instant.
+ * removed row fades and collapses (140 ms ease-in) as an inert ghost —
+ * `onFilesChange` itself always fires immediately. With `prefers-reduced-motion` nothing moves and removal is instant.
  */
 export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
   (
@@ -154,38 +154,35 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
     const testId = props["data-testid"];
     const filesRef = useRef(files);
     filesRef.current = files;
-    const [leaving, setLeaving] = useState<File[]>([]);
+    // Removed rows linger as inert "ghosts" for their collapse animation; the
+    // parent's `files` (and `onFilesChange`) update immediately, never delayed.
+    const [ghosts, setGhosts] = useState<{ file: File; index: number }[]>([]);
 
-    const remove = (file: File, row: HTMLElement | null) => {
+    const remove = (file: File) => {
       setErrors([]);
-      const finish = () => {
-        setLeaving((l) => l.filter((f) => f !== file));
-        const at = filesRef.current.indexOf(file);
-        if (at >= 0) onFilesChange(filesRef.current.filter((_, i) => i !== at));
-      };
       const list = filesRef.current;
       const index = list.indexOf(file);
-      const animation =
-        animated && !prefersReducedMotion()
-          ? animate(
-              row,
-              [
-                { opacity: 1, height: `${row?.offsetHeight ?? 36}px` },
-                {
-                  opacity: 0,
-                  height: "0px",
-                  // Swallow the 6px list gap next to the row as it collapses.
-                  marginTop: index > 0 ? "-6px" : "0px",
-                  marginBottom: index === 0 && list.length > 1 ? "-6px" : "0px",
-                },
-              ],
-              { duration: 140, easing: EASE_IN, fill: "forwards" },
-            )
-          : null;
-      if (!animation) return finish();
-      setLeaving((l) => [...l, file]);
-      animation.onfinish = finish;
-      animation.oncancel = finish;
+      if (index < 0) return;
+      onFilesChange(list.filter((_, i) => i !== index));
+      if (animated && !prefersReducedMotion()) setGhosts((g) => [...g, { file, index }]);
+    };
+
+    const collapseGhost = (el: HTMLLIElement | null, ghost: { file: File; index: number }) => {
+      if (!el || el.dataset.collapsing) return;
+      el.dataset.collapsing = "true";
+      const drop = () => setGhosts((g) => g.filter((x) => x !== ghost));
+      const animation = animate(
+        el,
+        [
+          { opacity: 1, height: `${el.offsetHeight || 36}px` },
+          // Swallow the 6px list gap next to the row as it collapses.
+          { opacity: 0, height: "0px", marginTop: ghost.index > 0 ? "-6px" : "0px", marginBottom: ghost.index === 0 ? "-6px" : "0px" },
+        ],
+        { duration: 140, easing: EASE_IN, fill: "forwards" },
+      );
+      if (!animation) return drop();
+      animation.onfinish = drop;
+      animation.oncancel = drop;
     };
 
     const add = (incoming: File[]) => {
@@ -330,33 +327,47 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
             ))}
           </ul>
         ) : null}
-        {!hideFileList && files.length ? (
+        {!hideFileList && (files.length || ghosts.length) ? (
           <ul className="grid grid-cols-[minmax(0,1fr)] gap-1.5" data-testid={testId ? `${testId}-list` : undefined}>
-            {files.map((file, index) => (
-              <li
-                key={files.indexOf(file) === index ? fileKey(file) : `${fileKey(file)}-${index}`}
-                className={cn(
-                  "flex h-9 items-center gap-2 overflow-hidden rounded-md border border-input bg-background pl-3 pr-1 text-sm shadow-sm",
-                  animated &&
-                    "transition-[opacity,translate] duration-150 ease-out starting:-translate-y-1 starting:opacity-0 motion-reduce:transition-none",
-                )}
-              >
-                <DocumentIcon aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <span className="min-w-0 flex-1 truncate text-foreground" title={file.name}>
-                  {file.name}
-                </span>
-                <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{formatFileSize(file.size, locale)}</span>
-                <button
-                  type="button"
-                  aria-label={`${l.remove} ${file.name}`}
-                  disabled={disabled || leaving.includes(file)}
-                  onClick={(e) => remove(file, e.currentTarget.closest("li"))}
-                  className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-[color,background-color,scale] duration-150 ease-out hover:bg-muted-foreground/10 hover:text-foreground active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 motion-reduce:scale-none!"
+            {withGhosts(files, ghosts).map((row, index) =>
+              row.ghost ? (
+                <li
+                  key={`ghost-${fileKey(row.file)}-${row.ghost.index}`}
+                  ref={(el) => collapseGhost(el, row.ghost!)}
+                  aria-hidden="true"
+                  className="pointer-events-none flex h-9 items-center gap-2 overflow-hidden rounded-md border border-input bg-background pl-3 pr-1 text-sm shadow-sm"
                 >
-                  <XMarkIcon aria-hidden="true" className="h-4 w-4" />
-                </button>
-              </li>
-            ))}
+                  <DocumentIcon aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="min-w-0 flex-1 truncate text-foreground">{row.file.name}</span>
+                  <span className="shrink-0 pr-9 text-xs tabular-nums text-muted-foreground">{formatFileSize(row.file.size, locale)}</span>
+                </li>
+              ) : (
+                <li
+                  key={files.indexOf(row.file) === row.fileIndex ? fileKey(row.file) : `${fileKey(row.file)}-${row.fileIndex}`}
+                  data-row={index}
+                  className={cn(
+                    "flex h-9 items-center gap-2 overflow-hidden rounded-md border border-input bg-background pl-3 pr-1 text-sm shadow-sm",
+                    animated &&
+                      "transition-[opacity,translate] duration-150 ease-out starting:-translate-y-1 starting:opacity-0 motion-reduce:transition-none",
+                  )}
+                >
+                  <DocumentIcon aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="min-w-0 flex-1 truncate text-foreground" title={row.file.name}>
+                    {row.file.name}
+                  </span>
+                  <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{formatFileSize(row.file.size, locale)}</span>
+                  <button
+                    type="button"
+                    aria-label={`${l.remove} ${row.file.name}`}
+                    disabled={disabled}
+                    onClick={() => remove(row.file)}
+                    className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-[color,background-color,scale] duration-150 ease-out hover:bg-muted-foreground/10 hover:text-foreground active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 motion-reduce:scale-none!"
+                  >
+                    <XMarkIcon aria-hidden="true" className="h-4 w-4" />
+                  </button>
+                </li>
+              ),
+            )}
           </ul>
         ) : null}
       </div>
@@ -364,3 +375,16 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
   },
 );
 FileInput.displayName = "FileInput";
+
+type ListRow =
+  | { file: File; fileIndex: number; ghost?: undefined }
+  | { file: File; fileIndex: -1; ghost: { file: File; index: number } };
+
+/** The current files with collapsing ghosts slotted back in at the position they were removed from. */
+function withGhosts(files: File[], ghosts: { file: File; index: number }[]): ListRow[] {
+  const rows: ListRow[] = files.map((file, fileIndex) => ({ file, fileIndex }));
+  for (const ghost of [...ghosts].sort((a, b) => a.index - b.index)) {
+    rows.splice(Math.min(ghost.index, rows.length), 0, { file: ghost.file, fileIndex: -1, ghost });
+  }
+  return rows;
+}

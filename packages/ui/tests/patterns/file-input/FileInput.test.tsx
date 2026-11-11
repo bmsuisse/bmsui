@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { FileInput, type FileInputProps, formatFileSize, matchesAccept } from "../../../src/patterns/file-input/FileInput";
@@ -97,6 +97,36 @@ describe("FileInput", () => {
     expect(screen.getByText("Drop to add")).toBeInTheDocument();
     fireEvent.dragLeave(zone, { dataTransfer: { types: ["Files"] } });
     expect(zone).not.toHaveAttribute("data-drag-over");
+  });
+
+  it("reports a removal immediately and keeps a collapsing ghost row while animating", () => {
+    const onChange = vi.fn();
+    // Pretend the browser animates (jsdom has no element.animate) so the ghost path runs.
+    const finishers: Array<() => void> = [];
+    const original = Element.prototype.animate;
+    Element.prototype.animate = function () {
+      const anim = { onfinish: null as null | (() => void), oncancel: null, cancel() {} };
+      finishers.push(() => anim.onfinish?.());
+      return anim as unknown as Animation;
+    };
+    const mq = window.matchMedia;
+    window.matchMedia = ((q: string) => ({ ...mq(q), matches: false })) as typeof window.matchMedia;
+    try {
+      render(<Controlled multiple onChange={onChange} />);
+      drop([file("a.txt"), file("b.txt")]);
+      onChange.mockClear();
+      fireEvent.click(screen.getByRole("button", { name: "Remove a.txt" }));
+      expect(onChange).toHaveBeenCalledTimes(1);
+      expect(onChange.mock.calls[0]?.[0].map((f: File) => f.name)).toEqual(["b.txt"]);
+      // The ghost stays (hidden from assistive tech, no button) until its animation ends.
+      expect(screen.queryByRole("button", { name: "Remove a.txt" })).not.toBeInTheDocument();
+      expect(screen.getByTestId("upload-list").querySelectorAll("li")).toHaveLength(2);
+      act(() => finishers.forEach((f) => f()));
+      expect(screen.getByTestId("upload-list").querySelectorAll("li")).toHaveLength(1);
+    } finally {
+      Element.prototype.animate = original;
+      window.matchMedia = mq;
+    }
   });
 
   it("does nothing when disabled", () => {
