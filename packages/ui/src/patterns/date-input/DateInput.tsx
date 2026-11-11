@@ -18,12 +18,19 @@ import {
 export type { DateInputError, DateInputLabels, DateInputProps } from "./shared";
 export { defaultDateInputLabels } from "./shared";
 
-/** `invalid` for non-dates, `range` outside `min`/`max`, null when the text is fine (or empty). ISO days sort as strings. */
-function check(text: string, locale: string, min: string, max: string): DateInputError | null {
+/** `invalid` for non-dates, `range` outside `min`/`max`, `disabled` for blocked days, null when the text is fine (or empty). ISO days sort as strings. */
+function check(
+  text: string,
+  locale: string,
+  min: string,
+  max: string,
+  isDateDisabled?: (iso: string) => boolean,
+): DateInputError | null {
   if (!text.trim()) return null;
   const iso = parseIsoDay(text, locale);
   if (iso == null) return "invalid";
   if ((min && iso < min) || (max && iso > max)) return "range";
+  if (isDateDisabled?.(iso)) return "disabled";
   return null;
 }
 
@@ -65,6 +72,7 @@ const TypedDateInput = forwardRef<HTMLInputElement, DateInputProps>(
       name,
       disabled,
       readOnly,
+      isDateDisabled,
       native: _native,
       bare = false,
       ...props
@@ -101,8 +109,8 @@ const TypedDateInput = forwardRef<HTMLInputElement, DateInputProps>(
 
     // Native validity follows the text as it is typed, not only once committed: a form must not submit
     // (Enter, submit button) with text that is no date while `value` still holds the previous day.
-    const live = check(text, locale, minDay, maxDay);
-    const liveMessage = live === "invalid" ? l.invalid : live === "range" ? l.outOfRange : "";
+    const live = check(text, locale, minDay, maxDay, isDateDisabled);
+    const liveMessage = errorMessage(live, l);
     useEffect(() => {
       inputRef.current?.setCustomValidity(liveMessage);
     }, [liveMessage]);
@@ -121,7 +129,7 @@ const TypedDateInput = forwardRef<HTMLInputElement, DateInputProps>(
         if (value) onValueChange("");
         return;
       }
-      const problem = check(text, locale, minDay, maxDay);
+      const problem = check(text, locale, minDay, maxDay, isDateDisabled);
       setError(problem);
       if (problem) return;
       commitIso(parseIsoDay(text, locale) as string);
@@ -135,9 +143,10 @@ const TypedDateInput = forwardRef<HTMLInputElement, DateInputProps>(
       const base = parseIsoDay(text, locale) ?? (toDay(value) || toLocalIsoDay(new Date()));
       // An empty field starts at today (or the nearest allowed day) instead of jumping a step away from it.
       let next = text.trim() || value ? shiftIsoDay(base, by) : base;
-      if (minDay && next < minDay) next = minDay;
-      if (maxDay && next > maxDay) next = maxDay;
-      return next;
+      // Day steps hop over blocked days (up to a year of them); a blocked month/year landing is ignored.
+      for (let hops = 0; hops < 366 && isDateDisabled?.(next) && "days" in by; hops++) next = shiftIsoDay(next, by);
+      if ((minDay && next < minDay) || (maxDay && next > maxDay)) next = minDay && next < minDay ? minDay : maxDay;
+      return isDateDisabled?.(next) ? null : next;
     };
 
     const openPicker = () => {
@@ -244,8 +253,14 @@ const TypedDateInput = forwardRef<HTMLInputElement, DateInputProps>(
                 onChange={(e) => {
                   const iso = e.target.value;
                   dirty.current = false;
-                  if (iso) commitIso(iso);
-                  else {
+                  if (iso) {
+                    // The browser's picker can't grey out single days: judge the pick like typed text.
+                    const problem = check(formatIsoDay(iso, locale), locale, minDay, maxDay, isDateDisabled);
+                    if (problem) {
+                      setText(formatIsoDay(iso, locale));
+                      setError(problem);
+                    } else commitIso(iso);
+                  } else {
                     setText("");
                     setError(null);
                     if (value) onValueChange("");

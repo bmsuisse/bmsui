@@ -2,14 +2,16 @@ import type { ReactElement } from "react";
 import { useSyncExternalStore } from "react";
 import type { InputProps } from "../../primitives/input";
 
-/** Why the typed text was rejected: it is no date (`invalid`), or a real date outside `min`/`max` (`range`). */
-export type DateInputError = "invalid" | "range";
+/** Why the entry was rejected: it is no date (`invalid`), a real date outside `min`/`max` (`range`), or one `isDateDisabled` blocks (`disabled`). */
+export type DateInputError = "invalid" | "range" | "disabled";
 
 export interface DateInputLabels {
   /** Message for text that is no date. */
   invalid: string;
   /** Message for a date before `min` or after `max`. */
   outOfRange: string;
+  /** Message for a date that `isDateDisabled` blocks. */
+  unavailable: string;
   /** Accessible name of the calendar button. */
   openCalendar: string;
 }
@@ -17,6 +19,7 @@ export interface DateInputLabels {
 export const defaultDateInputLabels: DateInputLabels = {
   invalid: "Enter a valid date",
   outOfRange: "Date is out of range",
+  unavailable: "Date is not available",
   openCalendar: "Choose date",
 };
 
@@ -34,6 +37,8 @@ export interface DateInputProps
   min?: string;
   /** Latest allowed ISO day. Typed dates after it are rejected; the calendar greys them out. */
   max?: string;
+  /** Blocks single days (weekends, holidays, booked days): typed, stepped or picked ones are rejected like out-of-range dates. The browser's own picker can't grey them out; `DatePicker`'s calendar does. */
+  isDateDisabled?: (iso: string) => boolean;
   /** Shows the error text under the field when the entry is rejected. Turn off to render it yourself (e.g. via `onInvalidChange`). Default `true`. */
   showError?: boolean;
   /** Translations for the error messages and the calendar button. */
@@ -66,7 +71,7 @@ const isCoarse = (): boolean => typeof window !== "undefined" && !!window.matchM
 export const useCoarsePointer = (): boolean => useSyncExternalStore(subscribeCoarse, isCoarse, () => false);
 
 export const errorMessage = (error: DateInputError | null, l: DateInputLabels): string =>
-  error === "invalid" ? l.invalid : error === "range" ? l.outOfRange : "";
+  error === "invalid" ? l.invalid : error === "range" ? l.outOfRange : error === "disabled" ? l.unavailable : "";
 
 export const DateInputMessage = ({ id, message }: { id: string; message: string }): ReactElement => (
   <p id={id} role="alert" className="mt-1 text-xs text-destructive">

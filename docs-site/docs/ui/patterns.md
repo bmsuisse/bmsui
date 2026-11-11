@@ -257,6 +257,7 @@ format. The value is an ISO day (`"2026-11-10"`, `""` for none).
 - **Keyboard:** ArrowUp/ArrowDown step a day, PageUp/PageDown a month (Shift: a year), clamped to `min`/`max`.
 - **Touch devices:** with `native="auto"` (default) a `pointer: coarse` device gets the browser's `<input type="date">`
   right away. `native="always"` / `"never"` force either.
+- **Blocked days:** `isDateDisabled={(iso) => boolean}` rejects single days (weekends, holidays) like out-of-range ones, with reason `"disabled"`; arrow steps hop over them.
 - **Invalid entries:** only real dates within `min`/`max` reach `onValueChange`. Anything else keeps the previous value,
   sets `aria-invalid`, shows an error message (translate via `labels`, hide with `showError={false}`), calls
   `onInvalidChange(true, reason)`, and sets the field's native validity so a surrounding `<form>` won't submit it.
@@ -430,8 +431,11 @@ a month grid in a popover. Same ISO-day value and commit rules as `DateInput`.
 <Calendar mode="range" value={range} onValueChange={setRange} isDateDisabled={isHoliday} />
 ```
 
-`min`/`max` limit typed and picked days (typed days outside are marked
-invalid). The calendar follows `locale` for month/weekday names and week start
+`min`/`max` and `isDateDisabled` limit typed and picked days alike (a typed day
+outside is marked invalid); `readOnly` also keeps the calendar from opening.
+Plain `DateInput` already has a calendar button (the browser's own picker) and
+`min`/`max`: reach for `DatePicker` when you need blocked days, a range, or a
+calendar that matches the app's look and language. The calendar follows `locale` for month/weekday names and week start
 (Monday in de-CH, Sunday in en-US; `weekStartsOn` overrides). Keyboard: arrows
 by day/week, PageUp/PageDown by month (Shift: year), Home/End to the week's
 ends. In a range the first click sets `from`, the second `to` (ordered);

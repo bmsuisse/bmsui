@@ -534,8 +534,10 @@ interface DateInputLabels
   invalid: string
   openCalendar: string
   outOfRange: string
+  unavailable: string
 interface DateInputProps extends Omit<InputProps, "value" | "defaultValue" | "onChange" | "type" | "min" | "max">
   bare?: boolean
+  isDateDisabled?: (iso: string) => boolean
   labels?: Partial<DateInputLabels>
   locale?: string
   max?: string
@@ -1233,7 +1235,7 @@ type BrandMode = "full" | "mark" | "one"
 type CalendarProps = CalendarSingleProps | CalendarRangeProps
 type ComboboxProps = ComboboxSingleProps | ComboboxMultiProps
 type ConfirmButtonPlacement = "leading" | "trailing"
-type DateInputError = "invalid" | "range"
+type DateInputError = "invalid" | "range" | "disabled"
 type ErrorInput = ErrorInfo | Error | string | null | undefined | false
 type InputProps = InputHTMLAttributes<HTMLInputElement>
 type NavItemProps<T extends ElementType = "a"> = Omit<ComponentPropsWithoutRef<T>, "as" | "className"> & {…}

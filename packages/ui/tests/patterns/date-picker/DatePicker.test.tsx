@@ -117,4 +117,53 @@ describe("DatePicker focus after a pick", () => {
     fireEvent.click(day("2026-11-14"));
     await waitFor(() => expect(screen.getByLabelText("From")).toHaveFocus());
   });
+
+describe("DatePicker review fixes", () => {
+  it("rejects typed days that isDateDisabled blocks, like the calendar does", () => {
+    const onChange = vi.fn();
+    render(
+      <DatePicker
+        aria-label="Due"
+        value="2026-11-10"
+        onValueChange={onChange}
+        isDateDisabled={(iso) => iso === "2026-11-14"}
+      />,
+    );
+    const input = screen.getByLabelText("Due");
+    fireEvent.change(input, { target: { value: "14.11.2026" } });
+    fireEvent.blur(input);
+    expect(onChange).not.toHaveBeenCalled();
+    expect(input).toHaveAttribute("aria-invalid", "true");
+    expect((input as HTMLInputElement).validity.valid).toBe(false);
+    fireEvent.change(input, { target: { value: "15.11.2026" } });
+    fireEvent.blur(input);
+    expect(onChange).toHaveBeenCalledWith("2026-11-15");
+  });
+
+  it("read-only: the calendar button is disabled and the calendar can't open", () => {
+    const onChange = vi.fn();
+    render(<DatePicker aria-label="Due" value="2026-11-10" onValueChange={onChange} readOnly />);
+    const button = screen.getByRole("button", { name: "Choose date" });
+    expect(button).toBeDisabled();
+    fireEvent.click(button);
+    expect(screen.queryByRole("grid")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Due")).toHaveAttribute("readonly");
+  });
+
+  it("DateRangePicker fields also reject blocked typed days", () => {
+    const onChange = vi.fn();
+    render(
+      <DateRangePicker
+        value={{ from: "", to: "" }}
+        onValueChange={onChange}
+        isDateDisabled={(iso) => iso === "2026-11-14"}
+      />,
+    );
+    const from = screen.getByLabelText("From");
+    fireEvent.change(from, { target: { value: "14.11.2026" } });
+    fireEvent.blur(from);
+    expect(onChange).not.toHaveBeenCalled();
+    expect(from).toHaveAttribute("aria-invalid", "true");
+  });
+});
 });

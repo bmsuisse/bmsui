@@ -493,7 +493,7 @@ logic above, which already had its own extraction). Structure:
     `aria-invalid` and keep the old value. Accepts `3.2.26`, any of `. / -`,
     and ISO. `toLocalIsoDay` is exported because OneSales hit the
     `toISOString().slice(0, 10)` UTC-day bug after 22:00 Swiss time. No
-    calendar popover here — `DatePicker` (v0.21.0) adds it (Astryx's `Calendar` was the
+    calendar popover here — `DatePicker` (v0.22.0) adds it (Astryx's `Calendar` was the
     reference for keyboard behaviour).
   - Display set (unreleased): `metadata-list/` `MetadataList` (`<dl>` label/
     value pairs, vertical or label-column layout, responsive `columns`,

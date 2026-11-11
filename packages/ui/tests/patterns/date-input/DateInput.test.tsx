@@ -405,3 +405,54 @@ describe("DateInput native mode", () => {
   });
 });
 
+describe("DateInput isDateDisabled", () => {
+  const weekend = (iso: string) => [0, 6].includes(new Date(`${iso}T12:00:00`).getDay());
+
+  it("rejects blocked typed days with a message and the 'disabled' reason", () => {
+    const onChange = vi.fn();
+    const onInvalidChange = vi.fn();
+    render(
+      <DateInput
+        aria-label="d"
+        value="2026-11-10"
+        onValueChange={onChange}
+        onInvalidChange={onInvalidChange}
+        isDateDisabled={weekend}
+        native="never"
+      />,
+    );
+    const input = screen.getByLabelText("d");
+    fireEvent.change(input, { target: { value: "14.11.2026" } }); // Saturday
+    fireEvent.blur(input);
+    expect(onChange).not.toHaveBeenCalled();
+    expect(onInvalidChange).toHaveBeenLastCalledWith(true, "disabled");
+    expect(screen.getByRole("alert")).toHaveTextContent("Date is not available");
+    expect((input as HTMLInputElement).checkValidity()).toBe(false);
+  });
+
+  it("arrow steps hop over blocked days", () => {
+    const onChange = vi.fn();
+    render(<DateInput aria-label="d" value="2026-11-13" onValueChange={onChange} isDateDisabled={weekend} native="never" />);
+    fireEvent.keyDown(screen.getByLabelText("d"), { key: "ArrowUp" }); // Fri -> (Sat, Sun) -> Mon
+    expect(onChange).toHaveBeenCalledWith("2026-11-16");
+  });
+
+  it("a day picked in the browser's calendar is judged like typed text", () => {
+    const onChange = vi.fn();
+    render(<DateInput aria-label="d" value="2026-11-10" onValueChange={onChange} isDateDisabled={weekend} native="never" />);
+    const picker = screen.getByTestId("date-input-picker");
+    fireEvent.change(picker, { target: { value: "2026-11-14" } });
+    expect(onChange).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("d")).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByLabelText("d")).toHaveValue("14.11.2026");
+  });
+
+  it("native mode rejects blocked days too", () => {
+    const onChange = vi.fn();
+    render(<DateInput aria-label="d" value="2026-11-10" onValueChange={onChange} isDateDisabled={weekend} native="always" />);
+    fireEvent.change(screen.getByLabelText("d"), { target: { value: "2026-11-14" } });
+    expect(onChange).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert")).toHaveTextContent("Date is not available");
+  });
+});
+

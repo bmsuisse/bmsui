@@ -27,6 +27,7 @@ export const NativeDateInput = forwardRef<HTMLInputElement, DateInputProps>(
       native: _native,
       min,
       max,
+      isDateDisabled,
       showError = true,
       labels,
       onBlur,
@@ -86,6 +87,10 @@ export const NativeDateInput = forwardRef<HTMLInputElement, DateInputProps>(
             }
             if (next && ((minDay && next < minDay) || (maxDay && next > maxDay))) {
               setError("range");
+              return;
+            }
+            if (next && isDateDisabled?.(next)) {
+              setError("disabled");
               return;
             }
             setError(null);

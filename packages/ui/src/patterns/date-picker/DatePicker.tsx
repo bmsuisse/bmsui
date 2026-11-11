@@ -55,7 +55,7 @@ const triggerTestId = (testId: unknown, suffix: string) => (typeof testId === "s
  */
 export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
   (
-    { value, onValueChange, locale = "de-CH", min, max, isDateDisabled, weekStartsOn, today, animated = true, size = "default", wrapperClassName, container, labels, className, disabled, ...props },
+    { value, onValueChange, locale = "de-CH", min, max, isDateDisabled, weekStartsOn, today, animated = true, size = "default", wrapperClassName, container, labels, className, disabled, readOnly, ...props },
     ref,
   ) => {
     const l = { ...defaultDatePickerLabels, ...labels };
@@ -64,9 +64,11 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
     // After a pick, focus goes back to the typed field instead of the calendar button.
     const focusInputOnClose = useRef(false);
     const testId = (props as Record<string, unknown>)["data-testid"];
+    // Read-only means no editing at all: the calendar must not open and change the date either.
+    const locked = disabled || readOnly;
 
     return (
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open && !locked} onOpenChange={(next) => setOpen(next && !locked)}>
         <PopoverAnchor asChild>
           <InputGroup size={size} className={wrapperClassName} data-testid={triggerTestId(testId, "group") ?? "date-picker"}>
             <DateInput
@@ -82,7 +84,9 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
               locale={locale}
               min={min}
               max={max}
+              isDateDisabled={isDateDisabled}
               disabled={disabled}
+              readOnly={readOnly}
               className={cn(
                 "h-full flex-1 rounded-none border-0 bg-transparent pb-[5px] pr-1 shadow-none focus-visible:ring-0",
                 size === "sm" && "px-2.5 text-xs",
@@ -90,7 +94,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
               )}
             />
             <PopoverTrigger asChild>
-              <InputGroupButton aria-label={l.openCalendar} disabled={disabled} data-testid={triggerTestId(testId, "calendar-button")}>
+              <InputGroupButton aria-label={l.openCalendar} disabled={locked} data-testid={triggerTestId(testId, "calendar-button")}>
                 <CalendarDaysIcon aria-hidden="true" />
               </InputGroupButton>
             </PopoverTrigger>
@@ -224,6 +228,7 @@ export function DateRangePicker({
             locale={locale}
             min={min}
             max={max}
+            isDateDisabled={isDateDisabled}
             disabled={disabled}
             name={name?.from}
             className={cn(field, "w-[calc(9.5ch+1.25rem)] pr-1.5", size === "sm" && "w-[calc(9.5ch+1rem)]")}
@@ -240,6 +245,7 @@ export function DateRangePicker({
             locale={locale}
             min={min}
             max={max}
+            isDateDisabled={isDateDisabled}
             disabled={disabled}
             name={name?.to}
             className={cn(field, "w-[calc(9.5ch+0.75rem)] pl-1.5 pr-1.5", size === "sm" && "w-[calc(9.5ch+0.75rem)] pl-1.5")}
