@@ -472,7 +472,10 @@ logic above, which already had its own extraction). Structure:
     zustand toastStore/Toaster but with a dependency-free module store read
     via `useSyncExternalStore`, so `toast(...)` works from anywhere (query
     error handlers, plain functions). `toast.success/.warning/.error/.info`,
-    one optional `action` (e.g. Undo), `description`, `duration`
+    one optional `action` (e.g. Undo), `description`, `id` (v0.23.0: dedupe
+    key — a toast with the id of a visible one replaces it in place and
+    restarts its countdown; `toast.dismiss` takes it too; added for CCMT2,
+    whose retried save fired the same error again and again), `duration`
     (`Infinity` = sticky; errors default to 8s, others 4s), max 3 at once
     (oldest dropped). Pauses on hover/focus. The progress bar's Web
     Animations API animation *is* the timer in browsers (so pausing the bar

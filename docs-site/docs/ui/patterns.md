@@ -109,8 +109,11 @@ toast.success("Saved");
 toast.error("Upload failed", { description: err.message });
 toast("Offer deleted", { action: { label: "Undo", onClick: restore } });
 const id = toast("Syncing…", { duration: Infinity }); toast.dismiss(id);
+toast.error("A reason is required", { id: "reason-required" }); // a retry replaces it, no second toast
 ```
 
+Pass `id` to dedupe: a toast whose `id` matches one still on screen replaces it
+(new text, fresh countdown); `toast.dismiss("reason-required")` accepts it too.
 At most three show at once, and the countdown pauses while the toast is
 hovered or focused. A toast lasts its own `duration`, else the Toaster's
 `duration` default (a number, or per tone: `duration={{ error: 12000 }}`),
