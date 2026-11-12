@@ -17,6 +17,16 @@ describe("Thumbnail", () => {
   });
 });
 
+describe("Thumbnail src change", () => {
+  it("shows the new image after the previous one failed", () => {
+    const { container, rerender } = render(<Thumbnail src="a.png" />);
+    fireEvent.error(container.querySelector("img") as HTMLImageElement);
+    expect(container.querySelector("img")).toBeNull();
+    rerender(<Thumbnail src="b.png" />);
+    expect(container.querySelector("img")?.getAttribute("src")).toBe("b.png");
+  });
+});
+
 describe("ResultCard", () => {
   it("is a pressable button reflecting selection", () => {
     const onSelect = vi.fn();
@@ -26,7 +36,7 @@ describe("ResultCard", () => {
       </ResultList>,
     );
     const button = screen.getByRole("button", { name: /Drill/ });
-    expect(button.getAttribute("aria-pressed")).toBe("true");
+    expect(button.getAttribute("aria-current")).toBe("true");
     fireEvent.click(button);
     expect(onSelect).toHaveBeenCalled();
     expect(screen.getByRole("list", { name: "Results" })).toBeTruthy();
@@ -41,14 +51,24 @@ describe("ResultCard", () => {
     expect(link.getAttribute("href")).toBe("/p/1");
     expect(link.getAttribute("aria-current")).toBe("true");
   });
-  it("can be disabled and omits absent slots", () => {
+  it("renders a non-interactive element when disabled or without handlers", () => {
     render(
       <ResultList aria-label="r">
-        <ResultCard title="Drill" disabled />
+        <ResultCard title="Disabled" disabled onSelect={() => {}} />
+        <ResultCard title="Disabled link" disabled href="/x" />
+        <ResultCard title="Static" />
       </ResultList>,
     );
-    const button = screen.getByRole("button") as HTMLButtonElement;
-    expect(button.disabled).toBe(true);
-    expect(button.textContent).toBe("Drill");
+    expect(screen.queryByRole("button")).toBeNull();
+    expect(screen.queryByRole("link")).toBeNull();
+    expect(screen.getByText("Disabled link").closest("[aria-disabled]")).not.toBeNull();
+  });
+  it("omits absent slots", () => {
+    render(
+      <ResultList aria-label="r">
+        <ResultCard title="Drill" onSelect={() => {}} />
+      </ResultList>,
+    );
+    expect(screen.getByRole("button").textContent).toBe("Drill");
   });
 });

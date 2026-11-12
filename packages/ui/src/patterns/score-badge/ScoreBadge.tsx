@@ -1,6 +1,6 @@
 import type { HTMLAttributes, ReactElement } from "react";
 import { cn } from "../../lib/utils";
-import { Badge } from "../../primitives/badge";
+import { badgeVariants } from "../../primitives/badge";
 import { STATUS_TONE_CLASSES, type StatusTone } from "../status-badge/StatusBadge";
 
 export interface ScoreThreshold {
@@ -35,7 +35,7 @@ const DOT_CLASSES: Record<StatusTone, string> = {
   neutral: "bg-muted-foreground",
 };
 
-export interface ScoreBadgeProps extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
+export interface ScoreBadgeProps extends Omit<HTMLAttributes<HTMLSpanElement>, "children"> {
   /** The score. `null`/`undefined` renders nothing. */
   value: number | null | undefined;
   /** Value that means 100 %. Pass `1` for 0–1 scores. @default 100 */
@@ -71,9 +71,10 @@ export const ScoreBadge = ({
   const percent = (value / max) * 100;
   const resolved = tone ?? resolveScoreTone(percent, thresholds);
   return (
-    <Badge
-      variant="outline"
+    // A span (not `Badge`'s div) so it's valid inside a button/link, e.g. in a ResultCard.
+    <span
       className={cn(
+        badgeVariants({ variant: "outline" }),
         "gap-1.5 font-semibold tabular-nums",
         size === "sm" ? "px-2 py-0 text-[10.5px]" : "px-2.5 py-0.5 text-[11px]",
         STATUS_TONE_CLASSES[resolved],
@@ -83,7 +84,7 @@ export const ScoreBadge = ({
     >
       {showDot && <span aria-hidden="true" className={cn("size-1.5 rounded-full", DOT_CLASSES[resolved])} />}
       {format(percent)}
-    </Badge>
+    </span>
   );
 };
 

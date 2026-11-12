@@ -988,7 +988,7 @@ interface ResultCardProps
 interface ResultListProps extends HTMLAttributes<HTMLUListElement>
   "aria-label": string
   busy?: boolean
-interface ScoreBadgeProps extends Omit<HTMLAttributes<HTMLDivElement>, "children">
+interface ScoreBadgeProps extends Omit<HTMLAttributes<HTMLSpanElement>, "children">
   format?: (percent: number) => string
   max?: number
   showDot?: boolean

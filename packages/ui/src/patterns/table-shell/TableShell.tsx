@@ -152,7 +152,7 @@ export function TableSearch({ className, ...props }: TableSearchProps): ReactEle
     <SearchBar
       className={cn(
         "w-full md:w-64 md:flex-none",
-        "md:[&_input]:h-8 md:[&_input]:pl-9 md:[&_input]:text-[13px] md:[&>div>span:first-child]:left-3 md:[&_button]:h-6 md:[&_button]:w-6 md:[&_button]:right-1",
+        "md:[&>div]:h-8 md:[&>div]:pr-1 md:[&_input]:pl-9 md:[&_input]:text-[13px] md:[&>div>span:first-child]:left-3 md:[&_button]:h-6 md:[&_button]:w-6",
         className,
       )}
       {...props}

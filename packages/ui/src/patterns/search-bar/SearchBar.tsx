@@ -56,7 +56,7 @@ export function SearchBar({
     <div className={className}>
       <div
         className={cn(
-          "relative flex h-11 w-full items-center gap-1 rounded-full border bg-background pr-2 focus-within:ring-1 focus-within:ring-ring",
+          "relative flex h-11 w-full items-center gap-1 rounded-full border bg-background pr-2 has-[input:focus-visible]:ring-1 has-[input:focus-visible]:ring-ring",
           hasError ? "border-destructive" : "border-input",
         )}
       >

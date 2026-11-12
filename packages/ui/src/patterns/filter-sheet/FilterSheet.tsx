@@ -1,7 +1,7 @@
 import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
 import type { ReactElement, ReactNode } from "react";
 import { cn } from "../../lib/utils";
-import { Badge } from "../../primitives/badge";
+import { badgeVariants } from "../../primitives/badge";
 import { Button, type ButtonProps } from "../../primitives/button";
 import { ResponsivePanel, type ResponsivePanelSize } from "../modal/ResponsivePanel";
 
@@ -45,7 +45,8 @@ export interface FilterSheetProps {
  * Filters in a bottom-sheet on phones (dialog on desktop) with Reset and
  * Apply in the footer. Chrome only: it holds no draft state, so for an
  * Apply button keep the draft selection in the caller and commit it in
- * `onApply`. Pair with `FilterSheetTrigger` for the button that opens it.
+ * `onApply`. Re-seed that draft from the applied value whenever the sheet
+ * opens: closing via X/Esc/backdrop leaves the abandoned draft untouched. Pair with `FilterSheetTrigger` for the button that opens it.
  */
 export const FilterSheet = ({
   open,
@@ -71,6 +72,7 @@ export const FilterSheet = ({
       breakpoint={breakpoint}
       className={className}
       footer={
+        onReset || onApply ? (
         <>
           {onReset && (
             <Button type="button" variant="outline" disabled={activeCount === 0} onClick={onReset}>
@@ -90,6 +92,7 @@ export const FilterSheet = ({
             </Button>
           )}
         </>
+        ) : undefined
       }
     >
       {children}
@@ -118,16 +121,18 @@ export const FilterSheetTrigger = ({
     <Button
       type="button"
       variant={variant}
-      aria-label={activeCount > 0 ? `${labels.title}, ${labels.activeCount(activeCount)}` : undefined}
       className={cn("gap-2", className)}
       {...props}
     >
       <AdjustmentsHorizontalIcon aria-hidden="true" />
       {children ?? labels.title}
       {activeCount > 0 && (
-        <Badge variant="secondary" aria-hidden="true" className="px-1.5 py-0 tabular-nums">
-          {activeCount}
-        </Badge>
+        <>
+          <span aria-hidden="true" className={cn(badgeVariants({ variant: "secondary" }), "px-1.5 py-0 tabular-nums")}>
+            {activeCount}
+          </span>
+          <span className="sr-only">{labels.activeCount(activeCount)}</span>
+        </>
       )}
     </Button>
   );

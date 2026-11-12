@@ -42,6 +42,13 @@ describe("FacetFilter", () => {
     expect(onValueChange).toHaveBeenCalledWith({ own: ["true"] });
   });
 
+  it("switches a boolean facet off", () => {
+    const onValueChange = vi.fn();
+    render(<FacetFilter facets={[ownBrand]} value={{ own: ["true"] }} onValueChange={onValueChange} />);
+    fireEvent.click(screen.getByRole("switch"));
+    expect(onValueChange).toHaveBeenCalledWith({});
+  });
+
   it("hides empty facets unless hideEmpty is false", () => {
     const empty: Facet = { key: "e", label: "Empty", options: [] };
     const { rerender } = render(<FacetFilter facets={[empty]} value={{}} onValueChange={() => {}} />);

@@ -1,5 +1,5 @@
 import { PhotoIcon } from "@heroicons/react/24/outline";
-import { type HTMLAttributes, type ReactElement, type ReactNode, useEffect, useState } from "react";
+import { type HTMLAttributes, type ReactElement, type ReactNode, useState } from "react";
 import { cn } from "../../lib/utils";
 
 const THUMB_SIZES = { sm: 40, md: 56, lg: 88 } as const;
@@ -25,8 +25,9 @@ export const Thumbnail = ({
   style,
   ...props
 }: ThumbnailProps): ReactElement => {
-  const [failed, setFailed] = useState(false);
-  useEffect(() => setFailed(false), [src]);
+  // Compared against `src` so a new image never shows the previous one's failure.
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const failed = failedSrc === src;
   const px = typeof size === "number" ? size : THUMB_SIZES[size];
   return (
     <span
@@ -42,7 +43,7 @@ export const Thumbnail = ({
           src={src}
           alt={alt}
           loading="lazy"
-          onError={() => setFailed(true)}
+          onError={() => setFailedSrc(src ?? null)}
           className={cn("size-full", fit === "contain" ? "object-contain p-1" : "object-cover")}
         />
       ) : (
@@ -112,6 +113,7 @@ export const ResultCard = ({
     disabled && "pointer-events-none opacity-50",
     className,
   );
+  const interactive = !disabled && (href !== undefined || onSelect !== undefined);
   const body = (
     <>
       {leading}
@@ -126,27 +128,25 @@ export const ResultCard = ({
   );
   return (
     <li>
-      {href ? (
-        <a
-          href={href}
-          aria-current={selected || undefined}
-          aria-disabled={disabled || undefined}
-          data-testid={testId}
-          className={classes}
-        >
+      {href !== undefined && !disabled ? (
+        <a href={href} aria-current={selected || undefined} data-testid={testId} className={classes}>
           {body}
         </a>
-      ) : (
+      ) : interactive ? (
         <button
           type="button"
-          aria-pressed={onSelect ? selected : undefined}
-          disabled={disabled}
+          aria-current={selected || undefined}
           onClick={onSelect}
           data-testid={testId}
           className={classes}
         >
           {body}
         </button>
+      ) : (
+        // Disabled or nothing to do: plain element, no tab stop, no href.
+        <div aria-current={selected || undefined} aria-disabled={disabled || undefined} data-testid={testId} className={cn(classes, "hover:bg-transparent")}>
+          {body}
+        </div>
       )}
     </li>
   );

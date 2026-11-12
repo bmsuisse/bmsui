@@ -47,11 +47,22 @@ describe("FilterSheet", () => {
   });
 });
 
+describe("FilterSheet footer", () => {
+  it("renders no footer without handlers", () => {
+    render(
+      <FilterSheet open onOpenChange={() => {}}>
+        body
+      </FilterSheet>,
+    );
+    expect(document.querySelector("[data-slot=dialog-footer], [data-slot=sheet-footer]")).toBeNull();
+  });
+});
+
 describe("FilterSheetTrigger", () => {
   it("shows the count only above zero", () => {
     const { rerender } = render(<FilterSheetTrigger activeCount={0} />);
     expect(screen.getByRole("button").textContent).toBe("Filters");
     rerender(<FilterSheetTrigger activeCount={3} />);
-    expect(screen.getByRole("button", { name: "Filters, 3 active" }).textContent).toBe("Filters3");
+    expect(screen.getByRole("button", { name: /Filters/ }).textContent).toBe("Filters33 active");
   });
 });
