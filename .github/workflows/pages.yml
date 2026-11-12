@@ -49,6 +49,12 @@ jobs:
         env:
           BASE_PATH: /bmsui/demo/ui/
 
+      - name: Build @bmsuisse/ui Storybook
+        working-directory: packages/ui
+        run: bun run build-storybook
+        env:
+          BASE_PATH: /bmsui/storybook/
+
       - name: Build @bmsuisse/datagrid demo (static, client-side sample data)
         working-directory: packages/datagrid/demo
         run: bun run build:static
@@ -58,11 +64,12 @@ jobs:
       - name: Assemble Pages artifact
         run: |
           set -euo pipefail
-          mkdir -p site/demo/ui/brand-motion site/demo/datagrid
+          mkdir -p site/demo/ui/brand-motion site/demo/datagrid site/storybook
           cp -r docs-site/build/. site/
           cp -r packages/ui/demo/dist/. site/demo/ui/
           cp packages/ui/demo/dist/index.html site/demo/ui/brand-motion/index.html
           cp -r packages/datagrid/demo/dist/. site/demo/datagrid/
+          cp -r packages/ui/storybook-static/. site/storybook/
 
       - uses: actions/upload-pages-artifact@v3
         with:

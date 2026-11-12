@@ -57,3 +57,11 @@ describe("SearchBar", () => {
     expect(input.className).toContain("[&::-webkit-search-decoration]:appearance-none");
   });
 });
+
+describe("SearchBar actions", () => {
+  it("renders actions after the clear button", () => {
+    render(<SearchBar value="abc" onChange={() => {}} actions={<button type="button" aria-label="Voice" />} />);
+    const buttons = screen.getAllByRole("button");
+    expect(buttons.map((b) => b.getAttribute("aria-label"))).toEqual(["Clear search", "Voice"]);
+  });
+});

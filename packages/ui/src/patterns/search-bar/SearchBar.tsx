@@ -1,5 +1,5 @@
 import { ExclamationTriangleIcon, MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import type { InputHTMLAttributes, ReactElement, Ref } from "react";
+import type { InputHTMLAttributes, ReactElement, ReactNode, Ref } from "react";
 import { type ErrorInput, toErrorInfo } from "../../lib/errorState";
 import { cn } from "../../lib/utils";
 import { InlineError } from "../error-state/ErrorState";
@@ -21,6 +21,8 @@ export interface SearchBarProps
   onClear?: (() => void) | false;
   /** Accessible label for the clear button. @default "Clear search" */
   clearLabel?: string;
+  /** Extra buttons inside the pill after the clear button (camera, voice input …). Use `<Button variant="ghost" size="icon-sm" aria-label="…">`. */
+  actions?: ReactNode;
   /** Forwarded ref so a caller can focus the input programmatically. */
   inputRef?: Ref<HTMLInputElement>;
   className?: string;
@@ -42,6 +44,7 @@ export function SearchBar({
   onRetry,
   onClear,
   clearLabel = "Clear search",
+  actions,
   inputRef,
   className,
   ...props
@@ -51,44 +54,47 @@ export function SearchBar({
   const showClear = onClear !== false && value.length > 0;
   return (
     <div className={className}>
-      <div className="relative">
-      <span className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-muted-foreground">
-        {busy ? (
-          <LoadingSpinner size="sm" />
-        ) : hasError ? (
-          <ExclamationTriangleIcon className="h-4 w-4 text-destructive" aria-hidden="true" />
-        ) : (
-          <MagnifyingGlassIcon className="h-4 w-4" aria-hidden="true" />
-        )}
-      </span>
-      <input
-        ref={inputRef}
-        type="search"
-        aria-invalid={hasError || undefined}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
+      <div
         className={cn(
-          "h-11 w-full rounded-full border bg-background text-[15px] text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none",
-          // Chromium/Safari render their own native clear (×) control on
-          // type="search" inputs -- left alone, it stacks on top of our own
-          // custom clear button below instead of replacing it.
-          "[&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none",
+          "relative flex h-11 w-full items-center gap-1 rounded-full border bg-background pr-2 has-[input:focus-visible]:ring-1 has-[input:focus-visible]:ring-ring",
           hasError ? "border-destructive" : "border-input",
-          showClear ? "pr-11" : "pr-4",
-          "pl-11",
         )}
-        {...props}
-      />
-      {showClear && (
-        <button
-          type="button"
-          onClick={() => (onClear ? onClear() : onChange(""))}
-          aria-label={clearLabel}
-          className="absolute top-1/2 right-2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
-        >
-          <XMarkIcon className="h-4 w-4" aria-hidden="true" />
-        </button>
-      )}
+      >
+        <span className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-muted-foreground">
+          {busy ? (
+            <LoadingSpinner size="sm" />
+          ) : hasError ? (
+            <ExclamationTriangleIcon className="h-4 w-4 text-destructive" aria-hidden="true" />
+          ) : (
+            <MagnifyingGlassIcon className="h-4 w-4" aria-hidden="true" />
+          )}
+        </span>
+        <input
+          ref={inputRef}
+          type="search"
+          aria-invalid={hasError || undefined}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          className={cn(
+            "h-full min-w-0 flex-1 rounded-full bg-transparent pr-2 pl-11 text-[15px] text-foreground placeholder:text-muted-foreground focus-visible:outline-none",
+            // Chromium/Safari render their own native clear (×) control on
+            // type="search" inputs -- left alone, it stacks on top of our own
+            // custom clear button below instead of replacing it.
+            "[&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none",
+          )}
+          {...props}
+        />
+        {showClear && (
+          <button
+            type="button"
+            onClick={() => (onClear ? onClear() : onChange(""))}
+            aria-label={clearLabel}
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
+          >
+            <XMarkIcon className="h-4 w-4" aria-hidden="true" />
+          </button>
+        )}
+        {actions}
       </div>
       {hasError && <InlineError error={error} onRetry={onRetry} className="mt-1 ml-4" />}
     </div>
