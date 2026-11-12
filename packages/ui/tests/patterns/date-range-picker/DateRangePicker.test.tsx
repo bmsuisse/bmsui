@@ -91,6 +91,23 @@ describe("DateRangePicker review fixes", () => {
     expect(onInvalidChange).toHaveBeenLastCalledWith(false, undefined);
   });
 
+  it("joins an external aria-describedby with its own error message id on both fields", () => {
+    render(
+      <>
+        <p id="hint">Pick a period</p>
+        <DateRangePicker value={{ from: "", to: "" }} onValueChange={() => {}} min="2026-01-01" aria-describedby="hint" />
+      </>,
+    );
+    const from = screen.getByLabelText("From");
+    const to = screen.getByLabelText("To");
+    expect(from).toHaveAttribute("aria-describedby", "hint");
+    fireEvent.change(to, { target: { value: "1.1.2025" } });
+    fireEvent.blur(to);
+    const message = screen.getByRole("alert").id;
+    expect(to).toHaveAttribute("aria-describedby", `hint ${message}`);
+    expect(from).toHaveAttribute("aria-describedby", `hint ${message}`);
+  });
+
   it("read-only: calendar button disabled, calendar can't open, fields read-only", () => {
     render(<DateRangePicker value={{ from: "2026-11-10", to: "2026-11-12" }} onValueChange={() => {}} readOnly />);
     expect(screen.getByRole("button", { name: "Choose dates" })).toBeDisabled();

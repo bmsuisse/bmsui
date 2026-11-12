@@ -303,6 +303,7 @@ interface AsyncBoundaryProps
   loading?: boolean
   loadingContent?: ReactNode
   onRetry?: () => void
+  retryProps?: RetryButtonProps
 interface AvatarGroupItem
   id?: string
   name: string
@@ -562,6 +563,7 @@ interface DateRangePickerLabels extends Pick<DateInputLabels, "invalid" | "outOf
   openCalendar: string
   to: string
 interface DateRangePickerProps extends PassThroughCalendarProps
+  "aria-describedby"?: string
   "data-testid"?: string
   className?: string
   container?: HTMLElement | null
@@ -605,6 +607,7 @@ interface ErrorStateProps extends Omit<HTMLAttributes<HTMLDivElement>, "title">
   error: ErrorInput
   labels?: Partial<ErrorStateLabels>
   onRetry?: () => void
+  retryProps?: RetryButtonProps
   variant?: "block" | "compact"
 interface FileInputLabels
   dropHere: string
@@ -678,6 +681,7 @@ interface InlineErrorProps extends Omit<HTMLAttributes<HTMLSpanElement>, "title"
   error: ErrorInput
   labels?: Partial<Pick<ErrorStateLabels, "title" | "retry">>
   onRetry?: () => void
+  retryProps?: RetryButtonProps
 interface InputGroupProps extends HTMLAttributes<HTMLDivElement>
   size?: InputGroupSize
 interface KbdProps extends HTMLAttributes<HTMLElement>
@@ -1228,7 +1232,7 @@ interface VoiceTranscriptProps extends Omit<HTMLAttributes<HTMLDivElement>, "onC
   value: string
 ```
 
-## Types (28)
+## Types (29)
 
 ```text
 type AiButtonVariant = "ai" | "ai-subtle" | "ai-ghost"
@@ -1255,6 +1259,8 @@ type PageRangeItem = number | "ellipsis"
 type ProgressTone = "default" | "success" | "warning" | "error"
 type RelativeTimeStyle = "long" | "short" | "narrow"
 type ResponsivePanelSize = keyof typeof desktopSizeClasses
+type RetryButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "onClick" | "type" | "children"> & {…}
+  "data-testid"?: string
 type SetLocalStorageState<T> = (value: T | ((previous: T) => T)) => void
 type SidebarNavProps = Omit<ComponentPropsWithoutRef<"div">, "className" | "children" | "ref"> & {…}
   children: ReactNode

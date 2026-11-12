@@ -149,6 +149,7 @@ export { toErrorInfo } from "./lib/errorState";
 export type {
   ErrorStateLabels,
   ErrorStateProps,
+  RetryButtonProps,
   InlineErrorProps,
 } from "./patterns/error-state/ErrorState";
 export { defaultErrorStateLabels, ErrorState, InlineError } from "./patterns/error-state/ErrorState";

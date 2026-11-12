@@ -221,6 +221,10 @@ logic above, which already had its own extraction). Structure:
     banner. `Combobox`, `TagCombobox`, `SearchBar`, `SearchPanel` and `KpiCard` take
     `error`/`onRetry`; `SearchBar`/`SearchPanel` `isLoading` is now `loading` (old name
     deprecated alias). New server-backed components should follow this, not invent props.
+    `retryProps` (v0.24.0) on `ErrorState`, `InlineError` and `AsyncBoundary` puts a `data-testid`
+    or a taller `className` (44px tap target on phones) on the Retry button; `onClick`/`type` stay
+    with `onRetry`. `DateRangePicker` takes `aria-describedby` (v0.24.0) for an outer hint and joins
+    it with its own error message id on both fields.
   - `alert-box/` — `AlertBox`, an error/warning/info/success banner.
     `error` reuses the shared `destructive` theme token; `warning`/`info`/
     `success` use fixed Tailwind palette colors (amber/sky/emerald) because

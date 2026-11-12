@@ -22,6 +22,21 @@ describe("AsyncBoundary", () => {
     expect(screen.getByTestId("error-state")).toBeInTheDocument();
   });
 
+  it("retryProps reach the Retry button of the error block and of the banner", () => {
+    const { rerender } = render(
+      <AsyncBoundary error="fail" onRetry={() => {}} retryProps={{ "data-testid": "reload" }}>
+        <p>data</p>
+      </AsyncBoundary>,
+    );
+    expect(screen.getByTestId("reload")).toBeInTheDocument();
+    rerender(
+      <AsyncBoundary error="fail" hasData onRetry={() => {}} retryProps={{ "data-testid": "reload" }}>
+        <p>data</p>
+      </AsyncBoundary>,
+    );
+    expect(screen.getByTestId("reload")).toBeInTheDocument();
+  });
+
   it("error with stale data keeps children and shows a banner", () => {
     render(
       <AsyncBoundary error="fail" hasData>
