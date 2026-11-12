@@ -1,0 +1,38 @@
+name: Update visual baselines
+
+# Renders every Storybook story on Linux (the same environment CI compares against; macOS
+# anti-aliasing differs) and commits the missing baselines to the branch you run this on.
+# To refresh a baseline that changed on purpose, delete its PNG in packages/ui/visual/baselines
+# on the branch first, then run this.
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  baselines:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - working-directory: packages/ui
+        run: bunx playwright install --with-deps chromium
+      - working-directory: packages/ui
+        run: bun run build-storybook
+      - working-directory: packages/ui
+        run: bun run test:visual:update
+        env:
+          CI: "true"
+      - name: Commit new baselines
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add packages/ui/visual/baselines
+          if git diff --cached --quiet; then
+            echo "No new baselines."
+          else
+            git commit -m "test(ui): add Storybook visual baselines"
+            git push
+          fi

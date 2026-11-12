@@ -670,12 +670,46 @@ logic above, which already had its own extraction). Structure:
     wrapper, so `TableSearch` sizes the wrapper, not the input).
 - `packages/ui/.storybook` + `packages/ui/stories/` — Storybook 10
   (`react-vite`, a11y + docs addons, light/dark toolbar toggle that sets `.dark`
-  on `<html>`). `bun run storybook` / `bun run build-storybook` in
-  `packages/ui`; `pages.yml` publishes it to `/bmsui/storybook/`. Stories import
-  `@bmsuisse/ui` (aliased to `src` in Vite and via `paths` in tsconfig); add a
-  story when you add an export. `bun run scripts/storybook-screenshots.ts`
-  regenerates `packages/ui/stories/screenshots` after a build. Keep `vite` at
-  `^5` here: vitest's own Vite is 5 and a second major breaks the typecheck.
+  on `<html>`), published at <https://bmsuisse.github.io/bmsui/storybook/> by
+  `pages.yml`. **Every exported component and hook has a story**; the whole
+  library is browsable there. `bun run storybook` / `bun run build-storybook`
+  in `packages/ui`. Stories import `@bmsuisse/ui` (aliased to `src` in Vite and
+  via `paths` in tsconfig). Keep `vite` at `^5` here: vitest's own Vite is 5 and
+  a second major breaks the typecheck. (Storybook's Vitest addon, the sidebar
+  play button, needs vitest 4, and bun links two vitest copies in this
+  workspace, so it is not set up; the Playwright check below covers every story.)
+
+  **Keeping it up to date — when you add or change an export, in the same PR:**
+  1. Add or extend `stories/<Name>.stories.tsx`. Title `Primitives/<Name>`,
+     `Patterns/<Name>` or `Hooks/<name>`; a default story plus the variants and
+     states a consumer would look for (disabled, invalid, loading, empty,
+     `labels` override, with icon). Controlled components get a `render` with
+     `useState`; overlays get a trigger button; use fixed sample data (no
+     `Date.now`/`Math.random`) so screenshots are stable. If TypeScript raises
+     TS2742 on the inferred meta type, write `const meta: Meta<typeof X> = ...`
+     instead of `satisfies`.
+  2. `tests/stories.test.ts` fails when an exported component/hook is not named
+     in any story. A compound sub-part may be shown inside its parent's story;
+     something with no UI of its own goes in that test's `NOT_STORIED` with a
+     reason (the test also fails when an entry there gains a story).
+  3. A changed prop or state needs its story changed too: stories are the
+     visual contract. Renamed export: rename it in the stories.
+  4. `bun run build-storybook && bun run test:visual` (CI runs the same, job
+     "Storybook"): opens every story in light and dark and fails on a page or
+     console error, then compares a screenshot with `visual/baselines`. A story
+     tagged `tags: ["no-visual"]` is still render-checked but not compared (live
+     clocks, random data). Local macOS runs can't match the Linux baselines, so
+     locally use `SMOKE_ONLY=1 bun run test:visual`.
+  5. Baselines are rendered on Linux by the **Update visual baselines** workflow
+     (run it on your branch; it commits missing PNGs to it). To accept an
+     intentional visual change, delete the old PNG in
+     `packages/ui/visual/baselines` on the branch, then run the workflow. Until
+     `visual/baselines` exists CI only does the render check.
+  6. `bun run scripts/storybook-screenshots.ts` regenerates the PR screenshots
+     in `packages/ui/stories/screenshots` (optional, for review).
+
+  Also still per export: a `CATALOG.md` line (tested), `bun run build && bun run
+  api-report` (CI-checked), and a version bump in `packages/ui/package.json`.
 - `packages/ui/demo/` — same pattern as `packages/datagrid/demo`: a Vite
   app aliasing `@bmsuisse/ui` straight to `src/index.ts`, using the same
   reference-app-derived Tailwind v4 tokens, for visual QA.

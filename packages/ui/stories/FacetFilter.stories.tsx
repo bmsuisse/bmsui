@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
-import { ActiveFacets, type FacetDefinition, FacetFilter, FacetFilterSkeleton, type FacetFilterValue } from "@bmsuisse/ui";
+import { ActiveFacets, type FacetDefinition, FacetFilter, FacetGroup, FacetFilterSkeleton, type FacetFilterValue } from "@bmsuisse/ui";
 
 const facets: FacetDefinition[] = [
   {
@@ -140,5 +140,21 @@ export const Dropdown: Story = {
       { key: "sort", label: "Sort by", type: "single", display: "dropdown", options: [{ value: "rel", label: "Relevance" }, { value: "price", label: "Price" }] },
     ],
     value: { category: ["c1", "c4"] },
+  },
+};
+
+/** One facet on its own (no reset row or other groups), e.g. inside a custom panel. */
+export const SingleGroup: Story = {
+  render: () => {
+    const [selected, setSelected] = useState<string[]>(["acme"]);
+    return (
+      <div className="w-72">
+        <FacetGroup
+          facet={{ key: "supplier", label: "Supplier", options: [{ value: "acme", label: "Acme AG", count: 42 }, { value: "bolt", label: "Bolt GmbH", count: 17 }] }}
+          selected={selected}
+          onSelectedChange={setSelected}
+        />
+      </div>
+    );
   },
 };
