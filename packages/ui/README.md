@@ -28,7 +28,10 @@ function Example() {
 ```
 
 See [AGENTS.md](../../AGENTS.md) for the full design rationale, and
-`packages/ui/demo` for a runnable example of every component.
+`packages/ui/demo` for a runnable example of every component. Browse the
+components interactively (controls, light/dark, accessibility check) in the
+[Storybook](https://bmsuisse.github.io/bmsui/storybook/), or run it locally with
+`bun run storybook`.
 
 ## License
 
