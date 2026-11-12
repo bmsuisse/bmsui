@@ -73,7 +73,7 @@ export const FilterSheet = ({
       className={className}
       footer={
         onReset || onApply ? (
-        <>
+        <div className="flex w-full gap-2 max-lg:[&>button]:h-11 max-lg:[&>button]:flex-1 lg:justify-end">
           {onReset && (
             <Button type="button" variant="outline" disabled={activeCount === 0} onClick={onReset}>
               {labels.reset}
@@ -91,7 +91,7 @@ export const FilterSheet = ({
               {labels.apply}
             </Button>
           )}
-        </>
+        </div>
         ) : undefined
       }
     >
@@ -120,6 +120,7 @@ export const FilterSheetTrigger = ({
   return (
     <Button
       type="button"
+      aria-haspopup="dialog"
       variant={variant}
       className={cn("gap-2", className)}
       {...props}

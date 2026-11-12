@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
-import { type Facet, FacetFilter, type FacetFilterValue } from "@bmsuisse/ui";
+import { type FacetDefinition, FacetFilter, type FacetFilterValue } from "@bmsuisse/ui";
 
-const facets: Facet[] = [
+const facets: FacetDefinition[] = [
   {
     key: "category",
     label: "Category",

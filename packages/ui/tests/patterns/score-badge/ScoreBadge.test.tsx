@@ -23,6 +23,13 @@ describe("ScoreBadge", () => {
     render(<ScoreBadge value={0.5} max={1} />);
     expect(screen.getByText("50%")).toBeTruthy();
   });
+  it("rounds before picking the tone and clamps to 0–100", () => {
+    render(<ScoreBadge value={84.6} data-testid="a" />);
+    expect(screen.getByTestId("a").textContent).toBe("85%");
+    expect(screen.getByTestId("a").className).toContain("emerald");
+    render(<ScoreBadge value={140} data-testid="b" />);
+    expect(screen.getByTestId("b").textContent).toBe("100%");
+  });
   it("renders nothing for null", () => {
     const { container } = render(<ScoreBadge value={null} />);
     expect(container.firstChild).toBeNull();

@@ -44,7 +44,7 @@ export interface ScoreBadgeProps extends Omit<HTMLAttributes<HTMLSpanElement>, "
   thresholds?: ScoreThreshold[];
   /** Forces a tone and skips the thresholds. */
   tone?: StatusTone;
-  /** Text for the percentage. @default `${Math.round(pct)}%` */
+  /** Text for the (rounded, 0–100) percentage. @default `${percent}%` */
   format?: (percent: number) => string;
   /** Leading colour dot (decorative). @default true */
   showDot?: boolean;
@@ -61,14 +61,15 @@ export const ScoreBadge = ({
   max = 100,
   thresholds,
   tone,
-  format = (percent) => `${Math.round(percent)}%`,
+  format = (percent) => `${percent}%`,
   showDot = true,
   size = "md",
   className,
   ...props
 }: ScoreBadgeProps): ReactElement | null => {
   if (value == null || Number.isNaN(value) || max <= 0) return null;
-  const percent = (value / max) * 100;
+  // Rounded and clamped first so the colour always agrees with the number shown ("85%" is never amber).
+  const percent = Math.min(100, Math.max(0, Math.round((value / max) * 100)));
   const resolved = tone ?? resolveScoreTone(percent, thresholds);
   return (
     // A span (not `Badge`'s div) so it's valid inside a button/link, e.g. in a ResultCard.
@@ -97,7 +98,7 @@ export interface RankBadgeProps extends HTMLAttributes<HTMLSpanElement> {
 export const RankBadge = ({ rank, className, ...props }: RankBadgeProps): ReactElement => (
   <span
     className={cn(
-      "flex size-[22px] shrink-0 items-center justify-center rounded-md bg-muted font-mono font-semibold text-[11px] text-muted-foreground tabular-nums",
+      "flex h-[22px] min-w-[22px] shrink-0 items-center justify-center rounded-md px-1 bg-muted font-mono font-semibold text-[11px] text-muted-foreground tabular-nums",
       className,
     )}
     {...props}

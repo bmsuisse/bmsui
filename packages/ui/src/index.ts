@@ -362,14 +362,14 @@ export { useLocalStorageState } from "./hooks/useLocalStorageState";
 export type { ScoreBadgeProps, ScoreThreshold, RankBadgeProps } from "./patterns/score-badge/ScoreBadge";
 export { ScoreBadge, RankBadge, defaultScoreThresholds, resolveScoreTone } from "./patterns/score-badge/ScoreBadge";
 export type {
-  Facet,
+  FacetDefinition,
   FacetFilterLabels,
   FacetFilterProps,
   FacetFilterValue,
   FacetGroupProps,
   FacetOption,
 } from "./patterns/facet-filter/FacetFilter";
-export { FacetFilter, FacetGroup, countActiveFilters, defaultFacetFilterLabels } from "./patterns/facet-filter/FacetFilter";
+export { FacetFilter, FacetGroup, countActiveFacets, defaultFacetFilterLabels } from "./patterns/facet-filter/FacetFilter";
 export type {
   FilterSheetLabels,
   FilterSheetProps,

@@ -1,13 +1,13 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { type Facet, FacetFilter, countActiveFilters } from "../../../src";
+import { type FacetDefinition, FacetFilter, countActiveFacets } from "../../../src";
 
-const supplier: Facet = {
+const supplier: FacetDefinition = {
   key: "supplier",
   label: "Supplier",
-  options: Array.from({ length: 10 }, (_, i) => ({ value: `s${i}`, label: `Supplier ${i}`, count: i * 1000 })),
+  options: Array.from({ length: 12 }, (_, i) => ({ value: `s${i}`, label: `Supplier ${i}`, count: i * 1000 })),
 };
-const ownBrand: Facet = { key: "own", label: "Own brand", type: "boolean", options: [{ value: "true", count: 4 }] };
+const ownBrand: FacetDefinition = { key: "own", label: "Own brand", type: "boolean", options: [{ value: "true", count: 4 }] };
 
 describe("FacetFilter", () => {
   it("adds and removes a value, dropping the empty key", () => {
@@ -23,16 +23,16 @@ describe("FacetFilter", () => {
   it("collapses long lists and expands with aria-expanded", () => {
     render(<FacetFilter facets={[supplier]} value={{}} onValueChange={() => {}} />);
     expect(screen.getAllByRole("checkbox")).toHaveLength(8);
-    const more = screen.getByRole("button", { name: "Show 2 more" });
+    const more = screen.getByRole("button", { name: "Show 4 more" });
     expect(more.getAttribute("aria-expanded")).toBe("false");
     fireEvent.click(more);
-    expect(screen.getAllByRole("checkbox")).toHaveLength(10);
+    expect(screen.getAllByRole("checkbox")).toHaveLength(12);
     expect(screen.getByRole("button", { name: "Show less" }).getAttribute("aria-expanded")).toBe("true");
   });
 
   it("keeps a selected option visible while collapsed", () => {
-    render(<FacetFilter facets={[supplier]} value={{ supplier: ["s9"] }} onValueChange={() => {}} />);
-    expect(screen.getByRole("checkbox", { name: /Supplier 9/ })).toBeTruthy();
+    render(<FacetFilter facets={[supplier]} value={{ supplier: ["s11"] }} onValueChange={() => {}} />);
+    expect(screen.getByRole("checkbox", { name: /Supplier 11/ })).toBeTruthy();
   });
 
   it("renders boolean facets as a switch", () => {
@@ -50,7 +50,7 @@ describe("FacetFilter", () => {
   });
 
   it("hides empty facets unless hideEmpty is false", () => {
-    const empty: Facet = { key: "e", label: "Empty", options: [] };
+    const empty: FacetDefinition = { key: "e", label: "Empty", options: [] };
     const { rerender } = render(<FacetFilter facets={[empty]} value={{}} onValueChange={() => {}} />);
     expect(screen.queryByText("Empty")).toBeNull();
     rerender(<FacetFilter facets={[empty]} value={{}} onValueChange={() => {}} hideEmpty={false} />);
@@ -75,8 +75,28 @@ describe("FacetFilter", () => {
       />,
     );
     expect(screen.getByText("#1000")).toBeTruthy();
-    expect(screen.getByText("1000 results")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Mehr (2)" })).toBeTruthy();
+    expect(screen.getByText("#1000 results")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Mehr (4)" })).toBeTruthy();
+  });
+
+  it("lists a selected value that's gone from the options so it can be unticked", () => {
+    const onValueChange = vi.fn();
+    render(<FacetFilter facets={[supplier]} value={{ supplier: ["gone"] }} onValueChange={onValueChange} />);
+    fireEvent.click(screen.getByRole("checkbox", { name: "gone" }));
+    expect(onValueChange).toHaveBeenCalledWith({});
+  });
+
+  it("doesn't collapse when only one or two options would hide", () => {
+    const few = { ...supplier, options: supplier.options.slice(0, 10) };
+    render(<FacetFilter facets={[few]} value={{}} onValueChange={() => {}} />);
+    expect(screen.getAllByRole("checkbox")).toHaveLength(10);
+    expect(screen.queryByRole("button", { name: /Show/ })).toBeNull();
+  });
+
+  it("renders a custom facet body", () => {
+    const custom = { key: "price", label: "Price", options: [], render: () => <div>my range</div> };
+    render(<FacetFilter facets={[custom]} value={{}} onValueChange={() => {}} hideEmpty={false} />);
+    expect(screen.getByText("my range")).toBeTruthy();
   });
 
   it("labels each group", () => {
@@ -85,8 +105,8 @@ describe("FacetFilter", () => {
   });
 });
 
-describe("countActiveFilters", () => {
+describe("countActiveFacets", () => {
   it("sums selections", () => {
-    expect(countActiveFilters({ a: ["1", "2"], b: ["3"] })).toBe(3);
+    expect(countActiveFacets({ a: ["1", "2"], b: ["3"] })).toBe(3);
   });
 });

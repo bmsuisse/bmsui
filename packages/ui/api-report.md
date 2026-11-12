@@ -213,7 +213,7 @@ function avatarColorIndex(name: string): number
 const badgeVariants: (props?: ({ variant?: "default" | "outline" | "destructive" | "secondary" | "warning" | null | undefined } & class_variance_authority_types.ClassProp) | undefined) => string
 const buttonVariants: (props?: ({ variant?: "default" | "outline" | "ghost" | "destructive" | "secondary" | "link" | "swiss-primary" | "swiss-secondary" | "ai" | "ai-subtle" | "ai-ghost" | null | undefined; size?: "default" | "xs" | "sm" | "lg" | "icon" | "icon-xs" | "icon-sm" | "icon-lg" | null | undefined } & class_variance_authority_types.ClassProp) | undefined) => string
 function cn(...inputs: ClassValue[]): string
-function countActiveFilters(value: FacetFilterValue): number
+function countActiveFacets(value: FacetFilterValue): number
 function datePlaceholder(locale: string): string
 function describeSpeechError(code: string): string | null
 function formatCommandPaletteShortcut(key?: string): string
@@ -623,20 +623,21 @@ interface ErrorStateProps extends Omit<HTMLAttributes<HTMLDivElement>, "title">
   onRetry?: () => void
   retryProps?: RetryButtonProps
   variant?: "block" | "compact"
-interface Facet
+interface FacetDefinition
   key: string
   label: string
   maxVisible?: number
   options: FacetOption[]
+  render?: (props: { selected: string[]; onSelectedChange: (next: string[]) => void }) => ReactNode
   type?: "list" | "boolean"
 interface FacetFilterLabels
-  optionCount: (count: number) => string
+  optionCount: (count: string) => string
   reset: string
   showLess: string
   showMore: (hidden: number) => string
 interface FacetFilterProps extends SharedProps
   className?: string
-  facets: Facet[]
+  facets: FacetDefinition[]
   hideEmpty?: boolean
   onValueChange: (next: FacetFilterValue) => void
   showReset?: boolean
@@ -646,7 +647,7 @@ interface FacetFilterProps extends SharedProps
   maxVisible?: number  (from SharedProps)
 interface FacetGroupProps extends SharedProps
   className?: string
-  facet: Facet
+  facet: FacetDefinition
   onSelectedChange: (next: string[]) => void
   selected: string[]
   formatCount?: (count: number) => string  (from SharedProps)
@@ -982,6 +983,7 @@ interface ResultCardProps
   leading?: ReactNode
   meta?: ReactNode
   onSelect?: () => void
+  renderLink?: (props: ResultCardLinkProps) => ReactElement
   selected?: boolean
   title: ReactNode
   trailing?: ReactNode

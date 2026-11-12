@@ -13,7 +13,7 @@ export interface FacetOption {
   disabled?: boolean;
 }
 
-export interface Facet {
+export interface FacetDefinition {
   /** Key in {@link FacetFilterValue}. */
   key: string;
   label: string;
@@ -22,6 +22,12 @@ export interface Facet {
   type?: "list" | "boolean";
   /** Overrides the filter-wide `maxVisible` for this facet. */
   maxVisible?: number;
+  /**
+   * Replaces the built-in option list with your own control (a price range, a radio list, a
+   * searchable list …) under the same heading. Selection still travels as `string[]` in the
+   * `FacetFilterValue`, so reset and active counts keep working.
+   */
+  render?: (props: { selected: string[]; onSelectedChange: (next: string[]) => void }) => ReactNode;
 }
 
 /** Selected option values per facet key; a facet without selection has no key. */
@@ -31,8 +37,8 @@ export interface FacetFilterLabels {
   showMore: (hidden: number) => string;
   showLess: string;
   reset: string;
-  /** Read out after an option's name, e.g. "42 results". */
-  optionCount: (count: number) => string;
+  /** Read out after an option's name, e.g. "42 results". Gets the count already run through `formatCount`. */
+  optionCount: (count: string) => string;
 }
 
 export const defaultFacetFilterLabels: FacetFilterLabels = {
@@ -43,7 +49,7 @@ export const defaultFacetFilterLabels: FacetFilterLabels = {
 };
 
 /** Number of selected options over all facets. */
-export function countActiveFilters(value: FacetFilterValue): number {
+export function countActiveFacets(value: FacetFilterValue): number {
   return Object.values(value).reduce((sum, selected) => sum + selected.length, 0);
 }
 
@@ -54,13 +60,14 @@ interface SharedProps {
 }
 
 export interface FacetGroupProps extends SharedProps {
-  facet: Facet;
+  facet: FacetDefinition;
   selected: string[];
   onSelectedChange: (next: string[]) => void;
   className?: string;
 }
 
-const defaultFormatCount = (count: number): string => new Intl.NumberFormat().format(count);
+let countFormat: Intl.NumberFormat | undefined;
+const defaultFormatCount = (count: number): string => (countFormat ??= new Intl.NumberFormat()).format(count);
 
 function toggle(selected: string[], value: string, on: boolean): string[] {
   const without = selected.filter((entry) => entry !== value);
@@ -84,18 +91,35 @@ export function FacetGroup({
   const limit = facet.maxVisible ?? maxVisible;
   const isBoolean = facet.type === "boolean";
 
+  // A selected value that's no longer among the options (e.g. after a refetch) must stay visible,
+  // otherwise it would keep filtering with no way to untick it.
+  const known = new Set(facet.options.map((option) => option.value));
+  const options = [
+    ...facet.options,
+    ...selected.filter((value) => !known.has(value)).map((value): FacetOption => ({ value })),
+  ];
   // Selected options always stay visible, even when collapsed.
-  const collapsedOptions = facet.options.filter(
-    (option, index) => index < limit || selected.includes(option.value),
-  );
-  const visible = expanded || isBoolean ? facet.options : collapsedOptions;
-  const hidden = facet.options.length - collapsedOptions.length;
+  const collapsedOptions = options.filter((option, index) => index < limit || selected.includes(option.value));
+  // Hiding one or two rows behind a button saves nothing.
+  const collapsible = options.length - collapsedOptions.length > 2;
+  const visible = expanded || isBoolean || !collapsible ? options : collapsedOptions;
+  const hidden = options.length - collapsedOptions.length;
 
   return (
     <div role="group" aria-labelledby={headingId} className={cn("space-y-1.5", className)} data-facet={facet.key}>
-      <div id={headingId} className="font-semibold text-muted-foreground text-xs uppercase tracking-wide">
+      {/* A boolean facet's switch already carries the label; a heading above it would repeat it. */}
+      <div
+        id={headingId}
+        className={cn(
+          "px-1.5 font-semibold text-muted-foreground text-xs uppercase tracking-wide",
+          isBoolean && "sr-only",
+        )}
+      >
         {facet.label}
       </div>
+      {facet.render ? (
+        facet.render({ selected, onSelectedChange })
+      ) : (
       <ul id={listId} className="space-y-0.5">
         {visible.slice(0, isBoolean ? 1 : undefined).map((option) => {
           const checked = selected.includes(option.value);
@@ -105,7 +129,7 @@ export function FacetGroup({
             <li key={option.value}>
               <label
                 className={cn(
-                  "flex min-h-8 cursor-pointer items-center gap-2 rounded-md px-1.5 text-sm hover:bg-foreground/5 max-md:min-h-11",
+                  "flex min-h-8 cursor-pointer items-center gap-2 rounded-md px-1.5 text-sm hover:bg-foreground/5 pointer-coarse:min-h-11",
                   option.disabled && "cursor-not-allowed opacity-50 hover:bg-transparent",
                 )}
               >
@@ -120,7 +144,7 @@ export function FacetGroup({
                     <span aria-hidden="true" className="shrink-0 text-muted-foreground text-xs tabular-nums">
                       {formatCount(option.count)}
                     </span>
-                    <span className="sr-only">{labels.optionCount(option.count)}</span>
+                    <span className="sr-only">{labels.optionCount(formatCount(option.count))}</span>
                   </>
                 )}
               </label>
@@ -128,25 +152,24 @@ export function FacetGroup({
           );
         })}
       </ul>
-      {!isBoolean && hidden > 0 && (
-        <Button
+      )}
+      {!facet.render && !isBoolean && collapsible && (
+        <button
           type="button"
-          variant="link"
-          size="xs"
           aria-expanded={expanded}
           aria-controls={listId}
           onClick={() => setExpanded((value) => !value)}
-          className="h-auto px-1.5 py-0.5 text-xs"
+          className="rounded px-1.5 py-0.5 font-medium text-foreground/80 text-xs underline-offset-2 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           {expanded ? labels.showLess : labels.showMore(hidden)}
-        </Button>
+        </button>
       )}
     </div>
   );
 }
 
 export interface FacetFilterProps extends SharedProps {
-  facets: Facet[];
+  facets: FacetDefinition[];
   /** Selection per facet key. Controlled. */
   value: FacetFilterValue;
   onValueChange: (next: FacetFilterValue) => void;
@@ -175,7 +198,7 @@ export function FacetFilter({
   ...shared
 }: FacetFilterProps): ReactElement {
   const labels = { ...defaultFacetFilterLabels, ...labelOverrides };
-  const active = countActiveFilters(value);
+  const active = countActiveFacets(value);
 
   const setSelected = (key: string, next: string[]): void => {
     const { [key]: _removed, ...rest } = value;
@@ -184,8 +207,9 @@ export function FacetFilter({
 
   return (
     <div className={cn("space-y-5", className)}>
-      {showReset && active > 0 && (
-        <Button type="button" variant="ghost" size="xs" onClick={() => onValueChange({})}>
+      {/* Always rendered (disabled while nothing is selected) so the facets don't jump on the first tick. */}
+      {showReset && (
+        <Button type="button" variant="ghost" size="xs" disabled={active === 0} onClick={() => onValueChange({})}>
           {labels.reset}
         </Button>
       )}

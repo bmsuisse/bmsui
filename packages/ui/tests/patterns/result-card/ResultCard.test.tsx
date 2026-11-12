@@ -63,6 +63,21 @@ describe("ResultCard", () => {
     expect(screen.queryByRole("link")).toBeNull();
     expect(screen.getByText("Disabled link").closest("[aria-disabled]")).not.toBeNull();
   });
+  it("lets a router render the link and doesn't print a bare 0", () => {
+    render(
+      <ResultList aria-label="r">
+        <ResultCard
+          title="Drill"
+          meta={0}
+          href="/p/1"
+          renderLink={(props) => <a data-router="1" href="/p/1" {...props} />}
+        />
+      </ResultList>,
+    );
+    const link = screen.getByRole("link");
+    expect(link.getAttribute("data-router")).toBe("1");
+    expect(link.textContent).toBe("Drill0");
+  });
   it("omits absent slots", () => {
     render(
       <ResultList aria-label="r">

@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
-import { type Facet, FacetFilter, FilterSheet, FilterSheetTrigger, type FacetFilterValue, countActiveFilters } from "@bmsuisse/ui";
+import { type FacetDefinition, FacetFilter, FilterSheet, FilterSheetTrigger, type FacetFilterValue, countActiveFacets } from "@bmsuisse/ui";
 
-const facets: Facet[] = [
+const facets: FacetDefinition[] = [
   { key: "supplier", label: "Supplier", options: [{ value: "acme", label: "Acme AG", count: 42 }, { value: "bolt", label: "Bolt GmbH", count: 17 }] },
   { key: "own", label: "Own brand", type: "boolean", options: [{ value: "true", count: 310 }] },
 ];
@@ -25,7 +25,7 @@ export const WithApply: Story = {
     return (
       <>
         <FilterSheetTrigger
-          activeCount={countActiveFilters(applied)}
+          activeCount={countActiveFacets(applied)}
           onClick={() => {
             setDraft(applied);
             setOpen(true);
@@ -34,7 +34,7 @@ export const WithApply: Story = {
         <FilterSheet
           open={open}
           onOpenChange={setOpen}
-          activeCount={countActiveFilters(draft)}
+          activeCount={countActiveFacets(draft)}
           onApply={() => setApplied(draft)}
           onReset={() => setDraft({})}
         >
@@ -52,8 +52,8 @@ export const Live: Story = {
     const [value, setValue] = useState<FacetFilterValue>({});
     return (
       <>
-        <FilterSheetTrigger activeCount={countActiveFilters(value)} onClick={() => setOpen(true)} />
-        <FilterSheet open={open} onOpenChange={setOpen} activeCount={countActiveFilters(value)} onReset={() => setValue({})}>
+        <FilterSheetTrigger activeCount={countActiveFacets(value)} onClick={() => setOpen(true)} />
+        <FilterSheet open={open} onOpenChange={setOpen} activeCount={countActiveFacets(value)} onReset={() => setValue({})}>
           <FacetFilter facets={facets} value={value} onValueChange={setValue} showReset={false} />
         </FilterSheet>
       </>

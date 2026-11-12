@@ -29,16 +29,16 @@ export const ProductList: Story = {
             title={item.title}
             meta={item.meta}
             leading={
-              <div className="flex items-center gap-2">
+              <span className="flex items-center gap-2">
                 <RankBadge rank={index + 1} />
                 <Thumbnail src={index === 1 ? "broken.png" : null} />
-              </div>
+              </span>
             }
             trailing={
-              <div className="flex flex-col items-end gap-1">
+              <span className="flex flex-col items-end gap-1">
                 <span className="font-medium text-sm tabular-nums">{item.price}</span>
                 <ScoreBadge value={item.score} size="sm" />
-              </div>
+              </span>
             }
             selected={selected === item.id}
             onSelect={() => setSelected(item.id)}

@@ -65,6 +65,15 @@ export const ResultList = ({ busy, className, ...props }: ResultListProps): Reac
   <ul aria-busy={busy || undefined} className={cn("space-y-2", className)} {...props} />
 );
 
+export interface ResultCardLinkProps {
+  className: string;
+  children: ReactNode;
+  "aria-current"?: "true";
+  "data-testid"?: string;
+}
+
+const present = (node: ReactNode): boolean => node !== undefined && node !== null && node !== false && node !== "";
+
 export interface ResultCardProps {
   title: ReactNode;
   /** One muted line under the title (article number, supplier …). */
@@ -81,6 +90,12 @@ export interface ResultCardProps {
   onSelect?: () => void;
   /** Makes the card a link instead (wins over `onSelect`). */
   href?: string;
+  /**
+   * Renders the link yourself so client-side routing works:
+   * `renderLink={(props) => <Link to="/p/1" {...props} />}`. Spread `props` (class, children,
+   * `aria-current`, test id). Only used with `href`, which the router link then replaces.
+   */
+  renderLink?: (props: ResultCardLinkProps) => ReactElement;
   disabled?: boolean;
   className?: string;
   "data-testid"?: string;
@@ -102,6 +117,7 @@ export const ResultCard = ({
   selected = false,
   onSelect,
   href,
+  renderLink,
   disabled,
   className,
   "data-testid": testId,
@@ -119,16 +135,18 @@ export const ResultCard = ({
       {leading}
       <span className="min-w-0 flex-1">
         <span className="block truncate font-medium text-sm">{title}</span>
-        {meta && <span className="block truncate text-muted-foreground text-xs">{meta}</span>}
-        {description && <span className="mt-1 line-clamp-2 block text-muted-foreground text-sm">{description}</span>}
-        {footer && <span className="mt-2 block">{footer}</span>}
+        {present(meta) && <span className="block truncate text-muted-foreground text-xs">{meta}</span>}
+        {present(description) && <span className="mt-1 line-clamp-2 block text-muted-foreground text-sm">{description}</span>}
+        {present(footer) && <span className="mt-2 block">{footer}</span>}
       </span>
-      {trailing && <span className="shrink-0 self-center">{trailing}</span>}
+      {present(trailing) && <span className="shrink-0 self-center">{trailing}</span>}
     </>
   );
   return (
     <li>
-      {href !== undefined && !disabled ? (
+      {href !== undefined && !disabled && renderLink ? (
+        renderLink({ className: classes, children: body, "aria-current": selected ? "true" : undefined, "data-testid": testId })
+      ) : href !== undefined && !disabled ? (
         <a href={href} aria-current={selected || undefined} data-testid={testId} className={classes}>
           {body}
         </a>
