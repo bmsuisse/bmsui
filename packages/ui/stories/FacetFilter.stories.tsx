@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
-import { ActiveFacets, type FacetDefinition, FacetFilter, type FacetFilterValue } from "@bmsuisse/ui";
+import { ActiveFacets, type FacetDefinition, FacetFilter, FacetFilterSkeleton, type FacetFilterValue } from "@bmsuisse/ui";
 
 const facets: FacetDefinition[] = [
   {
@@ -50,4 +50,25 @@ export const WithActiveChips: Story = {
       </div>
     );
   },
+};
+
+/** Fold-away headings with a selected-count badge, a radio facet and a dimmed zero-count option. */
+export const CollapsibleAndSingle: Story = {
+  args: {
+    collapsible: true,
+    value: { category: ["Safety"] },
+    facets: [
+      { key: "sort", label: "Sort by", type: "single", options: [{ value: "rel", label: "Relevance", count: 128 }, { value: "price", label: "Price", count: 128 }] },
+      { ...facets[0]!, defaultCollapsed: true },
+      { key: "brand", label: "Brand", defaultCollapsed: true, options: [{ value: "a", label: "Acme", count: 12 }, { value: "b", label: "Bolt", count: 0 }] },
+    ],
+  },
+};
+
+export const Loading: Story = {
+  render: () => (
+    <div className="w-72">
+      <FacetFilterSkeleton />
+    </div>
+  ),
 };

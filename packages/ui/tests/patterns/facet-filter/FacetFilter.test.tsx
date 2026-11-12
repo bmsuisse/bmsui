@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { type FacetDefinition, FacetFilter, countActiveFacets } from "../../../src";
+import { type FacetDefinition, FacetFilter, FacetFilterSkeleton, countActiveFacets } from "../../../src";
 
 const supplier: FacetDefinition = {
   key: "supplier",
@@ -104,6 +104,49 @@ describe("FacetFilter", () => {
     expect(screen.getByText("No matches")).toBeTruthy();
   });
 
+  it("clears a single facet from its heading", () => {
+    const onValueChange = vi.fn();
+    render(
+      <FacetFilter facets={[supplier, ownBrand]} value={{ supplier: ["s1", "s2"], own: ["true"] }} onValueChange={onValueChange} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Clear supplier" }));
+    expect(onValueChange).toHaveBeenCalledWith({ own: ["true"] });
+  });
+
+  it("folds a collapsible facet and shows its selection count", () => {
+    render(<FacetFilter facets={[supplier]} collapsible value={{ supplier: ["s1", "s2"] }} onValueChange={() => {}} />);
+    const heading = screen.getByRole("button", { name: /Supplier/ });
+    expect(heading.getAttribute("aria-expanded")).toBe("true");
+    fireEvent.click(heading);
+    expect(heading.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryAllByRole("checkbox")).toHaveLength(0);
+    expect(screen.getByText("2 selected")).toBeTruthy();
+  });
+
+  it("starts folded with defaultCollapsed unless something is selected", () => {
+    const folded = { ...supplier, collapsible: true, defaultCollapsed: true };
+    const { rerender, unmount } = render(<FacetFilter facets={[folded]} value={{}} onValueChange={() => {}} />);
+    expect(screen.queryAllByRole("checkbox")).toHaveLength(0);
+    unmount();
+    render(<FacetFilter facets={[folded]} value={{ supplier: ["s1"] }} onValueChange={() => {}} />);
+    expect(screen.getAllByRole("checkbox").length).toBeGreaterThan(0);
+    void rerender;
+  });
+
+  it("renders a single facet as radios that replace the selection", () => {
+    const onValueChange = vi.fn();
+    const sort: FacetDefinition = {
+      key: "sort",
+      label: "Sort",
+      type: "single",
+      options: [{ value: "rel", label: "Relevance" }, { value: "new", label: "Newest" }],
+    };
+    render(<FacetFilter facets={[sort]} value={{ sort: ["rel"] }} onValueChange={onValueChange} />);
+    expect(screen.getAllByRole("radio")).toHaveLength(2);
+    fireEvent.click(screen.getByRole("radio", { name: /Newest/ }));
+    expect(onValueChange).toHaveBeenCalledWith({ sort: ["new"] });
+  });
+
   it("renders a custom facet body", () => {
     const custom = { key: "price", label: "Price", options: [], render: () => <div>my range</div> };
     render(<FacetFilter facets={[custom]} value={{}} onValueChange={() => {}} hideEmpty={false} />);
@@ -119,5 +162,13 @@ describe("FacetFilter", () => {
 describe("countActiveFacets", () => {
   it("sums selections", () => {
     expect(countActiveFacets({ a: ["1", "2"], b: ["3"] })).toBe(3);
+  });
+});
+
+describe("FacetFilterSkeleton", () => {
+  it("is hidden from assistive tech and sized by props", () => {
+    const { container } = render(<FacetFilterSkeleton groups={2} rows={3} />);
+    expect((container.firstChild as HTMLElement).getAttribute("aria-hidden")).toBe("true");
+    expect(container.querySelectorAll("[class*='space-y-2.5']")).toHaveLength(2);
   });
 });

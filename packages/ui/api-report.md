@@ -7,7 +7,7 @@ Every public export with its kind and signature. Interfaces and object types
 list their own members one per line (inherited members come from the `extends`
 clause), so the diff of this file shows exactly what changed in the public API.
 
-## Components (173)
+## Components (174)
 
 ```text
 function ActiveFacets(props: ActiveFacetsProps): ReactElement | null
@@ -71,6 +71,7 @@ const DropdownMenuTrigger: react.ForwardRefExoticComponent<DropdownMenuPrimitive
 const EmptyState: (props: EmptyStateProps) => ReactElement
 const ErrorState: (props: ErrorStateProps) => ReactElement | null
 function FacetFilter(props: FacetFilterProps): ReactElement
+function FacetFilterSkeleton(props: FacetFilterSkeletonProps): ReactElement
 function FacetGroup(props: FacetGroupProps): ReactElement
 const FileInput: react.ForwardRefExoticComponent<FileInputProps & react.RefAttributes<HTMLInputElement>>
 const FilterSheet: (props: FilterSheetProps) => ReactElement
@@ -274,7 +275,7 @@ const defaultToasterLabels: ToasterLabels
 const defaultToolbarLabels: ToolbarLabels
 ```
 
-## Interfaces (150)
+## Interfaces (151)
 
 ```text
 interface ActiveFacetsLabels
@@ -636,18 +637,23 @@ interface ErrorStateProps extends Omit<HTMLAttributes<HTMLDivElement>, "title">
   retryProps?: RetryButtonProps
   variant?: "block" | "compact"
 interface FacetDefinition
+  collapsible?: boolean
+  defaultCollapsed?: boolean
   key: string
   label: string
   maxVisible?: number
   options: FacetOption[]
   render?: (props: { selected: string[]; onSelectedChange: (next: string[]) => void }) => ReactNode
   searchable?: boolean
-  type?: "list" | "boolean"
+  type?: "list" | "boolean" | "single"
 interface FacetFilterLabels
+  clear: string
+  clearFacet: (facetLabel: string) => string
   noMatches: string
   optionCount: (count: string) => string
   reset: string
   searchPlaceholder: (facetLabel: string) => string
+  selectedCount: (count: number) => string
   showLess: string
   showMore: (hidden: number) => string
 interface FacetFilterProps extends SharedProps
@@ -657,14 +663,20 @@ interface FacetFilterProps extends SharedProps
   onValueChange: (next: FacetFilterValue) => void
   showReset?: boolean
   value: FacetFilterValue
+  collapsible?: boolean  (from SharedProps)
   formatCount?: (count: number) => string  (from SharedProps)
   labels?: Partial<FacetFilterLabels>  (from SharedProps)
   maxVisible?: number  (from SharedProps)
+interface FacetFilterSkeletonProps
+  className?: string
+  groups?: number
+  rows?: number
 interface FacetGroupProps extends SharedProps
   className?: string
   facet: FacetDefinition
   onSelectedChange: (next: string[]) => void
   selected: string[]
+  collapsible?: boolean  (from SharedProps)
   formatCount?: (count: number) => string  (from SharedProps)
   labels?: Partial<FacetFilterLabels>  (from SharedProps)
   maxVisible?: number  (from SharedProps)

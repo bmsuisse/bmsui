@@ -365,11 +365,12 @@ export type {
   FacetDefinition,
   FacetFilterLabels,
   FacetFilterProps,
+  FacetFilterSkeletonProps,
   FacetFilterValue,
   FacetGroupProps,
   FacetOption,
 } from "./patterns/facet-filter/FacetFilter";
-export { FacetFilter, FacetGroup, countActiveFacets, defaultFacetFilterLabels } from "./patterns/facet-filter/FacetFilter";
+export { FacetFilter, FacetFilterSkeleton, FacetGroup, countActiveFacets, defaultFacetFilterLabels } from "./patterns/facet-filter/FacetFilter";
 export type { ActiveFacetsLabels, ActiveFacetsProps } from "./patterns/facet-filter/ActiveFacets";
 export { ActiveFacets, defaultActiveFacetsLabels } from "./patterns/facet-filter/ActiveFacets";
 export type {

@@ -1,8 +1,11 @@
+import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import { type ReactElement, type ReactNode, useId, useState } from "react";
 import { cn } from "../../lib/utils";
 import { Button } from "../../primitives/button";
 import { Checkbox } from "../../primitives/checkbox";
 import { Input } from "../../primitives/input";
+import { RadioGroup, RadioGroupItem } from "../../primitives/radio-group";
+import { Skeleton } from "../../primitives/skeleton";
 import { Switch } from "../../primitives/switch";
 
 export interface FacetOption {
@@ -19,8 +22,16 @@ export interface FacetDefinition {
   key: string;
   label: string;
   options: FacetOption[];
-  /** `list` (default): a checkbox per option. `boolean`: a switch for the first option (its value is what gets selected). */
-  type?: "list" | "boolean";
+  /**
+   * `list` (default): a checkbox per option. `boolean`: a switch for the first option (its value is
+   * what gets selected). `single`: radio buttons, at most one value selected; clear it with the
+   * facet's Clear button.
+   */
+  type?: "list" | "boolean" | "single";
+  /** Lets the user fold this facet away (overrides the filter-wide `collapsible`). */
+  collapsible?: boolean;
+  /** Starts folded; only with `collapsible`. A facet with a selection is never folded on mount. */
+  defaultCollapsed?: boolean;
   /** Overrides the filter-wide `maxVisible` for this facet. */
   maxVisible?: number;
   /** Adds a search box above the options, for long lists (suppliers, brands). Filters on the option's text. */
@@ -40,6 +51,12 @@ export interface FacetFilterLabels {
   showMore: (hidden: number) => string;
   showLess: string;
   reset: string;
+  /** Visible text of the per-facet clear button in a facet heading. */
+  clear: string;
+  /** Accessible name of that button, e.g. "Clear supplier". */
+  clearFacet: (facetLabel: string) => string;
+  /** Read out next to a folded facet's heading: "2 selected". */
+  selectedCount: (count: number) => string;
   /** Placeholder of a `searchable` facet's search box; also its accessible name. */
   searchPlaceholder: (facetLabel: string) => string;
   /** Shown when a facet search matches nothing. */
@@ -52,6 +69,9 @@ export const defaultFacetFilterLabels: FacetFilterLabels = {
   showMore: (hidden) => `Show ${hidden} more`,
   showLess: "Show less",
   reset: "Reset filters",
+  clear: "Clear",
+  clearFacet: (facetLabel) => `Clear ${facetLabel.toLowerCase()}`,
+  selectedCount: (count) => `${count} selected`,
   searchPlaceholder: (facetLabel) => `Search ${facetLabel.toLowerCase()}`,
   noMatches: "No matches",
   optionCount: (count) => `${count} results`,
@@ -63,6 +83,8 @@ export function countActiveFacets(value: FacetFilterValue): number {
 }
 
 interface SharedProps {
+  /** Every facet gets a fold-away heading (a facet's own `collapsible` wins). @default false */
+  collapsible?: boolean;
   maxVisible?: number;
   formatCount?: (count: number) => string;
   labels?: Partial<FacetFilterLabels>;
@@ -89,6 +111,7 @@ export function FacetGroup({
   selected,
   onSelectedChange,
   maxVisible = 8,
+  collapsible: collapsibleAll = false,
   formatCount = defaultFormatCount,
   labels: labelOverrides,
   className,
@@ -100,6 +123,10 @@ export function FacetGroup({
   const [query, setQuery] = useState("");
   const limit = facet.maxVisible ?? maxVisible;
   const isBoolean = facet.type === "boolean";
+  const isSingle = facet.type === "single";
+  const foldable = !isBoolean && (facet.collapsible ?? collapsibleAll);
+  const [folded, setFolded] = useState(() => foldable && facet.defaultCollapsed === true && selected.length === 0);
+  const bodyId = useId();
 
   // A selected value that's no longer among the options (e.g. after a refetch) must stay visible,
   // otherwise it would keep filtering with no way to untick it.
@@ -112,28 +139,19 @@ export function FacetGroup({
   const collapsedOptions = options.filter((option, index) => index < limit || selected.includes(option.value));
   // Hiding one or two rows behind a button saves nothing.
   const searching = facet.searchable === true && query.trim() !== "";
-  const collapsible = !searching && options.length - collapsedOptions.length > 2;
+  const canExpand = !searching && options.length - collapsedOptions.length > 2;
   const optionText = (option: FacetOption): string =>
     (typeof option.label === "string" ? option.label : option.value).toLowerCase();
   const visible = searching
     ? options.filter((option) => optionText(option).includes(query.trim().toLowerCase()))
-    : expanded || isBoolean || !collapsible
+    : expanded || isBoolean || !canExpand
       ? options
       : collapsedOptions;
   const hidden = options.length - collapsedOptions.length;
 
-  return (
-    <div role="group" aria-labelledby={headingId} className={cn("space-y-1.5", className)} data-facet={facet.key}>
-      {/* A boolean facet's switch already carries the label; a heading above it would repeat it. */}
-      <div
-        id={headingId}
-        className={cn(
-          "px-1.5 font-semibold text-muted-foreground text-xs uppercase tracking-wide",
-          isBoolean && "sr-only",
-        )}
-      >
-        {facet.label}
-      </div>
+  const headingClass = "font-semibold text-muted-foreground text-xs uppercase tracking-wide";
+  const body = folded ? null : (
+    <div id={bodyId} className="space-y-1.5">
       {facet.searchable && !facet.render && (
         <Input
           type="search"
@@ -147,44 +165,59 @@ export function FacetGroup({
       {facet.render ? (
         facet.render({ selected, onSelectedChange })
       ) : (
-      <ul id={listId} className="space-y-0.5">
-        {visible.slice(0, isBoolean ? 1 : undefined).map((option) => {
-          const checked = selected.includes(option.value);
-          const name = option.label ?? option.value;
-          const Control = isBoolean ? Switch : Checkbox;
-          return (
-            <li key={option.value}>
-              <label
-                className={cn(
-                  "flex min-h-8 cursor-pointer items-center gap-2 rounded-md px-1.5 text-sm hover:bg-foreground/5 pointer-coarse:min-h-11",
-                  option.disabled && "cursor-not-allowed opacity-50 hover:bg-transparent",
-                )}
-              >
-                <Control
-                  className={isBoolean ? undefined : "border-foreground/40 dark:border-input"}
-                  checked={checked}
-                  disabled={option.disabled}
-                  onCheckedChange={(next) => onSelectedChange(toggle(selected, option.value, next === true))}
-                />
-                <span className="min-w-0 flex-1 truncate">{isBoolean ? facet.label : name}</span>
-                {option.count !== undefined && (
-                  <>
-                    <span aria-hidden="true" className="shrink-0 text-muted-foreground text-xs tabular-nums">
-                      {formatCount(option.count)}
-                    </span>
-                    <span className="sr-only">{labels.optionCount(formatCount(option.count))}</span>
-                  </>
-                )}
-              </label>
-            </li>
-          );
-        })}
-      </ul>
+        <ul id={listId} className="space-y-0.5">
+          {visible.slice(0, isBoolean ? 1 : undefined).map((option) => {
+            const checked = selected.includes(option.value);
+            const name = option.label ?? option.value;
+            const empty = option.count === 0 && !checked;
+            const rowId = `${listId}-${option.value}`;
+            return (
+              <li key={option.value}>
+                <label
+                  htmlFor={rowId}
+                  className={cn(
+                    "flex min-h-8 cursor-pointer items-center gap-2 rounded-md px-1.5 text-sm hover:bg-foreground/5 pointer-coarse:min-h-11",
+                    (option.disabled || empty) && "text-muted-foreground",
+                    option.disabled && "cursor-not-allowed opacity-50 hover:bg-transparent",
+                  )}
+                >
+                  {isBoolean ? (
+                    <Switch
+                      id={rowId}
+                      checked={checked}
+                      disabled={option.disabled}
+                      onCheckedChange={(next) => onSelectedChange(toggle(selected, option.value, next === true))}
+                    />
+                  ) : isSingle ? (
+                    <RadioGroupItem id={rowId} value={option.value} disabled={option.disabled} />
+                  ) : (
+                    <Checkbox
+                      id={rowId}
+                      className="border-foreground/40 dark:border-input"
+                      checked={checked}
+                      disabled={option.disabled}
+                      onCheckedChange={(next) => onSelectedChange(toggle(selected, option.value, next === true))}
+                    />
+                  )}
+                  <span className="min-w-0 flex-1 truncate">{isBoolean ? facet.label : name}</span>
+                  {option.count !== undefined && (
+                    <>
+                      <span aria-hidden="true" className="shrink-0 text-muted-foreground text-xs tabular-nums">
+                        {formatCount(option.count)}
+                      </span>
+                      <span className="sr-only">{labels.optionCount(formatCount(option.count))}</span>
+                    </>
+                  )}
+                </label>
+              </li>
+            );
+          })}
+        </ul>
       )}
       {searching && visible.length === 0 && (
         <p className="px-1.5 text-muted-foreground text-sm">{labels.noMatches}</p>
       )}
-      {!facet.render && !isBoolean && collapsible && (
+      {!facet.render && !isBoolean && canExpand && (
         <button
           type="button"
           aria-expanded={expanded}
@@ -194,6 +227,67 @@ export function FacetGroup({
         >
           {expanded ? labels.showLess : labels.showMore(hidden)}
         </button>
+      )}
+    </div>
+  );
+
+  return (
+    <div role="group" aria-labelledby={headingId} className={cn("space-y-1.5", className)} data-facet={facet.key}>
+      {/* A boolean facet's switch already carries the label; a heading above it would repeat it. */}
+      <div className={cn("flex min-h-6 items-center gap-1.5 px-1.5", isBoolean && "sr-only")}>
+        {foldable ? (
+          <button
+            type="button"
+            id={headingId}
+            aria-expanded={!folded}
+            aria-controls={bodyId}
+            onClick={() => setFolded((value) => !value)}
+            className={cn(
+              headingClass,
+              "flex min-w-0 flex-1 items-center gap-1 rounded text-left hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            )}
+          >
+            <ChevronDownIcon
+              aria-hidden="true"
+              className={cn("size-4 shrink-0 transition-transform duration-150 motion-reduce:transition-none", folded && "-rotate-90")}
+            />
+            <span className="truncate">{facet.label}</span>
+            {folded && selected.length > 0 && (
+              <>
+                <span aria-hidden="true" className="rounded-full bg-foreground px-1.5 text-[10px] text-background tabular-nums">
+                  {selected.length}
+                </span>
+                <span className="sr-only">{labels.selectedCount(selected.length)}</span>
+              </>
+            )}
+          </button>
+        ) : (
+          <div id={headingId} className={cn(headingClass, "min-w-0 flex-1 truncate")}>
+            {facet.label}
+          </div>
+        )}
+        {selected.length > 0 && !isBoolean && !folded && (
+          <button
+            type="button"
+            aria-label={labels.clearFacet(facet.label)}
+            onClick={() => onSelectedChange([])}
+            className="shrink-0 rounded px-1 font-medium text-[11px] text-foreground/70 underline underline-offset-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            {labels.clear}
+          </button>
+        )}
+      </div>
+      {isSingle && !facet.render ? (
+        <RadioGroup
+          value={selected[0] ?? ""}
+          onValueChange={(next) => onSelectedChange([next])}
+          className="gap-0"
+          aria-labelledby={headingId}
+        >
+          {body}
+        </RadioGroup>
+      ) : (
+        body
       )}
     </div>
   );
@@ -256,6 +350,34 @@ export function FacetFilter({
             {...shared}
           />
         ))}
+    </div>
+  );
+}
+
+export interface FacetFilterSkeletonProps {
+  /** Number of placeholder sections. @default 3 */
+  groups?: number;
+  /** Rows per section. @default 4 */
+  rows?: number;
+  className?: string;
+}
+
+/** Placeholder with the same rhythm as {@link FacetFilter}, for the first load; swap it for the real filter once facets arrive. */
+export function FacetFilterSkeleton({ groups = 3, rows = 4, className }: FacetFilterSkeletonProps): ReactElement {
+  return (
+    <div aria-hidden="true" className={cn("space-y-5", className)}>
+      {Array.from({ length: groups }, (_, group) => (
+        <div key={group} className="space-y-2.5 px-1.5">
+          <Skeleton className="h-3 w-24" />
+          {Array.from({ length: rows }, (_, row) => (
+            <div key={row} className="flex items-center gap-2">
+              <Skeleton className="size-4 rounded-sm" />
+              <Skeleton className="h-3.5 flex-1" style={{ maxWidth: `${60 + ((group * 7 + row * 13) % 35)}%` }} />
+              <Skeleton className="h-3 w-7" />
+            </div>
+          ))}
+        </div>
+      ))}
     </div>
   );
 }
