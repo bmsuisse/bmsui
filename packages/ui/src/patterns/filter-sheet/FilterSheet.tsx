@@ -8,6 +8,8 @@ import { ResponsivePanel, type ResponsivePanelSize } from "../modal/ResponsivePa
 export interface FilterSheetLabels {
   title: string;
   apply: string;
+  /** Primary button text once `resultCount` is known: "Show 128 results". */
+  applyWithCount: (count: number) => string;
   reset: string;
   /** Description under the title while filters are active. */
   activeCount: (count: number) => string;
@@ -16,6 +18,7 @@ export interface FilterSheetLabels {
 export const defaultFilterSheetLabels: FilterSheetLabels = {
   title: "Filters",
   apply: "Apply",
+  applyWithCount: (count) => `Show ${count} ${count === 1 ? "result" : "results"}`,
   reset: "Reset",
   activeCount: (count) => `${count} active`,
 };
@@ -25,6 +28,11 @@ export interface FilterSheetProps {
   onOpenChange: (open: boolean) => void;
   /** The filter controls, e.g. a `FacetFilter`. */
   children: ReactNode;
+  /**
+   * How many results the current selection gives. The primary button then reads "Show 128 results"
+   * and (like Apply) closes the sheet; it also appears in live mode, where it just closes.
+   */
+  resultCount?: number;
   /** Number of active filters; shown under the title and enables Reset. */
   activeCount?: number;
   /**
@@ -53,6 +61,7 @@ export const FilterSheet = ({
   onOpenChange,
   children,
   activeCount = 0,
+  resultCount,
   onApply,
   onReset,
   applyDisabled,
@@ -72,23 +81,23 @@ export const FilterSheet = ({
       breakpoint={breakpoint}
       className={className}
       footer={
-        onReset || onApply ? (
+        onReset || onApply || resultCount !== undefined ? (
         <div className="flex w-full gap-2 max-lg:[&>button]:h-11 max-lg:[&>button]:flex-1 lg:justify-end">
           {onReset && (
             <Button type="button" variant="outline" disabled={activeCount === 0} onClick={onReset}>
               {labels.reset}
             </Button>
           )}
-          {onApply && (
+          {(onApply || resultCount !== undefined) && (
             <Button
               type="button"
               disabled={applyDisabled}
               onClick={() => {
-                onApply();
+                onApply?.();
                 onOpenChange(false);
               }}
             >
-              {labels.apply}
+              {resultCount !== undefined ? labels.applyWithCount(resultCount) : labels.apply}
             </Button>
           )}
         </div>

@@ -7,9 +7,10 @@ Every public export with its kind and signature. Interfaces and object types
 list their own members one per line (inherited members come from the `extends`
 clause), so the diff of this file shows exactly what changed in the public API.
 
-## Components (172)
+## Components (173)
 
 ```text
+function ActiveFacets(props: ActiveFacetsProps): ReactElement | null
 const AiButton: react.ForwardRefExoticComponent<AiButtonProps & react.RefAttributes<HTMLButtonElement>>
 function AiExplainButton(props: AiExplainButtonProps): ReactElement
 const AlertBox: (props: AlertBoxProps) => ReactElement
@@ -242,11 +243,12 @@ function toLocalIsoDay(d: Date): string
 const toast: typeof show & { info: (message: string, options?: ToneOptions) => number; success: (message: string, options?: ToneOptions) => number; warning: (message: string, options?: ToneOptions) => number; error: (message: string, options?: ToneOptions) => number; dismiss: typeof dismissToast }
 ```
 
-## Constants (25)
+## Constants (26)
 
 ```text
 const BRAND_ANIMATIONS: readonly [{ readonly id: "bounce"; readonly label: "Bounce home" }, { readonly id: "orbit"; readonly label: "Orbit and settle" }, { readonly id: "impact"; readonly label: "Shot in, boom" }, { readonly id: "liquid"; readonly label: "Liquid split" }, { readonly id: "signature"; readonly label: "Solid to signature" }, { readonly id: "burst"; readonly label: "Big bang, small dot" }, { readonly id: "gravity"; readonly label: "Gravity press" }]
 const MAX_TOASTS: 3
+const defaultActiveFacetsLabels: ActiveFacetsLabels
 const defaultAvatarGroupLabels: AvatarGroupLabels
 const defaultBreadcrumbsLabels: BreadcrumbsLabels
 const defaultCalendarLabels: CalendarLabels
@@ -272,9 +274,19 @@ const defaultToasterLabels: ToasterLabels
 const defaultToolbarLabels: ToolbarLabels
 ```
 
-## Interfaces (148)
+## Interfaces (150)
 
 ```text
+interface ActiveFacetsLabels
+  clearAll: string
+  listLabel: string
+  remove: (label: string) => string
+interface ActiveFacetsProps
+  className?: string
+  facets: FacetDefinition[]
+  labels?: Partial<ActiveFacetsLabels>
+  onValueChange: (next: FacetFilterValue) => void
+  value: FacetFilterValue
 interface AiButtonProps extends Omit<ButtonProps, "variant">
   icon?: ElementType<NavIconProps>
   loading?: boolean
@@ -629,10 +641,13 @@ interface FacetDefinition
   maxVisible?: number
   options: FacetOption[]
   render?: (props: { selected: string[]; onSelectedChange: (next: string[]) => void }) => ReactNode
+  searchable?: boolean
   type?: "list" | "boolean"
 interface FacetFilterLabels
+  noMatches: string
   optionCount: (count: string) => string
   reset: string
+  searchPlaceholder: (facetLabel: string) => string
   showLess: string
   showMore: (hidden: number) => string
 interface FacetFilterProps extends SharedProps
@@ -692,6 +707,7 @@ interface FileRejection
 interface FilterSheetLabels
   activeCount: (count: number) => string
   apply: string
+  applyWithCount: (count: number) => string
   reset: string
   title: string
 interface FilterSheetProps
@@ -705,6 +721,7 @@ interface FilterSheetProps
   onOpenChange: (open: boolean) => void
   onReset?: () => void
   open: boolean
+  resultCount?: number
   size?: ResponsivePanelSize
 interface FilterSheetTriggerProps extends Omit<ButtonProps, "children">
   activeCount?: number

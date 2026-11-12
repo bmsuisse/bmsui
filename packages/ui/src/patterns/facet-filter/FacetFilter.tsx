@@ -2,6 +2,7 @@ import { type ReactElement, type ReactNode, useId, useState } from "react";
 import { cn } from "../../lib/utils";
 import { Button } from "../../primitives/button";
 import { Checkbox } from "../../primitives/checkbox";
+import { Input } from "../../primitives/input";
 import { Switch } from "../../primitives/switch";
 
 export interface FacetOption {
@@ -22,6 +23,8 @@ export interface FacetDefinition {
   type?: "list" | "boolean";
   /** Overrides the filter-wide `maxVisible` for this facet. */
   maxVisible?: number;
+  /** Adds a search box above the options, for long lists (suppliers, brands). Filters on the option's text. */
+  searchable?: boolean;
   /**
    * Replaces the built-in option list with your own control (a price range, a radio list, a
    * searchable list …) under the same heading. Selection still travels as `string[]` in the
@@ -37,6 +40,10 @@ export interface FacetFilterLabels {
   showMore: (hidden: number) => string;
   showLess: string;
   reset: string;
+  /** Placeholder of a `searchable` facet's search box; also its accessible name. */
+  searchPlaceholder: (facetLabel: string) => string;
+  /** Shown when a facet search matches nothing. */
+  noMatches: string;
   /** Read out after an option's name, e.g. "42 results". Gets the count already run through `formatCount`. */
   optionCount: (count: string) => string;
 }
@@ -45,6 +52,8 @@ export const defaultFacetFilterLabels: FacetFilterLabels = {
   showMore: (hidden) => `Show ${hidden} more`,
   showLess: "Show less",
   reset: "Reset filters",
+  searchPlaceholder: (facetLabel) => `Search ${facetLabel.toLowerCase()}`,
+  noMatches: "No matches",
   optionCount: (count) => `${count} results`,
 };
 
@@ -88,6 +97,7 @@ export function FacetGroup({
   const headingId = useId();
   const listId = useId();
   const [expanded, setExpanded] = useState(false);
+  const [query, setQuery] = useState("");
   const limit = facet.maxVisible ?? maxVisible;
   const isBoolean = facet.type === "boolean";
 
@@ -101,8 +111,15 @@ export function FacetGroup({
   // Selected options always stay visible, even when collapsed.
   const collapsedOptions = options.filter((option, index) => index < limit || selected.includes(option.value));
   // Hiding one or two rows behind a button saves nothing.
-  const collapsible = options.length - collapsedOptions.length > 2;
-  const visible = expanded || isBoolean || !collapsible ? options : collapsedOptions;
+  const searching = facet.searchable === true && query.trim() !== "";
+  const collapsible = !searching && options.length - collapsedOptions.length > 2;
+  const optionText = (option: FacetOption): string =>
+    (typeof option.label === "string" ? option.label : option.value).toLowerCase();
+  const visible = searching
+    ? options.filter((option) => optionText(option).includes(query.trim().toLowerCase()))
+    : expanded || isBoolean || !collapsible
+      ? options
+      : collapsedOptions;
   const hidden = options.length - collapsedOptions.length;
 
   return (
@@ -117,6 +134,16 @@ export function FacetGroup({
       >
         {facet.label}
       </div>
+      {facet.searchable && !facet.render && (
+        <Input
+          type="search"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder={labels.searchPlaceholder(facet.label)}
+          aria-label={labels.searchPlaceholder(facet.label)}
+          className="h-8 text-sm"
+        />
+      )}
       {facet.render ? (
         facet.render({ selected, onSelectedChange })
       ) : (
@@ -134,6 +161,7 @@ export function FacetGroup({
                 )}
               >
                 <Control
+                  className={isBoolean ? undefined : "border-foreground/40 dark:border-input"}
                   checked={checked}
                   disabled={option.disabled}
                   onCheckedChange={(next) => onSelectedChange(toggle(selected, option.value, next === true))}
@@ -152,6 +180,9 @@ export function FacetGroup({
           );
         })}
       </ul>
+      )}
+      {searching && visible.length === 0 && (
+        <p className="px-1.5 text-muted-foreground text-sm">{labels.noMatches}</p>
       )}
       {!facet.render && !isBoolean && collapsible && (
         <button

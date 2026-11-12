@@ -47,6 +47,32 @@ describe("FilterSheet", () => {
   });
 });
 
+describe("FilterSheet result count", () => {
+  it("shows the count on the primary button, which applies and closes", () => {
+    const onApply = vi.fn();
+    const onOpenChange = vi.fn();
+    render(
+      <FilterSheet open onOpenChange={onOpenChange} onApply={onApply} resultCount={128}>
+        body
+      </FilterSheet>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Show 128 results" }));
+    expect(onApply).toHaveBeenCalled();
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("offers the count button in live mode too, and singularises", () => {
+    const onOpenChange = vi.fn();
+    render(
+      <FilterSheet open onOpenChange={onOpenChange} resultCount={1}>
+        body
+      </FilterSheet>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Show 1 result" }));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+});
+
 describe("FilterSheet footer", () => {
   it("renders no footer without handlers", () => {
     render(

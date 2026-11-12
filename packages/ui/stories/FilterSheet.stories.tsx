@@ -35,6 +35,7 @@ export const WithApply: Story = {
           open={open}
           onOpenChange={setOpen}
           activeCount={countActiveFacets(draft)}
+          resultCount={128 - countActiveFacets(draft) * 17}
           onApply={() => setApplied(draft)}
           onReset={() => setDraft({})}
         >

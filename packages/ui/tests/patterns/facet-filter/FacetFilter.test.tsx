@@ -93,6 +93,17 @@ describe("FacetFilter", () => {
     expect(screen.queryByRole("button", { name: /Show/ })).toBeNull();
   });
 
+  it("filters a searchable facet's options by text", () => {
+    const searchable = { ...supplier, searchable: true };
+    render(<FacetFilter facets={[searchable]} value={{}} onValueChange={() => {}} />);
+    const box = screen.getByRole("searchbox", { name: "Search supplier" });
+    fireEvent.change(box, { target: { value: "supplier 11" } });
+    expect(screen.getAllByRole("checkbox")).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: /Show/ })).toBeNull();
+    fireEvent.change(box, { target: { value: "zzz" } });
+    expect(screen.getByText("No matches")).toBeTruthy();
+  });
+
   it("renders a custom facet body", () => {
     const custom = { key: "price", label: "Price", options: [], render: () => <div>my range</div> };
     render(<FacetFilter facets={[custom]} value={{}} onValueChange={() => {}} hideEmpty={false} />);
