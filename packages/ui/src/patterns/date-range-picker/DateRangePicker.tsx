@@ -72,6 +72,8 @@ export interface DateRangePickerProps extends PassThroughCalendarProps {
   showError?: boolean;
   labels?: Partial<DateRangePickerLabels>;
   className?: string;
+  /** Id(s) of an element describing the range (a hint); joined with the picker's own error message id on both fields. */
+  "aria-describedby"?: string;
   "data-testid"?: string;
 }
 
@@ -140,7 +142,7 @@ export function DateRangePicker({
   };
   const message = errorMessage(errors.from ?? errors.to, l);
   const showMessage = showError && message !== "";
-  const describedBy = showMessage ? messageId : undefined;
+  const describedBy = [props["aria-describedby"], showMessage ? messageId : undefined].filter(Boolean).join(" ") || undefined;
 
   const messageEl = showMessage ? <DateInputMessage id={messageId} message={message} /> : null;
 

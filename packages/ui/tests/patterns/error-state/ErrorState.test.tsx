@@ -40,6 +40,37 @@ describe("ErrorState", () => {
   });
 });
 
+describe("retryProps", () => {
+  it("ErrorState puts the test id and a taller class on the Retry button, which still retries", () => {
+    const onRetry = vi.fn();
+    render(<ErrorState error="x" onRetry={onRetry} retryProps={{ "data-testid": "reload", className: "h-11" }} />);
+    const button = screen.getByTestId("reload");
+    expect(button).toHaveTextContent("Retry");
+    expect(button).toHaveClass("h-11", "mt-2");
+    fireEvent.click(button);
+    expect(onRetry).toHaveBeenCalledOnce();
+  });
+
+  it("InlineError forwards them too", () => {
+    const onRetry = vi.fn();
+    render(<InlineError error="x" onRetry={onRetry} retryProps={{ "data-testid": "reload", className: "py-2" }} />);
+    const button = screen.getByTestId("reload");
+    expect(button).toHaveClass("py-2", "underline");
+    fireEvent.click(button);
+    expect(onRetry).toHaveBeenCalledOnce();
+  });
+
+  it("onClick and type in retryProps cannot override onRetry", () => {
+    const onRetry = vi.fn();
+    const onClick = vi.fn();
+    render(<ErrorState error="x" onRetry={onRetry} retryProps={{ onClick, type: "submit" } as never} />);
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(onRetry).toHaveBeenCalledOnce();
+    expect(onClick).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Retry" })).toHaveAttribute("type", "button");
+  });
+});
+
 describe("InlineError", () => {
   it("shows the message and retries", () => {
     const onRetry = vi.fn();

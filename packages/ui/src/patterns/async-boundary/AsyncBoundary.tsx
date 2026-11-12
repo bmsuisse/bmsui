@@ -1,6 +1,6 @@
 import type { ReactElement, ReactNode } from "react";
 import { type ErrorInput, toErrorInfo } from "../../lib/errorState";
-import { ErrorState, InlineError } from "../error-state/ErrorState";
+import { ErrorState, InlineError, type RetryButtonProps } from "../error-state/ErrorState";
 import { LoadingState, RefreshBar } from "../loading-spinner/LoadingState";
 
 export interface AsyncBoundaryProps {
@@ -8,6 +8,8 @@ export interface AsyncBoundaryProps {
   loading?: boolean;
   error?: ErrorInput;
   onRetry?: () => void;
+  /** Attributes for the Retry button of the error block and banner, e.g. a `data-testid`. */
+  retryProps?: RetryButtonProps;
   /** The request finished with no data. Renders `emptyContent`. */
   empty?: boolean;
   emptyContent?: ReactNode;
@@ -32,6 +34,7 @@ export const AsyncBoundary = ({
   loading = false,
   error,
   onRetry,
+  retryProps,
   empty = false,
   emptyContent,
   loadingContent,
@@ -42,12 +45,12 @@ export const AsyncBoundary = ({
   const showData = hasData ?? false;
   // Loading wins over a stale error so a Retry in flight gives feedback (and can't be spammed).
   if (loading && !showData) return <>{loadingContent ?? <LoadingState />}</>;
-  if (failed && !showData) return <ErrorState error={error} onRetry={onRetry} />;
+  if (failed && !showData) return <ErrorState error={error} onRetry={onRetry} retryProps={retryProps} />;
   if (empty && !showData) return <>{emptyContent ?? null}</>;
   return (
     <div className="relative">
       <RefreshBar active={loading} />
-      {failed ? <InlineError error={error} onRetry={onRetry} className="mb-2" /> : null}
+      {failed ? <InlineError error={error} onRetry={onRetry} retryProps={retryProps} className="mb-2" /> : null}
       {children}
     </div>
   );

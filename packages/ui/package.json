@@ -1,6 +1,6 @@
 {
   "name": "@bmsuisse/ui",
-  "version": "0.23.0",
+  "version": "0.24.0",
   "description": "Shared shadcn/ui-based React primitives, composed UI patterns (dialogs, forms, inputs, date picking, feedback, page layout, command palette) and hooks. See CATALOG.md for the full list.",
   "type": "module",
   "license": "MIT",

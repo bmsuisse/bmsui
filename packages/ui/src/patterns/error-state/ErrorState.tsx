@@ -1,5 +1,5 @@
 import { ArrowPathIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
-import type { HTMLAttributes, ReactElement } from "react";
+import type { ButtonHTMLAttributes, HTMLAttributes, ReactElement } from "react";
 import { type ErrorInput, toErrorInfo } from "../../lib/errorState";
 import { cn } from "../../lib/utils";
 import { Button } from "../../primitives/button";
@@ -16,10 +16,17 @@ export const defaultErrorStateLabels: ErrorStateLabels = {
   showDetails: "Show details",
 };
 
+/** Extra attributes for the Retry button (`data-testid`, `className` for a larger tap target, ...). `onClick` and `type` stay under `onRetry`'s control. */
+export type RetryButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "onClick" | "type" | "children"> & {
+  "data-testid"?: string;
+};
+
 export interface ErrorStateProps extends Omit<HTMLAttributes<HTMLDivElement>, "title"> {
   error: ErrorInput;
   /** Shows a Retry button when set. */
   onRetry?: () => void;
+  /** Attributes for the Retry button, e.g. a `data-testid` or a taller `className` on touch screens. */
+  retryProps?: RetryButtonProps;
   /** `block` (default) is a centered panel for a whole content area; `compact` is a left-aligned tinted box for cards/popovers. */
   variant?: "block" | "compact";
   labels?: Partial<ErrorStateLabels>;
@@ -29,6 +36,7 @@ export interface ErrorStateProps extends Omit<HTMLAttributes<HTMLDivElement>, "t
 export const ErrorState = ({
   error,
   onRetry,
+  retryProps,
   variant = "block",
   labels,
   className,
@@ -67,7 +75,14 @@ export const ErrorState = ({
           </details>
         ) : null}
         {onRetry ? (
-          <Button type="button" variant="outline" size="sm" className="mt-2" onClick={onRetry}>
+          <Button
+            variant="outline"
+            size="sm"
+            {...retryProps}
+            className={cn("mt-2", retryProps?.className)}
+            type="button"
+            onClick={onRetry}
+          >
             <ArrowPathIcon className="h-4 w-4" aria-hidden="true" />
             {l.retry}
           </Button>
@@ -80,11 +95,20 @@ export const ErrorState = ({
 export interface InlineErrorProps extends Omit<HTMLAttributes<HTMLSpanElement>, "title"> {
   error: ErrorInput;
   onRetry?: () => void;
+  /** Attributes for the Retry button, e.g. a `data-testid`. */
+  retryProps?: RetryButtonProps;
   labels?: Partial<Pick<ErrorStateLabels, "title" | "retry">>;
 }
 
 /** One-line error for tight spaces (dropdowns, filters, tree nodes, stale-data banners): "⚠ message · Retry". */
-export const InlineError = ({ error, onRetry, labels, className, ...props }: InlineErrorProps): ReactElement | null => {
+export const InlineError = ({
+  error,
+  onRetry,
+  retryProps,
+  labels,
+  className,
+  ...props
+}: InlineErrorProps): ReactElement | null => {
   const info = toErrorInfo(error);
   if (!info) return null;
   const l = { ...defaultErrorStateLabels, ...labels };
@@ -100,7 +124,12 @@ export const InlineError = ({ error, onRetry, labels, className, ...props }: Inl
       <ExclamationTriangleIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
       <span className="truncate">{text}</span>
       {onRetry ? (
-        <button type="button" className="shrink-0 underline underline-offset-2" onClick={onRetry}>
+        <button
+          {...retryProps}
+          className={cn("shrink-0 underline underline-offset-2", retryProps?.className)}
+          type="button"
+          onClick={onRetry}
+        >
           {l.retry}
         </button>
       ) : null}

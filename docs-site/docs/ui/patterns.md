@@ -445,7 +445,8 @@ by day/week, PageUp/PageDown by month (Shift: year), Home/End to the week's
 ends. In a range the first click sets `from`, the second `to` (ordered);
 `DateRangePicker` closes once both are set. Inside a Dialog/Sheet pass
 `container` so the popover stays in the focus trap. `labels` translates the
-button names.
+button names. `aria-describedby` points both fields at an outer hint and is
+joined with the picker's own error message id.
 
 ### `NumberInput`
 

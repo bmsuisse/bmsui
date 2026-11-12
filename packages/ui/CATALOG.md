@@ -77,7 +77,7 @@ repo's `AGENTS.md`.
 | `AsyncBoundary` | Loading → error → empty → content switch for fetched data. Start here for any query-backed view. |
 | `EmptyState` | "Nothing here" with icon, title, description, action. |
 | `FilteredEmptyState`, `defaultFilteredEmptyStateLabels` | "No results" with a Reset filters button. |
-| `ErrorState`, `InlineError`, `defaultErrorStateLabels`, `toErrorInfo` | Load failure: block or one-line, with Retry. |
+| `ErrorState`, `InlineError`, `defaultErrorStateLabels`, `toErrorInfo`, `RetryButtonProps` | Load failure: block or one-line, with Retry; `retryProps` adds a test id or a taller tap target to the button. |
 | `LoadingState`, `RefreshBar`, `useDelayedFlag` | Initial-load placeholder; thin bar for refetch; delay flag to avoid spinner flash. |
 | `LoadingSpinner`, `LoadingOverlay`, `loadingSpinnerIconVariants` | Inline spinner; centered overlay spinner. |
 | `toast`, `Toaster`, `defaultToasterLabels`, `MAX_TOASTS`, `resetToasts` | Brief notices (`toast.success("Saved")`). Mount `<Toaster />` once. `resetToasts()` clears the queue between tests. |
