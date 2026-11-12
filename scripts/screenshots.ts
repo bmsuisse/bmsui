@@ -106,11 +106,15 @@ async function captureDatagridDemo(browser: Browser, url: string): Promise<void>
   await page.waitForTimeout(100);
   await editingWrapper.screenshot({ path: path.join(OUT_DIR, "datagrid-editing.png") });
 
-  // `.first()` — the page now has three `data-testid="tree-datagrid"`
-  // elements (the lazy-loading org chart below, the tree editing demo, and
-  // the groupBy+columnVisibility demo further down); this is the org chart,
-  // always first in DOM order.
-  const tree = page.getByTestId("tree-datagrid").first();
+  // The page has several `data-testid="tree-datagrid"` elements (a virtualized scroll demo, the
+  // lazy-loading org chart, a second virtualized one, the tree editing demo and the groupBy demo),
+  // and their order has changed before. The org chart is the only one that has expandable rows
+  // at load (the others are flat, or eager and already expanded), so select it by that rather
+  // than by position.
+  const tree = page
+    .getByTestId("tree-datagrid")
+    .filter({ has: page.getByRole("button", { name: "Expand" }) })
+    .first();
   await tree.scrollIntoViewIfNeeded();
   // Scoped to `tree`, not `page` — the orders grid's own row-detail chevrons
   // above use the same aria-label="Expand" convention, so an unscoped
