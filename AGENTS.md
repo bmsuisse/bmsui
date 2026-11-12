@@ -645,6 +645,30 @@ logic above, which already had its own extraction). Structure:
       keyframe animations, which this package doesn't ship), so only the
       enter is animated. FileInput's remove waits for its 140 ms collapse
       before `onFilesChange` (instant without WAAPI / with reduced motion).
+  - Search set (v0.25.0), ported from OneSales's product search with the
+    backend/domain parts left behind: `score-badge/` `ScoreBadge` (percent from
+    `value`/`max`, tone via `thresholds`, reuses `StatusBadge`'s exported
+    `STATUS_TONE_CLASSES`, renders a `<span>` so it is valid inside a button) +
+    `RankBadge` (1-based); `facet-filter/` `FacetFilter`/`FacetGroup` (facets
+    are data `{key,label,options[{value,label,count}]}`, controlled
+    `{[key]: string[]}`, show-more keeps selected options visible, `type:
+    "boolean"` = one switch; no backend key lists or locale baked in);
+    `filter-sheet/` `FilterSheet` + `FilterSheetTrigger` over `ResponsivePanel`
+    (chrome only: no draft state, Apply exists only with `onApply`, footer is
+    omitted when there are no handlers); `result-card/` `ResultList` +
+    `ResultCard` (one native button, or link with `href`; disabled or
+    handler-less cards are plain elements; `aria-current`, not `aria-pressed`)
+    + `Thumbnail` (falls back to an icon on error, no stale failure on `src`
+    change); `SearchBar` `actions` slot (border and focus ring live on a
+    wrapper, so `TableSearch` sizes the wrapper, not the input).
+- `packages/ui/.storybook` + `packages/ui/stories/` — Storybook 10
+  (`react-vite`, a11y + docs addons, light/dark toolbar toggle that sets `.dark`
+  on `<html>`). `bun run storybook` / `bun run build-storybook` in
+  `packages/ui`; `pages.yml` publishes it to `/bmsui/storybook/`. Stories import
+  `@bmsuisse/ui` (aliased to `src` in Vite and via `paths` in tsconfig); add a
+  story when you add an export. `bun run scripts/storybook-screenshots.ts`
+  regenerates `packages/ui/stories/screenshots` after a build. Keep `vite` at
+  `^5` here: vitest's own Vite is 5 and a second major breaks the typecheck.
 - `packages/ui/demo/` — same pattern as `packages/datagrid/demo`: a Vite
   app aliasing `@bmsuisse/ui` straight to `src/index.ts`, using the same
   reference-app-derived Tailwind v4 tokens, for visual QA.
