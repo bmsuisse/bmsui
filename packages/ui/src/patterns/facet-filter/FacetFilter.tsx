@@ -408,12 +408,12 @@ export function FacetFilterSkeleton({ groups = 3, rows = 4, className }: FacetFi
     <div aria-hidden="true" className={cn("space-y-5", className)}>
       {Array.from({ length: groups }, (_, group) => (
         <div key={group} className="space-y-2.5 px-1.5">
-          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-3 w-24 bg-foreground/10" />
           {Array.from({ length: rows }, (_, row) => (
             <div key={row} className="flex items-center gap-2">
-              <Skeleton className="size-4 rounded-sm" />
-              <Skeleton className="h-3.5 flex-1" style={{ maxWidth: `${60 + ((group * 7 + row * 13) % 35)}%` }} />
-              <Skeleton className="h-3 w-7" />
+              <Skeleton className="size-4 rounded-sm bg-foreground/10" />
+              <Skeleton className="h-3.5 flex-1 bg-foreground/10" style={{ maxWidth: `${60 + ((group * 7 + row * 13) % 35)}%` }} />
+              <Skeleton className="h-3 w-7 bg-foreground/10" />
             </div>
           ))}
         </div>
