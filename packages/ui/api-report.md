@@ -1136,6 +1136,7 @@ interface ToastItem
   description?: string
   duration?: number
   id: number
+  key?: string
   leaving: boolean
   message: string
   tone: ToastTone
@@ -1143,6 +1144,7 @@ interface ToastOptions
   action?: ToastAction
   description?: string
   duration?: number
+  id?: string
   tone?: ToastTone
 interface ToasterLabels
   dismiss: string

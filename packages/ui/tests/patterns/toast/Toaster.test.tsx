@@ -74,6 +74,37 @@ describe("Toaster", () => {
     expect(screen.queryByText("Good")).not.toBeInTheDocument();
   });
 
+  it("a toast with the same id replaces the visible one instead of stacking", () => {
+    render(<Toaster />);
+    act(() => {
+      toast.error("Reason required", { id: "reason", duration: 1000 });
+      toast.info("Other");
+    });
+    act(() => vi.advanceTimersByTime(800));
+    act(() => {
+      toast.error("Reason still required", { id: "reason", duration: 1000 });
+    });
+    expect(screen.queryByText("Reason required")).not.toBeInTheDocument();
+    expect(screen.getAllByTestId("toast")).toHaveLength(2);
+    // The countdown restarted: 800 ms after the replacement it is still there.
+    act(() => vi.advanceTimersByTime(800));
+    expect(screen.getByText("Reason still required")).toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(200 + TOAST_EXIT_MS));
+    expect(screen.queryByText("Reason still required")).not.toBeInTheDocument();
+  });
+
+  it("toast.dismiss accepts the id option", () => {
+    render(<Toaster />);
+    act(() => {
+      toast.success("Saved", { id: "save" });
+      toast.info("Keep me");
+    });
+    act(() => toast.dismiss("save"));
+    act(() => vi.advanceTimersByTime(TOAST_EXIT_MS));
+    expect(screen.queryByText("Saved")).not.toBeInTheDocument();
+    expect(screen.getByText("Keep me")).toBeInTheDocument();
+  });
+
   it("a numeric Toaster duration applies to every tone", () => {
     render(<Toaster duration={1000} />);
     act(() => {

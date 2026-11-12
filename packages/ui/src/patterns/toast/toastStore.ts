@@ -10,6 +10,12 @@ export interface ToastAction {
 }
 
 export interface ToastOptions {
+  /**
+   * Dedupe key. Showing a toast whose `id` matches one that is still visible replaces that toast in place
+   * (new text, fresh countdown) instead of stacking a second one, e.g. for an error that fires on every retry.
+   * `toast.dismiss(id)` also accepts it.
+   */
+  id?: string;
   /** Short secondary line under the message. */
   description?: string;
   tone?: ToastTone;
@@ -21,6 +27,8 @@ export interface ToastOptions {
 
 export interface ToastItem {
   id: number;
+  /** The caller's dedupe key, see `ToastOptions.id`. */
+  key?: string;
   message: string;
   description?: string;
   tone: ToastTone;
@@ -61,9 +69,9 @@ export const getServerToasts = (): ToastItem[] => EMPTY;
 
 const remove = (id: number) => emit(toasts.filter((t) => t.id !== id));
 
-/** Starts the exit transition of one toast, or of every toast when `id` is omitted. */
-export function dismissToast(id?: number): void {
-  const targets = toasts.filter((t) => !t.leaving && (id === undefined || t.id === id));
+/** Starts the exit transition of one toast (by the number `toast()` returned or by its `id` option), or of every toast when `id` is omitted. */
+export function dismissToast(id?: number | string): void {
+  const targets = toasts.filter((t) => !t.leaving && (id === undefined || t.id === id || t.key === id));
   if (targets.length === 0) return;
   const ids = new Set(targets.map((t) => t.id));
   emit(toasts.map((t) => (ids.has(t.id) ? { ...t, leaving: true } : t)));
@@ -77,6 +85,7 @@ function show(message: string, options: ToastOptions = {}): number {
   const tone = options.tone ?? "info";
   const item: ToastItem = {
     id,
+    key: options.id,
     message,
     description: options.description,
     tone,
@@ -85,6 +94,11 @@ function show(message: string, options: ToastOptions = {}): number {
     leaving: false,
   };
   const active = toasts.filter((t) => !t.leaving);
+  const same = options.id === undefined ? undefined : active.find((t) => t.key === options.id);
+  if (same) {
+    emit(toasts.map((t) => (t === same ? item : t)));
+    return id;
+  }
   if (active.length >= MAX_TOASTS) {
     // Make room by dropping the oldest timed toast; sticky ones (`Infinity`) go only when nothing else can.
     const victim = active.find((t) => t.duration !== Infinity) ?? active[0];
