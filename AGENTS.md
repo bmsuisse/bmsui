@@ -654,7 +654,7 @@ logic above, which already had its own extraction). Structure:
     `{[key]: string[]}`, show-more keeps selected options visible, `type:
     "boolean"` = one switch, `"single"` = radios, `"range"` = histogram + `RangeSlider`
     with typed bounds (`range: {min,max,unit,histogram}`), `"dateRange"` =
-    `DateRangePicker`; a range is ONE `"low..high"` entry (`parseFacetRange`/
+    `DateRangePicker`; `display: "dropdown"` renders a list/single facet as a `Combobox` (pass `popoverContainer` inside a `FilterSheet`); `hasMore`/`loadingMore`/`onLoadMore` add a "Load more" button once the local "Show more" has revealed everything, and `onSearchChange` switches the facet's search to server-driven (options shown as given); a range is ONE `"low..high"` entry (`parseFacetRange`/
     `formatFacetRange`, empty end = open) so it counts once and is one chip in
     `ActiveFacets`. The datagrid's `NumberHistogramFilter` is the same idea
     but `ui` can't import `datagrid` (no dependency between them), so the

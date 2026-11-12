@@ -2,6 +2,7 @@ import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import { type ReactElement, type ReactNode, useId, useState } from "react";
 import { cn } from "../../lib/utils";
 import { Button } from "../../primitives/button";
+import { Combobox } from "../combobox/Combobox";
 import { Checkbox } from "../../primitives/checkbox";
 import { Input } from "../../primitives/input";
 import { RadioGroup, RadioGroupItem } from "../../primitives/radio-group";
@@ -53,6 +54,26 @@ export interface FacetDefinition {
   defaultCollapsed?: boolean;
   /** Overrides the filter-wide `maxVisible` for this facet. */
   maxVisible?: number;
+  /**
+   * `list` (default): checkboxes (radios for `single`). `dropdown`: the options in a searchable
+   * `Combobox` instead, for facets with many values where a long list would push everything else
+   * off screen. Applies to `list` and `single` facets.
+   */
+  display?: "list" | "dropdown";
+  /**
+   * More options exist on the server than `options` holds. With `onLoadMore` this shows a "Load
+   * more" button under the options (after the local "Show more" has revealed them all); append the
+   * next page to `options` when it's called.
+   */
+  hasMore?: boolean;
+  /** A page is being fetched: the Load more button shows `labels.loadingMore` and is disabled. */
+  loadingMore?: boolean;
+  onLoadMore?: () => void;
+  /**
+   * Server-driven search: called with the search text on every change (debounce it yourself) and
+   * `options` is shown as given instead of being filtered locally. Implies `searchable` for lists.
+   */
+  onSearchChange?: (query: string) => void;
   /** Adds a search box above the options, for long lists (suppliers, brands). Filters on the option's text. */
   searchable?: boolean;
   /**
@@ -70,6 +91,12 @@ export interface FacetFilterLabels {
   showMore: (hidden: number) => string;
   showLess: string;
   reset: string;
+  /** Button that fetches the next page of a facet's options (see `FacetDefinition.hasMore`). */
+  loadMore: string;
+  /** Its text while that page loads. */
+  loadingMore: string;
+  /** Placeholder of a `display: "dropdown"` facet's trigger. */
+  dropdownPlaceholder: (facetLabel: string) => string;
   /** Names of the typed bounds of a `range` facet. */
   rangeMin: string;
   rangeMax: string;
@@ -91,6 +118,9 @@ export const defaultFacetFilterLabels: FacetFilterLabels = {
   showMore: (hidden) => `Show ${hidden} more`,
   showLess: "Show less",
   reset: "Reset filters",
+  loadMore: "Load more",
+  loadingMore: "Loading…",
+  dropdownPlaceholder: (facetLabel) => `Select ${facetLabel.toLowerCase()}`,
   rangeMin: "Minimum",
   rangeMax: "Maximum",
   clear: "Clear",
@@ -111,6 +141,8 @@ export function countActiveFacets(value: FacetFilterValue): number {
 }
 
 interface SharedProps {
+  /** Portal target for `dropdown` facets' popover; pass the Dialog/Sheet content element when the filter sits inside a `FilterSheet`. */
+  popoverContainer?: HTMLElement | null;
   /** Every facet gets a fold-away heading (a facet's own `collapsible` wins). @default false */
   collapsible?: boolean;
   maxVisible?: number;
@@ -139,6 +171,7 @@ export function FacetGroup({
   selected,
   onSelectedChange,
   maxVisible = 8,
+  popoverContainer,
   collapsible: collapsibleAll = false,
   formatCount = defaultFormatCount,
   labels: labelOverrides,
@@ -169,11 +202,14 @@ export function FacetGroup({
   // Selected options always stay visible, even when collapsed.
   const collapsedOptions = options.filter((option, index) => index < limit || selected.includes(option.value));
   // Hiding one or two rows behind a button saves nothing.
-  const searching = facet.searchable === true && query.trim() !== "";
+  const serverSearch = facet.onSearchChange !== undefined;
+  const hasSearch = facet.searchable === true || serverSearch;
+  const asDropdown = facet.display === "dropdown" && !isBoolean && !isRange && !isDateRange;
+  const searching = hasSearch && query.trim() !== "";
   const canExpand = !searching && options.length - collapsedOptions.length > 2;
   const optionText = (option: FacetOption): string =>
     (typeof option.label === "string" ? option.label : option.value).toLowerCase();
-  const visible = searching
+  const visible = searching && !serverSearch
     ? options.filter((option) => optionText(option).includes(query.trim().toLowerCase()))
     : expanded || isBoolean || !canExpand
       ? options
@@ -183,11 +219,14 @@ export function FacetGroup({
   const headingClass = "font-semibold text-muted-foreground text-xs uppercase tracking-wide";
   const body = folded ? null : (
     <div id={bodyId} className="space-y-1.5">
-      {facet.searchable && !facet.render && !isRange && !isDateRange && (
+      {hasSearch && !asDropdown && !facet.render && !isRange && !isDateRange && (
         <Input
           type="search"
           value={query}
-          onChange={(event) => setQuery(event.target.value)}
+          onChange={(event) => {
+            setQuery(event.target.value);
+            facet.onSearchChange?.(event.target.value);
+          }}
           placeholder={labels.searchPlaceholder(facet.label)}
           aria-label={labels.searchPlaceholder(facet.label)}
           className="h-8 text-sm"
@@ -204,6 +243,36 @@ export function FacetGroup({
         />
       ) : isDateRange ? (
         <DateRangeFacetBody config={facet.dateRange} selected={selected} onSelectedChange={onSelectedChange} />
+      ) : asDropdown ? (
+        <div className="px-1.5">
+          {(() => {
+            const comboOptions = options.map((option) => ({
+              value: option.value,
+              disabled: option.disabled,
+              label:
+                (typeof option.label === "string" ? option.label : option.value) +
+                (option.count !== undefined ? ` (${formatCount(option.count)})` : ""),
+            }));
+            const shared = {
+              options: comboOptions,
+              placeholder: labels.dropdownPlaceholder(facet.label),
+              searchPlaceholder: labels.searchPlaceholder(facet.label),
+              emptyMessage: labels.noMatches,
+              onSearchChange: facet.onSearchChange,
+              container: popoverContainer,
+              className: "w-full",
+            };
+            return isSingle ? (
+              <Combobox
+                {...shared}
+                value={selected[0] ?? null}
+                onChange={(next) => onSelectedChange(next === null ? [] : [next])}
+              />
+            ) : (
+              <Combobox {...shared} multiple value={selected} onChange={onSelectedChange} />
+            );
+          })()}
+        </div>
       ) : (
         <ul id={listId} className="space-y-0.5">
           {visible.slice(0, isBoolean ? 1 : undefined).map((option) => {
@@ -254,10 +323,10 @@ export function FacetGroup({
           })}
         </ul>
       )}
-      {searching && visible.length === 0 && (
+      {searching && !asDropdown && visible.length === 0 && (
         <p className="px-1.5 text-muted-foreground text-sm">{labels.noMatches}</p>
       )}
-      {!facet.render && !isBoolean && !isRange && !isDateRange && canExpand && (
+      {!facet.render && !isBoolean && !isRange && !isDateRange && !asDropdown && canExpand && (
         <button
           type="button"
           aria-expanded={expanded}
@@ -267,6 +336,19 @@ export function FacetGroup({
         >
           {expanded ? labels.showLess : labels.showMore(hidden)}
         </button>
+      )}
+      {facet.hasMore && facet.onLoadMore && !facet.render && !isRange && !isDateRange && (!canExpand || expanded || asDropdown) && (
+        <Button
+          type="button"
+          variant="outline"
+          size="xs"
+          disabled={facet.loadingMore}
+          aria-busy={facet.loadingMore || undefined}
+          onClick={facet.onLoadMore}
+          className="ml-1.5"
+        >
+          {facet.loadingMore ? labels.loadingMore : labels.loadMore}
+        </Button>
       )}
     </div>
   );

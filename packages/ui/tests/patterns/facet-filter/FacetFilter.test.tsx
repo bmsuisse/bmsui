@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import {
   type FacetDefinition,
@@ -187,6 +188,53 @@ describe("FacetFilter", () => {
     render(<FacetFilter facets={[date]} value={{ created: ["2026-01-01..2026-02-01"] }} onValueChange={() => {}} />);
     expect(screen.getByRole("group", { name: "Created" })).toBeTruthy();
     expect(screen.getAllByRole("textbox").length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("offers Load more once everything local is shown, and disables it while loading", () => {
+    const onLoadMore = vi.fn();
+    const paged = { ...supplier, options: supplier.options!.slice(0, 6), hasMore: true, onLoadMore };
+    const { rerender } = render(<FacetFilter facets={[paged]} value={{}} onValueChange={() => {}} />);
+    fireEvent.click(screen.getByRole("button", { name: "Load more" }));
+    expect(onLoadMore).toHaveBeenCalledTimes(1);
+    rerender(<FacetFilter facets={[{ ...paged, loadingMore: true }]} value={{}} onValueChange={() => {}} />);
+    const loading = screen.getByRole("button", { name: "Loading…" }) as HTMLButtonElement;
+    expect(loading.disabled).toBe(true);
+  });
+
+  it("waits with Load more until Show more has revealed the local rows", () => {
+    const paged = { ...supplier, hasMore: true, onLoadMore: () => {} };
+    render(<FacetFilter facets={[paged]} value={{}} onValueChange={() => {}} />);
+    expect(screen.queryByRole("button", { name: "Load more" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /Show \d+ more/ }));
+    expect(screen.getByRole("button", { name: "Load more" })).toBeTruthy();
+  });
+
+  it("hands the search text to onSearchChange and shows the options as given", () => {
+    const onSearchChange = vi.fn();
+    const server = { ...supplier, options: supplier.options!.slice(0, 3), onSearchChange };
+    render(<FacetFilter facets={[server]} value={{}} onValueChange={() => {}} />);
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "zzz" } });
+    expect(onSearchChange).toHaveBeenCalledWith("zzz");
+    expect(screen.getAllByRole("checkbox")).toHaveLength(3);
+  });
+
+  it("renders a dropdown facet as a combobox and selects from it", async () => {
+    const onValueChange = vi.fn();
+    const dropdown = { ...supplier, display: "dropdown" as const };
+    render(<FacetFilter facets={[dropdown]} value={{}} onValueChange={onValueChange} />);
+    expect(screen.queryAllByRole("checkbox")).toHaveLength(0);
+    const trigger = screen.getByRole("combobox");
+    expect(trigger.textContent).toContain("Select supplier");
+    await userEvent.click(trigger);
+    await userEvent.click(await screen.findByRole("option", { name: /Supplier 2/ }));
+    expect(onValueChange).toHaveBeenCalledWith({ supplier: ["s2"] });
+  });
+
+  it("shows the selected value of a single dropdown facet", async () => {
+    const onValueChange = vi.fn();
+    const sort = { key: "sort", label: "Sort", type: "single" as const, display: "dropdown" as const, options: [{ value: "a", label: "A" }, { value: "b", label: "B" }] };
+    render(<FacetFilter facets={[sort]} value={{ sort: ["a"] }} onValueChange={onValueChange} />);
+    expect(screen.getByRole("combobox").textContent).toContain("A");
   });
 
   it("renders a custom facet body", () => {

@@ -29,6 +29,8 @@ const SHOTS: Shot[] = [
   { name: "facet-german", id: "patterns-facetfilter--german", width: 420, height: 760 },
   { name: "empty-state", id: "patterns-emptystate--default", width: 520, height: 320 },
   { name: "status-badges", id: "patterns-statusbadge--all-tones", width: 480, height: 120 },
+  { name: "facet-dropdown", id: "patterns-facetfilter--dropdown", width: 420, height: 420 },
+  { name: "facet-load-more", id: "patterns-facetfilter--load-more", width: 420, height: 780 },
   { name: "result-card", id: "patterns-resultcard--product-list", width: 560, height: 360 },
   { name: "search-bar-actions", id: "patterns-searchbar--with-actions", width: 520, height: 140 },
   { name: "filter-sheet", id: "patterns-filtersheet--with-apply", open: "Filters", width: 900, height: 640 },

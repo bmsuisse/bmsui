@@ -646,9 +646,14 @@ interface FacetDefinition
   collapsible?: boolean
   dateRange?: FacetDateRangeConfig
   defaultCollapsed?: boolean
+  display?: "list" | "dropdown"
+  hasMore?: boolean
   key: string
   label: string
+  loadingMore?: boolean
   maxVisible?: number
+  onLoadMore?: () => void
+  onSearchChange?: (query: string) => void
   options?: FacetOption[]
   range?: FacetRangeConfig
   render?: (props: { selected: string[]; onSelectedChange: (next: string[]) => void }) => ReactNode
@@ -657,6 +662,9 @@ interface FacetDefinition
 interface FacetFilterLabels
   clear: string
   clearFacet: (facetLabel: string) => string
+  dropdownPlaceholder: (facetLabel: string) => string
+  loadMore: string
+  loadingMore: string
   noMatches: string
   optionCount: (count: string) => string
   rangeMax: string
@@ -677,6 +685,7 @@ interface FacetFilterProps extends SharedProps
   formatCount?: (count: number) => string  (from SharedProps)
   labels?: Partial<FacetFilterLabels>  (from SharedProps)
   maxVisible?: number  (from SharedProps)
+  popoverContainer?: HTMLElement | null  (from SharedProps)
 interface FacetFilterSkeletonProps
   className?: string
   groups?: number
@@ -690,6 +699,7 @@ interface FacetGroupProps extends SharedProps
   formatCount?: (count: number) => string  (from SharedProps)
   labels?: Partial<FacetFilterLabels>  (from SharedProps)
   maxVisible?: number  (from SharedProps)
+  popoverContainer?: HTMLElement | null  (from SharedProps)
 interface FacetOption
   count?: number
   disabled?: boolean

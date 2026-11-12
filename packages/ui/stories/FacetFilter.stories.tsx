@@ -86,3 +86,59 @@ export const DataTypes: Story = {
     ],
   },
 };
+
+/** Many values: local "Show more", then server paging with "Load more" and server-side search. */
+export const LoadMore: Story = {
+  render: () => {
+    const all = Array.from({ length: 60 }, (_, index) => ({ value: `c${index}`, label: `Category ${index + 1}`, count: 500 - index * 7 }));
+    const [value, setValue] = useState<FacetFilterValue>({});
+    const [loaded, setLoaded] = useState(12);
+    const [loading, setLoading] = useState(false);
+    const [query, setQuery] = useState("");
+    const matching = all.filter((option) => option.label.toLowerCase().includes(query.toLowerCase()));
+    return (
+      <div className="w-80">
+        <FacetFilter
+          value={value}
+          onValueChange={setValue}
+          facets={[
+            {
+              key: "category",
+              label: "Category",
+              options: matching.slice(0, loaded),
+              hasMore: loaded < matching.length,
+              loadingMore: loading,
+              onLoadMore: () => {
+                setLoading(true);
+                setTimeout(() => {
+                  setLoaded((count) => count + 12);
+                  setLoading(false);
+                }, 600);
+              },
+              onSearchChange: (text) => {
+                setQuery(text);
+                setLoaded(12);
+              },
+            },
+          ]}
+        />
+      </div>
+    );
+  },
+};
+
+/** The same facet as a searchable dropdown, for sidebars where a list would be too long. */
+export const Dropdown: Story = {
+  args: {
+    facets: [
+      {
+        key: "category",
+        label: "Category",
+        display: "dropdown",
+        options: Array.from({ length: 40 }, (_, index) => ({ value: `c${index}`, label: `Category ${index + 1}`, count: 400 - index * 5 })),
+      },
+      { key: "sort", label: "Sort by", type: "single", display: "dropdown", options: [{ value: "rel", label: "Relevance" }, { value: "price", label: "Price" }] },
+    ],
+    value: { category: ["c1", "c4"] },
+  },
+};
