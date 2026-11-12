@@ -16,7 +16,7 @@ export type StatusTone = "success" | "warning" | "error" | "info" | "neutral";
  * fixed red for the text because `text-destructive` is tuned for solid button
  * fills and only reaches ~3.9:1 (light) / ~3.5:1 (dark) on its own 15% tint.
  */
-const TONE_CLASSES: Record<StatusTone, string> = {
+export const STATUS_TONE_CLASSES: Record<StatusTone, string> = {
   success: "border-transparent bg-emerald-500/15 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300",
   warning: "border-transparent bg-amber-500/15 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300",
   info: "border-transparent bg-sky-500/15 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300",
@@ -108,7 +108,7 @@ export const StatusBadge = ({ status, label, tone, toneMap, className, ...props 
   const displayLabel = label ?? deriveStatusLabel(status);
 
   return (
-    <Badge variant="outline" className={cn(TONE_CLASSES[resolvedTone], className)} {...props}>
+    <Badge variant="outline" className={cn(STATUS_TONE_CLASSES[resolvedTone], className)} {...props}>
       {displayLabel}
     </Badge>
   );

@@ -7,7 +7,7 @@ Every public export with its kind and signature. Interfaces and object types
 list their own members one per line (inherited members come from the `extends`
 clause), so the diff of this file shows exactly what changed in the public API.
 
-## Components (163)
+## Components (172)
 
 ```text
 const AiButton: react.ForwardRefExoticComponent<AiButtonProps & react.RefAttributes<HTMLButtonElement>>
@@ -69,7 +69,11 @@ const DropdownMenuSubTrigger: react.ForwardRefExoticComponent<Omit<DropdownMenuP
 const DropdownMenuTrigger: react.ForwardRefExoticComponent<DropdownMenuPrimitive.DropdownMenuTriggerProps & react.RefAttributes<HTMLButtonElement>>
 const EmptyState: (props: EmptyStateProps) => ReactElement
 const ErrorState: (props: ErrorStateProps) => ReactElement | null
+function FacetFilter(props: FacetFilterProps): ReactElement
+function FacetGroup(props: FacetGroupProps): ReactElement
 const FileInput: react.ForwardRefExoticComponent<FileInputProps & react.RefAttributes<HTMLInputElement>>
+const FilterSheet: (props: FilterSheetProps) => ReactElement
+const FilterSheetTrigger: (props: FilterSheetTriggerProps) => ReactElement
 const FilteredEmptyState: (props: FilteredEmptyStateProps) => ReactElement
 function FormField(props: FormFieldProps): ReactElement
 const FormModal: (props: FormModalProps) => ReactElement
@@ -106,8 +110,12 @@ const RadioGroup: react.ForwardRefExoticComponent<Omit<RadioGroupPrimitive.Radio
 const RadioGroupItem: react.ForwardRefExoticComponent<Omit<RadioGroupPrimitive.RadioGroupItemProps & react.RefAttributes<HTMLButtonElement>, "ref"> & react.RefAttributes<HTMLButtonElement>>
 function RadioList<T extends string = string>(props: RadioListProps<T>): ReactElement
 function RangeSlider(props: RangeSliderProps): ReactElement
+const RankBadge: (props: RankBadgeProps) => ReactElement
 const RefreshBar: (props: { active: boolean; className?: string }) => ReactElement | null
 const ResponsivePanel: (props: ResponsivePanelProps) => ReactElement
+const ResultCard: (props: ResultCardProps) => ReactElement
+const ResultList: (props: ResultListProps) => ReactElement
+const ScoreBadge: (props: ScoreBadgeProps) => ReactElement | null
 const ScrollArea: react.ForwardRefExoticComponent<Omit<ScrollAreaPrimitive.ScrollAreaProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
 const ScrollBar: react.ForwardRefExoticComponent<Omit<ScrollAreaPrimitive.ScrollAreaScrollbarProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
 function SearchBar(props: SearchBarProps): ReactElement
@@ -162,6 +170,7 @@ const TabsList: react.ForwardRefExoticComponent<Omit<TabsPrimitive.TabsListProps
 const TabsTrigger: react.ForwardRefExoticComponent<Omit<TabsPrimitive.TabsTriggerProps & react.RefAttributes<HTMLButtonElement>, "ref"> & react.RefAttributes<HTMLButtonElement>>
 function TagCombobox(props: TagComboboxProps): ReactElement
 const Textarea: react.ForwardRefExoticComponent<TextareaProps & react.RefAttributes<HTMLTextAreaElement>>
+const Thumbnail: (props: ThumbnailProps) => ReactElement
 const Timestamp: (props: TimestampProps) => ReactElement
 const Toaster: (props: ToasterProps) => ReactElement
 function Toolbar(props: ToolbarProps): ReactElement
@@ -196,7 +205,7 @@ function useSidebarCollapsed(): boolean
 function useSpeechRecognition(props?: UseSpeechRecognitionOptions): SpeechRecognitionState
 ```
 
-## Functions (30)
+## Functions (32)
 
 ```text
 function announce(message: string, options?: AnnounceOptions): void
@@ -204,6 +213,7 @@ function avatarColorIndex(name: string): number
 const badgeVariants: (props?: ({ variant?: "default" | "outline" | "destructive" | "secondary" | "warning" | null | undefined } & class_variance_authority_types.ClassProp) | undefined) => string
 const buttonVariants: (props?: ({ variant?: "default" | "outline" | "ghost" | "destructive" | "secondary" | "link" | "swiss-primary" | "swiss-secondary" | "ai" | "ai-subtle" | "ai-ghost" | null | undefined; size?: "default" | "xs" | "sm" | "lg" | "icon" | "icon-xs" | "icon-sm" | "icon-lg" | null | undefined } & class_variance_authority_types.ClassProp) | undefined) => string
 function cn(...inputs: ClassValue[]): string
+function countActiveFilters(value: FacetFilterValue): number
 function datePlaceholder(locale: string): string
 function describeSpeechError(code: string): string | null
 function formatCommandPaletteShortcut(key?: string): string
@@ -223,6 +233,7 @@ function matchesAccept(file: File, accept?: string): boolean
 function parseIsoDay(text: string, locale: string): string | null
 function parseLocaleNumber(text: string, locale: string, formatOptions?: Intl.NumberFormatOptions): number | null
 function resetToasts(): void
+function resolveScoreTone(percent: number, thresholds?: ScoreThreshold[]): StatusTone
 function scoreCommand(query: string, label: string, keywords?: readonly string[]): number
 const sheetVariants: (props?: ({ side?: "top" | "right" | "bottom" | "left" | null | undefined } & class_variance_authority_types.ClassProp) | undefined) => string
 function shiftIsoDay(iso: string, by: { days?: number; months?: number }): string
@@ -231,7 +242,7 @@ function toLocalIsoDay(d: Date): string
 const toast: typeof show & { info: (message: string, options?: ToneOptions) => number; success: (message: string, options?: ToneOptions) => number; warning: (message: string, options?: ToneOptions) => number; error: (message: string, options?: ToneOptions) => number; dismiss: typeof dismissToast }
 ```
 
-## Constants (22)
+## Constants (25)
 
 ```text
 const BRAND_ANIMATIONS: readonly [{ readonly id: "bounce"; readonly label: "Bounce home" }, { readonly id: "orbit"; readonly label: "Orbit and settle" }, { readonly id: "impact"; readonly label: "Shot in, boom" }, { readonly id: "liquid"; readonly label: "Liquid split" }, { readonly id: "signature"; readonly label: "Solid to signature" }, { readonly id: "burst"; readonly label: "Big bang, small dot" }, { readonly id: "gravity"; readonly label: "Gravity press" }]
@@ -243,7 +254,9 @@ const defaultCommandPaletteLabels: CommandPaletteLabels
 const defaultDateInputLabels: DateInputLabels
 const defaultDateRangePickerLabels: DateRangePickerLabels
 const defaultErrorStateLabels: ErrorStateLabels
+const defaultFacetFilterLabels: FacetFilterLabels
 const defaultFileInputLabels: FileInputLabels
+const defaultFilterSheetLabels: FilterSheetLabels
 const defaultFilteredEmptyStateLabels: FilteredEmptyStateLabels
 const defaultKeyComboLabels: KeyComboLabels
 const defaultMetadataListLabels: MetadataListLabels
@@ -251,6 +264,7 @@ const defaultNumberInputLabels: NumberInputLabels
 const defaultPageHeaderLabels: PageHeaderLabels
 const defaultPaginationLabels: PaginationLabels
 const defaultRangeSliderLabels: RangeSliderLabels
+const defaultScoreThresholds: ScoreThreshold[]
 const defaultShortcutSheetLabels: ShortcutSheetLabels
 const defaultSplitPaneLabels: SplitPaneLabels
 const defaultTableResultCountLabels: TableResultCountLabels
@@ -258,7 +272,7 @@ const defaultToasterLabels: ToasterLabels
 const defaultToolbarLabels: ToolbarLabels
 ```
 
-## Interfaces (134)
+## Interfaces (148)
 
 ```text
 interface AiButtonProps extends Omit<ButtonProps, "variant">
@@ -609,6 +623,40 @@ interface ErrorStateProps extends Omit<HTMLAttributes<HTMLDivElement>, "title">
   onRetry?: () => void
   retryProps?: RetryButtonProps
   variant?: "block" | "compact"
+interface Facet
+  key: string
+  label: string
+  maxVisible?: number
+  options: FacetOption[]
+  type?: "list" | "boolean"
+interface FacetFilterLabels
+  optionCount: (count: number) => string
+  reset: string
+  showLess: string
+  showMore: (hidden: number) => string
+interface FacetFilterProps extends SharedProps
+  className?: string
+  facets: Facet[]
+  hideEmpty?: boolean
+  onValueChange: (next: FacetFilterValue) => void
+  showReset?: boolean
+  value: FacetFilterValue
+  formatCount?: (count: number) => string  (from SharedProps)
+  labels?: Partial<FacetFilterLabels>  (from SharedProps)
+  maxVisible?: number  (from SharedProps)
+interface FacetGroupProps extends SharedProps
+  className?: string
+  facet: Facet
+  onSelectedChange: (next: string[]) => void
+  selected: string[]
+  formatCount?: (count: number) => string  (from SharedProps)
+  labels?: Partial<FacetFilterLabels>  (from SharedProps)
+  maxVisible?: number  (from SharedProps)
+interface FacetOption
+  count?: number
+  disabled?: boolean
+  label?: ReactNode
+  value: string
 interface FileInputLabels
   dropHere: string
   prompt: string
@@ -640,6 +688,27 @@ interface FileRejection
   file: File
   message: string
   reason: "too-large" | "wrong-type" | "too-many"
+interface FilterSheetLabels
+  activeCount: (count: number) => string
+  apply: string
+  reset: string
+  title: string
+interface FilterSheetProps
+  activeCount?: number
+  applyDisabled?: boolean
+  breakpoint?: string
+  children: ReactNode
+  className?: string
+  labels?: Partial<FilterSheetLabels>
+  onApply?: () => void
+  onOpenChange: (open: boolean) => void
+  onReset?: () => void
+  open: boolean
+  size?: ResponsivePanelSize
+interface FilterSheetTriggerProps extends Omit<ButtonProps, "children">
+  activeCount?: number
+  children?: ReactNode
+  labels?: Partial<Pick<FilterSheetLabels, "title" | "activeCount">>
 interface FilteredEmptyStateLabels
   description: string
   reset: string
@@ -888,6 +957,8 @@ interface RangeSliderProps
   step?: number
   unit?: string
   value: [number, number]
+interface RankBadgeProps extends HTMLAttributes<HTMLSpanElement>
+  rank: number
 interface ResponsivePanelProps
   breakpoint?: string
   children: ReactNode
@@ -901,12 +972,40 @@ interface ResponsivePanelProps
   resizable?: boolean
   size?: ResponsivePanelSize
   title: string
+interface ResultCardProps
+  "data-testid"?: string
+  className?: string
+  description?: ReactNode
+  disabled?: boolean
+  footer?: ReactNode
+  href?: string
+  leading?: ReactNode
+  meta?: ReactNode
+  onSelect?: () => void
+  selected?: boolean
+  title: ReactNode
+  trailing?: ReactNode
+interface ResultListProps extends HTMLAttributes<HTMLUListElement>
+  "aria-label": string
+  busy?: boolean
+interface ScoreBadgeProps extends Omit<HTMLAttributes<HTMLDivElement>, "children">
+  format?: (percent: number) => string
+  max?: number
+  showDot?: boolean
+  size?: "sm" | "md"
+  thresholds?: ScoreThreshold[]
+  tone?: StatusTone
+  value: number | null | undefined
+interface ScoreThreshold
+  min: number
+  tone: StatusTone
 interface ScrollOverflow
   bottom: boolean
   left: boolean
   right: boolean
   top: boolean
 interface SearchBarProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "value" | "onChange" | "size">
+  actions?: ReactNode
   className?: string
   clearLabel?: string
   error?: ErrorInput
@@ -1123,6 +1222,12 @@ interface TagComboboxProps
   options: TagComboboxOption[]
   placeholder?: string
   value: string[]
+interface ThumbnailProps extends Omit<HTMLAttributes<HTMLSpanElement>, "children">
+  alt?: string
+  fallback?: ReactNode
+  fit?: "contain" | "cover"
+  size?: keyof typeof THUMB_SIZES | number
+  src?: string | null
 interface TimestampProps extends Omit<HTMLAttributes<HTMLElement>, "children">
   animated?: boolean
   format?: TimestampFormat
@@ -1232,7 +1337,7 @@ interface VoiceTranscriptProps extends Omit<HTMLAttributes<HTMLDivElement>, "onC
   value: string
 ```
 
-## Types (29)
+## Types (30)
 
 ```text
 type AiButtonVariant = "ai" | "ai-subtle" | "ai-ghost"
@@ -1246,6 +1351,7 @@ type ComboboxProps = ComboboxSingleProps | ComboboxMultiProps
 type ConfirmButtonPlacement = "leading" | "trailing"
 type DateInputError = "invalid" | "range" | "disabled"
 type ErrorInput = ErrorInfo | Error | string | null | undefined | false
+type FacetFilterValue = Record<string, string[]>
 type InputProps = InputHTMLAttributes<HTMLInputElement>
 type NavItemProps<T extends ElementType = "a"> = Omit<ComponentPropsWithoutRef<T>, "as" | "className"> & {…}
   active?: boolean

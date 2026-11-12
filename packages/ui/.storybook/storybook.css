@@ -1,0 +1,2 @@
+/* Same theme tokens + @source scan as the demo app, so stories look identical. */
+@import "../demo/src/globals.css";

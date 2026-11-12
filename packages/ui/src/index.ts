@@ -358,3 +358,23 @@ export type { ScrollOverflow, UseScrollOverflowResult } from "./hooks/useScrollO
 export { useScrollOverflow } from "./hooks/useScrollOverflow";
 export type { SetLocalStorageState, UseLocalStorageStateOptions } from "./hooks/useLocalStorageState";
 export { useLocalStorageState } from "./hooks/useLocalStorageState";
+
+export type { ScoreBadgeProps, ScoreThreshold, RankBadgeProps } from "./patterns/score-badge/ScoreBadge";
+export { ScoreBadge, RankBadge, defaultScoreThresholds, resolveScoreTone } from "./patterns/score-badge/ScoreBadge";
+export type {
+  Facet,
+  FacetFilterLabels,
+  FacetFilterProps,
+  FacetFilterValue,
+  FacetGroupProps,
+  FacetOption,
+} from "./patterns/facet-filter/FacetFilter";
+export { FacetFilter, FacetGroup, countActiveFilters, defaultFacetFilterLabels } from "./patterns/facet-filter/FacetFilter";
+export type {
+  FilterSheetLabels,
+  FilterSheetProps,
+  FilterSheetTriggerProps,
+} from "./patterns/filter-sheet/FilterSheet";
+export { FilterSheet, FilterSheetTrigger, defaultFilterSheetLabels } from "./patterns/filter-sheet/FilterSheet";
+export type { ResultCardProps, ResultListProps, ThumbnailProps } from "./patterns/result-card/ResultCard";
+export { ResultCard, ResultList, Thumbnail } from "./patterns/result-card/ResultCard";

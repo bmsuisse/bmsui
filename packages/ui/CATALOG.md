@@ -149,3 +149,12 @@ repo's `AGENTS.md`.
 | `useLongPress` | Press-and-hold (touch/mouse/pen) with threshold and move-cancel; spread handlers on the element. |
 | `useScrollOverflow` | `{ ref, top, bottom, left, right }` overflow flags for fade edges on a scroll container. |
 | `useLocalStorageState` | `useState` persisted in `localStorage`: SSR-safe, never throws, synced across hooks and tabs. |
+
+## Search results and filters
+
+| Export | Use when |
+|---|---|
+| `ScoreBadge`, `RankBadge`, `defaultScoreThresholds`, `resolveScoreTone` | Match/confidence score as a tinted "92%" pill (`max={1}` for 0–1 scores, custom `thresholds`); `RankBadge` is the numbered square for ranked lists. For a status word use `StatusBadge`. |
+| `FacetFilter`, `FacetGroup`, `countActiveFilters`, `defaultFacetFilterLabels` | Faceted-search sidebar: checkbox options with result counts, show-more, switch rows (`type: "boolean"`). Controlled `{ [facetKey]: values[] }`. One dropdown filter → `Combobox`. |
+| `FilterSheet`, `FilterSheetTrigger`, `defaultFilterSheetLabels` | Filters in a bottom sheet on phones / dialog on desktop with Reset/Apply and an active-count button. Holds no draft state. |
+| `ResultCard`, `ResultList`, `Thumbnail` | Search hit row/card (thumbnail, title, meta, trailing price/score) as one native button or link inside a `ResultList`. Tabular data → datagrid. |
