@@ -93,6 +93,21 @@ describe("Toaster", () => {
     expect(screen.queryByText("Reason still required")).not.toBeInTheDocument();
   });
 
+  it("an id also matches a toast that is already leaving", () => {
+    render(<Toaster />);
+    act(() => {
+      toast.error("First", { id: "dup" });
+    });
+    act(() => toast.dismiss("dup"));
+    act(() => {
+      toast.error("Second", { id: "dup" });
+    });
+    expect(screen.queryByText("First")).not.toBeInTheDocument();
+    expect(screen.getAllByTestId("toast")).toHaveLength(1);
+    act(() => vi.advanceTimersByTime(TOAST_EXIT_MS));
+    expect(screen.getByText("Second")).toBeInTheDocument();
+  });
+
   it("toast.dismiss accepts the id option", () => {
     render(<Toaster />);
     act(() => {

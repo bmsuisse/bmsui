@@ -94,7 +94,8 @@ function show(message: string, options: ToastOptions = {}): number {
     leaving: false,
   };
   const active = toasts.filter((t) => !t.leaving);
-  const same = options.id === undefined ? undefined : active.find((t) => t.key === options.id);
+  // A toast still playing its exit transition counts too, so a quick retry doesn't show a second one next to it.
+  const same = options.id === undefined ? undefined : toasts.find((t) => t.key === options.id);
   if (same) {
     emit(toasts.map((t) => (t === same ? item : t)));
     return id;
