@@ -10,6 +10,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 // link here would fail Docusaurus's own build-time broken-link check, which
 // has no way to know that path will exist once deployed.
 const DEMO_BASE = 'https://bmsuisse.github.io/bmsui/demo';
+const STORYBOOK_URL = 'https://bmsuisse.github.io/bmsui/storybook/';
 
 const config: Config = {
   title: 'bmsui',
@@ -80,6 +81,7 @@ const config: Config = {
           items: [
             {label: '@bmsuisse/ui', href: `${DEMO_BASE}/ui/`},
             {label: '@bmsuisse/datagrid', href: `${DEMO_BASE}/datagrid/`},
+            {label: 'Storybook (@bmsuisse/ui)', href: STORYBOOK_URL},
           ],
         },
         {
@@ -105,6 +107,7 @@ const config: Config = {
           items: [
             {label: 'UI kit', href: `${DEMO_BASE}/ui/`},
             {label: 'DataGrid', href: `${DEMO_BASE}/datagrid/`},
+            {label: 'Storybook', href: STORYBOOK_URL},
           ],
         },
         {
