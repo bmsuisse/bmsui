@@ -52,3 +52,35 @@ jobs:
         run: bun run e2e
         env:
           CI: "true"
+
+  storybook:
+    name: "Storybook: every story renders in light + dark, visual diff"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - working-directory: packages/ui
+        run: bunx playwright install --with-deps chromium
+      - working-directory: packages/ui
+        run: bun run build-storybook
+      - name: Smoke + visual diff (smoke only until baselines are committed)
+        working-directory: packages/ui
+        run: |
+          if [ -d visual/baselines ]; then
+            bun run test:visual
+          else
+            echo "::notice::No visual baselines yet (run the 'Update visual baselines' workflow); running the render check only."
+            SMOKE_ONLY=1 bun run test:visual
+          fi
+        env:
+          CI: "true"
+      - name: Upload report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: storybook-visual-report
+          path: |
+            packages/ui/visual/report
+            packages/ui/test-results
+          if-no-files-found: ignore

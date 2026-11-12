@@ -31,7 +31,7 @@ export const ProductList: Story = {
             leading={
               <span className="flex items-center gap-2">
                 <RankBadge rank={index + 1} />
-                <Thumbnail src={index === 1 ? "broken.png" : null} />
+                <Thumbnail src={index === 1 ? "data:image/png;base64,AAAA" : null} />
               </span>
             }
             trailing={
