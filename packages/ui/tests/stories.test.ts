@@ -26,12 +26,46 @@ const NOT_STORIED: Record<string, string> = {
   useMergedRefs: "ref utility, no UI",
 };
 
-const storyText = (): string => {
-  const dir = resolve(__dirname, "../stories");
-  return readdirSync(dir)
-    .filter((file) => file.endsWith(".stories.tsx"))
-    .map((file) => readFileSync(resolve(dir, file), "utf8"))
+// `@bmsuisse/datagrid` shares this Storybook (stories/datagrid). Its exports are read from the
+// source of its index (a regex over `export { ... }`, no import: the grid pulls in a lot).
+const NOT_STORIED_DATAGRID: Record<string, string> = {
+  useFilterLabels: "reads FilterLabelsProvider; shown through the filter stories",
+  useEditingState: "state machine behind DataGrid/TreeDataGrid `editing`; shown through the editing stories",
+  useCellEditingState: "state behind DataGrid `cellEditing`; shown through the CellEditing stories",
+  useCellSelection: "selection state behind DataGrid `cellEditing`; shown through the CellEditing stories",
+  SelectionOverlay: "drawn by DataGrid `cellEditing`; shown through the CellEditing stories",
+  useGridState: "sort/filter/page state behind DataGrid; shown through every DataGrid story",
+  useDebouncedCallback: "timer utility, no UI",
+  useGroupExpansion: "group collapse state behind `groupBy`; shown through the grouping stories",
+  useStickyGroupHeaderTop: "layout measurement behind `groupBy`; no UI of its own",
+  useVisibleColumns: "column filtering behind DataGrid/TreeDataGrid; shown through the ColumnSelector stories",
+  useTreeState: "expansion/loading state behind TreeDataGrid; shown through the TreeDataGrid stories",
+};
+
+const storyFiles = (dir: string): string[] =>
+  readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>
+    entry.isDirectory()
+      ? storyFiles(resolve(dir, entry.name))
+      : entry.name.endsWith(".stories.tsx")
+        ? [resolve(dir, entry.name)]
+        : [],
+  );
+
+const storyText = (): string =>
+  storyFiles(resolve(__dirname, "../stories"))
+    .map((file) => readFileSync(file, "utf8"))
     .join("\n");
+
+const datagridExports = (): string[] => {
+  const source = readFileSync(resolve(__dirname, "../../datagrid/src/index.ts"), "utf8");
+  const names: string[] = [];
+  for (const match of source.matchAll(/export\s*\{([^}]*)\}/g)) {
+    for (const part of (match[1] ?? "").split(",")) {
+      const name = part.trim().split(/\s+as\s+/).pop()?.trim();
+      if (name) names.push(name);
+    }
+  }
+  return names;
 };
 const mentioned = (text: string, name: string): boolean => new RegExp(`\\b${name}\\b`).test(text);
 
@@ -52,5 +86,24 @@ describe("Storybook coverage", () => {
     const text = storyText();
     const stale = Object.keys(NOT_STORIED).filter((name) => !candidates.includes(name) || mentioned(text, name));
     expect(stale, "remove these from NOT_STORIED: they now have a story or are no longer exported").toEqual([]);
+  });
+
+  describe("@bmsuisse/datagrid", () => {
+    const grid = datagridExports().filter((name) => /^(use[A-Z]|[A-Z][a-z])/.test(name));
+
+    it("has a story for every exported component and hook", () => {
+      const text = storyText();
+      const missing = grid.filter((name) => !(name in NOT_STORIED_DATAGRID) && !mentioned(text, name));
+      expect(
+        missing,
+        `Add a story in packages/ui/stories/datagrid/ for: ${missing.join(", ")} (or list it in NOT_STORIED_DATAGRID with a reason)`,
+      ).toEqual([]);
+    });
+
+    it("keeps NOT_STORIED_DATAGRID honest", () => {
+      const text = storyText();
+      const stale = Object.keys(NOT_STORIED_DATAGRID).filter((name) => !grid.includes(name) || mentioned(text, name));
+      expect(stale, "remove these from NOT_STORIED_DATAGRID").toEqual([]);
+    });
   });
 });

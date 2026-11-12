@@ -18,6 +18,8 @@ const config: StorybookConfig = {
           // Same trick as demo/vite.config.ts: stories import the package by
           // name, exactly like a consumer, but resolve to source.
           "@bmsuisse/ui": fileURLToPath(new URL("../src/index.ts", import.meta.url)),
+          // The data grid has its own package; its stories (stories/datagrid) import it by name too.
+          "@bmsuisse/datagrid": fileURLToPath(new URL("../../datagrid/src/index.ts", import.meta.url)),
         },
       },
     }),

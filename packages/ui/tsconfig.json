@@ -27,6 +27,9 @@
     "paths": {
       "@bmsuisse/ui": [
         "./src/index.ts"
+      ],
+      "@bmsuisse/datagrid": [
+        "../datagrid/src/index.ts"
       ]
     }
   },

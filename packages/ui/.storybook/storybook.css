@@ -1,2 +1,5 @@
 /* Same theme tokens + @source scan as the demo app, so stories look identical. */
 @import "../demo/src/globals.css";
+
+/* Tailwind scans only this project; the data grid's classes live in its own package. */
+@source "../../datagrid/src";
