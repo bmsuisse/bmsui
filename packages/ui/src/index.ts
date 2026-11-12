@@ -362,6 +362,7 @@ export { useLocalStorageState } from "./hooks/useLocalStorageState";
 export type { ScoreBadgeProps, ScoreThreshold, RankBadgeProps } from "./patterns/score-badge/ScoreBadge";
 export { ScoreBadge, RankBadge, defaultScoreThresholds, resolveScoreTone } from "./patterns/score-badge/ScoreBadge";
 export type {
+  FacetDateRangeConfig,
   FacetDefinition,
   FacetFilterLabels,
   FacetFilterProps,
@@ -369,8 +370,17 @@ export type {
   FacetFilterValue,
   FacetGroupProps,
   FacetOption,
+  FacetRangeConfig,
 } from "./patterns/facet-filter/FacetFilter";
-export { FacetFilter, FacetFilterSkeleton, FacetGroup, countActiveFacets, defaultFacetFilterLabels } from "./patterns/facet-filter/FacetFilter";
+export {
+  FacetFilter,
+  FacetFilterSkeleton,
+  FacetGroup,
+  countActiveFacets,
+  defaultFacetFilterLabels,
+  formatFacetRange,
+  parseFacetRange,
+} from "./patterns/facet-filter/FacetFilter";
 export type { ActiveFacetsLabels, ActiveFacetsProps } from "./patterns/facet-filter/ActiveFacets";
 export { ActiveFacets, defaultActiveFacetsLabels } from "./patterns/facet-filter/ActiveFacets";
 export type {

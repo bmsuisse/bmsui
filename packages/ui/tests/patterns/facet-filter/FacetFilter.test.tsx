@@ -1,6 +1,13 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { type FacetDefinition, FacetFilter, FacetFilterSkeleton, countActiveFacets } from "../../../src";
+import {
+  type FacetDefinition,
+  FacetFilter,
+  FacetFilterSkeleton,
+  countActiveFacets,
+  formatFacetRange,
+  parseFacetRange,
+} from "../../../src";
 
 const supplier: FacetDefinition = {
   key: "supplier",
@@ -87,7 +94,7 @@ describe("FacetFilter", () => {
   });
 
   it("doesn't collapse when only one or two options would hide", () => {
-    const few = { ...supplier, options: supplier.options.slice(0, 10) };
+    const few = { ...supplier, options: supplier.options!.slice(0, 10) };
     render(<FacetFilter facets={[few]} value={{}} onValueChange={() => {}} />);
     expect(screen.getAllByRole("checkbox")).toHaveLength(10);
     expect(screen.queryByRole("button", { name: /Show/ })).toBeNull();
@@ -147,6 +154,41 @@ describe("FacetFilter", () => {
     expect(onValueChange).toHaveBeenCalledWith({ sort: ["new"] });
   });
 
+  it("renders a range facet with a slider and commits one 'low..high' entry", () => {
+    const onValueChange = vi.fn();
+    const price: FacetDefinition = {
+      key: "price",
+      label: "Price",
+      type: "range",
+      range: { min: 0, max: 200, unit: "CHF", histogram: [1, 4, 9, 3] },
+    };
+    render(<FacetFilter facets={[price]} value={{}} onValueChange={onValueChange} />);
+    expect(screen.getAllByRole("slider")).toHaveLength(2);
+    const [low] = screen.getAllByRole("slider");
+    fireEvent.keyDown(low as HTMLElement, { key: "ArrowRight" });
+    fireEvent.keyUp(low as HTMLElement, { key: "ArrowRight" });
+    expect(onValueChange).toHaveBeenCalled();
+    const next = onValueChange.mock.calls.at(-1)?.[0] as Record<string, string[]>;
+    expect(next.price).toHaveLength(1);
+    expect(next.price?.[0]).toMatch(/^1\.\.$/);
+  });
+
+  it("shows a selected range in the slider and counts it once", () => {
+    const price: FacetDefinition = { key: "price", label: "Price", type: "range", range: { min: 0, max: 200 } };
+    render(<FacetFilter facets={[price]} value={{ price: ["20..80"] }} onValueChange={() => {}} />);
+    const sliders = screen.getAllByRole("slider");
+    expect(sliders[0]?.getAttribute("aria-valuenow")).toBe("20");
+    expect(sliders[1]?.getAttribute("aria-valuenow")).toBe("80");
+    expect(countActiveFacets({ price: ["20..80"] })).toBe(1);
+  });
+
+  it("renders a dateRange facet as a range picker", () => {
+    const date: FacetDefinition = { key: "created", label: "Created", type: "dateRange", dateRange: { locale: "en-GB" } };
+    render(<FacetFilter facets={[date]} value={{ created: ["2026-01-01..2026-02-01"] }} onValueChange={() => {}} />);
+    expect(screen.getByRole("group", { name: "Created" })).toBeTruthy();
+    expect(screen.getAllByRole("textbox").length).toBeGreaterThanOrEqual(2);
+  });
+
   it("renders a custom facet body", () => {
     const custom = { key: "price", label: "Price", options: [], render: () => <div>my range</div> };
     render(<FacetFilter facets={[custom]} value={{}} onValueChange={() => {}} hideEmpty={false} />);
@@ -170,5 +212,15 @@ describe("FacetFilterSkeleton", () => {
     const { container } = render(<FacetFilterSkeleton groups={2} rows={3} />);
     expect((container.firstChild as HTMLElement).getAttribute("aria-hidden")).toBe("true");
     expect(container.querySelectorAll("[class*='space-y-2.5']")).toHaveLength(2);
+  });
+});
+
+describe("facet range helpers", () => {
+  it("round-trips open and closed ends", () => {
+    expect(formatFacetRange(10, undefined)).toBe("10..");
+    expect(parseFacetRange("10..")).toEqual(["10", ""]);
+    expect(parseFacetRange("..99")).toEqual(["", "99"]);
+    expect(parseFacetRange("2026-01-01..2026-03-31")).toEqual(["2026-01-01", "2026-03-31"]);
+    expect(parseFacetRange(undefined)).toEqual(["", ""]);
   });
 });

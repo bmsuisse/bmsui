@@ -72,3 +72,17 @@ export const Loading: Story = {
     </div>
   ),
 };
+
+/** Different data types in one filter: list, search, price range with histogram, quantity range, date range. */
+export const DataTypes: Story = {
+  args: {
+    collapsible: true,
+    value: { price: ["20..80"] },
+    facets: [
+      facets[0]!,
+      { key: "price", label: "Price", type: "range", range: { min: 0, max: 200, unit: "CHF", histogram: [3, 9, 14, 11, 7, 4, 3, 2, 1, 1, 0, 2] } },
+      { key: "pack", label: "Pack size", type: "range", range: { min: 1, max: 5 } },
+      { key: "created", label: "Listed since", type: "dateRange", dateRange: { locale: "de-CH" } },
+    ],
+  },
+};

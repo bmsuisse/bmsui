@@ -20,6 +20,16 @@ describe("ActiveFacets", () => {
     expect(screen.getByRole("button", { name: "Remove Own brand" })).toBeTruthy();
   });
 
+  it("describes range and date facets in one chip", () => {
+    const more: FacetDefinition[] = [
+      { key: "price", label: "Price", type: "range", range: { min: 0, max: 200, unit: "CHF" } },
+      { key: "created", label: "Created", type: "dateRange" },
+    ];
+    render(<ActiveFacets facets={more} value={{ price: ["20..80"], created: ["2026-01-01.."] }} onValueChange={() => {}} />);
+    expect(screen.getByRole("button", { name: "Remove Price: 20 – 80 CHF" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Remove Created: ≥ 2026-01-01" })).toBeTruthy();
+  });
+
   it("removes one value and drops an emptied key", () => {
     const onValueChange = vi.fn();
     render(<ActiveFacets facets={facets} value={{ supplier: ["acme", "bolt"], own: ["true"] }} onValueChange={onValueChange} />);

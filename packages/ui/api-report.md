@@ -207,7 +207,7 @@ function useSidebarCollapsed(): boolean
 function useSpeechRecognition(props?: UseSpeechRecognitionOptions): SpeechRecognitionState
 ```
 
-## Functions (32)
+## Functions (34)
 
 ```text
 function announce(message: string, options?: AnnounceOptions): void
@@ -219,6 +219,7 @@ function countActiveFacets(value: FacetFilterValue): number
 function datePlaceholder(locale: string): string
 function describeSpeechError(code: string): string | null
 function formatCommandPaletteShortcut(key?: string): string
+function formatFacetRange(low: string | number | undefined, high: string | number | undefined): string
 function formatFileSize(bytes: number, locale?: string): string
 function formatHotkey(keys: string, platform?: "mac" | "other"): string
 function formatIsoDay(iso: string, locale: string): string
@@ -232,6 +233,7 @@ function isMacPlatform(): boolean
 function isWindowsPlatform(): boolean
 const loadingSpinnerIconVariants: (props?: ({ size?: "default" | "sm" | "lg" | null | undefined } & class_variance_authority_types.ClassProp) | undefined) => string
 function matchesAccept(file: File, accept?: string): boolean
+function parseFacetRange(entry: string | undefined): [string, string]
 function parseIsoDay(text: string, locale: string): string | null
 function parseLocaleNumber(text: string, locale: string, formatOptions?: Intl.NumberFormatOptions): number | null
 function resetToasts(): void
@@ -275,7 +277,7 @@ const defaultToasterLabels: ToasterLabels
 const defaultToolbarLabels: ToolbarLabels
 ```
 
-## Interfaces (151)
+## Interfaces (153)
 
 ```text
 interface ActiveFacetsLabels
@@ -636,21 +638,29 @@ interface ErrorStateProps extends Omit<HTMLAttributes<HTMLDivElement>, "title">
   onRetry?: () => void
   retryProps?: RetryButtonProps
   variant?: "block" | "compact"
+interface FacetDateRangeConfig
+  locale?: string
+  max?: string
+  min?: string
 interface FacetDefinition
   collapsible?: boolean
+  dateRange?: FacetDateRangeConfig
   defaultCollapsed?: boolean
   key: string
   label: string
   maxVisible?: number
-  options: FacetOption[]
+  options?: FacetOption[]
+  range?: FacetRangeConfig
   render?: (props: { selected: string[]; onSelectedChange: (next: string[]) => void }) => ReactNode
   searchable?: boolean
-  type?: "list" | "boolean" | "single"
+  type?: "list" | "boolean" | "single" | "range" | "dateRange"
 interface FacetFilterLabels
   clear: string
   clearFacet: (facetLabel: string) => string
   noMatches: string
   optionCount: (count: string) => string
+  rangeMax: string
+  rangeMin: string
   reset: string
   searchPlaceholder: (facetLabel: string) => string
   selectedCount: (count: number) => string
@@ -685,6 +695,14 @@ interface FacetOption
   disabled?: boolean
   label?: ReactNode
   value: string
+interface FacetRangeConfig
+  decimals?: number
+  histogram?: number[]
+  locale?: string
+  max: number
+  min: number
+  step?: number
+  unit?: string
 interface FileInputLabels
   dropHere: string
   prompt: string

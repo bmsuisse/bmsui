@@ -6,6 +6,19 @@ import { Checkbox } from "../../primitives/checkbox";
 import { Input } from "../../primitives/input";
 import { RadioGroup, RadioGroupItem } from "../../primitives/radio-group";
 import { Skeleton } from "../../primitives/skeleton";
+import {
+  DateRangeFacetBody,
+  type FacetDateRangeConfig,
+  type FacetRangeConfig,
+  RangeFacetBody,
+} from "./rangeFacets";
+
+export {
+  type FacetDateRangeConfig,
+  type FacetRangeConfig,
+  formatFacetRange,
+  parseFacetRange,
+} from "./rangeFacets";
 import { Switch } from "../../primitives/switch";
 
 export interface FacetOption {
@@ -21,13 +34,19 @@ export interface FacetDefinition {
   /** Key in {@link FacetFilterValue}. */
   key: string;
   label: string;
-  options: FacetOption[];
+  /** The choices. Not needed for `range`/`dateRange` facets or with `render`. */
+  options?: FacetOption[];
   /**
    * `list` (default): a checkbox per option. `boolean`: a switch for the first option (its value is
    * what gets selected). `single`: radio buttons, at most one value selected; clear it with the
-   * facet's Clear button.
+   * facet's Clear button. `range`: histogram/slider/typed bounds from `range`. `dateRange`: a date
+   * range picker. Both store one `"low..high"` entry (see `parseFacetRange`).
    */
-  type?: "list" | "boolean" | "single";
+  type?: "list" | "boolean" | "single" | "range" | "dateRange";
+  /** Bounds and display of a `type: "range"` facet. */
+  range?: FacetRangeConfig;
+  /** Bounds of a `type: "dateRange"` facet. */
+  dateRange?: FacetDateRangeConfig;
   /** Lets the user fold this facet away (overrides the filter-wide `collapsible`). */
   collapsible?: boolean;
   /** Starts folded; only with `collapsible`. A facet with a selection is never folded on mount. */
@@ -51,6 +70,9 @@ export interface FacetFilterLabels {
   showMore: (hidden: number) => string;
   showLess: string;
   reset: string;
+  /** Names of the typed bounds of a `range` facet. */
+  rangeMin: string;
+  rangeMax: string;
   /** Visible text of the per-facet clear button in a facet heading. */
   clear: string;
   /** Accessible name of that button, e.g. "Clear supplier". */
@@ -69,6 +91,8 @@ export const defaultFacetFilterLabels: FacetFilterLabels = {
   showMore: (hidden) => `Show ${hidden} more`,
   showLess: "Show less",
   reset: "Reset filters",
+  rangeMin: "Minimum",
+  rangeMax: "Maximum",
   clear: "Clear",
   clearFacet: (facetLabel) => `Clear ${facetLabel.toLowerCase()}`,
   selectedCount: (count) => `${count} selected`,
@@ -76,6 +100,10 @@ export const defaultFacetFilterLabels: FacetFilterLabels = {
   noMatches: "No matches",
   optionCount: (count) => `${count} results`,
 };
+
+/** Whether a facet has anything to show: options, a custom body, or a range/date control. */
+const hasBody = (facet: FacetDefinition): boolean =>
+  (facet.options?.length ?? 0) > 0 || facet.render !== undefined || facet.type === "range" || facet.type === "dateRange";
 
 /** Number of selected options over all facets. */
 export function countActiveFacets(value: FacetFilterValue): number {
@@ -130,9 +158,12 @@ export function FacetGroup({
 
   // A selected value that's no longer among the options (e.g. after a refetch) must stay visible,
   // otherwise it would keep filtering with no way to untick it.
-  const known = new Set(facet.options.map((option) => option.value));
-  const options = [
-    ...facet.options,
+  const baseOptions = facet.options ?? [];
+  const known = new Set(baseOptions.map((option) => option.value));
+  const isRange = facet.type === "range" && facet.range !== undefined;
+  const isDateRange = facet.type === "dateRange";
+  const options = isRange || isDateRange ? [] : [
+    ...baseOptions,
     ...selected.filter((value) => !known.has(value)).map((value): FacetOption => ({ value })),
   ];
   // Selected options always stay visible, even when collapsed.
@@ -152,7 +183,7 @@ export function FacetGroup({
   const headingClass = "font-semibold text-muted-foreground text-xs uppercase tracking-wide";
   const body = folded ? null : (
     <div id={bodyId} className="space-y-1.5">
-      {facet.searchable && !facet.render && (
+      {facet.searchable && !facet.render && !isRange && !isDateRange && (
         <Input
           type="search"
           value={query}
@@ -164,6 +195,15 @@ export function FacetGroup({
       )}
       {facet.render ? (
         facet.render({ selected, onSelectedChange })
+      ) : isRange && facet.range ? (
+        <RangeFacetBody
+          config={facet.range}
+          selected={selected}
+          onSelectedChange={onSelectedChange}
+          labels={{ min: labels.rangeMin, max: labels.rangeMax }}
+        />
+      ) : isDateRange ? (
+        <DateRangeFacetBody config={facet.dateRange} selected={selected} onSelectedChange={onSelectedChange} />
       ) : (
         <ul id={listId} className="space-y-0.5">
           {visible.slice(0, isBoolean ? 1 : undefined).map((option) => {
@@ -217,7 +257,7 @@ export function FacetGroup({
       {searching && visible.length === 0 && (
         <p className="px-1.5 text-muted-foreground text-sm">{labels.noMatches}</p>
       )}
-      {!facet.render && !isBoolean && canExpand && (
+      {!facet.render && !isBoolean && !isRange && !isDateRange && canExpand && (
         <button
           type="button"
           aria-expanded={expanded}
@@ -339,7 +379,7 @@ export function FacetFilter({
         </Button>
       )}
       {facets
-        .filter((facet) => !hideEmpty || facet.options.length > 0)
+        .filter((facet) => !hideEmpty || hasBody(facet))
         .map((facet) => (
           <FacetGroup
             key={facet.key}

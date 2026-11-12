@@ -652,7 +652,14 @@ logic above, which already had its own extraction). Structure:
     `RankBadge` (1-based); `facet-filter/` `FacetFilter`/`FacetGroup` (facets
     are data `{key,label,options[{value,label,count}]}`, controlled
     `{[key]: string[]}`, show-more keeps selected options visible, `type:
-    "boolean"` = one switch; no backend key lists or locale baked in);
+    "boolean"` = one switch, `"single"` = radios, `"range"` = histogram + `RangeSlider`
+    with typed bounds (`range: {min,max,unit,histogram}`), `"dateRange"` =
+    `DateRangePicker`; a range is ONE `"low..high"` entry (`parseFacetRange`/
+    `formatFacetRange`, empty end = open) so it counts once and is one chip in
+    `ActiveFacets`. The datagrid's `NumberHistogramFilter` is the same idea
+    but `ui` can't import `datagrid` (no dependency between them), so the
+    histogram here is a small separate implementation; no backend key lists or
+    locale baked in);
     `filter-sheet/` `FilterSheet` + `FilterSheetTrigger` over `ResponsivePanel`
     (chrome only: no draft state, Apply exists only with `onApply`, footer is
     omitted when there are no handlers); `result-card/` `ResultList` +

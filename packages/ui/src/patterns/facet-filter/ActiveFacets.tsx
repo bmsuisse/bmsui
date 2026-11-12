@@ -2,6 +2,7 @@ import { XMarkIcon } from "@heroicons/react/20/solid";
 import type { ReactElement } from "react";
 import { cn } from "../../lib/utils";
 import type { FacetDefinition, FacetFilterValue } from "./FacetFilter";
+import { parseFacetRange } from "./rangeFacets";
 
 export interface ActiveFacetsLabels {
   /** Button that clears everything. */
@@ -28,7 +29,13 @@ export interface ActiveFacetsProps {
 
 function textOf(facet: FacetDefinition, selected: string): string {
   if (facet.type === "boolean") return facet.label;
-  const option = facet.options.find((entry) => entry.value === selected);
+  if (facet.type === "range" || facet.type === "dateRange") {
+    const [low, high] = parseFacetRange(selected);
+    const unit = facet.type === "range" && facet.range?.unit ? ` ${facet.range.unit}` : "";
+    const span = low && high ? `${low} – ${high}` : low ? `≥ ${low}` : `≤ ${high}`;
+    return `${facet.label}: ${span}${unit}`;
+  }
+  const option = facet.options?.find((entry) => entry.value === selected);
   return typeof option?.label === "string" ? option.label : (option?.value ?? selected);
 }
 

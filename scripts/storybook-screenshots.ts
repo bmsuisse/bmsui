@@ -24,6 +24,7 @@ const SHOTS: Shot[] = [
   { name: "facet-filter", id: "patterns-facetfilter--preselected", width: 420, height: 760 },
   { name: "active-chips", id: "patterns-facetfilter--with-active-chips", width: 420, height: 880 },
   { name: "facet-collapsible", id: "patterns-facetfilter--collapsible-and-single", width: 420, height: 520 },
+  { name: "facet-data-types", id: "patterns-facetfilter--data-types", width: 440, height: 900 },
   { name: "result-card", id: "patterns-resultcard--product-list", width: 560, height: 360 },
   { name: "search-bar-actions", id: "patterns-searchbar--with-actions", width: 520, height: 140 },
   { name: "filter-sheet", id: "patterns-filtersheet--with-apply", open: "Filters", width: 900, height: 640 },
