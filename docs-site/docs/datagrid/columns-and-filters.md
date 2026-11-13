@@ -42,10 +42,12 @@ its `type`:
 ## `filterDisplay` — where a filter widget renders
 
 `filterDisplay?: "popover" | "row"` (default `"popover"`) controls this.
-`"popover"` is the header-icon + popover every column gets automatically.
+`"popover"` is the header-icon + popover every column gets automatically
+(below 768px the same icon opens the widget in a modal with a "Done" button
+instead, text from `filterLabels.filterDone`).
 `"row"` renders the widget inline in an extra filter row under the header
 instead — useful for a widget too wide for a popover, like a slider. That
-row is entirely opt-in: it only appears once at least one visible,
+row is entirely opt-in, and stays inline on mobile too: it only appears once at least one visible,
 filterable column sets `filterDisplay: "row"`.
 
 ## `renderFilter` — a custom widget for one column
