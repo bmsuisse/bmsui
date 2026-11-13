@@ -1284,6 +1284,16 @@ Notes for extending it:
   this is a small, mouse-only reorder list inside a dialog, not a use case
   that justifies pulling in a DnD library; no touch fallback yet (a real gap
   for tablet/phone use, follow up if it's ever asked for).
+- **Column filters open as a modal on mobile** (0.45.0): below 768px
+  (`(max-width: 767px)`, the datagrid's own `hooks/useMediaQuery.ts` — this
+  package does not depend on `@bmsuisse/ui`) `HeaderCellContent` renders the
+  funnel's widget in a `Dialog` instead of a `Popover` — a header-anchored
+  popover is cramped and jumps around with the on-screen keyboard on a phone.
+  Same trigger button (`data-state` highlight, `filter-trigger-<id>` testid),
+  same first-text-input autofocus; the dialog is titled with
+  `filterLabels.filterAriaLabel(header)` and ends in a "Done" close button
+  (`filterLabels.filterDone`, testid `filter-done-<id>`). `filterDisplay: "row"`
+  widgets bring their own popover and are unchanged.
 - **Order drives the grids** (0.43.0, [#88](https://github.com/bmsuisse/bmsui/issues/88)):
   `<DataGrid>` and `<TreeDataGrid>` take `columnOrder?: string[]` and apply it
   in `useVisibleColumns` (`applyColumnOrder`, then the visibility filter), so
@@ -1967,7 +1977,7 @@ filtering, matching `ContractTreelist` (hierarchy order from the backend).
   `gridState` (`Pick<GridState, "filter" | "sort">`) **and**
   `onGridStateChange`; then `sortable`/`filterable` columns render the same
   header controls as `<DataGrid>` — both grids share
-  `grid/HeaderCellContent.tsx` (sort button / plain label + funnel popover;
+  `grid/HeaderCellContent.tsx` (sort button / plain label + funnel popover, a modal below 768px;
   the `<th>` stays per grid) and the pure `withColumnFilter`/
   `withToggledSort` helpers from `useGridState.ts`. The grid runs
   `tree/filterSortTree.ts` (ported from MDMApp's `treeView.ts`): a node

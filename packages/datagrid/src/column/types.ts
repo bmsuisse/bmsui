@@ -61,8 +61,8 @@ export interface BaseColumn<TRow> {
   ) => ReactNode;
   /**
    * Where this column's filter control renders. Defaults to `"popover"`: a
-   * filter-icon button in the header that opens the widget in a popover,
-   * same as every column gets automatically today. `"row"` renders the
+   * filter-icon button in the header that opens the widget in a popover (a
+   * modal below 768px), same as every column gets automatically today. `"row"` renders the
    * widget's content directly, inline, in an additional filter row under
    * the header instead — needed for a wide control (e.g.
    * `NumberHistogramFilter`'s slider/histogram) that doesn't fit well

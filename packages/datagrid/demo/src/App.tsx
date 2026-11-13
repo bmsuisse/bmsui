@@ -758,7 +758,7 @@ export function RowStylingDemo(): ReactElement {
   const [activeId, setActiveId] = useState<string | null>("s2");
   const [activeTreeId, setActiveTreeId] = useState<string | null>(null);
   return (
-    <div className="grid gap-4 md:grid-cols-2" data-testid="row-styling-demo">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-2" data-testid="row-styling-demo">
       <div>
         <p className="mb-2 text-sm text-muted-foreground">Active row: {activeId ?? "none"}</p>
         <DataGrid

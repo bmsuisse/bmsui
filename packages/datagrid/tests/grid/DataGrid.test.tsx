@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { ColumnDef } from "../../src/column/types";
@@ -160,6 +160,35 @@ describe("DataGrid (client mode)", () => {
     expect(trigger).toHaveAttribute("data-state", "open");
     expect(trigger).toHaveClass("data-[state=open]:bg-primary/15");
     expect(await screen.findByPlaceholderText(/name/i)).toHaveFocus();
+  });
+
+  it("opens the column filter as a modal instead of a popover on a narrow viewport", async () => {
+    const original = window.matchMedia;
+    window.matchMedia = ((query: string) => ({
+      matches: query === "(max-width: 767px)",
+      media: query,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    })) as unknown as typeof window.matchMedia;
+    try {
+      render(
+        <DataGrid columns={columns} dataSource={{ mode: "client", data: rows }} getRowId={(row) => row.id} />,
+      );
+      const trigger = screen.getByTestId("filter-trigger-name");
+
+      await userEvent.click(trigger);
+
+      const dialog = await screen.findByRole("dialog", { name: "Filter Name" });
+      expect(trigger).toHaveAttribute("data-state", "open");
+      expect(within(dialog).getByPlaceholderText(/name/i)).toHaveFocus();
+
+      await userEvent.type(within(dialog).getByPlaceholderText(/name/i), "Ali");
+      await userEvent.click(within(dialog).getByRole("button", { name: "Done" }));
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      await waitFor(() => expect(nameCellsInOrder()).toEqual(["Alice"]));
+    } finally {
+      window.matchMedia = original;
+    }
   });
 
   it("sorts descending first, then ascending, when sortDescFirst is set", async () => {

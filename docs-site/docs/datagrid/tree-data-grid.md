@@ -39,7 +39,7 @@ requiring a fixed field shape on `TRow`:
 
 Pass `gridState` and `onGridStateChange` together (fully controlled, no
 internal fallback) and every `sortable`/`filterable` column gets the same
-header sort toggle and filter popover `<DataGrid>` has:
+header sort toggle and filter popover (a modal below 768px) `<DataGrid>` has:
 
 ```tsx
 const [gridState, setGridState] = useState<Pick<GridState, "filter" | "sort">>({ filter: null, sort: [] });

@@ -43,6 +43,7 @@ import { de } from "date-fns/locale";
     selectAll: "Alle auswählen",
     searchPlaceholder: (header) => `${header} suchen…`,
     filterAriaLabel: (header) => `${header} filtern`,
+    filterDone: "Fertig", // close button of the mobile filter modal
     dateLocale: de,
   }}
 />;
