@@ -1,5 +1,6 @@
-/** A filter widget's text-entry control: the search / value input, not a checkbox or the operator select. */
-const TEXT_INPUT = 'input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), textarea';
+/** A filter widget's text-entry control: the search / value input, not a checkbox, slider or the operator select. */
+const NON_TEXT_TYPES = ["checkbox", "radio", "hidden", "range", "button", "submit", "reset", "file", "color"];
+const TEXT_INPUT = `${NON_TEXT_TYPES.reduce((sel, type) => `${sel}:not([type="${type}"])`, "input")}, textarea`;
 
 /**
  * `onOpenAutoFocus` handler for a filter popover. Radix focuses the first
