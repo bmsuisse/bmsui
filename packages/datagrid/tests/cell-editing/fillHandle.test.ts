@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeFillChanges } from "../../src/cell-editing/fillHandle";
+import { canFillSeries, computeFill, computeFillChanges, previewFillValue } from "../../src/cell-editing/fillHandle";
 import type { ColumnDef } from "../../src/column/types";
 import type { CellRange } from "../../src/cell-editing/types";
 
@@ -109,5 +109,136 @@ describe("computeFillChanges", () => {
   it("returns an empty array when the fill didn't actually extend beyond the source (final === source)", () => {
     const range: CellRange = { anchor: { rowId: "r1", columnId: "a" }, focus: { rowId: "r1", columnId: "a" } };
     expect(computeFillChanges(range, range, rowIds, columnIds, columns, getRow)).toEqual([]);
+  });
+});
+
+describe("fill series", () => {
+  interface NumRow {
+    id: string;
+    n: number;
+    label: string;
+  }
+  const numRows: NumRow[] = [
+    { id: "r1", n: 2, label: "x" },
+    { id: "r2", n: 4, label: "y" },
+    { id: "r3", n: 0, label: "z" },
+    { id: "r4", n: 0, label: "z" },
+    { id: "r5", n: 0, label: "z" },
+  ];
+  const numRowIds = numRows.map((r) => r.id);
+  const numById = new Map(numRows.map((r) => [r.id, r]));
+  const getNum = (id: string): NumRow | undefined => numById.get(id);
+  const numColumns: ColumnDef<NumRow>[] = [
+    { id: "n", type: "number", header: "N", accessorKey: "n", editable: true },
+    { id: "label", type: "string", header: "L", accessorKey: "label", editable: true },
+  ];
+  const numColumnIds = numColumns.map((c) => c.id);
+  const range = (r1: string, c1: string, r2: string, c2: string): CellRange => ({
+    anchor: { rowId: r1, columnId: c1 },
+    focus: { rowId: r2, columnId: c2 },
+  });
+
+  it("continues a single number by 1 per row", () => {
+    const changes = computeFillChanges(range("r1", "n", "r1", "n"), range("r1", "n", "r3", "n"), numRowIds, numColumnIds, numColumns, getNum, "series");
+    expect(changes.map((c) => c.value)).toEqual([3, 4]);
+  });
+
+  it("continues a multi-cell numeric source by its own step", () => {
+    const changes = computeFillChanges(range("r1", "n", "r2", "n"), range("r1", "n", "r4", "n"), numRowIds, numColumnIds, numColumns, getNum, "series");
+    expect(changes.map((c) => c.value)).toEqual([6, 8]);
+  });
+
+  it("extends upward with a negative direction", () => {
+    const changes = computeFillChanges(range("r2", "n", "r2", "n"), range("r1", "n", "r2", "n"), numRowIds, numColumnIds, numColumns, getNum, "series");
+    expect(changes.map((c) => c.value)).toEqual([3]);
+  });
+
+  it("falls back to copying for a non-numeric column", () => {
+    const changes = computeFillChanges(range("r1", "label", "r1", "label"), range("r1", "label", "r2", "label"), numRowIds, numColumnIds, numColumns, getNum, "series");
+    expect(changes.map((c) => c.value)).toEqual(["x"]);
+  });
+
+  it("previewFillValue reports the value under the cursor", () => {
+    const preview = previewFillValue(range("r1", "n", "r2", "n"), range("r1", "n", "r5", "n"), numRowIds, numColumnIds, numColumns, getNum, { mode: "series" });
+    expect(preview?.value).toBe(10);
+    expect(previewFillValue(range("r1", "n", "r1", "n"), range("r1", "n", "r1", "n"), numRowIds, numColumnIds, numColumns, getNum)).toBeUndefined();
+  });
+
+  it("canFillSeries is true only for a numeric source", () => {
+    expect(canFillSeries(range("r1", "n", "r1", "n"), numRowIds, numColumnIds, numColumns, getNum)).toBe(true);
+    expect(canFillSeries(range("r1", "label", "r1", "label"), numRowIds, numColumnIds, numColumns, getNum)).toBe(false);
+  });
+});
+
+describe("fill across different column types and validations", () => {
+  interface Mixed {
+    id: string;
+    name: string;
+    qty: number;
+    owner: string;
+    note: string;
+  }
+  const data: Mixed[] = [
+    { id: "r1", name: "42", qty: 1, owner: "alice", note: "" },
+    { id: "r2", name: "x", qty: 2, owner: "bob", note: "" },
+  ];
+  const byId = new Map(data.map((r) => [r.id, r]));
+  const get = (id: string): Mixed | undefined => byId.get(id);
+  const cols: ColumnDef<Mixed>[] = [
+    { id: "name", type: "string", header: "Name", accessorKey: "name", editable: true },
+    { id: "qty", type: "number", header: "Qty", accessorKey: "qty", editable: true, validateEdit: (v) => (typeof v === "number" && v < 0 ? "Must be >= 0" : undefined) },
+    {
+      id: "owner",
+      type: "enum",
+      header: "Owner",
+      accessorKey: "owner",
+      editable: true,
+      options: [
+        { value: "alice", label: "Alice" },
+        { value: "bob", label: "Bob" },
+      ],
+    },
+    { id: "note", type: "string", header: "Note", accessorKey: "note", editable: true, validateEdit: (v) => (v === "" ? "Required" : undefined) },
+  ];
+  const ids = cols.map((c) => c.id);
+  const rids = data.map((r) => r.id);
+  const r = (r1: string, c1: string, r2: string, c2: string): CellRange => ({ anchor: { rowId: r1, columnId: c1 }, focus: { rowId: r2, columnId: c2 } });
+
+  it("converts a string into a number column like a paste would", () => {
+    const { changes, skipped } = computeFill(r("r1", "name", "r1", "name"), r("r1", "name", "r1", "qty"), rids, ids, cols, get);
+    expect(changes).toEqual([{ rowId: "r1", row: data[0], columnId: "qty", previousValue: 1, value: 42 }]);
+    expect(skipped).toEqual([]);
+  });
+
+  it("skips a value that doesn't convert to the target type instead of writing garbage", () => {
+    const { changes, skipped } = computeFill(r("r2", "name", "r2", "name"), r("r2", "name", "r2", "qty"), rids, ids, cols, get);
+    expect(changes).toEqual([]);
+    expect(skipped).toMatchObject([{ rowId: "r2", columnId: "qty", reason: "incompatible-type" }]);
+  });
+
+  it("skips an enum value the target enum doesn't have, and matches by label across types", () => {
+    const toEnum = computeFill(r("r2", "name", "r2", "name"), r("r2", "name", "r2", "owner"), rids, ids, cols, get);
+    expect(toEnum.skipped.find((cell) => cell.columnId === "owner")).toMatchObject({ reason: "incompatible-type" });
+    const labelled: Mixed[] = [{ id: "r1", name: "Bob", qty: 0, owner: "alice", note: "n" }];
+    const byLabel = new Map(labelled.map((x) => [x.id, x]));
+    const matched = computeFill(r("r1", "name", "r1", "name"), r("r1", "name", "r1", "owner"), ["r1"], ids, cols, (id) => byLabel.get(id));
+    expect(matched.changes.map((c) => c.value)).toEqual(["bob"]);
+  });
+
+  it("applies the target column's validateEdit and reports the message", () => {
+    const { changes, skipped } = computeFill(r("r1", "note", "r1", "note"), r("r1", "note", "r2", "note"), rids, ids, cols, get);
+    expect(changes).toEqual([]);
+    expect(skipped).toMatchObject([{ rowId: "r2", columnId: "note", reason: "validation", message: "Required" }]);
+  });
+
+  it("validate: false writes the value despite validateEdit", () => {
+    const { changes } = computeFill(r("r1", "note", "r1", "note"), r("r1", "note", "r2", "note"), rids, ids, cols, get, { validate: false });
+    expect(changes).toHaveLength(1);
+  });
+
+  it("series fill leaves a non-numeric target in a horizontal fill to a plain copy", () => {
+    const { changes } = computeFill(r("r1", "qty", "r1", "qty"), r("r1", "qty", "r1", "owner"), rids, ids, cols, get, { mode: "series" });
+    // "1" doesn't match an enum option, so it's skipped rather than series-filled.
+    expect(changes).toEqual([]);
   });
 });

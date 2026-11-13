@@ -19,17 +19,18 @@ import type {
 import { GridErrorState, GridInlineError, LoadingRows, RefreshBar, resolveStatusLabels, toErrorInfo } from "../components/status";
 import { Fragment, useEffect, useId, useMemo, useRef, useState } from "react";
 import { parseTsv, rangeToTsv } from "../cell-editing/clipboard";
-import { coerceValueForColumn } from "../cell-editing/coerce";
-import { computeFillChanges } from "../cell-editing/fillHandle";
+import { adaptValueForColumn, type SkippedCell } from "../cell-editing/adaptValue";
+import { canFillSeries, computeFill, previewFillValue, type FillMode } from "../cell-editing/fillHandle";
+import { defaultCellEditingLabels, FillOptionsMenu } from "../cell-editing/FillOptionsMenu";
 import { buildIndexMap, normalizeRange } from "../cell-editing/rangeUtils";
 import { AlwaysEditCell, type AtomicGestureContext } from "../cell-editing/renderAlwaysEditCell";
 import { renderCellModeCell } from "../cell-editing/renderCellModeCell";
 import { SelectionOverlay } from "../cell-editing/SelectionOverlay";
-import type { CellAddress, CellChange } from "../cell-editing/types";
+import type { CellAddress, CellChange, CellRange } from "../cell-editing/types";
 import type { CellEditingCellContext } from "../cell-editing/useCellEditingState";
 import { useCellEditingState } from "../cell-editing/useCellEditingState";
 import { useCellSelection } from "../cell-editing/useCellSelection";
-import { alignClassName } from "../column/format";
+import { alignClassName, defaultFormat } from "../column/format";
 import type { ColumnDef } from "../column/types";
 import { getColumnValue, isEditable, isFilterable, isSortable } from "../column/types";
 import { Button } from "../components/ui/button";
@@ -1012,6 +1013,8 @@ export function DataGrid<TRow extends RowData>({
   // stops propagation specifically so this doesn't also start a range-select
   // drag on the cell underneath it).
   const pendingFillCellRef = useRef<{ rowId: string; columnId: string } | null>(null);
+  // The fill that just finished, kept so the "Auto fill options" button can redo it in another mode.
+  const [lastFill, setLastFill] = useState<{ source: CellRange; final: CellRange; mode: FillMode } | undefined>(undefined);
   const fillRafRef = useRef<number | null>(null);
   useEffect(() => {
     if (!cellSelection.isFillDragging) return;
@@ -1030,15 +1033,20 @@ export function DataGrid<TRow extends RowData>({
     function handleMouseUp(): void {
       const result = cellSelection.endFillDrag();
       if (!result || !cellEditingCtx) return;
-      const changes = computeFillChanges(
+      const { changes, skipped } = computeFill(
         result.sourceRange,
         result.finalRange,
         cellEditingRowIds,
         cellEditingColumnIds,
         visibleColumns,
         findRowById,
+        { validate: validateBulk },
       );
-      if (changes.length > 0) applyCellChanges(changes);
+      reportSkipped(skipped);
+      if (changes.length > 0) {
+        applyCellChanges(changes);
+        setLastFill({ source: result.sourceRange, final: result.finalRange, mode: "copy" });
+      }
     }
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mouseup", handleMouseUp);
@@ -1086,6 +1094,58 @@ export function DataGrid<TRow extends RowData>({
 
   function handleFillHandleMouseDown(): void {
     cellSelection.startFillDrag();
+  }
+
+  // The options button only belongs to the selection the fill produced:
+  // selecting anything else, or opening an editor, dismisses it.
+  const selectedFinalOfLastFill =
+    lastFill !== undefined &&
+    cellSelection.selection !== undefined &&
+    cellSelection.selection.anchor.rowId === lastFill.final.anchor.rowId &&
+    cellSelection.selection.anchor.columnId === lastFill.final.anchor.columnId &&
+    cellSelection.selection.focus.rowId === lastFill.final.focus.rowId &&
+    cellSelection.selection.focus.columnId === lastFill.final.focus.columnId;
+  const isEditingAnyCell = cellEditingCtx?.editingCell !== undefined;
+  useEffect(() => {
+    if (lastFill && (!selectedFinalOfLastFill || isEditingAnyCell)) setLastFill(undefined);
+  }, [lastFill, selectedFinalOfLastFill, isEditingAnyCell]);
+
+  const validateBulk = cellEditing?.bulk?.validate ?? true;
+  const fillEnabled = cellEditing?.fill?.enabled ?? true;
+  const fillSeriesEnabled = cellEditing?.fill?.series ?? true;
+  function reportSkipped(skipped: SkippedCell<TRow>[]): void {
+    if (skipped.length > 0) cellEditing?.bulk?.onSkipped?.(skipped);
+  }
+
+  const fillLabels = useMemo(
+    () => ({ ...defaultCellEditingLabels, ...cellEditing?.labels }),
+    [cellEditing?.labels],
+  );
+
+  // What Excel shows next to the cursor while fill-dragging: the value the cell under it would get.
+  const fillTooltip = useMemo(() => {
+    const preview = cellSelection.fillPreviewRange;
+    const base = cellSelection.selection;
+    if (!hasCellEditing || !preview || !base) return undefined;
+    const result = previewFillValue(base, preview, cellEditingRowIds, cellEditingColumnIds, visibleColumns, findRowById, { validate: validateBulk });
+    return result ? defaultFormat(result.column, result.value) : undefined;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `findRowById` isn't memoized (see the fill-drag effect above); the preview range changing is what should recompute this.
+  }, [hasCellEditing, cellSelection.fillPreviewRange, cellSelection.selection, cellEditingRowIds, cellEditingColumnIds, visibleColumns, validateBulk]);
+
+  function applyFillMode(mode: FillMode): void {
+    if (!lastFill || mode === lastFill.mode) return;
+    const { changes, skipped } = computeFill(
+      lastFill.source,
+      lastFill.final,
+      cellEditingRowIds,
+      cellEditingColumnIds,
+      visibleColumns,
+      findRowById,
+      { mode, validate: validateBulk },
+    );
+    reportSkipped(skipped);
+    if (changes.length > 0) applyCellChanges(changes);
+    setLastFill({ ...lastFill, mode });
   }
 
   function handleCellMouseDown(event: ReactMouseEvent<HTMLDivElement>): void {
@@ -1242,17 +1302,25 @@ export function DataGrid<TRow extends RowData>({
     event.clipboardData.setData("text/plain", text);
   }
 
-  /** Builds one `CellChange` for `(row, col)` from `raw` pasted/filled text, or `undefined` to skip that cell — not editable, no longer exists, or `raw` doesn't coerce to that column's type (see `coerceValueForColumn`'s own doc). */
-  function buildCellChange(row: number, col: number, raw: string): CellChange<TRow> | undefined {
+  /** Builds one `CellChange` for `(row, col)` from `raw` pasted text, or `undefined` to skip that cell (recorded in `skipped`) — not editable, `raw` doesn't coerce to that column's type (see `coerceValueForColumn`'s own doc), or its `validateEdit` rejects it. */
+  function buildCellChange(row: number, col: number, raw: string, skipped: SkippedCell<TRow>[]): CellChange<TRow> | undefined {
     const rowId = cellEditingRowIds[row];
     const columnId = cellEditingColumnIds[col];
     if (rowId === undefined || columnId === undefined) return undefined;
     const column = columnById.get(columnId);
     const rowData = findRowById(rowId);
-    if (!column || rowData === undefined || !isEditable(column, rowData)) return undefined;
-    const coerced = coerceValueForColumn(column, raw);
-    if (!coerced) return undefined;
-    return { rowId, row: rowData, columnId, previousValue: getColumnValue(column, rowData), value: coerced.value };
+    if (!column || rowData === undefined) return undefined;
+    if (!isEditable(column, rowData)) {
+      skipped.push({ rowId, columnId, row: rowData, reason: "not-editable", value: raw });
+      return undefined;
+    }
+    // No source column: `raw` is already text, so it always goes through `coerceValueForColumn`.
+    const adapted = adaptValueForColumn(column, rowData, undefined, raw, validateBulk);
+    if (!("value" in adapted)) {
+      skipped.push({ rowId, columnId, row: rowData, reason: adapted.reason, message: adapted.message, value: raw });
+      return undefined;
+    }
+    return { rowId, row: rowData, columnId, previousValue: getColumnValue(column, rowData), value: adapted.value };
   }
 
   function handlePaste(event: ReactClipboardEvent<HTMLDivElement>): void {
@@ -1271,6 +1339,7 @@ export function DataGrid<TRow extends RowData>({
     if (!normalized) return;
     const parsed = parseTsv(text);
     const changes: CellChange<TRow>[] = [];
+    const skipped: SkippedCell<TRow>[] = [];
     // A single copied value fills every selected cell (Excel's own
     // behavior for pasting one value onto a multi-cell selection); a real
     // multi-cell block instead anchors at the selection's top-left corner
@@ -1279,7 +1348,7 @@ export function DataGrid<TRow extends RowData>({
       const raw = parsed[0]![0]!;
       for (let r = normalized.rowStart; r <= normalized.rowEnd; r++) {
         for (let c = normalized.colStart; c <= normalized.colEnd; c++) {
-          const change = buildCellChange(r, c, raw);
+          const change = buildCellChange(r, c, raw, skipped);
           if (change) changes.push(change);
         }
       }
@@ -1287,11 +1356,12 @@ export function DataGrid<TRow extends RowData>({
       for (let ri = 0; ri < parsed.length; ri++) {
         const line = parsed[ri]!;
         for (let ci = 0; ci < line.length; ci++) {
-          const change = buildCellChange(normalized.rowStart + ri, normalized.colStart + ci, line[ci]!);
+          const change = buildCellChange(normalized.rowStart + ri, normalized.colStart + ci, line[ci]!, skipped);
           if (change) changes.push(change);
         }
       }
     }
+    reportSkipped(skipped);
     if (changes.length > 0) applyCellChanges(changes);
   }
 
@@ -1636,7 +1706,8 @@ export function DataGrid<TRow extends RowData>({
           data-testid={testId}
           className={cn(
             "h-full overflow-auto rounded-md border",
-            hasCellEditing && "relative",
+            // `select-none`: dragging a range would otherwise paint the browser's own blue text selection over the cells (copy/paste is handled by the grid, editors stay selectable).
+            hasCellEditing && "relative select-none [&_input]:select-text [&_textarea]:select-text",
           )}
           style={shouldVirtualize ? { maxHeight: virtualize?.maxBodyHeight ?? 480 } : maxHeight !== undefined ? { maxHeight } : undefined}
           // `tabIndex`/`onKeyDown` only under `cellEditing` — the scroll
@@ -1918,8 +1989,25 @@ export function DataGrid<TRow extends RowData>({
             range={cellSelection.effectiveRange}
             fillPreviewRange={cellSelection.fillPreviewRange}
             onFillHandleMouseDown={
-              cellSelection.selection && !cellSelection.isDragging && !cellEditingCtx?.editingCell
+              fillEnabled && cellSelection.selection && !cellSelection.isDragging && !cellEditingCtx?.editingCell
                 ? handleFillHandleMouseDown
+                : undefined
+            }
+            fillTooltip={fillTooltip}
+            fillOptions={
+              lastFill && selectedFinalOfLastFill && !isEditingAnyCell
+                ? {
+                    range: lastFill.final,
+                    content: (
+                      <FillOptionsMenu
+                        mode={lastFill.mode}
+                        canFillSeries={fillSeriesEnabled && canFillSeries(lastFill.source, cellEditingRowIds, cellEditingColumnIds, visibleColumns, findRowById)}
+                        labels={fillLabels}
+                        onSelect={applyFillMode}
+                        onClosed={() => scrollRef.current?.focus()}
+                      />
+                    ),
+                  }
                 : undefined
             }
           />
