@@ -773,9 +773,25 @@ describe("TreeDataGrid (groupBy)", () => {
         groupBy={groupByTier}
       />,
     );
-    const groupHeaderCell = screen.getByText("Senior (2)").closest("td")!;
-    expect(groupHeaderCell).toHaveClass("sticky", "z-20", "bg-muted");
-    expect(groupHeaderCell.style.top).not.toBe("");
+    const groupHeaderRow = screen.getByText("Senior (2)").closest("tr")!;
+    expect(groupHeaderRow).toHaveClass("sticky", "bg-muted");
+    expect(groupHeaderRow.style.top).not.toBe("");
+  });
+
+  it("renders each group in its own <tbody>, so a sticky group header is released by the next one", () => {
+    render(
+      <TreeDataGrid
+        columns={columns}
+        data={groupedTree}
+        getRowId={(row) => row.id}
+        getChildren={(row) => row.children}
+        groupBy={groupByTier}
+      />,
+    );
+    const headers = screen.getAllByTestId(/^group-header-/);
+    expect(headers.length).toBeGreaterThan(1);
+    const bodies = headers.map((header) => header.closest("tbody"));
+    expect(new Set(bodies).size).toBe(headers.length);
   });
 
   it("omits the group-header shading when zebra is false", () => {
@@ -791,7 +807,8 @@ describe("TreeDataGrid (groupBy)", () => {
     );
     const groupHeaderCell = screen.getByText("Senior (2)").closest("td")!;
     expect(groupHeaderCell).not.toHaveClass("bg-muted");
-    expect(groupHeaderCell).toHaveClass("bg-background", "sticky");
+    expect(groupHeaderCell).toHaveClass("bg-background");
+    expect(groupHeaderCell.closest("tr")).toHaveClass("bg-background", "sticky");
   });
 
   it("renders a per-group summary row from a column's summary(roots), computed off root rows only", () => {

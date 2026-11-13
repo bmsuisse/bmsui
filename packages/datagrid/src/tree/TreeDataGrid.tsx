@@ -6,7 +6,7 @@ import {
   ChevronRightIcon,
 } from "@heroicons/react/24/outline";
 import type { CSSProperties, ReactElement, ReactNode } from "react";
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { alignClassName } from "../column/format";
 import type { ColumnDef } from "../column/types";
 import { getColumnValue, isFilterable, isSortable } from "../column/types";
@@ -679,6 +679,70 @@ export function TreeDataGrid<TRow>({
               )}
             </tr>
           </thead>
+          {/* One `<tbody>` per group, with the sticky on the header `<tr>`: a sticky row is bounded by its tbody (a sticky `<td>` is bounded by the whole table),
+              so each group header is pushed out by the next instead of all of them piling up under the column header. */}
+          {groupedBuckets && viewRoots.length > 0 ? (
+            groupedBuckets.map((bucket) => {
+              const groupExpanded = isGroupExpanded(bucket.key);
+              return (
+                <tbody key={`group-${bucket.key}`}>
+                  {/* Own background + 1px overlap under the header: a fractional header height (36.5px) otherwise leaves a sliver where the rows below show through. */}
+                  <tr
+                    data-testid={`group-header-${bucket.key}`}
+                    className={cn("sticky z-[19]", zebra ? "bg-muted" : "bg-background")}
+                    style={{ top: Math.max(0, groupHeaderTop - 1) }}
+                  >
+                    <td
+                      colSpan={totalColumnCount}
+                      className={cn("border-b p-2 font-medium", zebra ? "bg-muted" : "bg-background")}
+                    >
+                      <button
+                        type="button"
+                        className="flex w-full items-center gap-1 text-left"
+                        onClick={() => toggleGroupExpanded(bucket.key)}
+                        aria-expanded={groupExpanded}
+                      >
+                        <ChevronRightIcon
+                          className={`h-4 w-4 shrink-0 transition-transform${groupExpanded ? " rotate-90" : ""}`}
+                          aria-hidden
+                        />
+                        {renderGroupHeader
+                          ? renderGroupHeader(bucket.key, bucket.roots, groupExpanded)
+                          : `${bucket.key} (${bucket.roots.length})`}
+                      </button>
+                    </td>
+                  </tr>
+                  {/* Not sticky, unlike the label row above — scrolls away
+                      with this group's own rows. Rendered regardless of
+                      `groupExpanded`, same as `<DataGrid>`'s own group
+                      summary row: a collapsed group's subtotal is often
+                      the whole reason to collapse it. */}
+                  {hasColumnSummary && (
+                    <tr
+                      data-testid={`group-summary-${bucket.key}`}
+                      className="border-b border-border divide-x divide-border"
+                    >
+                      {showSelectionColumn && (
+                        <td
+                          className={cn("p-2", zebra ? "bg-muted" : "bg-background")}
+                          style={{ width: SELECTION_COLUMN_WIDTH }}
+                        />
+                      )}
+                      {renderGroupSummaryCells(bucket.roots)}
+                      {showRowActionsColumn && (
+                        <td className={cn("p-2", zebra ? "bg-muted" : "bg-background")} aria-hidden />
+                      )}
+                    </tr>
+                  )}
+                  {groupExpanded &&
+                    (() => {
+                      const startIndex = groupedRender?.startIndexByBucket.get(bucket.key) ?? 0;
+                      return bucket.flatRows.map((flatRow, i) => renderRow(flatRow, startIndex + i));
+                    })()}
+                </tbody>
+              );
+            })
+          ) : (
           <tbody>
             {viewRoots.length === 0 ? (
               <tr>
@@ -692,66 +756,6 @@ export function TreeDataGrid<TRow>({
                   )}
                 </td>
               </tr>
-            ) : groupedBuckets ? (
-              groupedBuckets.map((bucket) => {
-                const groupExpanded = isGroupExpanded(bucket.key);
-                return (
-                  <Fragment key={`group-${bucket.key}`}>
-                    <tr data-testid={`group-header-${bucket.key}`}>
-                      <td
-                        colSpan={totalColumnCount}
-                        className={cn(
-                          "sticky z-20 border-b p-2 font-medium",
-                          zebra ? "bg-muted" : "bg-background",
-                        )}
-                        style={{ top: groupHeaderTop }}
-                      >
-                        <button
-                          type="button"
-                          className="flex w-full items-center gap-1 text-left"
-                          onClick={() => toggleGroupExpanded(bucket.key)}
-                          aria-expanded={groupExpanded}
-                        >
-                          <ChevronRightIcon
-                            className={`h-4 w-4 shrink-0 transition-transform${groupExpanded ? " rotate-90" : ""}`}
-                            aria-hidden
-                          />
-                          {renderGroupHeader
-                            ? renderGroupHeader(bucket.key, bucket.roots, groupExpanded)
-                            : `${bucket.key} (${bucket.roots.length})`}
-                        </button>
-                      </td>
-                    </tr>
-                    {/* Not sticky, unlike the label row above — scrolls away
-                        with this group's own rows. Rendered regardless of
-                        `groupExpanded`, same as `<DataGrid>`'s own group
-                        summary row: a collapsed group's subtotal is often
-                        the whole reason to collapse it. */}
-                    {hasColumnSummary && (
-                      <tr
-                        data-testid={`group-summary-${bucket.key}`}
-                        className="border-b border-border divide-x divide-border"
-                      >
-                        {showSelectionColumn && (
-                          <td
-                            className={cn("p-2", zebra ? "bg-muted" : "bg-background")}
-                            style={{ width: SELECTION_COLUMN_WIDTH }}
-                          />
-                        )}
-                        {renderGroupSummaryCells(bucket.roots)}
-                        {showRowActionsColumn && (
-                          <td className={cn("p-2", zebra ? "bg-muted" : "bg-background")} aria-hidden />
-                        )}
-                      </tr>
-                    )}
-                    {groupExpanded &&
-                      (() => {
-                        const startIndex = groupedRender?.startIndexByBucket.get(bucket.key) ?? 0;
-                        return bucket.flatRows.map((flatRow, i) => renderRow(flatRow, startIndex + i));
-                      })()}
-                  </Fragment>
-                );
-              })
             ) : shouldVirtualize ? (
               <>
                 {paddingTop > 0 && (
@@ -775,6 +779,7 @@ export function TreeDataGrid<TRow>({
               flatRows.map((flatRow, index) => renderRow(flatRow, index))
             )}
           </tbody>
+          )}
           {showTotals && hasColumnSummary && (
             // Sticky to the BOTTOM of the scroll container, mirroring the
             // `<thead>`'s own `top-0` stickiness — see `<DataGrid>`'s own
