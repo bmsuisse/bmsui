@@ -135,6 +135,43 @@ test.describe("cellEditing — true spreadsheet editing", () => {
 
     await expect(cell(page, "2", "owner")).toHaveText("Alice");
   });
+
+  test("opening an enum editor keeps the row height and the selection overlay on the cell", async ({ page }) => {
+    const owner = cell(page, "3", "owner");
+    const before = await owner.boundingBox();
+    await owner.click();
+    await expect(page.getByTestId("edit-3-owner")).toBeVisible();
+    const after = await owner.boundingBox();
+    const overlay = await page.getByTestId("cell-selection-overlay").boundingBox();
+    if (!before || !after || !overlay) throw new Error("cell or overlay not visible");
+    expect(after.height).toBe(before.height);
+    expect(Math.abs(overlay.x - after.x)).toBeLessThan(1.5);
+    expect(Math.abs(overlay.width - after.width)).toBeLessThan(1.5);
+  });
+
+  test("fill drag shows the value in a tooltip; Auto fill options switches copy to a series", async ({ page }) => {
+    await cell(page, "1", "hours").click({ modifiers: ["Shift"] });
+    const handleBox = await page.getByTestId("cell-fill-handle").boundingBox();
+    const targetBox = await cell(page, "4", "hours").boundingBox();
+    if (!handleBox || !targetBox) throw new Error("fill handle or target cell not visible");
+
+    await page.mouse.move(handleBox.x + handleBox.width / 2, handleBox.y + handleBox.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + targetBox.height / 2, { steps: 5 });
+    await expect(page.getByTestId("cell-fill-tooltip")).toHaveText("6");
+    await page.mouse.up();
+    await expect(page.getByTestId("cell-fill-tooltip")).not.toBeVisible();
+    await expect(cell(page, "4", "hours")).toHaveText("6");
+
+    await page.getByTestId("cell-fill-options").click();
+    await page.getByTestId("cell-fill-option-series").click();
+    await expect(cell(page, "2", "hours")).toHaveText("7");
+    await expect(cell(page, "4", "hours")).toHaveText("9");
+
+    // Selecting something else dismisses the button.
+    await cell(page, "5", "title").click({ modifiers: ["Shift"] });
+    await expect(page.getByTestId("cell-fill-options")).not.toBeVisible();
+  });
 });
 
 // Regression coverage for a real browser-only bug (jsdom can't reproduce

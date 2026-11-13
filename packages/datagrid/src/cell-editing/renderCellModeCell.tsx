@@ -133,8 +133,12 @@ export function renderCellModeCell<TRow>(
     else ctx!.onCommitEdit(row, value);
   }
 
+  // A single-line editor (`h-8`, 32px) is taller than a line of static text
+  // (20px) — the -my-1.5 pulls it into the cell's own padding so opening it
+  // doesn't grow the row. A multiline textarea may legitimately grow.
+  const isMultiline = column.type === "string" && column.multiline;
   return (
-    <div onKeyDown={handleKeyDown} onBlur={handleBlur}>
+    <div className={isMultiline ? undefined : "-my-1.5"} onKeyDown={handleKeyDown} onBlur={handleBlur}>
       {editor}
     </div>
   );
