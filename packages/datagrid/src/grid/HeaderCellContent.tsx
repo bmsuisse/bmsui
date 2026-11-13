@@ -97,8 +97,8 @@ export function HeaderCellContent<TRow>({
             >
               <DialogTitle>{filterLabel}</DialogTitle>
               <DialogDescription className="sr-only">{filterLabel}</DialogDescription>
-              {/* Widgets carry popover-era fixed widths; in the modal they fill it instead. */}
-              <div className="mt-4 [&>*]:w-full! [&>*]:max-w-none!">{renderFilter()}</div>
+              {/* Widgets carry popover-era fixed widths; in the modal they fill it instead (the widget root, and the capped panel inside it). */}
+              <div className="mt-4 [&>*]:w-full! [&>*]:max-w-none! [&>*>*]:max-w-none!">{renderFilter()}</div>
               <DialogFooter className="mt-4">
                 <DialogClose asChild>
                   <Button type="button" data-testid={`filter-done-${column.id}`}>
