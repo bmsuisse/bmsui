@@ -1287,6 +1287,7 @@ const CELL_EDITING_TASKS: CellEditingTask[] = [
 function CellEditingDemo(): ReactElement {
   const [tasks, setTasks] = useState(CELL_EDITING_TASKS);
   const [alwaysEdit, setAlwaysEdit] = useState(false);
+  const [skippedNote, setSkippedNote] = useState("");
 
   const cellEditingColumns: ColumnDef<CellEditingTask>[] = [
     // Not `editable` — selectable/copyable like any other cell, but never
@@ -1303,7 +1304,14 @@ function CellEditingDemo(): ReactElement {
       validateEdit: (value) => (typeof value === "string" && value.trim() === "" ? "Title is required" : undefined),
     },
     { id: "owner", type: "enum", header: "Owner", accessorKey: "owner", editable: true, options: TASK_OWNERS },
-    { id: "hours", type: "number", header: "Est. hours", accessorKey: "hours", editable: true },
+    {
+      id: "hours",
+      type: "number",
+      header: "Est. hours",
+      accessorKey: "hours",
+      editable: true,
+      validateEdit: (value) => (typeof value === "number" && value < 0 ? "Hours can't be negative" : undefined),
+    },
     { id: "done", type: "boolean", header: "Done", accessorKey: "done", editable: true },
   ];
 
@@ -1317,6 +1325,7 @@ function CellEditingDemo(): ReactElement {
         cells. The ID column isn't `editable` — it's still selectable and copyable, just never
         opens an editor. Every change applies immediately — no Save button.
       </p>
+      {skippedNote && <p data-testid="cell-editing-skipped" className="mb-2 text-sm text-destructive">{skippedNote}</p>}
       <label className="mb-2 flex items-center gap-2 text-sm">
         <input type="checkbox" checked={alwaysEdit} onChange={(e) => setAlwaysEdit(e.target.checked)} />
         <code>cellEditing.alwaysEdit</code> — every editable cell shows its editor all the time,
@@ -1330,7 +1339,14 @@ function CellEditingDemo(): ReactElement {
         showPagination={false}
         cellEditing={{
           alwaysEdit,
+          // Paste/fill convert each value to the target column's type and run its
+          // `validateEdit`; cells that can't take the value are left alone and reported here.
+          bulk: {
+            onSkipped: (skipped) =>
+              setSkippedNote(`${skipped.length} cell${skipped.length === 1 ? "" : "s"} skipped: ${[...new Set(skipped.map((s) => s.reason))].join(", ")}`),
+          },
           onCellsChange: (changes) => {
+            setSkippedNote("");
             // A paste or fill-drag spanning multiple columns for the same
             // row produces multiple entries sharing one rowId — merge ALL
             // of them per row (not just the first, `.find()`'s own result)

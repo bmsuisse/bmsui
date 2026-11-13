@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
-import type { CellChange, ColumnDef, StringColumn } from "../../src";
+import type { CellChange, CellEditingOptions, ColumnDef, StringColumn } from "../../src";
 import { DataGrid } from "../../src/grid/DataGrid";
 
 interface Row {
@@ -191,11 +191,13 @@ function CellEditingGrid({
   columnsOverride,
   alwaysEdit,
   disabled,
+  bulk,
 }: {
   onCellsChange?: (changes: CellChange<EditableRow>[]) => void;
   columnsOverride?: ColumnDef<EditableRow>[];
   alwaysEdit?: boolean;
   disabled?: boolean;
+  bulk?: CellEditingOptions<EditableRow>["bulk"];
 }): ReactElement {
   const [data, setData] = useState(editableRows);
   return (
@@ -207,6 +209,7 @@ function CellEditingGrid({
       cellEditing={{
         alwaysEdit,
         disabled,
+        bulk,
         onCellsChange: (changes) => {
           onCellsChange?.(changes);
           setData((prev) =>
@@ -425,6 +428,30 @@ describe("DataGrid cellEditing — clipboard", () => {
     const changes = onCellsChange.mock.calls[0]![0] as CellChange<EditableRow>[];
     expect(changes).toEqual([{ rowId: "1", row: editableRows[0], columnId: "name", previousValue: "Charlie", value: "Bob" }]);
     expect(screen.getByTestId("cell-1-status")).toHaveTextContent("Pending"); // untouched
+  });
+
+  it("skips a pasted value the target column's validateEdit rejects, and reports it via bulk.onSkipped", () => {
+    const onCellsChange = vi.fn();
+    const onSkipped = vi.fn();
+    const { container } = render(<CellEditingGrid onCellsChange={onCellsChange} bulk={{ onSkipped }} />);
+    fireEvent.mouseDown(editableCellAt(container, "1", "name"), { shiftKey: true });
+    fireEvent.mouseUp(window);
+
+    fireEvent.paste(editableCellAt(container, "1", "name"), { clipboardData: mockClipboardData("   ") });
+    expect(onCellsChange).not.toHaveBeenCalled();
+    expect(onSkipped).toHaveBeenCalledWith([
+      expect.objectContaining({ rowId: "1", columnId: "name", reason: "validation", message: "Name is required" }),
+    ]);
+  });
+
+  it("bulk.validate: false lets a paste through despite validateEdit", () => {
+    const onCellsChange = vi.fn();
+    const { container } = render(<CellEditingGrid onCellsChange={onCellsChange} bulk={{ validate: false }} />);
+    fireEvent.mouseDown(editableCellAt(container, "1", "name"), { shiftKey: true });
+    fireEvent.mouseUp(window);
+
+    fireEvent.paste(editableCellAt(container, "1", "name"), { clipboardData: mockClipboardData("   ") });
+    expect(onCellsChange).toHaveBeenCalledTimes(1);
   });
 
   it("does nothing on paste when no cell is selected", () => {

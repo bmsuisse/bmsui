@@ -1,9 +1,14 @@
 import type { CellAddress, CellRange } from "./types";
 
-/** Maps each id to its position in `ids` — built once per (rowIds|columnIds) identity change, then reused for every lookup during a drag, rather than an O(n) `indexOf` per cell per mousemove. */
+const indexMapCache = new WeakMap<string[], Map<string, number>>();
+
+/** Maps each id to its position in `ids`. Cached per array identity (callers pass the grid's memoized id arrays and never mutate them), so a drag or a per-render lookup doesn't rebuild an O(n) map each time. The returned map is shared — treat it as read-only. */
 export function buildIndexMap(ids: string[]): Map<string, number> {
+  const cached = indexMapCache.get(ids);
+  if (cached) return cached;
   const map = new Map<string, number>();
   ids.forEach((id, index) => map.set(id, index));
+  indexMapCache.set(ids, map);
   return map;
 }
 

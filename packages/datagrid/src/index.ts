@@ -86,7 +86,11 @@ export { renderCellModeCell } from "./cell-editing/renderCellModeCell";
 export { SelectionOverlay } from "./cell-editing/SelectionOverlay";
 export { coerceValueForColumn } from "./cell-editing/coerce";
 export { parseTsv, rangeToTsv } from "./cell-editing/clipboard";
-export { computeFillChanges } from "./cell-editing/fillHandle";
+export type { FillMode, FillOptions, FillResult } from "./cell-editing/fillHandle";
+export type { SkipReason, SkippedCell } from "./cell-editing/adaptValue";
+export { computeFill, computeFillChanges } from "./cell-editing/fillHandle";
+export type { CellEditingLabels } from "./cell-editing/FillOptionsMenu";
+export { defaultCellEditingLabels } from "./cell-editing/FillOptionsMenu";
 
 // --- column selector -----------------------------------------------------
 export type { ColumnVisibility } from "./column-selector/types";

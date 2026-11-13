@@ -1,3 +1,6 @@
+import type { SkippedCell } from "./adaptValue";
+import type { CellEditingLabels } from "./FillOptionsMenu";
+
 /**
  * Identifies one cell by stable row id + column id — never by DOM node or
  * virtualization index, so a selection/edit survives a virtualized row
@@ -70,4 +73,25 @@ export interface CellEditingOptions<TRow> {
    * through to `onCellsChange` on every keystroke. Defaults to false.
    */
   alwaysEdit?: boolean;
+  /** Overrides the strings of the fill-drag's "Auto fill options" button and menu (e.g. to translate them). */
+  labels?: Partial<CellEditingLabels>;
+  /** The fill handle (drag a selection's corner to fill adjacent cells). */
+  fill?: {
+    /** Shows the fill handle. Defaults to true. */
+    enabled?: boolean;
+    /** Offers "Fill series" next to "Copy cells" after a fill, for numeric sources. Defaults to true. */
+    series?: boolean;
+  };
+  /**
+   * How paste and fill treat a target cell that can't take the value — a
+   * different column type, an enum option that doesn't exist, a value its
+   * `validateEdit` rejects. Such cells are always left untouched; this only
+   * configures the checking and the reporting.
+   */
+  bulk?: {
+    /** Run each target column's `validateEdit` before writing a pasted/filled value. Defaults to true. */
+    validate?: boolean;
+    /** Called once per paste/fill with every cell that was left untouched and why — e.g. to show a toast "3 cells skipped". */
+    onSkipped?: (skipped: SkippedCell<TRow>[]) => void;
+  };
 }

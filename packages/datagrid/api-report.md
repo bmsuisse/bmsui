@@ -28,7 +28,7 @@ function NumberComparisonFilter<TRow>(props: FilterWidgetProps<NumberColumn<TRow
 function NumberEditor<TRow>(props: EditWidgetProps<NumberColumn<TRow>>): ReactElement
 function NumberHistogramFilter<TRow>(props: NumberHistogramFilterProps<TRow>): ReactElement
 function NumberRangeFilter<TRow>(props: FilterWidgetProps<NumberColumn<TRow>> & { bare?: boolean }): ReactElement
-function SelectionOverlay(props: { containerRef: { current: HTMLDivElement | null }; range: CellRange | undefined; fillPreviewRange?: CellRange | undefined; onFillHandleMouseDown?: (event: MouseEvent<HTMLDivElement>) => void }): ReactElement | null
+function SelectionOverlay(props: { containerRef: { current: HTMLDivElement | null }; range: CellRange | undefined; fillPreviewRange?: CellRange | undefined; onFillHandleMouseDown?: (event: MouseEvent<HTMLDivElement>) => void; fillTooltip?: string | undefined; fillOptions?: { range: CellRange; content: ReactNode } | undefined }): ReactElement | null
 function StringEditor<TRow>(props: EditWidgetProps<StringColumn<TRow>>): ReactElement
 function StringFilter<TRow>(props: FilterWidgetProps<StringColumn<TRow>> & { bare?: boolean }): ReactElement
 function TreeDataGrid<TRow>(props: TreeDataGridProps<TRow>): ReactElement
@@ -50,7 +50,7 @@ function useTreeState<TRow>(props: UseTreeStateOptions<TRow>): TreeStateControll
 function useVisibleColumns<TRow>(columns: ColumnDef<TRow>[], columnVisibility: ColumnVisibility | undefined, columnOrder?: readonly string[]): ColumnDef<TRow>[]
 ```
 
-## Functions (56)
+## Functions (57)
 
 ```text
 function alignClassName<TRow>(column: ColumnDef<TRow>): string
@@ -61,7 +61,8 @@ function canHideGroup<TRow>(columns: readonly ColumnDef<TRow>[], visibility: Col
 function cellsInRange(range: CellRange, rowIds: string[], columnIds: string[], rowIndex: Map<string, number>, columnIndex: Map<string, number>): CellAddress[]
 function clearPersistedVisibility(persistKey: string): void
 function coerceValueForColumn<TRow>(column: ColumnDef<TRow>, raw: string): { value: unknown } | undefined
-function computeFillChanges<TRow>(sourceRange: CellRange, finalRange: CellRange, rowIds: string[], columnIds: string[], columns: ColumnDef<TRow>[], getRow: (rowId: string) => TRow | undefined): CellChange<TRow>[]
+function computeFill<TRow>(sourceRange: CellRange, finalRange: CellRange, rowIds: string[], columnIds: string[], columns: ColumnDef<TRow>[], getRow: (rowId: string) => TRow | undefined, props?: FillOptions): FillResult<TRow>
+function computeFillChanges<TRow>(sourceRange: CellRange, finalRange: CellRange, rowIds: string[], columnIds: string[], columns: ColumnDef<TRow>[], getRow: (rowId: string) => TRow | undefined, mode?: FillMode): CellChange<TRow>[]
 function countVisible<TRow>(columns: readonly ColumnDef<TRow>[], visibility: ColumnVisibility): number
 function decodeGridStateSearch(search: Record<string, unknown>, prefix?: string): Pick<GridState, "filter" | "sort">
 function defaultAlign<TRow>(column: ColumnDef<TRow>): ColumnAlign
@@ -111,16 +112,17 @@ function validateGridStateSearch<P extends string = "">(search: Record<string, u
 function writePersistedColumnSizing(persistKey: string, sizing: Record<string, number>): void
 ```
 
-## Constants (4)
+## Constants (5)
 
 ```text
 const FILTER_OPERATORS: readonly FilterOperator[]
 const UNARY_OPERATORS: ReadonlySet<FilterOperator>
+const defaultCellEditingLabels: CellEditingLabels
 const defaultFilterLabels: FilterLabels
 const defaultGridStatusLabels: GridStatusLabels
 ```
 
-## Interfaces (48)
+## Interfaces (52)
 
 ```text
 interface ActiveFilterBarProps<TRow>
@@ -180,9 +182,16 @@ interface CellEditingCellContext<TRow>
   onCommitValue: (row: TRow, previousValue: unknown, value: unknown) => void
   onSetError: (rowId: string, columnId: string, message: string | undefined) => void
   resolveValue: (rowId: string, columnId: string, rawValue: unknown) => unknown
+interface CellEditingLabels
+  copyCells: string
+  fillOptions: string
+  fillSeries: string
 interface CellEditingOptions<TRow>
   alwaysEdit?: boolean
+  bulk?: { validate?: boolean; onSkipped?: (skipped: SkippedCell<TRow>[]) => void }
   disabled?: boolean
+  fill?: { enabled?: boolean; series?: boolean }
+  labels?: Partial<CellEditingLabels>
   onCellsChange: (changes: CellChange<TRow>[]) => void | Promise<void>
 interface CellEditingState<TRow>
   applyChanges: (changes: CellChange<TRow>[]) => void
@@ -329,6 +338,12 @@ interface ErrorInfo
   title?: string
 interface FacetOption extends EnumOption
   count: number
+interface FillOptions
+  mode?: FillMode
+  validate?: boolean
+interface FillResult<TRow>
+  changes: CellChange<TRow>[]
+  skipped: SkippedCell<TRow>[]
 interface FilterDescription
   label: string
   operator: string
@@ -458,6 +473,13 @@ interface PersistedColumnSizing
   reset: () => void
 interface ResolvedMenuItem<TRow> extends MenuItem<TRow>
   isDisabled: boolean
+interface SkippedCell<TRow>
+  columnId: string
+  message?: string
+  reason: SkipReason
+  row: TRow
+  rowId: string
+  value: unknown
 interface SortDescriptor
   dir: "asc" | "desc"
   field: string
@@ -530,7 +552,7 @@ interface UseTreeStateOptions<TRow> extends TreeAccessors<TRow>
   onLoadChildren?: (row: TRow) => Promise<TRow[]>
 ```
 
-## Types (17)
+## Types (19)
 
 ```text
 type BooleanColumn<TRow> = BaseColumn<TRow> & {…}
@@ -547,6 +569,7 @@ type EnumColumn<TRow> = BaseColumn<TRow> & {…}
 type EnumFilterOption = EnumOption & {…}
   count?: number
 type ErrorInput = ErrorInfo | Error | string | null | undefined | false
+type FillMode = "copy" | "series"
 type FilterOperator = "eq" | "neq" | "lt" | "lte" | "gt" | "gte" | "in" | "notIn" | "contains" | "doesNotContain" | "startsWith" | "endsWith" | "isEmpty" | "isNotEmpty" | "isNull" | "isNotNull" | "between"
 type FilterTuple = [field: string, operator: FilterOperator, value?: unknown, ignoreCase?: 1]
 type GridStateSearch<P extends string = ""> = { [K in `${P}f`]?: FilterTuple[] } & { [K in `${P}s`]?: SortTuple[] }
@@ -558,6 +581,7 @@ type NumberHistogramFilterProps<TRow> = FilterWidgetProps<NumberColumn<TRow>> & 
   bare?: boolean
   buckets?: number
   format?: (value: number) => string
+type SkipReason = "not-editable" | "incompatible-type" | "validation"
 type SortTuple = [field: string, dir: "asc" | "desc"]
 type StringColumn<TRow> = BaseColumn<TRow> & {…}
   multiline?: boolean
