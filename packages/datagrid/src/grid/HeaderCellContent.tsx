@@ -64,13 +64,13 @@ export function HeaderCellContent<TRow>({
             <Button
               variant="ghost"
               size="icon"
-              className="group data-[state=open]:bg-accent"
+              className="group data-[state=open]:bg-primary/15 data-[state=open]:ring-1 data-[state=open]:ring-primary/50"
               data-testid={`filter-trigger-${column.id}`}
               aria-label={labels.filterAriaLabel(column.header)}
             >
               <FunnelIcon
                 className={cn(
-                  "h-3 w-3 group-data-[state=open]:text-primary group-data-[state=open]:opacity-100",
+                  "h-3 w-3 group-data-[state=open]:text-foreground group-data-[state=open]:opacity-100",
                   filterActive ? "opacity-100 text-primary" : "opacity-40",
                 )}
                 aria-hidden

@@ -158,7 +158,7 @@ describe("DataGrid (client mode)", () => {
     await userEvent.click(trigger);
 
     expect(trigger).toHaveAttribute("data-state", "open");
-    expect(trigger).toHaveClass("data-[state=open]:bg-accent");
+    expect(trigger).toHaveClass("data-[state=open]:bg-primary/15");
     expect(await screen.findByPlaceholderText(/name/i)).toHaveFocus();
   });
 
