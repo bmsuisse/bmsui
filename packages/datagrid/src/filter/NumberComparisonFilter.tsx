@@ -12,6 +12,7 @@ import { isNumberPair } from "./numberRangeShared";
 import type { FilterDescriptor, FilterOperator } from "./types";
 import type { FilterLabels } from "./labels";
 import { useFilterLabels } from "./labels";
+import { focusFirstTextInput } from "./focus";
 import type { FilterWidgetProps } from "./widget-types";
 
 type NumberOperator = "eq" | "neq" | "gt" | "gte" | "lt" | "lte" | "between";
@@ -231,7 +232,7 @@ export function NumberComparisonFilter<TRow>({
           {isFiltered && <span className="truncate">{summary}</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-3">{panel}</PopoverContent>
+      <PopoverContent className="w-auto p-3" onOpenAutoFocus={focusFirstTextInput}>{panel}</PopoverContent>
     </Popover>
   );
 }

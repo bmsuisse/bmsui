@@ -15,6 +15,7 @@ import {
 import { cn } from "../lib/utils";
 import type { FilterOperator } from "./types";
 import { useFilterLabels } from "./labels";
+import { focusFirstTextInput } from "./focus";
 import type { FilterWidgetProps } from "./widget-types";
 
 interface StringOperatorOption {
@@ -129,7 +130,7 @@ export function StringFilter<TRow>({
           {isFiltered && <span className="truncate">{text}</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-3">{panel}</PopoverContent>
+      <PopoverContent className="w-auto p-3" onOpenAutoFocus={focusFirstTextInput}>{panel}</PopoverContent>
     </Popover>
   );
 }

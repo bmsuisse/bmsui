@@ -30,6 +30,14 @@ describe("StringFilter: trigger summary", () => {
 });
 
 describe("StringFilter", () => {
+  it("focuses the text input, not the operator select, when the popover opens", async () => {
+    render(<StringFilter column={column} value={undefined} onChange={vi.fn()} />);
+
+    await userEvent.click(screen.getByRole("button", { name: "Filter Name" }));
+
+    expect(await screen.findByPlaceholderText("Filter name...")).toHaveFocus();
+  });
+
   it("emits a contains filter as the user types", async () => {
     const onChangeSpy = vi.fn();
     render(<ControlledFilter<StringColumn<Row>> Widget={StringFilter} column={column} onChangeSpy={onChangeSpy} />);

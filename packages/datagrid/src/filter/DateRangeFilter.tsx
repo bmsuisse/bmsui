@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popove
 import { cn } from "../lib/utils";
 import type { FilterDescriptor } from "./types";
 import { useFilterLabels } from "./labels";
+import { focusFirstTextInput } from "./focus";
 import type { FilterWidgetProps } from "./widget-types";
 
 interface Preset {
@@ -168,7 +169,7 @@ export function DateRangeFilter<TRow>({
           {isFiltered && <span className="truncate">{summary}</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto max-w-[var(--radix-popover-content-available-width)]">{panel}</PopoverContent>
+      <PopoverContent className="w-auto max-w-[var(--radix-popover-content-available-width)]" onOpenAutoFocus={focusFirstTextInput}>{panel}</PopoverContent>
     </Popover>
   );
 }

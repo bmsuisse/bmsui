@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popove
 import { cn } from "../lib/utils";
 import type { FilterDescriptor } from "./types";
 import { useFilterLabels } from "./labels";
+import { focusFirstTextInput } from "./focus";
 import type { FilterWidgetProps } from "./widget-types";
 
 /** Rows rendered at most; past it a hint asks the user to type to narrow. */
@@ -302,7 +303,7 @@ export function EnumFilter<TRow>({
           {isFiltered && <span className="truncate">{summary}</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-64 p-2">{panel}</PopoverContent>
+      <PopoverContent className="w-64 p-2" onOpenAutoFocus={focusFirstTextInput}>{panel}</PopoverContent>
     </Popover>
   );
 }

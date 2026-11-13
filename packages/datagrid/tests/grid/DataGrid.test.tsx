@@ -148,6 +148,20 @@ describe("DataGrid (client mode)", () => {
     expect(screen.getByTestId("filter-trigger-name")).toBeInTheDocument();
   });
 
+  it("highlights the filter trigger while its popover is open and focuses the filter's text input", async () => {
+    render(
+      <DataGrid columns={columns} dataSource={{ mode: "client", data: rows }} getRowId={(row) => row.id} />,
+    );
+    const trigger = screen.getByTestId("filter-trigger-name");
+    expect(trigger).toHaveAttribute("data-state", "closed");
+
+    await userEvent.click(trigger);
+
+    expect(trigger).toHaveAttribute("data-state", "open");
+    expect(trigger).toHaveClass("data-[state=open]:bg-accent");
+    expect(await screen.findByPlaceholderText(/name/i)).toHaveFocus();
+  });
+
   it("sorts descending first, then ascending, when sortDescFirst is set", async () => {
     const descFirstColumns: ColumnDef<Row>[] = [columns[0]!, { ...columns[1]!, sortDescFirst: true }];
     render(
