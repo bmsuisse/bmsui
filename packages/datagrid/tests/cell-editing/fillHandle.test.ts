@@ -164,9 +164,28 @@ describe("fill series", () => {
     expect(previewFillValue(range("r1", "n", "r1", "n"), range("r1", "n", "r1", "n"), numRowIds, numColumnIds, numColumns, getNum)).toBeUndefined();
   });
 
+  it("keeps decimals of large values intact (no float garbage)", () => {
+    const big: NumRow[] = [
+      { id: "r1", n: 465687819.92, label: "" },
+      { id: "r2", n: 0, label: "" },
+    ];
+    const byBig = new Map(big.map((x) => [x.id, x]));
+    const changes = computeFillChanges(range("r1", "n", "r1", "n"), range("r1", "n", "r2", "n"), ["r1", "r2"], numColumnIds, numColumns, (id) => byBig.get(id), "series");
+    expect(changes.map((c) => c.value)).toEqual([465687820.92]);
+  });
+
+  it("canFillSeries is false when a source column mixes numbers and empty cells", () => {
+    const mixed: NumRow[] = [
+      { id: "r1", n: 1, label: "" },
+      { id: "r2", n: null as unknown as number, label: "" },
+    ];
+    const byMixed = new Map(mixed.map((x) => [x.id, x]));
+    expect(canFillSeries(range("r1", "n", "r2", "n"), range("r1", "n", "r3", "n"), ["r1", "r2", "r3"], numColumnIds, numColumns, (id) => byMixed.get(id))).toBe(false);
+  });
+
   it("canFillSeries is true only for a numeric source", () => {
-    expect(canFillSeries(range("r1", "n", "r1", "n"), numRowIds, numColumnIds, numColumns, getNum)).toBe(true);
-    expect(canFillSeries(range("r1", "label", "r1", "label"), numRowIds, numColumnIds, numColumns, getNum)).toBe(false);
+    expect(canFillSeries(range("r1", "n", "r1", "n"), range("r1", "n", "r3", "n"), numRowIds, numColumnIds, numColumns, getNum)).toBe(true);
+    expect(canFillSeries(range("r1", "label", "r1", "label"), range("r1", "label", "r3", "label"), numRowIds, numColumnIds, numColumns, getNum)).toBe(false);
   });
 });
 

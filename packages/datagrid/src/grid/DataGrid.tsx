@@ -1132,6 +1132,13 @@ export function DataGrid<TRow extends RowData>({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `findRowById` isn't memoized (see the fill-drag effect above); the preview range changing is what should recompute this.
   }, [hasCellEditing, cellSelection.fillPreviewRange, cellSelection.selection, cellEditingRowIds, cellEditingColumnIds, visibleColumns, validateBulk]);
 
+  // Memoized: `canFillSeries` walks the source range, and the options button re-renders with every grid render (scroll included).
+  const lastFillSupportsSeries = useMemo(
+    () => fillSeriesEnabled && lastFill !== undefined && canFillSeries(lastFill.source, lastFill.final, cellEditingRowIds, cellEditingColumnIds, visibleColumns, findRowById),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `findRowById` isn't memoized (see the fill-drag effect above).
+    [fillSeriesEnabled, lastFill, cellEditingRowIds, cellEditingColumnIds, visibleColumns],
+  );
+
   function applyFillMode(mode: FillMode): void {
     if (!lastFill || mode === lastFill.mode) return;
     const { changes, skipped } = computeFill(
@@ -1362,7 +1369,10 @@ export function DataGrid<TRow extends RowData>({
       }
     }
     reportSkipped(skipped);
-    if (changes.length > 0) applyCellChanges(changes);
+    if (changes.length > 0) {
+      setLastFill(undefined);
+      applyCellChanges(changes);
+    }
   }
 
   function renderRow(
@@ -2001,7 +2011,7 @@ export function DataGrid<TRow extends RowData>({
                     content: (
                       <FillOptionsMenu
                         mode={lastFill.mode}
-                        canFillSeries={fillSeriesEnabled && canFillSeries(lastFill.source, cellEditingRowIds, cellEditingColumnIds, visibleColumns, findRowById)}
+                        canFillSeries={lastFillSupportsSeries}
                         labels={fillLabels}
                         onSelect={applyFillMode}
                         onClosed={() => scrollRef.current?.focus()}

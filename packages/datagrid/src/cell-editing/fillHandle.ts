@@ -25,9 +25,9 @@ function isNumericColumn<TRow>(column: ColumnDef<TRow>): boolean {
   return column.type === "number" || column.type === "currency";
 }
 
-/** Rounds away float noise (0.1 + 0.2) so a decimal series stays readable. */
+/** Drops float noise (0.1 + 0.2) to 12 significant digits — relative, so large values keep their decimals. */
 function tidy(value: number): number {
-  return Math.round(value * 1e10) / 1e10;
+  return Number(value.toPrecision(12));
 }
 
 interface Filler<TRow> {
@@ -269,23 +269,39 @@ export function previewFillValue<TRow>(
   return "value" in adapted ? { column, row, value: adapted.value } : undefined;
 }
 
-/** True if at least one source line of `sourceRange` is numeric, i.e. "Fill series" would differ from "Copy cells". */
+/** True if "Fill series" would differ from "Copy cells" for this fill: along the axis it extended (rows → each source column, columns → each source row), some line is entirely finite numbers in numeric columns. */
 export function canFillSeries<TRow>(
   sourceRange: CellRange,
+  finalRange: CellRange,
   rowIds: string[],
   columnIds: string[],
   columns: ColumnDef<TRow>[],
   getRow: (rowId: string) => TRow | undefined,
 ): boolean {
   const columnById = new Map(columns.map((column) => [column.id, column]));
-  const source = normalizeRange(sourceRange, buildIndexMap(rowIds), buildIndexMap(columnIds));
-  if (!source) return false;
-  for (let c = source.colStart; c <= source.colEnd; c++) {
+  const rowIndex = buildIndexMap(rowIds);
+  const columnIndex = buildIndexMap(columnIds);
+  const source = normalizeRange(sourceRange, rowIndex, columnIndex);
+  const final = normalizeRange(finalRange, rowIndex, columnIndex);
+  if (!source || !final) return false;
+  const isNumber = (r: number, c: number): boolean => {
     const column = columnById.get(columnIds[c] ?? "");
-    if (column && isNumericColumn(column)) {
-      const row = getRow(rowIds[source.rowStart] ?? "");
-      if (row !== undefined && typeof getColumnValue(column, row) === "number") return true;
+    const row = getRow(rowIds[r] ?? "");
+    return column !== undefined && row !== undefined && isNumericColumn(column) && Number.isFinite(getColumnValue(column, row));
+  };
+  const vertical = final.rowStart < source.rowStart || final.rowEnd > source.rowEnd;
+  if (vertical) {
+    for (let c = source.colStart; c <= source.colEnd; c++) {
+      let all = true;
+      for (let r = source.rowStart; r <= source.rowEnd && all; r++) all = isNumber(r, c);
+      if (all) return true;
     }
+    return false;
+  }
+  for (let r = source.rowStart; r <= source.rowEnd; r++) {
+    let all = true;
+    for (let c = source.colStart; c <= source.colEnd && all; c++) all = isNumber(r, c);
+    if (all) return true;
   }
   return false;
 }

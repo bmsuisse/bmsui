@@ -290,9 +290,12 @@ export function SelectionOverlay({
         />
       )}
       {fillOptions && optionsRect && !previewRect && (
+        // React events from the (portalled) menu still bubble through here to the grid's own key/mouse handlers (Enter = move down, typing = start editing), which would dismiss the button mid-interaction.
         <div
           className="absolute z-30"
           style={{ top: optionsRect.top + optionsRect.height + 6, left: optionsRect.left + optionsRect.width - 20 }}
+          onKeyDown={(event) => event.stopPropagation()}
+          onMouseDown={(event) => event.stopPropagation()}
         >
           {fillOptions.content}
         </div>
