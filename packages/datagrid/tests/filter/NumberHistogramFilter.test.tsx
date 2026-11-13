@@ -84,6 +84,18 @@ describe("NumberHistogramFilter: bare={false} (own Popover/trigger — for filte
     expect(screen.getByLabelText("Sales maximum")).toHaveValue("500");
   });
 
+  it("focuses the minimum text input, not the range slider, when the popover opens", async () => {
+    render(
+      <ControlledFilter<NumberColumn<Row>, { allValues: (number | null | undefined)[]; buckets?: number; bare: boolean }>
+        Widget={NumberHistogramFilter}
+        column={column}
+        extraProps={{ allValues: fullRange, bare: false }}
+      />,
+    );
+    await openPopover();
+    expect(await screen.findByLabelText("Sales minimum")).toHaveFocus();
+  });
+
   it("emits gte when only the min input is changed", async () => {
     const onChangeSpy = vi.fn();
     render(

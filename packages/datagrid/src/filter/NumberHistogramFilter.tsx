@@ -8,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popove
 import { cn } from "../lib/utils";
 import { descriptorFor, rangeOf } from "./numberRangeShared";
 import { useFilterLabels } from "./labels";
+import { focusFirstTextInput } from "./focus";
 import type { FilterWidgetProps } from "./widget-types";
 
 const BAR_HEIGHT_PX = 56;
@@ -379,7 +380,7 @@ export function NumberHistogramFilter<TRow>({
           {isFiltered && <span className="truncate">{summary}</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80">{panel}</PopoverContent>
+      <PopoverContent className="w-80" onOpenAutoFocus={focusFirstTextInput}>{panel}</PopoverContent>
     </Popover>
   );
 }

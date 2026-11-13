@@ -3,6 +3,7 @@ import type { MouseEvent, ReactElement, ReactNode } from "react";
 import type { ColumnDef } from "../column/types";
 import { Button } from "../components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
+import { focusFirstTextInput } from "../filter/focus";
 import { useFilterLabels } from "../filter/labels";
 import { cn } from "../lib/utils";
 
@@ -63,16 +64,23 @@ export function HeaderCellContent<TRow>({
             <Button
               variant="ghost"
               size="icon"
+              className="group data-[state=open]:bg-primary/15 data-[state=open]:ring-1 data-[state=open]:ring-primary/50"
               data-testid={`filter-trigger-${column.id}`}
               aria-label={labels.filterAriaLabel(column.header)}
             >
               <FunnelIcon
-                className={cn("h-3 w-3", filterActive ? "opacity-100 text-primary" : "opacity-40")}
+                className={cn(
+                  "h-3 w-3 group-data-[state=open]:text-foreground group-data-[state=open]:opacity-100",
+                  filterActive ? "opacity-100 text-primary" : "opacity-40",
+                )}
                 aria-hidden
               />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto max-w-[var(--radix-popover-content-available-width)]">
+          <PopoverContent
+            className="w-auto max-w-[var(--radix-popover-content-available-width)]"
+            onOpenAutoFocus={focusFirstTextInput}
+          >
             {renderFilter()}
           </PopoverContent>
         </Popover>
