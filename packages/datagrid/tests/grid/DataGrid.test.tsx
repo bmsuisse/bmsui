@@ -183,7 +183,7 @@ describe("DataGrid (client mode)", () => {
       expect(within(dialog).getByPlaceholderText(/name/i)).toHaveFocus();
 
       await userEvent.type(within(dialog).getByPlaceholderText(/name/i), "Ali");
-      await userEvent.keyboard("{Escape}");
+      await userEvent.click(within(dialog).getByRole("button", { name: "Done" }));
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
       await waitFor(() => expect(nameCellsInOrder()).toEqual(["Alice"]));
     } finally {

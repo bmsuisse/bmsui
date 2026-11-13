@@ -1291,7 +1291,8 @@ Notes for extending it:
   popover is cramped and jumps around with the on-screen keyboard on a phone.
   Same trigger button (`data-state` highlight, `filter-trigger-<id>` testid),
   same first-text-input autofocus; the dialog is titled with
-  `filterLabels.filterAriaLabel(header)`, so no new label. `filterDisplay: "row"`
+  `filterLabels.filterAriaLabel(header)` and ends in a "Done" close button
+  (`filterLabels.filterDone`, testid `filter-done-<id>`). `filterDisplay: "row"`
   widgets bring their own popover and are unchanged.
 - **Order drives the grids** (0.43.0, [#88](https://github.com/bmsuisse/bmsui/issues/88)):
   `<DataGrid>` and `<TreeDataGrid>` take `columnOrder?: string[]` and apply it

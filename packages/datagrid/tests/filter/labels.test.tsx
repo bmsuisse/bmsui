@@ -30,6 +30,7 @@ const paidColumn: BooleanColumn<Row> = { id: "paid", type: "boolean", header: "P
 
 const DE: Partial<FilterLabels> = {
   filterAriaLabel: (header) => `${header} filtern`,
+  filterDone: "Fertig",
   selectAll: "Alle auswählen",
   searchPlaceholder: () => "Suchen…",
   selectAllOfGroup: (group) => `Alle in ${group} auswählen`,
@@ -44,6 +45,7 @@ describe("defaultFilterLabels", () => {
     expect(defaultFilterLabels.selectAll).toBe("Select all");
     expect(defaultFilterLabels.searchPlaceholder("Status")).toBe("Search status...");
     expect(defaultFilterLabels.filterAriaLabel("Status")).toBe("Filter Status");
+    expect(defaultFilterLabels.filterDone).toBe("Done");
     expect(defaultFilterLabels.stringPlaceholder("Name")).toBe("Filter name...");
     expect(defaultFilterLabels.minimumAriaLabel("Amount")).toBe("Amount minimum");
   });

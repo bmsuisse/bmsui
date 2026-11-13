@@ -19,6 +19,8 @@ import { createContext, useContext, useMemo } from "react";
 export interface FilterLabels {
   /** Accessible name of every filter trigger button (the header funnel icon and each widget's own `bare={false}` trigger). */
   filterAriaLabel: (header: string) => string;
+  /** Close button of the column filter modal shown on mobile (below 768px). */
+  filterDone: string;
 
   // --- EnumFilter ---
   /** EnumFilter search input placeholder. */
@@ -127,6 +129,7 @@ const DEFAULT_OPERATOR_LABELS: Record<FilterOperator, string> = {
 /** English defaults — byte-for-byte the strings every widget rendered before `FilterLabels` existed. */
 export const defaultFilterLabels: FilterLabels = {
   filterAriaLabel: (header) => `Filter ${header}`,
+  filterDone: "Done",
 
   searchPlaceholder: (header) => `Search ${header.toLowerCase()}...`,
   selectAll: "Select all",

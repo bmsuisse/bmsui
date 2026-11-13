@@ -369,6 +369,7 @@ interface FilterLabels
   enumIsAnyOf: string
   enumIsNoneOf: string
   filterAriaLabel: (header: string) => string
+  filterDone: string
   loadFailed: string
   loading: string
   maxPlaceholder: string

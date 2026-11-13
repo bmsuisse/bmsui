@@ -2,7 +2,15 @@ import { BarsArrowDownIcon, BarsArrowUpIcon, FunnelIcon } from "@heroicons/react
 import type { MouseEvent, ReactElement, ReactNode } from "react";
 import type { ColumnDef } from "../column/types";
 import { Button } from "../components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "../components/ui/dialog";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogTitle,
+  DialogTrigger,
+} from "../components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
 import { focusFirstTextInput } from "../filter/focus";
 import { useFilterLabels } from "../filter/labels";
@@ -91,6 +99,13 @@ export function HeaderCellContent<TRow>({
               <DialogDescription className="sr-only">{filterLabel}</DialogDescription>
               {/* Widgets carry popover-era fixed widths; in the modal they fill it instead. */}
               <div className="mt-4 [&>*]:w-full! [&>*]:max-w-none!">{renderFilter()}</div>
+              <DialogFooter className="mt-4">
+                <DialogClose asChild>
+                  <Button type="button" data-testid={`filter-done-${column.id}`}>
+                    {labels.filterDone}
+                  </Button>
+                </DialogClose>
+              </DialogFooter>
             </DialogContent>
           </Dialog>
         ) : (
