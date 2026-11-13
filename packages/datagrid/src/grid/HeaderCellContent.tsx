@@ -6,11 +6,8 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } 
 import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
 import { focusFirstTextInput } from "../filter/focus";
 import { useFilterLabels } from "../filter/labels";
-import { useMediaQuery } from "../hooks/useMediaQuery";
+import { MOBILE_MEDIA_QUERY, useMediaQuery } from "../hooks/useMediaQuery";
 import { cn } from "../lib/utils";
-
-/** Below Tailwind's `md`: a header popover is cramped and keyboard-fragile on a phone, so filters open as a modal. */
-const MOBILE_QUERY = "(max-width: 767px)";
 
 export interface HeaderCellContentProps<TRow> {
   column: ColumnDef<TRow>;
@@ -38,7 +35,7 @@ export function HeaderCellContent<TRow>({
   filterActive = false,
 }: HeaderCellContentProps<TRow>): ReactElement {
   const labels = useFilterLabels();
-  const isMobile = useMediaQuery(MOBILE_QUERY);
+  const isMobile = useMediaQuery(MOBILE_MEDIA_QUERY);
   const headerContent = column.renderHeader ? column.renderHeader(column) : column.header;
   const filterLabel = labels.filterAriaLabel(column.header);
   const filterTrigger = (
@@ -92,7 +89,8 @@ export function HeaderCellContent<TRow>({
             >
               <DialogTitle>{filterLabel}</DialogTitle>
               <DialogDescription className="sr-only">{filterLabel}</DialogDescription>
-              <div className="mt-4 flex justify-center">{renderFilter()}</div>
+              {/* Widgets carry popover-era fixed widths; in the modal they fill it instead. */}
+              <div className="mt-4 [&>*]:w-full! [&>*]:max-w-none!">{renderFilter()}</div>
             </DialogContent>
           </Dialog>
         ) : (

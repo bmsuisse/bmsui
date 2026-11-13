@@ -6,6 +6,7 @@ import type { DateColumn } from "../column/types";
 import { Button } from "../components/ui/button";
 import { Calendar } from "../components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
+import { MOBILE_MEDIA_QUERY, useMediaQuery } from "../hooks/useMediaQuery";
 import { cn } from "../lib/utils";
 import type { FilterDescriptor } from "./types";
 import { useFilterLabels } from "./labels";
@@ -99,6 +100,7 @@ export function DateRangeFilter<TRow>({
   const labels = useFilterLabels(labelOverrides);
   const locale = labels.dateLocale ? { locale: labels.dateLocale } : undefined;
   const range = rangeOf(value);
+  const isMobile = useMediaQuery(MOBILE_MEDIA_QUERY);
 
   function emit(next: DateRange | undefined): void {
     if (!next?.from || !next.to) {
@@ -147,7 +149,7 @@ export function DateRangeFilter<TRow>({
           {labels.dateCustom}
         </Button>
       </div>
-      <Calendar mode="range" selected={range} onSelect={emit} numberOfMonths={2} locale={labels.dateLocale} />
+      <Calendar mode="range" selected={range} onSelect={emit} numberOfMonths={isMobile ? 1 : 2} locale={labels.dateLocale} />
     </div>
   );
 
