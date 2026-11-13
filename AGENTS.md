@@ -671,8 +671,12 @@ logic above, which already had its own extraction). Structure:
 - `packages/ui/.storybook` + `packages/ui/stories/` — Storybook 10
   (`react-vite`, a11y + docs addons, light/dark toolbar toggle that sets `.dark`
   on `<html>`), published at <https://bmsuisse.github.io/bmsui/storybook/> by
-  `pages.yml`. **Every exported component and hook has a story**; the whole
-  library is browsable there. `bun run storybook` / `bun run build-storybook`
+  `pages.yml`. **Every exported component and hook of `@bmsuisse/ui` and
+  `@bmsuisse/datagrid` has a story**; both libraries are browsable there. The
+  data grid's stories live in `packages/ui/stories/datagrid/` (titles
+  `DataGrid/<Topic>`) and import `@bmsuisse/datagrid`, which `.storybook/main.ts`
+  aliases to `packages/datagrid/src` (Tailwind scans it via `@source` in
+  `.storybook/storybook.css`; sample data in `stories/datagrid/sampleData.ts`). `bun run storybook` / `bun run build-storybook`
   in `packages/ui`. Stories import `@bmsuisse/ui` (aliased to `src` in Vite and
   via `paths` in tsconfig). Keep `vite` at `^5` here: vitest's own Vite is 5 and
   a second major breaks the typecheck. (Storybook's Vitest addon, the sidebar
@@ -688,10 +692,11 @@ logic above, which already had its own extraction). Structure:
      `Date.now`/`Math.random`) so screenshots are stable. If TypeScript raises
      TS2742 on the inferred meta type, write `const meta: Meta<typeof X> = ...`
      instead of `satisfies`.
-  2. `tests/stories.test.ts` fails when an exported component/hook is not named
-     in any story. A compound sub-part may be shown inside its parent's story;
-     something with no UI of its own goes in that test's `NOT_STORIED` with a
-     reason (the test also fails when an entry there gains a story).
+  2. `tests/stories.test.ts` fails when an exported component/hook (of either
+     package; datagrid's are read from `packages/datagrid/src/index.ts`) is not
+     named in any story. A compound sub-part may be shown inside its parent's story;
+     something with no UI of its own goes in that test's `NOT_STORIED` /
+     `NOT_STORIED_DATAGRID` with a reason (the test also fails when an entry there gains a story).
   3. A changed prop or state needs its story changed too: stories are the
      visual contract. Renamed export: rename it in the stories.
   4. `bun run build-storybook && bun run test:visual` (CI runs the same, job
