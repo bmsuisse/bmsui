@@ -172,6 +172,11 @@ const PRODUCTS: Product[] = [
 const priceCol: NumberColumn<Product> = { id: "price", type: "number", header: "Price", accessorKey: "price" };
 const ratingCol: NumberColumn<Product> = { id: "rating", type: "number", header: "Rating", accessorKey: "rating" };
 
+const HISTOGRAM_PRICES = [
+  12, 14, 15, 18, 19, 21, 22, 24, 25, 26, 28, 29, 31, 33, 34, 36, 38, 39, 41, 42, 44, 45, 47, 49, 52, 55, 58, 60, 18, 23,
+  27, 35, 40, 48, 95, 210, 280, 340, 450, 620,
+];
+
 export const NumberHistogramPopover: Story = {
   render: () => {
     const [value, setValue] = useState<FilterDescriptor | undefined>();
@@ -182,7 +187,7 @@ export const NumberHistogramPopover: Story = {
           column={priceCol}
           value={value}
           onChange={setValue}
-          allValues={PRODUCTS.map((p) => p.price)}
+          allValues={HISTOGRAM_PRICES}
           format={(v) => `CHF ${v.toLocaleString()}`}
         />
       </Show>
@@ -201,7 +206,7 @@ export const NumberHistogramBare: Story = {
             column={priceCol}
             value={value}
             onChange={setValue}
-            allValues={PRODUCTS.map((p) => p.price)}
+            allValues={HISTOGRAM_PRICES}
           />
         </div>
       </Show>

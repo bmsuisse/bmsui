@@ -12,7 +12,7 @@ export const Default: Story = {
         <CardTitle>Offer 4711</CardTitle>
         <CardDescription>Created yesterday</CardDescription>
       </CardHeader>
-      <CardContent>Three line items, total CHF 1'240.00.</CardContent>
+      <CardContent>Three line items, total CHF{" "}1'240.00.</CardContent>
       <CardFooter className="gap-2">
         <Button size="sm">Open</Button>
         <Button size="sm" variant="outline">Archive</Button>

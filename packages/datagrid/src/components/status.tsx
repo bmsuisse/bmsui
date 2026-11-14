@@ -102,7 +102,7 @@ export function GridErrorState({
       {info.message ? <p className="text-muted-foreground">{info.message}</p> : null}
       {info.details ? (
         <details className="w-full max-w-lg text-left text-xs">
-          <summary className="cursor-pointer select-none underline underline-offset-2">{labels.showDetails}</summary>
+          <summary className="cursor-pointer select-none text-center underline underline-offset-2">{labels.showDetails}</summary>
           <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap break-words rounded bg-muted p-2 text-muted-foreground">
             {info.details}
           </pre>

@@ -137,6 +137,7 @@ logic above, which already had its own extraction). Structure:
   on `#6b90b8`; white was 3.33:1) — consuming apps must mirror it, since
   Calendar's selected day, SearchBar's clear hover and other `bg-accent` fills
   use `text-accent-foreground`/`dark:text-accent-foreground`.
+- `TabsContent` has `mt-2` (ui 0.25.3); override via `className`.
 - `packages/ui/src/patterns/` — components composed on top of the
   primitives, one subfolder per pattern, each addressing a specific
   duplication found in the survey:
@@ -872,6 +873,8 @@ row is **entirely opt-in**: it only appears at all once at least one visible,
 filterable column sets `filterDisplay: "row"`; columns that don't just get an
 empty cell in it, and every other page's `<DataGrid>` keeps rendering with no
 filter row whatsoever.
+
+Header labels (sort button / plain label, both grids) carry `-ml-1` on top of `px-1`, so header text lines up with body cell text (th+8 like td) (0.43.3).
 
 ### `renderHeader` — a rich header for a single column
 

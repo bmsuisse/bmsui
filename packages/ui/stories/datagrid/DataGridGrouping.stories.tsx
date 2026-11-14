@@ -7,7 +7,7 @@ const meta: Meta = { title: "DataGrid/DataGridGrouping", parameters: { layout: "
 export default meta;
 type Story = StoryObj;
 
-const chf = new Intl.NumberFormat("de-CH", { style: "currency", currency: "CHF" });
+const chf = new Intl.NumberFormat("en-US", { style: "currency", currency: "CHF" });
 const sum = (rows: Order[], key: "amount" | "qty") => rows.reduce((total, r) => total + r[key], 0);
 
 const summaryColumns: ColumnDef<Order>[] = orderColumns.map((c) => {

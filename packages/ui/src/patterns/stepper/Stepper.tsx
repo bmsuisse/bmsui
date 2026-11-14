@@ -123,7 +123,7 @@ export function Stepper({
                             : "bg-muted text-muted-foreground",
                       )}
                     >
-                      {done ? <CheckIcon className="h-3 w-3" /> : n}
+                      {done ? <CheckIcon className="h-3 w-3" strokeWidth={2.5} /> : n}
                     </div>
                     <span
                       className={cn(

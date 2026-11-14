@@ -37,7 +37,7 @@ export const Indeterminate: Story = {
 export const Circular: Story = {
   render: () => (
     <div className="flex items-center gap-4">
-      <CircularProgress value={25} showValue />
+      <CircularProgress value={25} size={40} showValue />
       <CircularProgress value={60} tone="success" size={64} showValue />
       <CircularProgress value={90} tone="error" size={48} strokeWidth={6} showValue />
     </div>
