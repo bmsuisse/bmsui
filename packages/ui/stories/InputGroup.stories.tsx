@@ -6,7 +6,7 @@ import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "
 const meta: Meta<typeof InputGroup> = {
   title: "Patterns/InputGroup",
   component: InputGroup,
-  decorators: [(Story) => <div className="w-80"><Story /></div>],
+  decorators: [(Story) => <div className="w-80 max-w-full"><Story /></div>],
 };
 export default meta;
 type Story = StoryObj<typeof InputGroup>;

@@ -146,7 +146,7 @@ function Sidebar(props: SidebarProps): ReactElement
 function SidebarNav(props: SidebarNavProps): ReactElement
 const Skeleton: (props: HTMLAttributes<HTMLDivElement>) => ReactElement
 const Slider: react.ForwardRefExoticComponent<SliderProps & react.RefAttributes<HTMLSpanElement>>
-function Sparkline(props: { data: number[]; color: string }): ReactElement | null
+function Sparkline(props: { data: number[]; color?: string }): ReactElement | null
 function SplitPane(props: SplitPaneProps): ReactElement
 function SplitPanePanel(props: SplitPanePanelProps): ReactElement
 const StatusBadge: (props: StatusBadgeProps) => ReactElement

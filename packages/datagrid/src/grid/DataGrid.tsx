@@ -605,7 +605,7 @@ export function DataGrid<TRow extends RowData>({
       return { className: `sticky z-10 ${bg}`, classNameOdd: `sticky z-10 ${bgOdd}`, style: { left: leftPinnedOffsets.get(column.id), width: columnSize(column.id), minWidth: columnSize(column.id) } };
     }
     if (column.pinned === "right") {
-      return { className: `sticky z-10 ${bg}`, classNameOdd: `sticky z-10 ${bgOdd}`, style: { right: rightPinnedOffsets.get(column.id), width: columnSize(column.id), minWidth: columnSize(column.id) } };
+      return { className: `sticky z-10 border-l border-border ${bg}`, classNameOdd: `sticky z-10 border-l border-border ${bgOdd}`, style: { right: rightPinnedOffsets.get(column.id), width: columnSize(column.id), minWidth: columnSize(column.id) } };
     }
     if (enableColumnResizing) return { style: { width: columnSize(column.id) } };
     return { style: column.width ? { width: column.width } : undefined };
@@ -1715,7 +1715,7 @@ export function DataGrid<TRow extends RowData>({
           ref={scrollRef}
           data-testid={testId}
           className={cn(
-            "h-full overflow-auto rounded-md border",
+            "h-full overflow-auto rounded-md border [container-type:inline-size]",
             // `select-none`: dragging a range would otherwise paint the browser's own blue text selection over the cells (copy/paste is handled by the grid, editors stay selectable).
             hasCellEditing && "relative select-none [&_input]:select-text [&_textarea]:select-text",
           )}
@@ -1954,13 +1954,15 @@ export function DataGrid<TRow extends RowData>({
           <tbody>
             <tr>
               <td colSpan={totalColumnCount} className="p-4 text-center text-muted-foreground">
-                {loading ? (
-                  <LoadingRows label={labels.loading} />
-                ) : hasError ? (
-                  <GridErrorState error={error} onRetry={onRetry} labels={labels} />
-                ) : (
-                  labels.noResults
-                )}
+                <div className="sticky left-4 w-[calc(100cqw-2rem)] max-w-full">
+                  {loading ? (
+                    <LoadingRows label={labels.loading} />
+                  ) : hasError ? (
+                    <GridErrorState error={error} onRetry={onRetry} labels={labels} />
+                  ) : (
+                    labels.noResults
+                  )}
+                </div>
               </td>
             </tr>
           </tbody>

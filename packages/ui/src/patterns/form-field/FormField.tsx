@@ -70,7 +70,7 @@ export function FormField({
       <Label htmlFor={effectiveId}>
         {label}
         {required ? (
-          <span className="text-destructive" aria-hidden="true">
+          <span className="text-red-700 dark:text-red-300" aria-hidden="true">
             {" "}
             *
           </span>
@@ -78,7 +78,7 @@ export function FormField({
       </Label>
       {child}
       {error ? (
-        <p id={messageId} className="text-sm text-destructive">
+        <p id={messageId} className="text-sm text-red-700 dark:text-red-300">
           {error}
         </p>
       ) : description ? (

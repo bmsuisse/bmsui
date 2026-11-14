@@ -57,7 +57,7 @@ export function HeaderCellContent<TRow>({
       <FunnelIcon
         className={cn(
           "h-3 w-3 group-data-[state=open]:text-foreground group-data-[state=open]:opacity-100",
-          filterActive ? "opacity-100 text-primary" : "opacity-40",
+          filterActive ? "opacity-100 text-primary dark:text-ring" : "opacity-60",
         )}
         aria-hidden
       />

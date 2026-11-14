@@ -321,8 +321,8 @@ export const ColumnResizing: Story = {
   render: () => (
     <TreeDataGrid
       columns={[
-        { id: "name", type: "string", header: "Name", accessorKey: "name", width: 260 },
-        { id: "headcount", type: "number", header: "Headcount", accessorKey: "headcount", width: 140 },
+        { id: "name", type: "string", header: "Name", accessorKey: "name", width: 180 },
+        { id: "headcount", type: "number", header: "Headcount", accessorKey: "headcount", width: 110 },
       ] satisfies ColumnDef<DeptRow>[]}
       data={DEPT_TREE}
       getRowId={(row) => row.id}

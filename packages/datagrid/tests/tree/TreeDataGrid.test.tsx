@@ -595,7 +595,7 @@ describe("TreeDataGrid (columnVisibility)", () => {
         columnVisibility={{ id: false }}
       />,
     );
-    const cell = screen.getByText("No results.");
+    const cell = screen.getByText("No results.").closest("td");
     expect(cell).toHaveAttribute("colspan", "1");
   });
 });

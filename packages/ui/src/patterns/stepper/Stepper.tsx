@@ -117,7 +117,7 @@ export function Stepper({
                       className={cn(
                         "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold transition-colors",
                         done
-                          ? "bg-primary/15 text-primary"
+                          ? "bg-primary/15 text-primary dark:text-ring"
                           : active
                             ? "bg-primary text-primary-foreground"
                             : "bg-muted text-muted-foreground",
@@ -131,14 +131,14 @@ export function Stepper({
                         active
                           ? "text-[12px] font-semibold text-foreground"
                           : done
-                            ? "text-[12px] font-medium text-primary"
+                            ? "text-[12px] font-medium text-primary dark:text-ring"
                             : "text-[12px] font-medium text-muted-foreground",
                       )}
                     >
                       {label}
                     </span>
                     {phase && (
-                      <span className="text-[9px] tracking-[0.5px] text-muted-foreground/50 uppercase">
+                      <span className="text-[9px] tracking-[0.5px] text-muted-foreground uppercase">
                         {phase}
                       </span>
                     )}
@@ -147,7 +147,7 @@ export function Stepper({
                     <div
                       className={cn(
                         "mx-1.5 mt-3.5 h-px flex-1 transition-colors",
-                        done ? "bg-primary" : "bg-border",
+                        done ? "bg-primary dark:bg-ring" : "bg-border",
                       )}
                     />
                   )}

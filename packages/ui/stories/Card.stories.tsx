@@ -7,7 +7,7 @@ type Story = StoryObj;
 
 export const Default: Story = {
   render: () => (
-    <Card className="w-80">
+    <Card className="w-80 max-w-full">
       <CardHeader>
         <CardTitle>Offer 4711</CardTitle>
         <CardDescription>Created yesterday</CardDescription>
@@ -22,7 +22,7 @@ export const Default: Story = {
 };
 export const ContentOnly: Story = {
   render: () => (
-    <Card className="w-80">
+    <Card className="w-80 max-w-full">
       <CardContent className="pt-6 text-sm text-muted-foreground">A card with just content.</CardContent>
     </Card>
   ),

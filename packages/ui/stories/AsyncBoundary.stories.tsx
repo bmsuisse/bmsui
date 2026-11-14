@@ -5,7 +5,7 @@ const meta: Meta<typeof AsyncBoundary> = {
   title: "Patterns/AsyncBoundary",
   component: AsyncBoundary,
   args: { children: <p className="text-sm">Loaded content: 42 offers.</p> },
-  decorators: [(Story) => <div className="relative min-h-40 max-w-lg rounded-md border p-4"><Story /></div>],
+  decorators: [(Story) => <div className="relative min-h-40 w-96 max-w-full rounded-md border p-4"><Story /></div>],
 };
 
 export default meta;

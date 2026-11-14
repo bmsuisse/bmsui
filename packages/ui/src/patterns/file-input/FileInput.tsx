@@ -321,7 +321,7 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
           />
         </div>
         {errors.length ? (
-          <ul id={errorId} role="alert" className="grid gap-0.5 text-xs text-destructive">
+          <ul id={errorId} role="alert" className="grid gap-0.5 text-xs text-red-700 dark:text-red-300">
             {errors.map((message) => (
               <li key={message}>{message}</li>
             ))}

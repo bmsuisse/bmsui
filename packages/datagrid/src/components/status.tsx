@@ -59,7 +59,7 @@ export function LoadingRows({ label, rows = 4 }: { label: string; rows?: number 
     <div role="status" aria-busy="true" data-testid="grid-loading-rows" className="flex flex-col gap-2 p-1">
       <span className="sr-only">{label}</span>
       {Array.from({ length: rows }, (_, i) => (
-        <div key={i} className="h-4 animate-pulse rounded-md bg-muted" style={{ width: i === rows - 1 ? "60%" : "100%" }} />
+        <div key={i} className="h-4 animate-pulse rounded-md bg-foreground/10" style={{ width: i === rows - 1 ? "60%" : "100%" }} />
       ))}
     </div>
   );
@@ -74,7 +74,7 @@ export function RefreshBar(props: { "data-testid"?: string }): ReactElement {
       className="pointer-events-none absolute inset-x-0 top-0 z-30 h-0.5 overflow-hidden bg-muted"
       {...props}
     >
-      <div className="h-full w-1/3 animate-pulse bg-primary motion-reduce:animate-none" />
+      <div className="h-full w-1/3 animate-pulse bg-primary dark:bg-ring motion-reduce:animate-none" />
     </div>
   );
 }

@@ -742,6 +742,8 @@ logic above, which already had its own extraction). Structure:
   (no `bmsdna/__init__.py` at the root) — mirrors `bmsdna-devtools` in the
   `devtools` repo. Built with hatchling; see `python/datagrid/pyproject.toml`.
 
+**Dark-mode foreground trap:** `text-primary`/thin `bg-primary` as a foreground needs `dark:text-ring`/`dark:bg-ring` (the dark `--primary` stays navy, ~2:1 on dark surfaces; `--ring` measures 5.6:1).
+
 ### `@bmsuisse/ui` hooks (`packages/ui/src/hooks/`)
 
 Behaviour-only hooks, no styling, React 18 + 19, SSR-safe, no extra
@@ -1394,7 +1396,7 @@ rejection shows `filterLabels.loadFailed` + `retry` instead of an empty histogra
 datagrid package does not depend on `@bmsuisse/ui`, so these are small local copies
 (`src/components/status.tsx`) with the same `ErrorInput` shape — keep the two in sync when
 changing either. Error text uses `text-red-700 dark:text-red-300` (like `AlertBox`), not `text-destructive`,
-which fails WCAG AA as small text.
+which fails WCAG AA as small text. The loading/error/empty block sits in a `sticky left-4 w-[calc(100cqw-2rem)]` wrapper inside the colSpan cell (the scroll container is `[container-type:inline-size]`), so it stays within the visible width on a grid wider than its container (0.43.1).
 
 ### `renderDetail` — expand a row to show more, without `<TreeDataGrid>`
 

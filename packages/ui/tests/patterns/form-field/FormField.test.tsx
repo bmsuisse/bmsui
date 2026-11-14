@@ -41,7 +41,7 @@ describe("FormField", () => {
     );
     const message = screen.getByText("Email is required");
     expect(message).toBeInTheDocument();
-    expect(message).toHaveClass("text-destructive");
+    expect(message).toHaveClass("text-red-700");
   });
 
   it("renders description text instead of an error when there's no error", () => {

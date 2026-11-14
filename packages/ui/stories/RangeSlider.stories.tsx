@@ -9,7 +9,7 @@ const meta: Meta<typeof RangeSlider> = {
   render: (args) => {
     const [value, setValue] = useState<[number, number]>(args.value);
     return (
-      <div className="w-80">
+      <div className="w-80 max-w-full">
         <RangeSlider {...args} value={value} onValueChange={setValue} />
       </div>
     );

@@ -49,7 +49,7 @@ export function DateEditor<TRow>({
       <Input
         type={column.type === "datetime" ? "datetime-local" : "date"}
         step={column.type === "datetime" ? 1 : undefined}
-        className="h-8"
+        className="h-8 min-w-24"
         aria-label={`Edit ${column.header}`}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}

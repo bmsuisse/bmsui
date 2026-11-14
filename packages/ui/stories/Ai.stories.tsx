@@ -60,7 +60,7 @@ export const InFlight: Story = {
   render: () => {
     const [loading, setLoading] = useState(false);
     return (
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3">
         <AiButton
           loading={loading}
           onClick={() => {

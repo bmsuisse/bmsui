@@ -31,7 +31,7 @@ function Shell({ initialCollapsed = false, resizable = false }: { initialCollaps
         onCollapsedChange={setCollapsed}
         resizable={resizable}
         header={(isCollapsed) => <span className="truncate text-sm font-semibold">{isCollapsed ? "D" : "Demo App"}</span>}
-        footer="v0.7.0"
+        footer={(c) => (c ? null : <span className="px-2 text-xs text-muted-foreground">v0.7.0</span>)}
       >
         <NavGroup label="Work">
           {item("overview", Squares2X2Icon, "Overview")}

@@ -457,7 +457,7 @@ describe("DataGrid (columnVisibility)", () => {
     await userEvent.click(screen.getByRole("button", { name: "Filter Name" }));
     await userEvent.type(await screen.findByPlaceholderText("Filter name..."), "zzz-no-match");
 
-    const cell = screen.getByText("No results.");
+    const cell = screen.getByText("No results.").closest("td");
     expect(cell).toHaveAttribute("colspan", "1");
   });
 });
@@ -691,7 +691,7 @@ describe("DataGrid (renderDetail)", () => {
     await userEvent.click(screen.getByRole("button", { name: "Filter Name" }));
     await userEvent.type(await screen.findByPlaceholderText("Filter name..."), "zzz-no-match");
 
-    expect(screen.getByText("No results.")).toHaveAttribute("colspan", "3");
+    expect(screen.getByText("No results.").closest("td")).toHaveAttribute("colspan", "3");
   });
 
   it("keeps an expanded detail row inside the SAME <tbody> as its main row, so a virtualizer measures both as one unit", async () => {

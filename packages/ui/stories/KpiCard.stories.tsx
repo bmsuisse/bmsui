@@ -6,7 +6,7 @@ const meta: Meta<typeof KpiCard> = {
   title: "Patterns/KpiCard",
   component: KpiCard,
   args: { label: "New customers", value: "248", icon: UsersIcon, badge: { text: "+8%", positive: true }, sparkline: [3, 4, 3, 5, 6, 5, 7] },
-  decorators: [(Story) => <div className="max-w-xs"><Story /></div>],
+  decorators: [(Story) => <div className="w-72 max-w-full"><Story /></div>],
 };
 
 export default meta;

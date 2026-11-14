@@ -9,7 +9,7 @@ import type { ReactElement } from "react";
  */
 export function EditFieldError({ id, message }: { id: string; message: string }): ReactElement {
   return (
-    <span id={id} className="mt-0.5 block text-xs text-destructive">
+    <span id={id} className="mt-0.5 block text-xs text-red-700 dark:text-red-300">
       {message}
     </span>
   );

@@ -59,7 +59,7 @@ export function EditingBar<TRow>({
       <span aria-live="polite">
         {pendingRowCount} row{pendingRowCount === 1 ? "" : "s"} changed
         {hasEditErrors && (
-          <span className="ml-2 text-destructive">
+          <span className="ml-2 text-red-700 dark:text-red-300">
             Fix the highlighted errors before saving ({describeErrorRows(editErrors)}).
           </span>
         )}

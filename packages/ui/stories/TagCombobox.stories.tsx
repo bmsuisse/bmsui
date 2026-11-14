@@ -11,7 +11,7 @@ const meta: Meta<typeof TagCombobox> = {
   render: (args) => {
     const [value, setValue] = useState(args.value);
     return (
-      <div className="w-96">
+      <div className="w-96 max-w-full">
         <TagCombobox {...args} value={value} onChange={setValue} />
       </div>
     );

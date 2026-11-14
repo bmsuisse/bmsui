@@ -604,7 +604,7 @@ export function TreeDataGrid<TRow>({
         // its overflow-y-auto/maxHeight styling once virtualization kicked
         // in, so a non-virtualized (or grouped) tree that outgrew its box
         // just rendered past it with no way to scroll to what was clipped.
-        className="min-h-0 overflow-y-auto"
+        className="min-h-0 overflow-y-auto [container-type:inline-size]"
         style={{ maxHeight: maxBodyHeight }}
       >
         <table
@@ -747,13 +747,15 @@ export function TreeDataGrid<TRow>({
             {viewRoots.length === 0 ? (
               <tr>
                 <td colSpan={totalColumnCount} className="p-4 text-center text-muted-foreground">
-                  {loading ? (
-                    <LoadingRows label={labels.loading} />
-                  ) : hasError ? (
-                    <GridErrorState error={error} onRetry={onRetry} labels={labels} />
-                  ) : (
-                    labels.noResults
-                  )}
+                  <div className="sticky left-4 w-[calc(100cqw-2rem)] max-w-full">
+                    {loading ? (
+                      <LoadingRows label={labels.loading} />
+                    ) : hasError ? (
+                      <GridErrorState error={error} onRetry={onRetry} labels={labels} />
+                    ) : (
+                      labels.noResults
+                    )}
+                  </div>
                 </td>
               </tr>
             ) : shouldVirtualize ? (

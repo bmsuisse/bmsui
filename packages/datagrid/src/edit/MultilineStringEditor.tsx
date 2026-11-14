@@ -57,7 +57,7 @@ export function MultilineStringEditor<TRow>({
     <div>
       <Textarea
         ref={textareaRef}
-        className="resize-none overflow-hidden"
+        className="min-w-24 resize-none overflow-hidden"
         aria-label={`Edit ${column.header}`}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}

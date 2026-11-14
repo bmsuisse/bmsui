@@ -3,3 +3,4 @@
 
 /* Tailwind scans only this project; the data grid's classes live in its own package. */
 @source "../../datagrid/src";
+.sb-main-centered #storybook-root { max-width: 100%; }

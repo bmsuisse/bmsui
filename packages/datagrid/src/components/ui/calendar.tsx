@@ -63,7 +63,7 @@ export function Calendar({ className, classNames, ...props }: CalendarProps) {
         range_middle: cn("rounded-none bg-accent/60", defaultClassNames.range_middle),
         range_end: cn("rounded-r-md bg-accent", defaultClassNames.range_end),
         today: cn(
-          "[&:not([data-selected])]:text-primary [&:not([data-selected])]:font-semibold",
+          "[&:not([data-selected])]:text-primary dark:[&:not([data-selected])]:text-ring [&:not([data-selected])]:font-semibold",
           defaultClassNames.today,
         ),
         outside: cn("text-muted-foreground/50", defaultClassNames.outside),

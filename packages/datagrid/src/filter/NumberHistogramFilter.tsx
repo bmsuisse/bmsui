@@ -267,7 +267,7 @@ export function NumberHistogramFilter<TRow>({
         <span
           role="alert"
           title={loadError}
-          className="flex items-center gap-1.5 text-xs text-destructive"
+          className="flex items-center gap-1.5 text-xs text-red-700 dark:text-red-300"
           data-testid={`filter-${column.id}-error`}
         >
           <ExclamationTriangleIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
@@ -312,7 +312,7 @@ export function NumberHistogramFilter<TRow>({
         />
         <div className="pointer-events-none absolute top-1/2 h-1.5 w-full -translate-y-1/2 rounded-full bg-muted">
           <div
-            className="absolute h-full rounded-full bg-primary"
+            className="absolute h-full rounded-full bg-primary dark:bg-ring"
             style={{ left: `${logPct(activeMin)}%`, right: `${100 - logPct(activeMax)}%` }}
           />
         </div>
@@ -374,7 +374,7 @@ export function NumberHistogramFilter<TRow>({
           data-testid={`filter-${column.id}`}
         >
           <FunnelIcon
-            className={cn("h-3.5 w-3.5 shrink-0", isFiltered ? "opacity-100 text-primary" : "opacity-40")}
+            className={cn("h-3.5 w-3.5 shrink-0", isFiltered ? "opacity-100 text-primary dark:text-ring" : "opacity-60")}
             aria-hidden
           />
           {isFiltered && <span className="truncate">{summary}</span>}

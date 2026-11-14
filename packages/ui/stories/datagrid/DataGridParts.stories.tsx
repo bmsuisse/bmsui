@@ -53,7 +53,7 @@ export const Editors: Story = {
     const [done, setDone] = useState<unknown>(true);
     const [status, setStatus] = useState<unknown>("open");
     return (
-      <div className="grid w-96 gap-3">
+      <div className="grid w-96 max-w-full gap-3">
         <StringEditor column={stringColumn} rowId="1" value={name} onChange={setName} />
         <MultilineStringEditor column={stringColumn} rowId="2" value={note} onChange={setNote} />
         <NumberEditor column={numberColumn} rowId="1" value={qty} onChange={setQty} />

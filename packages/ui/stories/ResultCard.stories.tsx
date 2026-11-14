@@ -22,7 +22,7 @@ export const ProductList: Story = {
   render: () => {
     const [selected, setSelected] = useState("1");
     return (
-      <ResultList aria-label="Search results" className="w-[28rem]">
+      <ResultList aria-label="Search results" className="w-[28rem] max-w-full">
         {items.map((item, index) => (
           <ResultCard
             key={item.id}
@@ -49,4 +49,4 @@ export const ProductList: Story = {
   },
 };
 
-export const Disabled: Story = { args: { disabled: true, meta: "Not available" }, decorators: [(Story) => <ResultList aria-label="r" className="w-96"><Story /></ResultList>] };
+export const Disabled: Story = { args: { disabled: true, meta: "Not available" }, decorators: [(Story) => <ResultList aria-label="r" className="w-96 max-w-full"><Story /></ResultList>] };

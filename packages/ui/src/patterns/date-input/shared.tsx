@@ -101,7 +101,7 @@ export const errorMessage = (error: DateInputError | null, l: DateInputLabels): 
   error === "invalid" ? l.invalid : error === "range" ? l.outOfRange : error === "disabled" ? l.unavailable : "";
 
 export const DateInputMessage = ({ id, message }: { id: string; message: string }): ReactElement => (
-  <p id={id} role="alert" className="mt-1 text-xs text-destructive">
+  <p id={id} role="alert" className="mt-1 text-xs text-red-700 dark:text-red-300">
     {message}
   </p>
 );

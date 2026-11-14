@@ -10,7 +10,7 @@ const meta: Meta<typeof SearchPanel> = {
   render: (args) => {
     const [value, setValue] = useState(args.value);
     return (
-      <div className="w-[420px]">
+      <div className="w-[420px] max-w-full">
         <SearchPanel {...args} value={value} onChange={setValue} />
       </div>
     );
@@ -31,7 +31,7 @@ export const WithModes: Story = {
     const [value, setValue] = useState("");
     const [mode, setMode] = useState("all");
     return (
-      <div className="w-[420px]">
+      <div className="w-[420px] max-w-full">
         <SearchPanel {...args} value={value} onChange={setValue} activeMode={mode} onModeChange={setMode} />
       </div>
     );
