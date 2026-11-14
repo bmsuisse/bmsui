@@ -696,6 +696,15 @@ logic above, which already had its own extraction). Structure:
   `MetadataList`'s label column is capped at 40%, `Toolbar`'s overflow-button
   width follows the root font size. Story wrappers with a fixed width (`w-72`
   etc.) need `max-w-full` so they don't overflow phone viewports.
+- Focus-ring pass (ui 0.25.6 / datagrid 0.43.6): the `default` `Button` gets a
+  `ring-offset-2` gap (light `--ring` equals `--primary`, so the ring was invisible on a
+  primary fill); Checkbox/Switch use one language, `ring-2 ring-ring ring-offset-1`;
+  `NumberHistogramFilter`'s drawn thumbs show the ring via `peer-focus-visible/min|max`
+  off the invisible range inputs; datagrid inputs/textarea/select style `aria-invalid`;
+  the grid's select-all checkbox is `indeterminate` when only some page rows are selected;
+  with `cellEditing`, Tab/Shift+Tab at the first/last column are no longer
+  `preventDefault`ed, so focus leaves the grid (WCAG 2.1.2). Small text buttons (retry,
+  clear, chip remove, sort, tree chevron) use the themed ring, not the browser outline.
 - `packages/ui/.storybook` + `packages/ui/stories/` — Storybook 10
   (`react-vite`, a11y + docs addons, light/dark toolbar toggle that sets `.dark`
   on `<html>`), published at <https://bmsuisse.github.io/bmsui/storybook/> by

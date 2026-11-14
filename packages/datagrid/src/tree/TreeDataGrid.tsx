@@ -92,7 +92,7 @@ function TreeCell<TRow>({
           disabled={isLoading}
           aria-label={flatRow.isExpanded ? "Collapse" : "Expand"}
           aria-expanded={flatRow.isExpanded}
-          className="flex h-4 w-4 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-50"
+          className="flex h-4 w-4 shrink-0 items-center justify-center rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring text-muted-foreground hover:text-foreground disabled:opacity-50"
         >
           {isLoading ? (
             <ArrowPathIcon className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />

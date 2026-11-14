@@ -70,7 +70,7 @@ export function HeaderCellContent<TRow>({
           type="button"
           id={labelId}
           data-testid={`sort-button-${column.id}`}
-          className="-ml-1 flex items-center gap-1 rounded-sm px-1 hover:bg-accent hover:text-accent-foreground"
+          className="-ml-1 flex items-center gap-1 rounded-sm px-1 hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           onClick={onToggleSort}
         >
           {headerContent}

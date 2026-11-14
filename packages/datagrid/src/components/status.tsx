@@ -149,7 +149,7 @@ export function GridInlineError({
       <ExclamationTriangleIcon className={cn("h-3.5 w-3.5 shrink-0", wrap && "mt-0.5")} aria-hidden="true" />
       <span className={wrap ? "min-w-0 break-words" : "truncate"}>{info.message ?? info.title ?? labels.errorTitle}</span>
       {onRetry ? (
-        <button type="button" className="shrink-0 underline underline-offset-2" onClick={onRetry}>
+        <button type="button" className="shrink-0 rounded-sm underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={onRetry}>
           {labels.retry}
         </button>
       ) : null}

@@ -105,7 +105,7 @@ export const InputGroupButton = forwardRef<HTMLButtonElement, ButtonProps>(
         variant={variant}
         size={size ?? (groupSize === "sm" ? "icon-xs" : "icon-sm")}
         className={cn(
-          "shrink-0 transition-[color,background-color,scale] duration-150 ease-out first:ml-0.5 last:mr-0.5 active:scale-95 motion-reduce:scale-none!",
+          "shrink-0 focus-visible:ring-inset transition-[color,background-color,scale] duration-150 ease-out first:ml-0.5 last:mr-0.5 active:scale-95 motion-reduce:scale-none!",
           groupSize === "sm" ? "h-6 [&_svg]:size-3.5" : "h-7",
           size == null && (groupSize === "sm" ? "w-6" : "w-7"),
           variant === "ghost" &&

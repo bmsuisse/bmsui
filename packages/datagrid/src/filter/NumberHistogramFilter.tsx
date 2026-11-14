@@ -272,7 +272,7 @@ export function NumberHistogramFilter<TRow>({
         >
           <ExclamationTriangleIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
           {labels.loadFailed}
-          <button type="button" className="underline underline-offset-2" onClick={() => setRetryKey((k) => k + 1)}>
+          <button type="button" className="rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring underline underline-offset-2" onClick={() => setRetryKey((k) => k + 1)}>
             {labels.retry}
           </button>
         </span>
@@ -296,7 +296,7 @@ export function NumberHistogramFilter<TRow>({
           step={logStep}
           value={tLog(activeMin)}
           onChange={(event) => handleMinChange(tInv(Number.parseFloat(event.target.value)))}
-          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+          className="peer/min absolute inset-0 h-full w-full cursor-pointer opacity-0"
           style={{ zIndex: minOnTop ? 5 : 3 }}
         />
         <input
@@ -307,7 +307,7 @@ export function NumberHistogramFilter<TRow>({
           step={logStep}
           value={tLog(activeMax)}
           onChange={(event) => handleMaxChange(tInv(Number.parseFloat(event.target.value)))}
-          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+          className="peer/max absolute inset-0 h-full w-full cursor-pointer opacity-0"
           style={{ zIndex: minOnTop ? 3 : 5 }}
         />
         <div className="pointer-events-none absolute top-1/2 h-1.5 w-full -translate-y-1/2 rounded-full bg-muted">
@@ -319,7 +319,12 @@ export function NumberHistogramFilter<TRow>({
         {[activeMin, activeMax].map((v, i) => (
           <div
             key={i}
-            className="pointer-events-none absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-primary dark:border-ring bg-background shadow"
+            className={cn(
+              "pointer-events-none absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-primary dark:border-ring bg-background shadow",
+              i === 0
+                ? "peer-focus-visible/min:ring-2 peer-focus-visible/min:ring-ring peer-focus-visible/min:ring-offset-1 peer-focus-visible/min:ring-offset-background"
+                : "peer-focus-visible/max:ring-2 peer-focus-visible/max:ring-ring peer-focus-visible/max:ring-offset-1 peer-focus-visible/max:ring-offset-background",
+            )}
             style={{ left: `${logPct(v)}%` }}
           />
         ))}

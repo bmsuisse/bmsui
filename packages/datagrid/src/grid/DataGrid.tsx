@@ -415,6 +415,7 @@ export function DataGrid<TRow extends RowData>({
     [rows, selectedIds, getRowId],
   );
   const allOnPageSelected = rows.length > 0 && rows.every((row) => selectedIds.has(getRowId(row)));
+  const someOnPageSelected = rows.some((row) => selectedIds.has(getRowId(row)));
 
   const singleSelect = selectionMode === "single";
   const selectionGroupName = useId();
@@ -1255,6 +1256,11 @@ export function DataGrid<TRow extends RowData>({
       return;
     }
     if (event.key === "Tab") {
+      // Let focus leave the grid at either edge (WCAG 2.1.2 No Keyboard Trap);
+      // moveSelection clamps columns, so the first/last column is the edge.
+      const focusColId = cellSelection.selection?.focus.columnId;
+      const colIdx = focusColId === undefined ? -1 : cellEditingColumnIds.indexOf(focusColId);
+      if (event.shiftKey ? colIdx <= 0 : colIdx === cellEditingColumnIds.length - 1) return;
       event.preventDefault();
       cellSelection.moveSelection(event.shiftKey ? "left" : "right");
       return;
@@ -1719,6 +1725,10 @@ export function DataGrid<TRow extends RowData>({
             "h-full overflow-auto rounded-md border [container-type:inline-size]",
             // `select-none`: dragging a range would otherwise paint the browser's own blue text selection over the cells (copy/paste is handled by the grid, editors stay selectable).
             hasCellEditing && "relative select-none [&_input]:select-text [&_textarea]:select-text",
+            hasCellEditing &&
+              (cellSelection.selection
+                ? "focus-visible:outline-none"
+                : "focus-visible:outline-2 focus-visible:-outline-offset-1 focus-visible:outline-ring"),
           )}
           style={shouldVirtualize ? { maxHeight: virtualize?.maxBodyHeight ?? 480 } : maxHeight !== undefined ? { maxHeight } : undefined}
           // `tabIndex`/`onKeyDown` only under `cellEditing` — the scroll
@@ -1853,6 +1863,9 @@ export function DataGrid<TRow extends RowData>({
                             className="h-4 w-4 accent-primary dark:accent-ring"
                             aria-label="Select all rows on this page"
                             checked={allOnPageSelected}
+                            ref={(el) => {
+                              if (el) el.indeterminate = someOnPageSelected && !allOnPageSelected;
+                            }}
                             onChange={toggleAllOnPageSelected}
                           />
                         )}
@@ -1900,6 +1913,9 @@ export function DataGrid<TRow extends RowData>({
                           className="h-4 w-4 accent-primary dark:accent-ring"
                           aria-label="Select all rows on this page"
                           checked={allOnPageSelected}
+                          ref={(el) => {
+                            if (el) el.indeterminate = someOnPageSelected && !allOnPageSelected;
+                            }}
                           onChange={toggleAllOnPageSelected}
                         />
                       )}

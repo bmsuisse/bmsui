@@ -351,6 +351,25 @@ describe("DataGrid (row/header actions)", () => {
     expect(screen.getByText("0 selected")).toBeInTheDocument();
   });
 
+  it("select-all checkbox is indeterminate when only some rows on the page are selected", async () => {
+    render(
+      <DataGrid
+        columns={columns}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        headerActions={[{ id: "bulk", label: "Bulk", onSelect: vi.fn() }]}
+      />,
+    );
+    const all = screen.getByRole("checkbox", { name: "Select all rows on this page" }) as HTMLInputElement;
+    expect(all.indeterminate).toBe(false);
+    await userEvent.click(screen.getByRole("checkbox", { name: `Select row ${rows[0]!.id}` }));
+    expect(all.indeterminate).toBe(true);
+    expect(all.checked).toBe(false);
+    await userEvent.click(all);
+    expect(all.indeterminate).toBe(false);
+    expect(all.checked).toBe(true);
+  });
+
   it("reads selection from a controlled `selectedIds` set, not just from clicks inside the grid", () => {
     render(
       <DataGrid

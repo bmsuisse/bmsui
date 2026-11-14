@@ -133,7 +133,7 @@ export const InlineError = ({
       {onRetry ? (
         <button
           {...retryProps}
-          className={cn("shrink-0 underline underline-offset-2", retryProps?.className)}
+          className={cn("-mx-0.5 shrink-0 rounded-sm px-0.5 underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", retryProps?.className)}
           type="button"
           onClick={onRetry}
         >
