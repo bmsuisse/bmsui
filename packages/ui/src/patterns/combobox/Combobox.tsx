@@ -38,6 +38,10 @@ interface ComboboxBaseProps {
   options: ComboboxOption[];
   /** Trigger text shown when nothing is selected. Defaults to `"Select…"`. */
   placeholder?: string;
+  /** Shows the search input inside the popover. Set `false` for a short list that needs no
+   * search: the options are then listed as-is and `searchPlaceholder`/`onSearchChange` are
+   * ignored. Defaults to `true`. */
+  searchable?: boolean;
   /** Placeholder for the search input inside the popover. Defaults to `"Search…"`. */
   searchPlaceholder?: string;
   /** Shown when the search term matches nothing. Defaults to `"No matches."`. */
@@ -160,6 +164,7 @@ export function Combobox(props: ComboboxProps): ReactElement {
   const {
     options,
     placeholder = "Select…",
+    searchable = true,
     searchPlaceholder = "Search…",
     emptyMessage = "No matches.",
     disabled,
@@ -201,11 +206,11 @@ export function Combobox(props: ComboboxProps): ReactElement {
   // against a possibly-stale `search` term would double-filter and could hide
   // options the server already matched on fields other than `label`.
   const visibleOptions = useMemo(() => {
-    if (onSearchChange) return options;
+    if (!searchable || onSearchChange) return options;
     const term = search.trim().toLowerCase();
     if (!term) return options;
     return options.filter((option) => option.label.toLowerCase().includes(term));
-  }, [options, search, onSearchChange]);
+  }, [options, search, searchable, onSearchChange]);
 
   // Reset the search box and re-point `activeIndex` at the current selection
   // each time the popover opens — intentionally NOT reactive to `options`/
@@ -214,7 +219,7 @@ export function Combobox(props: ComboboxProps): ReactElement {
   useEffect(() => {
     if (!open) return;
     setSearch("");
-    onSearchChange?.("");
+    if (searchable) onSearchChange?.("");
     const firstSelected = selectedValues[0];
     const selectedIdx = firstSelected ? options.findIndex((option) => option.value === firstSelected) : -1;
     setActiveIndex(selectedIdx >= 0 ? selectedIdx : 0);
@@ -301,7 +306,10 @@ export function Combobox(props: ComboboxProps): ReactElement {
         onClick={() => selectOption(option)}
         className={cn(
           "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm outline-none disabled:pointer-events-none disabled:opacity-50",
-          isActive && "bg-accent text-accent-foreground",
+          // Without a search box there is no keyboard cursor, so only hover and focus highlight a row.
+          searchable
+            ? isActive && "bg-accent text-accent-foreground"
+            : "hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:text-accent-foreground",
         )}
       >
         {props.multiple ? (
@@ -373,17 +381,19 @@ export function Combobox(props: ComboboxProps): ReactElement {
         onOpenAutoFocus={(event) => event.preventDefault()}
       >
         <div className="flex flex-col gap-2">
-          <Input
-            ref={inputRef}
-            value={search}
-            onChange={(event) => {
-              setSearch(event.target.value);
-              onSearchChange?.(event.target.value);
-            }}
-            onKeyDown={handleKeyDown}
-            placeholder={searchPlaceholder}
-            aria-label={searchPlaceholder}
-          />
+          {searchable ? (
+            <Input
+              ref={inputRef}
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                onSearchChange?.(event.target.value);
+              }}
+              onKeyDown={handleKeyDown}
+              placeholder={searchPlaceholder}
+              aria-label={searchPlaceholder}
+            />
+          ) : null}
           <div role={hasError ? undefined : "listbox"} className={cn("max-h-60 overflow-y-auto", !columns && "flex flex-col gap-0.5")}>
             {hasError ? (
               <div className="flex justify-center py-2">

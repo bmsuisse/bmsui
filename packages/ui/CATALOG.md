@@ -63,7 +63,7 @@ repo's `AGENTS.md`.
 | `RadioList` | Radio options with label + description, plain or `variant="card"`. |
 | `RangeSlider`, `defaultRangeSliderLabels` | Two-thumb numeric range with typed min/max inputs (price/area filters). |
 | `FileInput`, `defaultFileInputLabels`, `formatFileSize`, `matchesAccept` | Drop zone + click to browse, `accept`/`maxSize`/`maxFiles` errors, removable file list. Controlled `files`. |
-| `Combobox` | Searchable dropdown, single or `multiple`. |
+| `Combobox` | Searchable dropdown, single or `multiple`; `searchable={false}` drops the search box for a short list. |
 | `TagCombobox` | Multi-select with chips inline in the field. |
 | `ButtonGroup` | Connected single-select segment buttons. |
 | `SearchBar` | Pill search input with clear button; caller renders results. |

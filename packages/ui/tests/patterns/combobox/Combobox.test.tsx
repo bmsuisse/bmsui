@@ -130,6 +130,53 @@ describe("Combobox", () => {
   });
 });
 
+describe("Combobox (searchable={false})", () => {
+  it("renders no search input but lists every option", async () => {
+    render(<Combobox options={OPTIONS} value={null} onChange={vi.fn()} searchable={false} />);
+    await userEvent.click(screen.getByRole("combobox"));
+    expect(await screen.findByRole("option", { name: "Switzerland" })).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText("Search…")).not.toBeInTheDocument();
+    expect(screen.getAllByRole("option")).toHaveLength(OPTIONS.length);
+  });
+
+  it("still selects an option on click", async () => {
+    const onChange = vi.fn();
+    render(<Combobox options={OPTIONS} value={null} onChange={onChange} searchable={false} />);
+    await userEvent.click(screen.getByRole("combobox"));
+    await userEvent.click(await screen.findByRole("option", { name: "Germany" }));
+    expect(onChange).toHaveBeenCalledWith("de");
+  });
+
+  it("ignores onSearchChange, as there is no search input to drive it", async () => {
+    const onSearchChange = vi.fn();
+    render(
+      <Combobox options={OPTIONS} value={null} onChange={vi.fn()} searchable={false} onSearchChange={onSearchChange} />,
+    );
+    await userEvent.click(screen.getByRole("combobox"));
+    await screen.findByRole("option", { name: "Germany" });
+    expect(onSearchChange).not.toHaveBeenCalled();
+  });
+
+  it("keeps the group headers and multi-select behavior", async () => {
+    const onChange = vi.fn();
+    render(
+      <Combobox
+        multiple
+        searchable={false}
+        options={[
+          { value: "a", label: "Alpha", group: "Team 1" },
+          { value: "b", label: "Beta", group: "Team 1" },
+        ]}
+        value={[]}
+        onChange={onChange}
+      />,
+    );
+    await userEvent.click(screen.getByRole("combobox"));
+    await userEvent.click(await screen.findByRole("checkbox", { name: "Select all of Team 1" }));
+    expect(onChange).toHaveBeenCalledWith(["a", "b"]);
+  });
+});
+
 describe("Combobox (multiple)", () => {
   it("renders a checkbox reflecting selection state for every option", async () => {
     render(<Combobox options={OPTIONS} value={["de"]} onChange={vi.fn()} multiple />);

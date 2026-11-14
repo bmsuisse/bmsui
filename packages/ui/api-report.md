@@ -480,6 +480,7 @@ interface ComboboxMultiProps extends ComboboxBaseProps
   options: ComboboxOption[]  (from ComboboxBaseProps)
   placeholder?: string  (from ComboboxBaseProps)
   searchPlaceholder?: string  (from ComboboxBaseProps)
+  searchable?: boolean  (from ComboboxBaseProps)
   selectedLabel?: string  (from ComboboxBaseProps)
 interface ComboboxOption
   data?: Record<string, ReactNode>
@@ -508,6 +509,7 @@ interface ComboboxSingleProps extends ComboboxBaseProps
   options: ComboboxOption[]  (from ComboboxBaseProps)
   placeholder?: string  (from ComboboxBaseProps)
   searchPlaceholder?: string  (from ComboboxBaseProps)
+  searchable?: boolean  (from ComboboxBaseProps)
   selectedLabel?: string  (from ComboboxBaseProps)
 interface CommandItem
   description?: string
