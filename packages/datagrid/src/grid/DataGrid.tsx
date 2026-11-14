@@ -1624,7 +1624,7 @@ export function DataGrid<TRow extends RowData>({
           >
             <button
               type="button"
-              className="flex w-full items-center gap-1 text-left"
+              className="sticky left-2 flex w-[calc(100cqw-1rem)] max-w-full items-center gap-1 text-left"
               onClick={() => toggleGroupExpanded(key)}
               aria-expanded={expanded}
             >
@@ -1700,14 +1700,14 @@ export function DataGrid<TRow extends RowData>({
         />
       )}
       {showSelectionColumn && headerActions && (
-        <div className="flex shrink-0 items-center justify-between text-sm">
+        <div className="flex shrink-0 items-center justify-between gap-3 text-sm">
           <span>{selectedRows.length} selected</span>
           <ActionsMenu items={headerActions} ctx={{ selectedRows }} triggerLabel="Bulk actions" />
         </div>
       )}
       {hasError && rows.length > 0 && (
         <div className="flex shrink-0 items-center rounded-md border border-destructive/40 bg-destructive/10 px-2 py-1">
-          <GridInlineError error={error} onRetry={onRetry} labels={labels} />
+          <GridInlineError error={error} onRetry={onRetry} labels={labels} wrap />
         </div>
       )}
       <div className="relative min-h-0 flex-1">

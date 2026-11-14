@@ -9,7 +9,7 @@ type Story = StoryObj<typeof Input>;
 export const Default: Story = {};
 export const WithLabel: Story = {
   render: (args) => (
-    <div className="grid w-72 gap-1.5">
+    <div className="grid w-72 max-w-full gap-1.5">
       <Label htmlFor="i1">Email</Label>
       <Input id="i1" type="email" {...args} />
     </div>
@@ -20,7 +20,7 @@ export const Invalid: Story = { args: { "aria-invalid": true, defaultValue: "not
 export const File: Story = { args: { type: "file" } };
 export const WithIcon: Story = {
   render: (args) => (
-    <div className="relative w-72">
+    <div className="relative w-72 max-w-full">
       <MagnifyingGlassIcon className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
       <Input className="pl-8" {...args} />
     </div>

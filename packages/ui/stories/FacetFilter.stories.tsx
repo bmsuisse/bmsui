@@ -22,7 +22,7 @@ const meta = {
   render: (args) => {
     const [value, setValue] = useState<FacetFilterValue>(args.value);
     return (
-      <div className="w-72">
+      <div className="w-72 max-w-full">
         <FacetFilter {...args} value={value} onValueChange={setValue} />
       </div>
     );
@@ -60,7 +60,7 @@ export const WithActiveChips: Story = {
   render: (args) => {
     const [value, setValue] = useState<FacetFilterValue>(args.value);
     return (
-      <div className="w-80 space-y-4">
+      <div className="w-80 max-w-full space-y-4">
         <ActiveFacets facets={facets} value={value} onValueChange={setValue} />
         <FacetFilter {...args} value={value} onValueChange={setValue} />
       </div>
@@ -83,7 +83,7 @@ export const CollapsibleAndSingle: Story = {
 
 export const Loading: Story = {
   render: () => (
-    <div className="w-72">
+    <div className="w-72 max-w-full">
       <FacetFilterSkeleton />
     </div>
   ),
@@ -113,7 +113,7 @@ export const LoadMore: Story = {
     const [query, setQuery] = useState("");
     const matching = all.filter((option) => option.label.toLowerCase().includes(query.toLowerCase()));
     return (
-      <div className="w-80">
+      <div className="w-80 max-w-full">
         <FacetFilter
           value={value}
           onValueChange={setValue}
@@ -164,7 +164,7 @@ export const SingleGroup: Story = {
   render: () => {
     const [selected, setSelected] = useState<string[]>(["acme"]);
     return (
-      <div className="w-72">
+      <div className="w-72 max-w-full">
         <FacetGroup
           facet={{ key: "supplier", label: "Supplier", options: [{ value: "acme", label: "Acme AG", count: 42 }, { value: "bolt", label: "Bolt GmbH", count: 17 }] }}
           selected={selected}

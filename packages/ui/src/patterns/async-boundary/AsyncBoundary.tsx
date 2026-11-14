@@ -50,7 +50,7 @@ export const AsyncBoundary = ({
   return (
     <div className="relative">
       <RefreshBar active={loading} />
-      {failed ? <InlineError error={error} onRetry={onRetry} retryProps={retryProps} className="mb-2" /> : null}
+      {failed ? <InlineError error={error} onRetry={onRetry} retryProps={retryProps} className="mb-2" wrap /> : null}
       {children}
     </div>
   );

@@ -20,7 +20,7 @@ export const Single: Story = {
   render: () => {
     const [value, setValue] = useState<string | null>(null);
     return (
-      <div className="w-64">
+      <div className="w-64 max-w-full">
         <Combobox options={options} value={value} onChange={setValue} placeholder="Supplier" />
       </div>
     );
@@ -31,7 +31,7 @@ export const Multiple: Story = {
   render: () => {
     const [value, setValue] = useState<string[]>(["acme-ag"]);
     return (
-      <div className="w-64">
+      <div className="w-64 max-w-full">
         <Combobox multiple options={options} value={value} onChange={setValue} placeholder="Suppliers" />
       </div>
     );

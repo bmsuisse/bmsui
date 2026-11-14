@@ -205,7 +205,7 @@ export const SheetFooter = ({
   className,
   ...props
 }: HTMLAttributes<HTMLDivElement>): ReactElement => (
-  <div className={cn("flex shrink-0 justify-end gap-2", className)} {...props} />
+  <div className={cn("flex shrink-0 flex-wrap justify-end gap-2", className)} {...props} />
 );
 
 export const SheetTitle = forwardRef<

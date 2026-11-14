@@ -200,7 +200,7 @@ export const NumberHistogramBare: Story = {
     const [value, setValue] = useState<FilterDescriptor | undefined>();
     return (
       <Show value={value}>
-        <div className="w-72">
+        <div className="w-72 max-w-full">
           <NumberHistogramFilter
             bare
             column={priceCol}

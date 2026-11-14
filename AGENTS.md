@@ -684,6 +684,18 @@ logic above, which already had its own extraction). Structure:
     + `Thumbnail` (falls back to an icon on error, no stale failure on `src`
     change); `SearchBar` `actions` slot (border and focus ring live on a
     wrapper, so `TableSearch` sizes the wrapper, not the input).
+- Visual QA round 6 (ui 0.25.5, datagrid 0.43.5): `DialogFooter`/`SheetFooter` are
+  `flex-wrap`, so many buttons wrap instead of overflowing on phones. `InlineError`
+  has an additive `wrap` prop (default `false`; datagrid's internal
+  `GridInlineError` too), used by `AsyncBoundary`'s and both grids' stale-data
+  banners so long messages wrap; the per-node tree error stays one line. Group
+  header buttons in both grids are `sticky left-2 w-[calc(100cqw-1rem)]` (relies
+  on the scroll container's `[container-type:inline-size]`) so the label stays in
+  view under horizontal scroll. `ResultCard` titles clamp to 2 lines, `FileInput`
+  `size="sm"` wraps (`min-h-9`), `Calendar` cells cap at `(100vw-3.5rem)/7`,
+  `MetadataList`'s label column is capped at 40%, `Toolbar`'s overflow-button
+  width follows the root font size. Story wrappers with a fixed width (`w-72`
+  etc.) need `max-w-full` so they don't overflow phone viewports.
 - `packages/ui/.storybook` + `packages/ui/stories/` — Storybook 10
   (`react-vite`, a11y + docs addons, light/dark toolbar toggle that sets `.dark`
   on `<html>`), published at <https://bmsuisse.github.io/bmsui/storybook/> by

@@ -282,7 +282,7 @@ export function Calendar(props: CalendarProps): ReactElement {
                 key={name + i}
                 scope="col"
                 abbr={longNames[i]}
-                className="h-8 w-9 text-center text-xs font-medium text-muted-foreground"
+                className="h-8 w-[min(2.25rem,calc((100vw-3.5rem)/7))] text-center text-xs font-medium text-muted-foreground"
               >
                 {name}
               </th>
@@ -335,7 +335,7 @@ export function Calendar(props: CalendarProps): ReactElement {
                         if (range) setHoverDay(iso);
                       }}
                       className={cn(
-                        "relative inline-flex h-9 w-9 items-center justify-center rounded-md text-sm tabular-nums transition-[color,background-color,box-shadow,scale] duration-150 ease-out",
+                        "relative inline-flex h-9 w-[min(2.25rem,calc((100vw-3.5rem)/7))] items-center justify-center rounded-md text-sm tabular-nums transition-[color,background-color,box-shadow,scale] duration-150 ease-out",
                         !disabled && "active:scale-95 motion-reduce:scale-none!",
                         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                         disabled && "cursor-not-allowed text-muted-foreground/40",

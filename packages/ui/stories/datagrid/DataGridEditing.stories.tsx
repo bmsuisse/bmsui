@@ -56,6 +56,9 @@ const columns: ColumnDef<Task>[] = [
  * enter a negative number to see `validateEdit` block Save. "Done" is not editable for Chiara's tasks.
  */
 export const InlineEditing: Story = {
+  play: async ({ canvasElement }) => {
+    canvasElement.querySelector<HTMLElement>('[data-testid^="cell-"]')?.click();
+  },
   render: function Render() {
     const [tasks, setTasks] = useState(initialTasks);
     const [saving, setSaving] = useState(false);

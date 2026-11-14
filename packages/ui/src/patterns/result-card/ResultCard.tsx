@@ -134,7 +134,7 @@ export const ResultCard = ({
     <>
       {leading}
       <span className="min-w-0 flex-1">
-        <span className="block truncate font-medium text-sm">{title}</span>
+        <span className="line-clamp-2 break-words font-medium text-sm">{title}</span>
         {present(meta) && <span className="block truncate text-muted-foreground text-xs">{meta}</span>}
         {present(description) && <span className="mt-1 line-clamp-2 block text-muted-foreground text-sm">{description}</span>}
         {present(footer) && <span className="mt-2 block">{footer}</span>}

@@ -8,7 +8,7 @@ type Story = StoryObj<typeof Label>;
 export const Default: Story = {};
 export const WithInput: Story = {
   render: () => (
-    <div className="grid w-64 gap-1.5">
+    <div className="grid w-64 max-w-full gap-1.5">
       <Label htmlFor="l1">Name</Label>
       <Input id="l1" />
     </div>

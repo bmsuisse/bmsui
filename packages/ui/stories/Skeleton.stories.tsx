@@ -19,7 +19,7 @@ export const Card: Story = {
 };
 export const Paragraph: Story = {
   render: () => (
-    <div className="w-72 space-y-2">
+    <div className="w-72 max-w-full space-y-2">
       {[100, 90, 95, 60].map((w, i) => <Skeleton key={i} className="h-3" style={{ width: w + "%" }} />)}
     </div>
   ),

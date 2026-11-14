@@ -68,7 +68,7 @@ export const Editors: Story = {
 /** Every editor shows its `validateEdit` message under the control and marks it invalid. */
 export const EditorError: Story = {
   render: () => (
-    <div className="w-72 space-y-1">
+    <div className="w-72 max-w-full space-y-1">
       <NumberEditor column={numberColumn} rowId="1" value={-3} onChange={() => {}} error="Must be 0 or more" />
       <EditFieldError id="standalone-error" message="Standalone error text" />
     </div>

@@ -811,6 +811,7 @@ interface InlineErrorProps extends Omit<HTMLAttributes<HTMLSpanElement>, "title"
   labels?: Partial<Pick<ErrorStateLabels, "title" | "retry">>
   onRetry?: () => void
   retryProps?: RetryButtonProps
+  wrap?: boolean
 interface InputGroupProps extends HTMLAttributes<HTMLDivElement>
   size?: InputGroupSize
 interface KbdProps extends HTMLAttributes<HTMLElement>

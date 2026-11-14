@@ -124,11 +124,14 @@ export function GridInlineError({
   onRetry,
   labels,
   className,
+  wrap = false,
 }: {
   error: ErrorInput;
   onRetry?: () => void;
   labels: GridStatusLabels;
   className?: string;
+  /** Let a long message wrap instead of truncating (stale-rows banners). */
+  wrap?: boolean;
 }): ReactElement | null {
   const info = toErrorInfo(error);
   if (!info) return null;
@@ -137,10 +140,14 @@ export function GridInlineError({
       role="alert"
       data-testid="grid-inline-error"
       title={info.details}
-      className={cn("inline-flex min-w-0 items-center gap-1.5 text-xs text-red-700 dark:text-red-300", className)}
+      className={cn(
+        wrap ? "flex items-start" : "inline-flex items-center",
+        "min-w-0 gap-1.5 text-xs text-red-700 dark:text-red-300",
+        className,
+      )}
     >
-      <ExclamationTriangleIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-      <span className="truncate">{info.message ?? info.title ?? labels.errorTitle}</span>
+      <ExclamationTriangleIcon className={cn("h-3.5 w-3.5 shrink-0", wrap && "mt-0.5")} aria-hidden="true" />
+      <span className={wrap ? "min-w-0 break-words" : "truncate"}>{info.message ?? info.title ?? labels.errorTitle}</span>
       {onRetry ? (
         <button type="button" className="shrink-0 underline underline-offset-2" onClick={onRetry}>
           {labels.retry}

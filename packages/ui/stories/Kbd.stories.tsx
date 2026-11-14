@@ -9,7 +9,7 @@ type Story = StoryObj;
 
 export const Default: Story = {
   render: () => (
-    <div className="flex items-center gap-6 text-xs text-muted-foreground">
+    <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
       <span className="flex items-center gap-2"><Kbd>K</Kbd> default</span>
       <span className="flex items-center gap-2"><Kbd size="sm">Esc</Kbd> small</span>
       <span className="flex items-center gap-2"><Kbd pressed>Enter</Kbd> pressed</span>

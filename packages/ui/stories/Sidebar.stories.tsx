@@ -56,7 +56,7 @@ export const RailCollapsed: Story = { render: () => <Shell initialCollapsed /> }
 export const Resizable: Story = { render: () => <Shell resizable /> };
 export const NavOnly: Story = {
   render: () => (
-    <div className="flex h-72 w-64 flex-col rounded-lg border border-border">
+    <div className="flex h-72 w-64 max-w-full flex-col rounded-lg border border-border">
       <SidebarNav>
         <NavGroup label="Menu">
           <NavItem as="button" type="button" icon={Squares2X2Icon} label="Overview" active />

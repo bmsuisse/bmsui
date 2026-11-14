@@ -107,7 +107,7 @@ export const MetadataList = ({
               "group/meta min-w-0",
               horizontal
                 ? cn(
-                    "grid grid-cols-[minmax(0,var(--metadata-label-width))_minmax(0,1fr)] items-baseline gap-x-4",
+                    "grid grid-cols-[minmax(0,min(var(--metadata-label-width),40%))_minmax(0,1fr)] items-baseline gap-x-4",
                     // Hairlines need air around them; without them rows sit closer, like a property sheet.
                     divided ? "py-2.5" : "py-1.5",
                   )

@@ -206,7 +206,7 @@ export const DialogFooter = ({
   <div
     data-slot="dialog-footer"
     className={cn(
-      "flex shrink-0 justify-end gap-2 bg-background px-6 pb-6 pt-3 transition-shadow [[data-overflow-bottom]+&]:shadow-[inset_0_1px_0_var(--dialog-divider)] [[data-slot=dialog-body]:empty+&]:pt-1 [[data-slot=dialog-header]+&]:pt-1",
+      "flex shrink-0 flex-wrap justify-end gap-2 bg-background px-6 pb-6 pt-3 transition-shadow [[data-overflow-bottom]+&]:shadow-[inset_0_1px_0_var(--dialog-divider)] [[data-slot=dialog-body]:empty+&]:pt-1 [[data-slot=dialog-header]+&]:pt-1",
       className,
     )}
     {...props}

@@ -578,7 +578,7 @@ export function TreeDataGrid<TRow>({
     <div className="flex h-full min-h-0 flex-col gap-2" data-testid="tree-datagrid">
       {hasError && data.length > 0 && (
         <div className="flex shrink-0 items-center rounded-md border border-destructive/40 bg-destructive/10 px-2 py-1">
-          <GridInlineError error={error} onRetry={onRetry} labels={labels} />
+          <GridInlineError error={error} onRetry={onRetry} labels={labels} wrap />
         </div>
       )}
       {editing && editingState.pendingEdits.size > 0 && (
@@ -698,7 +698,7 @@ export function TreeDataGrid<TRow>({
                     >
                       <button
                         type="button"
-                        className="flex w-full items-center gap-1 text-left"
+                        className="sticky left-2 flex w-[calc(100cqw-1rem)] max-w-full items-center gap-1 text-left"
                         onClick={() => toggleGroupExpanded(bucket.key)}
                         aria-expanded={groupExpanded}
                       >
