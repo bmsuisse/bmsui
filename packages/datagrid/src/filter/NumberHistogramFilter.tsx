@@ -257,7 +257,7 @@ export function NumberHistogramFilter<TRow>({
   const summary = isFiltered ? `${format(activeMin)} – ${format(activeMax)}` : "";
 
   const panel = (
-    <div className={bare ? "flex w-full flex-col gap-3" : "flex w-80 flex-col gap-3"}>
+    <div className="flex w-full flex-col gap-3">
       {loading && (
         <p className="text-xs text-muted-foreground" data-testid={`filter-${column.id}-loading`}>
           {labels.loading}
@@ -380,7 +380,7 @@ export function NumberHistogramFilter<TRow>({
           {isFiltered && <span className="truncate">{summary}</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80" onOpenAutoFocus={focusFirstTextInput}>{panel}</PopoverContent>
+      <PopoverContent className="w-[22rem]" onOpenAutoFocus={focusFirstTextInput}>{panel}</PopoverContent>
     </Popover>
   );
 }

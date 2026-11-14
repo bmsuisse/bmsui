@@ -293,10 +293,10 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
           >
             <ArrowUpTrayIcon aria-hidden="true" className={sm ? "h-4 w-4" : "h-5 w-5"} />
           </span>
-          <span className={cn("min-w-0", sm && "flex items-baseline gap-2 truncate")}>
-            <span className="font-medium text-foreground">{dragOver ? l.dropHere : multiple ? l.prompt : l.promptSingle}</span>
+          <span className={cn("min-w-0", sm && "flex items-baseline gap-2")}>
+            <span className={cn("font-medium text-foreground", sm && "truncate")}>{dragOver ? l.dropHere : multiple ? l.prompt : l.promptSingle}</span>
             {hint ? (
-              <span className={cn("text-xs text-muted-foreground", sm ? "truncate" : "mt-0.5 block")}>{hint}</span>
+              <span className={cn("text-xs text-muted-foreground", sm ? "shrink-0" : "mt-0.5 block")}>{hint}</span>
             ) : null}
           </span>
           <input

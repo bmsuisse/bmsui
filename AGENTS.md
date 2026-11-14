@@ -127,6 +127,16 @@ logic above, which already had its own extraction). Structure:
   after some of that app's call sites had already switched to this `Input`
   while others hadn't, mid-migration. Ref-forwarding was already correct,
   just untested — added a test for it alongside.
+- v0.25.2 visual-QA conventions: overlay primitives (`PopoverContent`,
+  `HoverCardContent`, `DropdownMenuContent`, both packages) default
+  `collisionPadding={8}` (overridable), and popover/hover-card content has
+  `max-w-[calc(100vw-1rem)]`, so nothing touches or overflows a phone's edge.
+  `DialogContent` is `w-[calc(100%-2rem)]` (16px phone gutter; `max-w-md` still
+  caps it). Dark `--accent-foreground` must be a dark colour whenever dark
+  `--accent` is a light/mid blue (reference theme: `oklch(0.165 0.022 265)`, 5.79:1
+  on `#6b90b8`; white was 3.33:1) — consuming apps must mirror it, since
+  Calendar's selected day, SearchBar's clear hover and other `bg-accent` fills
+  use `text-accent-foreground`/`dark:text-accent-foreground`.
 - `packages/ui/src/patterns/` — components composed on top of the
   primitives, one subfolder per pattern, each addressing a specific
   duplication found in the survey:

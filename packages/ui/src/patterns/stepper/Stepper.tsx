@@ -146,7 +146,7 @@ export function Stepper({
                   {!last && (
                     <div
                       className={cn(
-                        "mx-1.5 mt-3.5 h-px flex-1 transition-colors",
+                        "mx-1.5 mt-3.5 h-px min-w-3 flex-1 transition-colors",
                         done ? "bg-primary dark:bg-ring" : "bg-border",
                       )}
                     />

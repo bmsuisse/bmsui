@@ -343,8 +343,8 @@ export function Calendar(props: CalendarProps): ReactElement {
                         !disabled && (outside ? "text-muted-foreground/60" : "text-foreground"),
                         !selected && !isStart && !isEnd && !disabled && "hover:bg-muted-foreground/10",
                         isToday && "font-semibold",
-                        selected && "bg-primary font-medium text-primary-foreground hover:bg-primary/90 dark:bg-accent dark:hover:bg-accent/90",
-                        (isStart || isEnd) && !selected && "bg-primary/80 font-medium text-primary-foreground dark:bg-accent/80",
+                        selected && "bg-primary font-medium text-primary-foreground hover:bg-primary/90 dark:bg-accent dark:text-accent-foreground dark:hover:bg-accent/90",
+                        (isStart || isEnd) && !selected && "bg-primary/80 font-medium text-primary-foreground dark:bg-accent/80 dark:text-accent-foreground",
                       )}
                     >
                       {Number(iso.slice(8, 10))}

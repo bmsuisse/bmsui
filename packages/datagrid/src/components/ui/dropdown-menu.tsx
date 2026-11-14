@@ -10,11 +10,12 @@ export const DropdownMenuGroup = DropdownMenuPrimitive.Group;
 export const DropdownMenuContent = forwardRef<
   ElementRef<typeof DropdownMenuPrimitive.Content>,
   ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content>
->(({ className, sideOffset = 4, ...props }, ref) => (
+>(({ className, sideOffset = 4, collisionPadding = 8, ...props }, ref) => (
   <DropdownMenuPrimitive.Portal>
     <DropdownMenuPrimitive.Content
       ref={ref}
       sideOffset={sideOffset}
+      collisionPadding={collisionPadding}
       className={cn(
         "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md",
         className,

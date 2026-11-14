@@ -47,7 +47,9 @@ export const SelectContent = forwardRef<
       )}
       {...props}
     >
-      <SelectPrimitive.Viewport className="p-1">{children}</SelectPrimitive.Viewport>
+      <SelectPrimitive.Viewport
+        className={cn("p-1", position === "popper" && "w-full min-w-[var(--radix-select-trigger-width)]")}
+      >{children}</SelectPrimitive.Viewport>
     </SelectPrimitive.Content>
   </SelectPrimitive.Portal>
 ));

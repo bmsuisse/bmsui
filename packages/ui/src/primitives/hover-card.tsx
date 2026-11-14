@@ -81,7 +81,7 @@ export const HoverCardContent = forwardRef<
     /** Portal target; see `PopoverContent`'s `container` for when you need it (inside a Dialog/Sheet). */
     container?: ComponentPropsWithoutRef<typeof HoverCardPrimitive.Portal>["container"];
   }
->(({ className, align = "start", sideOffset = 6, container, ...props }, ref) => {
+>(({ className, align = "start", sideOffset = 6, collisionPadding = 8, container, ...props }, ref) => {
   const exiting = useContext(HoverCardExit);
   return (
     <HoverCardPrimitive.Portal container={container}>
@@ -89,11 +89,12 @@ export const HoverCardContent = forwardRef<
         ref={ref}
         align={align}
         sideOffset={sideOffset}
+        collisionPadding={collisionPadding}
         data-testid="hover-card"
         data-exiting={exiting || undefined}
         className={cn(
           // 10% foreground hairline in light: --border is near-invisible on the light surface.
-          "z-50 w-72 rounded-lg border border-foreground/10 bg-popover p-4 text-sm text-popover-foreground shadow-lg shadow-black/[0.08] outline-none dark:border-border dark:shadow-black/40",
+          "z-50 w-72 max-w-[calc(100vw-1rem)] rounded-lg border border-foreground/10 bg-popover p-4 text-sm text-popover-foreground shadow-lg shadow-black/[0.08] outline-none dark:border-border dark:shadow-black/40",
           // Enter via @starting-style, exit via data-exiting; scale grows from Radix's computed origin.
           "origin-(--radix-hover-card-content-transform-origin) transition-[opacity,scale,translate] duration-150 ease-out starting:opacity-0 motion-reduce:transition-opacity",
           "motion-safe:starting:scale-[0.96] motion-safe:data-[side=bottom]:starting:-translate-y-1 motion-safe:data-[side=top]:starting:translate-y-1 motion-safe:data-[side=left]:starting:translate-x-1 motion-safe:data-[side=right]:starting:-translate-x-1",
