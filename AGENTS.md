@@ -294,6 +294,11 @@ logic above, which already had its own extraction). Structure:
     convention (`${testId}-option` on each row) so E2E selectors like
     `[data-testid="x-option"][data-option-value="y"]` keep working after a
     migration to this component.
+    `searchable={false}` (ui 0.26.0, default `true`) drops the search input
+    for a short list: the options then render as given, `searchPlaceholder`
+    and `onSearchChange` are ignored, and — with no input to hold a keyboard
+    cursor — arrow-key navigation is gone (rows highlight on hover/focus,
+    Tab still reaches each one).
     Options can carry a `group` key (v0.3.0) to render under a bold header,
     with a tri-state "select all" checkbox in multi-select mode (unchecked/
     checked/indeterminate, reflecting how many of the group's members are
