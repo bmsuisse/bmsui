@@ -1458,6 +1458,7 @@ export function DataGrid<TRow extends RowData>({
               <input
                 type={singleSelect ? "radio" : "checkbox"}
                 name={singleSelect ? selectionGroupName : undefined}
+                className="h-4 w-4 accent-primary dark:accent-ring"
                 aria-label={`Select row ${row.id}`}
                 checked={selectedIds.has(row.id)}
                 onClick={stopRowClick}
@@ -1849,6 +1850,7 @@ export function DataGrid<TRow extends RowData>({
                         {!singleSelect && (
                           <input
                             type="checkbox"
+                            className="h-4 w-4 accent-primary dark:accent-ring"
                             aria-label="Select all rows on this page"
                             checked={allOnPageSelected}
                             onChange={toggleAllOnPageSelected}
@@ -1895,6 +1897,7 @@ export function DataGrid<TRow extends RowData>({
                       {!singleSelect && (
                         <input
                           type="checkbox"
+                          className="h-4 w-4 accent-primary dark:accent-ring"
                           aria-label="Select all rows on this page"
                           checked={allOnPageSelected}
                           onChange={toggleAllOnPageSelected}

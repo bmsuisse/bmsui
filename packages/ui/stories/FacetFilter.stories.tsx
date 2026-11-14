@@ -34,8 +34,24 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
 export const Preselected: Story = { args: { value: { category: ["Other"], own: ["true"] } } };
+const germanFacets: FacetDefinition[] = [
+  { ...facets[0]!, label: "Kategorie", maxVisible: 5 },
+  { ...facets[1]!, label: "Lieferant" },
+  { ...facets[2]!, label: "Eigenmarke" },
+];
 export const German: Story = {
-  args: { labels: { showMore: (n) => `${n} weitere anzeigen`, showLess: "Weniger", reset: "Filter zurücksetzen" } },
+  args: {
+    facets: germanFacets,
+    value: { category: ["Fasteners"] },
+    labels: {
+      showMore: (n) => `${n} weitere anzeigen`,
+      showLess: "Weniger",
+      reset: "Filter zurücksetzen",
+      searchPlaceholder: (l) => `${l} suchen`,
+      clear: "Löschen",
+      noMatches: "Keine Treffer",
+    },
+  },
 };
 
 /** Applied filters as chips above a result list; share `value` with the sidebar. */

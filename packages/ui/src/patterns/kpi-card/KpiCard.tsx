@@ -293,12 +293,12 @@ export const KpiCard = memo(function KpiCard({
       href ? (
         <a
           href={href}
-          className="tap-target flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:text-ring transition-[background-color,scale] hover:bg-primary/20 active:scale-90 motion-reduce:transition-none md:h-6 md:w-6"
+          className="tap-target flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-primary/10 dark:bg-ring/15 text-primary dark:text-ring transition-[background-color,scale] hover:bg-primary/20 dark:hover:bg-ring/25 active:scale-90 motion-reduce:transition-none md:h-6 md:w-6"
         >
           <Icon className="h-4 w-4 md:h-3.5 md:w-3.5" aria-hidden="true" />
         </a>
       ) : (
-        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:text-ring md:h-6 md:w-6">
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-primary/10 dark:bg-ring/15 text-primary dark:text-ring md:h-6 md:w-6">
           <Icon className="h-4 w-4 md:h-3.5 md:w-3.5" aria-hidden="true" />
         </div>
       )
@@ -373,7 +373,7 @@ export const KpiCard = memo(function KpiCard({
         <div className={rowBetween}>
           <p className="min-w-0 text-[11px] font-bold tracking-[0.12em] text-muted-foreground uppercase">{label}</p>
           {Icon && (
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-primary/8 text-primary dark:text-ring">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-primary/8 dark:bg-ring/15 text-primary dark:text-ring">
               <Icon className="h-3.5 w-3.5" aria-hidden="true" />
             </div>
           )}
@@ -431,7 +431,7 @@ export const KpiCard = memo(function KpiCard({
       <div className={rowBetween}>
         <p className="min-w-0 text-[11px] font-bold tracking-[0.12em] text-muted-foreground uppercase">{label}</p>
         {Icon && (
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-primary/8 text-primary dark:text-ring">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-primary/8 dark:bg-ring/15 text-primary dark:text-ring">
             <Icon className="h-3.5 w-3.5" aria-hidden="true" />
           </div>
         )}

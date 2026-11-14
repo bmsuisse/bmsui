@@ -782,6 +782,14 @@ dependencies. Docs: `docs-site/docs/ui/hooks.md`; tests:
   (`useSyncExternalStore`: hydration-safe, same-key hooks and other tabs stay
   in sync, never throws).
 
+### Visual QA round 5 notes (ui 0.25.4 / datagrid 0.43.4)
+
+- Active row tint is `bg-primary/20 dark:bg-ring/25` (dark `--primary` is navy).
+- `NumberHistogramFilter`: bins with zero count render nothing (height 0); non-zero bins are at least 3px.
+- `PageHeader` tabs divider lives on an outer wrapper, not on the `-mx-1` bleeding scroller, so it no longer overhangs.
+- DataGrid's native selection checkbox/radio inputs are `h-4 w-4 accent-primary dark:accent-ring`.
+- `Checkbox` primitive uses `rounded-[3px]` (`rounded-sm` is 6px in this theme).
+
 ## Public API reports — `packages/*/api-report.md`
 
 `bun run api-report` (`scripts/api-report.ts`) reads the **built**

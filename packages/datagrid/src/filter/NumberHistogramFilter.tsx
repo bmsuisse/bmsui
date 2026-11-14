@@ -223,7 +223,7 @@ export function NumberHistogramFilter<TRow>({
     const peak = Math.max(...counts);
     return counts.map((count, i) => ({
       count,
-      heightPx: peak > 0 ? Math.max((count / peak) * BAR_HEIGHT_PX, 2) : 2,
+      heightPx: count > 0 && peak > 0 ? Math.max((count / peak) * BAR_HEIGHT_PX, 3) : 0,
       active: tInv(logDataMin + i * step) < activeMax && tInv(logDataMin + (i + 1) * step) > activeMin,
     }));
   }, [nums, dataMin, dataMax, logDataMin, logDataMax, buckets, activeMin, activeMax]);
@@ -281,7 +281,7 @@ export function NumberHistogramFilter<TRow>({
         {histBars.map((bar, i) => (
           <div
             key={i}
-            className={cn("flex-1 rounded-sm", bar.active ? "bg-primary/70" : "bg-muted-foreground/20")}
+            className={cn("flex-1 rounded-t-[2px]", bar.active ? "bg-primary/70 dark:bg-ring/70" : "bg-muted-foreground/20")}
             style={{ height: bar.heightPx }}
           />
         ))}
@@ -319,7 +319,7 @@ export function NumberHistogramFilter<TRow>({
         {[activeMin, activeMax].map((v, i) => (
           <div
             key={i}
-            className="pointer-events-none absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-primary bg-background shadow"
+            className="pointer-events-none absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-primary dark:border-ring bg-background shadow"
             style={{ left: `${logPct(v)}%` }}
           />
         ))}

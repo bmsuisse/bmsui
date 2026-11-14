@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
-import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { MicrophoneIcon } from "@heroicons/react/24/outline";
 import { SearchPanel, SearchTrigger } from "@bmsuisse/ui";
 
 const meta: Meta<typeof SearchPanel> = {
@@ -41,7 +41,7 @@ export const WithTrailingSlot: Story = {
   args: {
     trailingSlot: (
       <button type="button" className="text-muted-foreground hover:text-foreground" aria-label="Voice search">
-        <MagnifyingGlassIcon className="h-4 w-4" aria-hidden="true" />
+        <MicrophoneIcon className="h-4 w-4" aria-hidden="true" />
       </button>
     ),
   },

@@ -44,7 +44,7 @@ const DEPT_TREE: DeptRow[] = [
 ];
 
 const deptColumns: ColumnDef<DeptRow>[] = [
-  { id: "name", type: "string", header: "Name", accessorKey: "name", width: 220 },
+  { id: "name", type: "string", header: "Name", accessorKey: "name", width: 220, summary: () => "Total" },
   {
     id: "headcount",
     type: "number",

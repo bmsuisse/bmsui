@@ -163,7 +163,7 @@ export const SheetContent = forwardRef<ElementRef<typeof DialogPrimitive.Content
               <div
                 className={cn(
                   "h-1 w-10 rounded-full bg-muted-foreground/30 transition-all duration-150 group-hover:w-14 group-hover:bg-muted-foreground/50",
-                  isDragging && "w-14 bg-primary/60",
+                  isDragging && "w-14 bg-primary/60 dark:bg-ring/60",
                 )}
               />
             </div>

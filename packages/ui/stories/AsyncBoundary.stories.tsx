@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { AsyncBoundary } from "@bmsuisse/ui";
+import { AsyncBoundary, EmptyState } from "@bmsuisse/ui";
 
 const meta: Meta<typeof AsyncBoundary> = {
   title: "Patterns/AsyncBoundary",
@@ -14,6 +14,6 @@ type Story = StoryObj<typeof AsyncBoundary>;
 export const Default: Story = {};
 export const Loading: Story = { args: { loading: true } };
 export const Error: Story = { args: { error: "Couldn't load offers", onRetry: () => {} } };
-export const Empty: Story = { args: { empty: true, emptyContent: <p className="text-sm text-muted-foreground">Nothing here yet.</p> } };
+export const Empty: Story = { args: { empty: true, emptyContent: <EmptyState size="sm" title="No offers yet" description="New offers will show up here." /> } };
 export const Refetching: Story = { args: { loading: true, hasData: true } };
 export const ErrorOverStaleData: Story = { args: { error: "Couldn't refresh", onRetry: () => {}, hasData: true } };

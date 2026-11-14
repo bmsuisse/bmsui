@@ -162,7 +162,7 @@ export function Sidebar({
               onPointerMove={handlePointerMove}
               onPointerUp={endDrag}
               onDoubleClick={() => setWidth(defaultWidth)}
-              className="absolute top-0 right-0 h-full w-1.5 cursor-col-resize touch-none hover:bg-primary/40"
+              className="absolute top-0 right-0 h-full w-1.5 cursor-col-resize touch-none hover:bg-primary/40 dark:hover:bg-ring/50"
             />
           )}
         </aside>
