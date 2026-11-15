@@ -62,6 +62,10 @@ in your `@theme` block and `:root`:
 }
 ```
 
+In dark mode point `--nav-primary` at a light accent such as `--ring`
+(`html.dark { --nav-primary: var(--ring); }`), because `--primary` stays navy
+(~2:1 on dark surfaces) and the active-row tint and label would vanish.
+
 ### Chart tokens
 
 `KpiCard`'s `donut` variant (and any future multi-series chart in the

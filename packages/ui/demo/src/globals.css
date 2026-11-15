@@ -93,6 +93,7 @@
 
 /* Reference consumer app's dark-mode token values. */
 html.dark {
+  --nav-primary: var(--ring);
   --background: oklch(0.165 0.022 265);
   --foreground: oklch(0.97 0.01 265);
   --primary: #2e4a62;

@@ -271,8 +271,8 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
           onDragLeave={(e) => onDrag(e, "leave")}
           onDrop={(e) => onDrag(e, "drop")}
           className={cn(
-            "group flex items-center rounded-md border border-dashed border-muted-foreground/35 bg-background text-sm transition-[color,background-color,border-color,box-shadow,translate] duration-150 ease-out",
-            !disabled && "cursor-pointer hover:border-muted-foreground/60 hover:bg-muted-foreground/5",
+            "group flex items-center rounded-md border border-dashed border-muted-foreground/70 bg-background text-sm transition-[color,background-color,border-color,box-shadow,translate] duration-150 ease-out",
+            !disabled && "cursor-pointer hover:border-muted-foreground hover:bg-muted-foreground/5",
             "focus-visible:border-solid focus-visible:border-ring focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
             sm ? "min-h-9 gap-2 px-3 py-1.5" : "flex-col justify-center gap-2 px-6 py-6 text-center",
             dragOver && "border-solid border-ring bg-accent/10 ring-4 ring-ring/10 hover:border-ring hover:bg-accent/10",

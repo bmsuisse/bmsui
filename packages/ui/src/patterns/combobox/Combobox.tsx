@@ -367,7 +367,7 @@ export function Combobox(props: ComboboxProps): ReactElement {
                 <XMarkIcon className="h-3.5 w-3.5" />
               </span>
             ) : null}
-            <ChevronUpDownIcon className="h-4 w-4 shrink-0 opacity-50" aria-hidden="true" />
+            <ChevronUpDownIcon className="h-4 w-4 shrink-0 opacity-70" aria-hidden="true" />
           </span>
         </Button>
       </PopoverTrigger>

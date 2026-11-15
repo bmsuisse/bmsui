@@ -815,6 +815,15 @@ dependencies. Docs: `docs-site/docs/ui/hooks.md`; tests:
 - DataGrid's native selection checkbox/radio inputs are `h-4 w-4 accent-primary dark:accent-ring`.
 - `Checkbox` primitive uses `rounded-[3px]` (`rounded-sm` is 6px in this theme).
 
+### Contrast round 9 (ui 0.26.3 / datagrid 0.45.3)
+
+Dark checked/indeterminate Checkbox fills use `bg-accent`/`text-accent-foreground` (both packages);
+Stepper's active chip is `dark:bg-accent`; NavItem's active tint is `dark:bg-nav-primary/20`, and a
+consuming app's dark `--nav-primary` must be a light accent (e.g. `var(--ring)`), not navy
+`--primary`. Slider track has an inset `muted-foreground/70` ring; FileInput dashed border, SplitPane
+grip and Breadcrumbs separators use `muted-foreground/70`; Combobox chevron `opacity-70`;
+FacetFilter checkbox uses the primitive's default border.
+
 ## Public API reports — `packages/*/api-report.md`
 
 `bun run api-report` (`scripts/api-report.ts`) reads the **built**

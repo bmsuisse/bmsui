@@ -119,7 +119,7 @@ export function Stepper({
                         done
                           ? "bg-primary/15 text-primary dark:text-ring"
                           : active
-                            ? "bg-primary text-primary-foreground"
+                            ? "bg-primary text-primary-foreground dark:bg-accent dark:text-accent-foreground"
                             : "bg-muted text-muted-foreground",
                       )}
                     >

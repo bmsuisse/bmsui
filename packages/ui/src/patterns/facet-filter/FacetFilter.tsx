@@ -302,7 +302,6 @@ export function FacetGroup({
                   ) : (
                     <Checkbox
                       id={rowId}
-                      className="border-foreground/40 dark:border-input"
                       checked={checked}
                       disabled={option.disabled}
                       onCheckedChange={(next) => onSelectedChange(toggle(selected, option.value, next === true))}

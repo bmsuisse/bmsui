@@ -48,7 +48,7 @@ export function NavItem<T extends ElementType = "a">({
         "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset focus-visible:outline-none",
         collapsed ? "justify-center gap-0" : "gap-2.5",
         active
-          ? "bg-nav-primary/8 font-semibold text-foreground"
+          ? "bg-nav-primary/8 dark:bg-nav-primary/20 font-semibold text-foreground"
           : "text-foreground/65 hover:bg-muted/60 hover:text-foreground",
         className,
       )}
