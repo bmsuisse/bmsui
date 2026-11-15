@@ -690,7 +690,7 @@ logic above, which already had its own extraction). Structure:
   `GridInlineError` too), used by `AsyncBoundary`'s and both grids' stale-data
   banners so long messages wrap; the per-node tree error stays one line. Group
   header buttons in both grids are `sticky left-2 w-[calc(var(--dg-viewport-w,100%_+_1rem)_-_1rem)]` (`--dg-viewport-w` is set on the scroll container by `useViewportWidthVar`, only while the table overflows; fallback 100%) so the label stays in
-  view under horizontal scroll. `ResultCard` titles clamp to 2 lines, `FileInput`
+  view under horizontal scroll. `ResultCard` titles clamp to 2 lines and the card wraps (`flex-wrap`, title `min-w-[min(10rem,100%)]`, trailing `ml-auto`) so on narrow cards or large text the trailing price/score moves to its own line instead of squeezing the title (ui 0.26.4), `FileInput`
   `size="sm"` wraps (`min-h-9`), `Calendar` cells cap at `(100vw-3.5rem)/7`,
   `MetadataList`'s label column is capped at 40%, `Toolbar`'s overflow-button
   width follows the root font size. Story wrappers with a fixed width (`w-72`

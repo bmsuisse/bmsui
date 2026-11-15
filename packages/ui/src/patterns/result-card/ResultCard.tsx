@@ -123,7 +123,7 @@ export const ResultCard = ({
   "data-testid": testId,
 }: ResultCardProps): ReactElement => {
   const classes = cn(
-    "flex w-full items-start gap-3 rounded-xl border border-foreground/10 bg-background p-3 text-left transition-colors dark:border-border",
+    "flex w-full flex-wrap items-start gap-3 rounded-xl border border-foreground/10 bg-background p-3 text-left transition-colors dark:border-border",
     "hover:bg-foreground/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none",
     selected && "border-foreground bg-foreground/5 dark:border-foreground/60",
     disabled && "pointer-events-none opacity-50",
@@ -133,13 +133,13 @@ export const ResultCard = ({
   const body = (
     <>
       {leading}
-      <span className="min-w-0 flex-1">
+      <span className="min-w-[min(10rem,100%)] flex-1">
         <span className="line-clamp-2 break-words font-medium text-sm">{title}</span>
         {present(meta) && <span className="block truncate text-muted-foreground text-xs">{meta}</span>}
         {present(description) && <span className="mt-1 line-clamp-2 block text-muted-foreground text-sm">{description}</span>}
         {present(footer) && <span className="mt-2 block">{footer}</span>}
       </span>
-      {present(trailing) && <span className="shrink-0 self-center">{trailing}</span>}
+      {present(trailing) && <span className="ml-auto shrink-0 self-center">{trailing}</span>}
     </>
   );
   return (
