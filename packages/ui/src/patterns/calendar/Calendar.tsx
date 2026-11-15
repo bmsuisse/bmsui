@@ -340,7 +340,7 @@ export function Calendar(props: CalendarProps): ReactElement {
                         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                         disabled && "cursor-not-allowed text-muted-foreground/40",
                         blocked && "line-through",
-                        !disabled && (outside ? "text-muted-foreground/60" : "text-foreground"),
+                        !disabled && (outside && !inRange ? "text-muted-foreground" : "text-foreground"),
                         !selected && !isStart && !isEnd && !disabled && "hover:bg-muted-foreground/10",
                         isToday && "font-semibold",
                         selected && "bg-primary font-medium text-primary-foreground hover:bg-primary/90 dark:bg-accent dark:text-accent-foreground dark:hover:bg-accent/90",

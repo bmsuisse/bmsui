@@ -29,7 +29,7 @@ export function EnumEditor<TRow>({
         onOpenChange={onOpenChange}
       >
         <SelectTrigger
-          className="h-8 min-w-24"
+          className="h-8 min-w-24 [[data-fixed-layout]_&]:min-w-0"
           aria-label={`Edit ${column.header}`}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? errorId : undefined}

@@ -66,7 +66,7 @@ export function Calendar({ className, classNames, ...props }: CalendarProps) {
           "[&:not([data-selected])]:text-primary dark:[&:not([data-selected])]:text-ring [&:not([data-selected])]:font-semibold",
           defaultClassNames.today,
         ),
-        outside: cn("text-muted-foreground/50", defaultClassNames.outside),
+        outside: cn("text-muted-foreground", defaultClassNames.outside),
         disabled: cn("text-muted-foreground/30 line-through", defaultClassNames.disabled),
         hidden: cn("invisible", defaultClassNames.hidden),
         ...classNames,

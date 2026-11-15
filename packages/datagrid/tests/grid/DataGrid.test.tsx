@@ -606,6 +606,15 @@ describe("DataGrid (filter display)", () => {
     expect(screen.getByRole("columnheader", { name: "Age Group" })).toBeInTheDocument();
   });
 
+  it("marks the table data-fixed-layout only with enableColumnResizing", () => {
+    const props = { columns, dataSource: { mode: "client" as const, data: rows }, getRowId: (row: { id: string }) => row.id };
+    const { unmount } = render(<DataGrid {...(props as any)} />);
+    expect(screen.getByRole("table")).not.toHaveAttribute("data-fixed-layout");
+    unmount();
+    render(<DataGrid {...(props as any)} enableColumnResizing />);
+    expect(screen.getByRole("table")).toHaveAttribute("data-fixed-layout");
+  });
+
   it("doesn't wrap a non-sortable column's renderHeader in a button, so nested interactive content stays clickable", async () => {
     // Regression test: the leaf header cell always wrapped `renderHeader` output
     // in a `<button disabled={!sortable}>` for the sort toggle. A *disabled*

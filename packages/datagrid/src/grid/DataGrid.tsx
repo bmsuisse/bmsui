@@ -44,6 +44,7 @@ import type { FilterDescriptor } from "../filter/types";
 import { useGroupExpansion } from "../hooks/useGroupExpansion";
 import { useStickyGroupHeaderTop } from "../hooks/useStickyGroupHeaderTop";
 import { useVisibleColumns } from "../hooks/useVisibleColumns";
+import { useViewportWidthVar } from "../hooks/useViewportWidthVar";
 import { cn, stopRowClick } from "../lib/utils";
 import { SELECTION_COLUMN_WIDTH } from "../lib/structuralColumns";
 import { ACTIVE_ROW_CLASS, activeRowProps } from "../lib/activeRow";
@@ -818,6 +819,7 @@ export function DataGrid<TRow extends RowData>({
   }, [shouldVirtualize, groupedBuckets, tableRows, isGroupExpanded]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  useViewportWidthVar(scrollRef);
   const virtualizer = useVirtualizer({
     count: flatItems.length,
     getScrollElement: () => scrollRef.current,
@@ -1630,7 +1632,7 @@ export function DataGrid<TRow extends RowData>({
           >
             <button
               type="button"
-              className="sticky left-2 flex w-[calc(100cqw-1rem)] max-w-full items-center gap-1 text-left"
+              className="sticky left-2 flex w-[calc(var(--dg-viewport-w,100%_+_1rem)_-_1rem)] max-w-full items-center gap-1 text-left"
               onClick={() => toggleGroupExpanded(key)}
               aria-expanded={expanded}
             >
@@ -1722,7 +1724,7 @@ export function DataGrid<TRow extends RowData>({
           ref={scrollRef}
           data-testid={testId}
           className={cn(
-            "h-full overflow-auto rounded-md border [container-type:inline-size]",
+            "h-full overflow-auto rounded-md border",
             // `select-none`: dragging a range would otherwise paint the browser's own blue text selection over the cells (copy/paste is handled by the grid, editors stay selectable).
             hasCellEditing && "relative select-none [&_input]:select-text [&_textarea]:select-text",
             hasCellEditing &&
@@ -1757,6 +1759,7 @@ export function DataGrid<TRow extends RowData>({
           keeps natural, content-driven column sizing.
         */}
         <table
+          data-fixed-layout={enableColumnResizing ? "" : undefined}
           className={cn(
             "border-collapse text-sm",
             fixedTableWidth === undefined && "w-full",
@@ -1973,7 +1976,7 @@ export function DataGrid<TRow extends RowData>({
           <tbody>
             <tr>
               <td colSpan={totalColumnCount} className="p-4 text-center text-muted-foreground">
-                <div className="sticky left-4 w-[calc(100cqw-2rem)] max-w-full">
+                <div className="sticky left-4 w-[calc(var(--dg-viewport-w,100%_+_2rem)_-_2rem)] max-w-full">
                   {loading ? (
                     <LoadingRows label={labels.loading} />
                   ) : hasError ? (

@@ -931,6 +931,14 @@ describe("TreeDataGrid (showTotals)", () => {
       expect(screen.getByRole("table")).toHaveClass("table-fixed");
     });
 
+    it("marks the table data-fixed-layout only with enableColumnResizing", () => {
+      const { unmount } = renderGrid({});
+      expect(screen.getByRole("table")).not.toHaveAttribute("data-fixed-layout");
+      unmount();
+      renderGrid({ enableColumnResizing: true });
+      expect(screen.getByRole("table")).toHaveAttribute("data-fixed-layout");
+    });
+
     it("resizes with the arrow keys from the rendered width and reports the new sizing", async () => {
       const onColumnSizingChange = vi.fn();
       const rect = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({ width: 100 } as DOMRect);

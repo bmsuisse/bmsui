@@ -7,7 +7,7 @@ describe("StatusBadge", () => {
     render(<StatusBadge status="approved" />);
     const badge = screen.getByText("Approved");
     expect(badge.className).toContain("bg-emerald-500/15");
-    expect(badge.className).toContain("text-emerald-700");
+    expect(badge.className).toContain("text-emerald-800");
   });
 
   it("falls back to the neutral tone for an unknown status", () => {

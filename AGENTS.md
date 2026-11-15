@@ -689,13 +689,17 @@ logic above, which already had its own extraction). Structure:
   has an additive `wrap` prop (default `false`; datagrid's internal
   `GridInlineError` too), used by `AsyncBoundary`'s and both grids' stale-data
   banners so long messages wrap; the per-node tree error stays one line. Group
-  header buttons in both grids are `sticky left-2 w-[calc(100cqw-1rem)]` (relies
-  on the scroll container's `[container-type:inline-size]`) so the label stays in
+  header buttons in both grids are `sticky left-2 w-[calc(var(--dg-viewport-w,100%_+_1rem)_-_1rem)]` (`--dg-viewport-w` is set on the scroll container by `useViewportWidthVar`, only while the table overflows; fallback 100%) so the label stays in
   view under horizontal scroll. `ResultCard` titles clamp to 2 lines, `FileInput`
   `size="sm"` wraps (`min-h-9`), `Calendar` cells cap at `(100vw-3.5rem)/7`,
   `MetadataList`'s label column is capped at 40%, `Toolbar`'s overflow-button
   width follows the root font size. Story wrappers with a fixed width (`w-72`
   etc.) need `max-w-full` so they don't overflow phone viewports.
+- Contrast/layout pass (ui 0.26.2 / datagrid 0.45.2): built-in editors carry `[[data-fixed-layout]_&]:min-w-0`
+  (the grids set `data-fixed-layout` on `<table>` only with `enableColumnResizing`), so their `min-w-*` floor
+  no longer overrides a dragged column width. Contrast: Calendar outside days are full `text-muted-foreground`
+  (in-range days stay `text-foreground`), `NavItem` inactive text `text-foreground/65`, StatusBadge/AlertBox
+  success/info light text is `-800` (dark unchanged), a checked `Switch` is `dark:bg-accent`.
 - Focus-ring pass (ui 0.25.6 / datagrid 0.43.6): the `default` `Button` gets a
   `ring-offset-2` gap (light `--ring` equals `--primary`, so the ring was invisible on a
   primary fill); Checkbox/Switch use one language, `ring-2 ring-ring ring-offset-1`;
@@ -1438,7 +1442,7 @@ rejection shows `filterLabels.loadFailed` + `retry` instead of an empty histogra
 datagrid package does not depend on `@bmsuisse/ui`, so these are small local copies
 (`src/components/status.tsx`) with the same `ErrorInput` shape — keep the two in sync when
 changing either. Error text uses `text-red-700 dark:text-red-300` (like `AlertBox`), not `text-destructive`,
-which fails WCAG AA as small text. The loading/error/empty block sits in a `sticky left-4 w-[calc(100cqw-2rem)]` wrapper inside the colSpan cell (the scroll container is `[container-type:inline-size]`), so it stays within the visible width on a grid wider than its container (0.43.1).
+which fails WCAG AA as small text. The loading/error/empty block sits in a `sticky left-4 w-[calc(var(--dg-viewport-w,100%_+_2rem)_-_2rem)]` wrapper inside the colSpan cell (`--dg-viewport-w` comes from `useViewportWidthVar`, set only while the table overflows its scroll container, fallback 100%; `container-type: inline-size` was dropped because it collapsed the grid in inline-block / w-fit / unsized flex parents), so it stays within the visible width on a grid wider than its container (0.43.1).
 
 ### `renderDetail` — expand a row to show more, without `<TreeDataGrid>`
 

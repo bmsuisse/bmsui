@@ -49,7 +49,7 @@ export function NavItem<T extends ElementType = "a">({
         collapsed ? "justify-center gap-0" : "gap-2.5",
         active
           ? "bg-nav-primary/8 font-semibold text-foreground"
-          : "text-foreground/55 hover:bg-muted/60 hover:text-foreground",
+          : "text-foreground/65 hover:bg-muted/60 hover:text-foreground",
         className,
       )}
       {...rest}
