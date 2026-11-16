@@ -121,7 +121,7 @@ class TestBuildFilterExpr:
         ("operator", "symbol"),
         [("lt", "<"), ("lte", "<="), ("gt", ">"), ("gte", ">=")],
     )
-    def test_comparison_operators(self, operator, symbol) -> None:
+    def test_comparison_operators(self, operator: FilterOperator, symbol: str) -> None:
         assert build_filter_expr(FilterDescriptor(field="age", operator=operator, value=18)) == (f"age {symbol} 18")
 
     def test_in(self) -> None:
@@ -161,7 +161,7 @@ class TestBuildFilterExpr:
         assert build_filter_expr(FilterDescriptor(field="status", operator="notIn", value=[])) == ("status IS NOT NULL")
 
     @pytest.mark.parametrize("operator", ["eq", "neq", "in", "notIn"])
-    def test_ignore_case_raises_unsupported(self, operator) -> None:
+    def test_ignore_case_raises_unsupported(self, operator: FilterOperator) -> None:
         # Meilisearch's filter DSL has no case-insensitive comparison
         # operator; silently ignoring ignoreCase here would make the same
         # FilterDescriptor match differently across DataSource modes.
@@ -170,7 +170,7 @@ class TestBuildFilterExpr:
             build_filter_expr(FilterDescriptor(field="name", operator=operator, value=value, ignoreCase=True))
 
     @pytest.mark.parametrize("operator", ["eq", "neq"])
-    def test_ignore_case_does_not_raise_for_a_non_string_value(self, operator) -> None:
+    def test_ignore_case_does_not_raise_for_a_non_string_value(self, operator: FilterOperator) -> None:
         # ignoreCase has nothing to case-fold for a numeric value — sql.py
         # and evaluateFilter both simply ignore the flag in that case, so
         # raising here would reject a filter the other two engines handle
@@ -213,7 +213,7 @@ class TestBuildFilterExpr:
         )
 
     @pytest.mark.parametrize("operator", ["contains", "doesNotContain", "startsWith", "endsWith"])
-    def test_unsupported_operators_raise(self, operator) -> None:
+    def test_unsupported_operators_raise(self, operator: FilterOperator) -> None:
         with pytest.raises(UnsupportedOperatorError):
             build_filter_expr(FilterDescriptor(field="name", operator=operator, value="a"))
 
@@ -314,7 +314,7 @@ class TestBuildSearchParams:
     def test_ready_to_spread_into_index_search(self) -> None:
         params = build_search_params(None, [], 0, 10)
 
-        def fake_search(q, **kwargs):
+        def fake_search(q: str, **kwargs: object) -> tuple[str, dict[str, object]]:
             return q, kwargs
 
         assert fake_search("hello", **params) == ("hello", {"offset": 0, "limit": 10})

@@ -45,8 +45,14 @@ def test_every_operator_case_covers_the_full_filteroperator_contract() -> None:
 
 @pytest.mark.parametrize("dialect", DIALECTS)
 @pytest.mark.parametrize(("operator", "kwargs", "expected_where", "expected_params"), EVERY_OPERATOR_CASES)
-def test_every_operator(dialect, operator, kwargs, expected_where, expected_params) -> None:
-    filter_ = FilterDescriptor(field="x", operator=operator, **kwargs)
+def test_every_operator(
+    dialect: str,
+    operator: FilterOperator,
+    kwargs: dict[str, object],
+    expected_where: str,
+    expected_params: dict[str, object],
+) -> None:
+    filter_ = FilterDescriptor.model_validate({"field": "x", "operator": operator, **kwargs})
     sql, params = build_select("t", filter_, [], 0, 10, dialect=dialect)
 
     placeholder = "%({name})s" if dialect == "postgres" else ":{name}"
@@ -56,7 +62,7 @@ def test_every_operator(dialect, operator, kwargs, expected_where, expected_para
 
 
 @pytest.mark.parametrize("dialect", DIALECTS)
-def test_ignore_case_uses_case_insensitive_like(dialect) -> None:
+def test_ignore_case_uses_case_insensitive_like(dialect: str) -> None:
     filter_ = FilterDescriptor(field="name", operator="contains", value="corp", ignoreCase=True)
     sql, params = build_select("t", filter_, [], 0, 10, dialect=dialect)
     assert params == {"p0": "%corp%"}
@@ -68,7 +74,7 @@ def test_ignore_case_uses_case_insensitive_like(dialect) -> None:
 
 
 @pytest.mark.parametrize("dialect", DIALECTS)
-def test_two_levels_of_and_or_nesting(dialect) -> None:
+def test_two_levels_of_and_or_nesting(dialect: str) -> None:
     # (status = 'active' AND age >= 18) OR (status = 'pending' AND age < 10)
     filter_ = CompositeFilterDescriptor(
         logic="or",
