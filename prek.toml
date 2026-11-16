@@ -1,16 +1,2 @@
-[[repos]]
-repo = "https://github.com/astral-sh/ruff-pre-commit"
-rev = "v0.17.4"
-hooks = [
-    { id = "ruff-check", args = ["--fix"] },
-    { id = "ruff-format" },
-]
-
-[[repos]]
-repo = "local"
-hooks = [
-    { id = "ruff-warn-any-datagrid", name = "ruff warn: typing.Any (ANN401) [python/datagrid]", language = "system", entry = "sh -c 'cd python/datagrid && uv run ruff check --select ANN401 --exit-zero --output-format concise'", files = '^python/datagrid/.*\.py$', pass_filenames = false, verbose = true },
-    { id = "ruff-warn-any-e2e-server", name = "ruff warn: typing.Any (ANN401) [e2e/server]", language = "system", entry = "sh -c 'cd e2e/server && uv run ruff check --select ANN401 --exit-zero --output-format concise'", files = '^e2e/server/.*\.py$', pass_filenames = false, verbose = true },
-    { id = "ty-datagrid", name = "ty check [python/datagrid]", language = "system", entry = "sh -c 'cd python/datagrid && uv run --all-groups ty check'", files = '^python/datagrid/.*\.py$', pass_filenames = false },
-    { id = "ty-e2e-server", name = "ty check [e2e/server]", language = "system", entry = "sh -c 'cd e2e/server && uv run --all-groups ty check'", files = '^e2e/server/.*\.py$', pass_filenames = false },
-]
+# Workspace root: the Python projects (python/datagrid, e2e/server) carry their own prek.toml.
+repos = []
