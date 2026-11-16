@@ -33,7 +33,7 @@ EVERY_OPERATOR_CASES = [
 ]
 
 
-def test_every_operator_case_covers_the_full_filteroperator_contract():
+def test_every_operator_case_covers_the_full_filteroperator_contract() -> None:
     """Guards against a new FilterOperator being added to filters.py without a
     matching branch (and test) landing here — the branch dispatch in sql.py's
     _build_leaf has no static exhaustiveness check tying it to the Literal, so
@@ -45,7 +45,7 @@ def test_every_operator_case_covers_the_full_filteroperator_contract():
 
 @pytest.mark.parametrize("dialect", DIALECTS)
 @pytest.mark.parametrize(("operator", "kwargs", "expected_where", "expected_params"), EVERY_OPERATOR_CASES)
-def test_every_operator(dialect, operator, kwargs, expected_where, expected_params):
+def test_every_operator(dialect, operator, kwargs, expected_where, expected_params) -> None:
     filter_ = FilterDescriptor(field="x", operator=operator, **kwargs)
     sql, params = build_select("t", filter_, [], 0, 10, dialect=dialect)
 
@@ -56,7 +56,7 @@ def test_every_operator(dialect, operator, kwargs, expected_where, expected_para
 
 
 @pytest.mark.parametrize("dialect", DIALECTS)
-def test_ignore_case_uses_case_insensitive_like(dialect):
+def test_ignore_case_uses_case_insensitive_like(dialect) -> None:
     filter_ = FilterDescriptor(field="name", operator="contains", value="corp", ignoreCase=True)
     sql, params = build_select("t", filter_, [], 0, 10, dialect=dialect)
     assert params == {"p0": "%corp%"}
@@ -68,7 +68,7 @@ def test_ignore_case_uses_case_insensitive_like(dialect):
 
 
 @pytest.mark.parametrize("dialect", DIALECTS)
-def test_two_levels_of_and_or_nesting(dialect):
+def test_two_levels_of_and_or_nesting(dialect) -> None:
     # (status = 'active' AND age >= 18) OR (status = 'pending' AND age < 10)
     filter_ = CompositeFilterDescriptor(
         logic="or",
@@ -97,7 +97,7 @@ def test_two_levels_of_and_or_nesting(dialect):
     assert params == {"p0": "active", "p1": 18, "p2": "pending", "p3": 10}
 
 
-def test_top_level_and_of_leaf_and_composite():
+def test_top_level_and_of_leaf_and_composite() -> None:
     filter_ = CompositeFilterDescriptor(
         logic="and",
         filters=[
@@ -116,35 +116,35 @@ def test_top_level_and_of_leaf_and_composite():
     assert params == {"p0": "active", "p1": 18, "p2": "%ann%"}
 
 
-def test_empty_and_is_vacuously_true():
+def test_empty_and_is_vacuously_true() -> None:
     sql, _ = build_select("t", CompositeFilterDescriptor(logic="and", filters=[]), [], 0, 10)
     assert "WHERE TRUE" in sql
 
 
-def test_empty_or_is_vacuously_false():
+def test_empty_or_is_vacuously_false() -> None:
     sql, _ = build_select("t", CompositeFilterDescriptor(logic="or", filters=[]), [], 0, 10)
     assert "WHERE FALSE" in sql
 
 
-def test_no_filter_omits_where_clause():
+def test_no_filter_omits_where_clause() -> None:
     sql, params = build_select("t", None, [], 0, 10, dialect="postgres")
     assert "WHERE" not in sql
     assert params == {}
 
 
-def test_prequalified_field_path_renders_qualified_column():
+def test_prequalified_field_path_renders_qualified_column() -> None:
     filter_ = FilterDescriptor(field=["c", "customer_name"], operator="eq", value="Acme")
     sql, params = build_select("orders", filter_, [], 0, 10, dialect="postgres")
     assert "c.customer_name = %(p0)s" in sql
     assert params == {"p0": "Acme"}
 
 
-def test_sort_single_column():
+def test_sort_single_column() -> None:
     sql, _ = build_select("t", None, [SortDescriptor(field="created_at", dir="desc")], 0, 10)
     assert "ORDER BY created_at DESC" in sql
 
 
-def test_sort_multiple_columns_preserves_order():
+def test_sort_multiple_columns_preserves_order() -> None:
     sql, _ = build_select(
         "t",
         None,
@@ -156,25 +156,25 @@ def test_sort_multiple_columns_preserves_order():
     assert sql.index("status") < sql.index("created_at", order_by_index)
 
 
-def test_pagination_offset_and_limit():
+def test_pagination_offset_and_limit() -> None:
     sql, _ = build_select("t", None, [], 40, 20, dialect="postgres")
     assert "LIMIT 20" in sql
     assert "OFFSET 40" in sql
 
 
-def test_in_with_empty_value_list_matches_nothing():
+def test_in_with_empty_value_list_matches_nothing() -> None:
     sql, params = build_select("t", FilterDescriptor(field="x", operator="in", value=[]), [], 0, 10)
     assert "WHERE FALSE" in sql
     assert params == {}
 
 
-def test_notin_with_empty_value_list_matches_non_null_rows():
+def test_notin_with_empty_value_list_matches_non_null_rows() -> None:
     sql, params = build_select("t", FilterDescriptor(field="x", operator="notIn", value=[]), [], 0, 10)
     assert "WHERE NOT x IS NULL" in sql
     assert params == {}
 
 
-def test_notin_with_missing_value_matches_nothing():
+def test_notin_with_missing_value_matches_nothing() -> None:
     # A missing/malformed value (not even an empty list) is a different case
     # from an explicit empty list above — evaluateFilter's Array.isArray
     # guard is false (never a match) for this, but an earlier version of
@@ -184,13 +184,13 @@ def test_notin_with_missing_value_matches_nothing():
     assert params == {}
 
 
-def test_between_with_malformed_value_matches_nothing():
+def test_between_with_malformed_value_matches_nothing() -> None:
     sql, params = build_select("t", FilterDescriptor(field="x", operator="between", value=[1]), [], 0, 10)
     assert "WHERE FALSE" in sql
     assert params == {}
 
 
-def test_between_is_order_independent():
+def test_between_is_order_independent() -> None:
     # SQL's BETWEEN is not symmetric (`BETWEEN 45 AND 30` matches nothing),
     # but evaluateFilter's `between` deliberately is — a FilterDescriptor
     # with inverted bounds must produce the same result on both sides.
@@ -199,7 +199,7 @@ def test_between_is_order_independent():
     assert params == {"p0": 30, "p1": 45}
 
 
-def test_between_reorders_mismatched_types_via_numeric_coercion():
+def test_between_reorders_mismatched_types_via_numeric_coercion() -> None:
     # A numeric string ("10") vs. a real int (5) raises TypeError under a
     # naive Python `>` comparison — the reorder must coerce both sides to
     # numbers first (mirroring evaluateFilter's asFiniteNumber) rather than
@@ -209,14 +209,14 @@ def test_between_reorders_mismatched_types_via_numeric_coercion():
     assert params == {"p0": 5, "p1": "10"}
 
 
-def test_between_leaves_genuinely_incomparable_bounds_as_given():
+def test_between_leaves_genuinely_incomparable_bounds_as_given() -> None:
     sql, params = build_select("t", FilterDescriptor(field="x", operator="between", value=["a", 1]), [], 0, 10)
     assert "x BETWEEN %(p0)s AND %(p1)s" in sql
     assert params == {"p0": "a", "p1": 1}
 
 
 class TestIgnoreCaseBeyondLike:
-    def test_applies_to_eq(self):
+    def test_applies_to_eq(self) -> None:
         # ignoreCase was previously only honored for LIKE-based operators;
         # eq/neq/in/notIn silently stayed case-sensitive, disagreeing with
         # evaluateFilter's valuesEqual (which lowercases both sides for eq
@@ -227,13 +227,13 @@ class TestIgnoreCaseBeyondLike:
         assert "LOWER(status) = LOWER(%(p0)s)" in sql
         assert params == {"p0": "ACTIVE"}
 
-    def test_applies_to_neq(self):
+    def test_applies_to_neq(self) -> None:
         sql, _ = build_select(
             "t", FilterDescriptor(field="status", operator="neq", value="ACTIVE", ignoreCase=True), [], 0, 10
         )
         assert "LOWER(status) <> LOWER(%(p0)s)" in sql
 
-    def test_applies_to_in(self):
+    def test_applies_to_in(self) -> None:
         sql, params = build_select(
             "t",
             FilterDescriptor(field="status", operator="in", value=["A", "B"], ignoreCase=True),
@@ -244,7 +244,7 @@ class TestIgnoreCaseBeyondLike:
         assert "LOWER(status) IN (LOWER(%(p0)s), LOWER(%(p1)s))" in sql
         assert params == {"p0": "A", "p1": "B"}
 
-    def test_applies_to_notin(self):
+    def test_applies_to_notin(self) -> None:
         sql, _ = build_select(
             "t",
             FilterDescriptor(field="status", operator="notIn", value=["A", "B"], ignoreCase=True),
@@ -254,13 +254,13 @@ class TestIgnoreCaseBeyondLike:
         )
         assert "NOT LOWER(status) IN (LOWER(%(p0)s), LOWER(%(p1)s))" in sql
 
-    def test_does_not_apply_to_a_non_string_value(self):
+    def test_does_not_apply_to_a_non_string_value(self) -> None:
         # ignoreCase is meaningless for a numeric value; LOWER(numeric_column)
         # would be a type error against a real numeric column in most drivers.
         sql, _ = build_select("t", FilterDescriptor(field="age", operator="eq", value=5, ignoreCase=True), [], 0, 10)
         assert "LOWER" not in sql
 
-    def test_does_not_apply_to_in_with_only_non_string_values(self):
+    def test_does_not_apply_to_in_with_only_non_string_values(self) -> None:
         sql, _ = build_select(
             "t", FilterDescriptor(field="age", operator="in", value=[5, 10], ignoreCase=True), [], 0, 10
         )
@@ -268,14 +268,14 @@ class TestIgnoreCaseBeyondLike:
 
 
 class TestLikeMetacharacterEscaping:
-    def test_percent_and_underscore_are_escaped_in_contains(self):
+    def test_percent_and_underscore_are_escaped_in_contains(self) -> None:
         # Without escaping, a literal "_" or "%" in the search text would act
         # as a LIKE wildcard instead of matching itself.
         sql, params = build_select("t", FilterDescriptor(field="sku", operator="contains", value="10_5%off"), [], 0, 10)
         assert "LIKE %(p0)s ESCAPE '\\'" in sql
         assert params == {"p0": "%10\\_5\\%off%"}
 
-    def test_backslash_itself_is_escaped(self):
+    def test_backslash_itself_is_escaped(self) -> None:
         sql, params = build_select(
             "t", FilterDescriptor(field="path", operator="startsWith", value="C:\\Users"), [], 0, 10
         )
@@ -284,14 +284,14 @@ class TestLikeMetacharacterEscaping:
 
 
 class TestContainsWithNonStringValue:
-    def test_contains_with_none_value_matches_nothing(self):
+    def test_contains_with_none_value_matches_nothing(self) -> None:
         # An f-string pattern would have rendered `LIKE '%None%'`, matching
         # any row whose value literally contains the text "None".
         sql, params = build_select("t", FilterDescriptor(field="name", operator="contains", value=None), [], 0, 10)
         assert "WHERE FALSE" in sql
         assert params == {}
 
-    def test_does_not_contain_with_none_value_matches_non_null_rows(self):
+    def test_does_not_contain_with_none_value_matches_non_null_rows(self) -> None:
         sql, params = build_select(
             "t", FilterDescriptor(field="name", operator="doesNotContain", value=None), [], 0, 10
         )
@@ -300,7 +300,7 @@ class TestContainsWithNonStringValue:
 
 
 class TestBuildCount:
-    def test_matches_build_select_where_clause(self):
+    def test_matches_build_select_where_clause(self) -> None:
         filter_ = FilterDescriptor(field="status", operator="eq", value="active")
         _select_sql, select_params = build_select("t", filter_, [], 0, 10, dialect="postgres")
         count_sql, count_params = build_count("t", filter_, dialect="postgres")
@@ -309,7 +309,7 @@ class TestBuildCount:
         assert "WHERE status = %(p0)s" in count_sql
         assert count_params == select_params == {"p0": "active"}
 
-    def test_no_filter(self):
+    def test_no_filter(self) -> None:
         sql, params = build_count("t", None, dialect="sqlite")
         assert sql == "SELECT COUNT(*) AS cnt FROM t"
         assert params == {}
