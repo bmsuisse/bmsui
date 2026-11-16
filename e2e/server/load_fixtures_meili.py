@@ -79,7 +79,8 @@ def load_fixtures_meili(client: Client) -> None:
         # a pre-existing index only surfaces as a *failed* task, discovered
         # by wait_for_task, not as an exception from create_index() itself.
         create_result = client.wait_for_task(client.create_index(entity, {"primaryKey": "id"}).task_uid)
-        if create_result.status == "failed" and create_result.error.get("code") != "index_already_exists":
+        create_error = create_result.error or {}
+        if create_result.status == "failed" and create_error.get("code") != "index_already_exists":
             raise RuntimeError(f"failed to create Meilisearch index {entity!r}: {create_result.error}")
 
         index = client.index(entity)
