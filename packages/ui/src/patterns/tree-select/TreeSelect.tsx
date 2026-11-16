@@ -118,7 +118,7 @@ function TreeRows({
                   aria-label={node.label}
                   tabIndex={-1}
                   aria-expanded={isOpen}
-                  className="flex size-6 shrink-0 items-center justify-center text-muted-foreground"
+                  className="flex size-11 shrink-0 items-center justify-center text-muted-foreground sm:size-6"
                   onClick={() => onToggle(node.value)}
                 >
                   {isOpen ? (
@@ -128,7 +128,7 @@ function TreeRows({
                   )}
                 </button>
               ) : (
-                <span className="size-6 shrink-0" />
+                <span className="size-11 shrink-0 sm:size-6" />
               )}
               <button
                 type="button"
@@ -141,10 +141,10 @@ function TreeRows({
                 data-testid={
                   testId ? `${testId}-option-${node.value}` : undefined
                 }
-                className="flex min-w-0 flex-1 items-center gap-2 py-1 pr-2 text-left text-sm"
+                className="flex min-h-11 min-w-0 flex-1 items-center gap-2 py-1 pr-2 text-left text-sm sm:min-h-0"
                 onClick={() => onSelect(node.value)}
               >
-                <span className="truncate">{node.label}</span>
+                <span className="min-w-0 break-words whitespace-normal sm:truncate" title={node.label}>{node.label}</span>
                 {selected && <CheckIcon className="ml-auto size-4 shrink-0" />}
               </button>
             </div>
@@ -284,7 +284,10 @@ export function TreeSelect({
           value={query}
           placeholder={searchPlaceholder}
           aria-label={searchPlaceholder}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setActiveValue(null);
+          }}
           onKeyDown={(e) => {
             if (e.key === "Enter") e.preventDefault();
             if (errorMessage || loading) return;

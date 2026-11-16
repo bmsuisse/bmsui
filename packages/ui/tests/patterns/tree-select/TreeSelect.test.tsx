@@ -49,6 +49,18 @@ describe("TreeSelect", () => {
     expect(onChange).toHaveBeenCalledWith("team");
   });
 
+  it("keeps a visible tab stop after clearing search on a collapsed descendant", async () => {
+    const user = userEvent.setup();
+    render(<TreeSelect nodes={nodes} value={null} onChange={vi.fn()} />);
+    await user.click(screen.getByRole("combobox"));
+    await user.type(screen.getByRole("textbox"), "team");
+    await user.keyboard("{ArrowDown}{ArrowDown}{ArrowDown}");
+    expect(screen.getByRole("treeitem", { name: "Team A" })).toHaveFocus();
+    await user.tab({ shift: true });
+    await user.clear(screen.getByRole("textbox"));
+    expect(screen.getByRole("treeitem", { name: "Switzerland" })).toHaveAttribute("tabindex", "0");
+  });
+
   it("displays a saved value without offering it as an available choice", async () => {
     const user = userEvent.setup();
     render(<TreeSelect nodes={nodes} value="old" valueLabel="Old unit" onChange={vi.fn()} />);
