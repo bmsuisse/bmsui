@@ -68,3 +68,6 @@ ban-relative-imports = "all"
 
 [tool.ty.src]
 exclude = [".worktrees", ".claude"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
