@@ -28,12 +28,11 @@ export const Checkbox = forwardRef<
     )}
     {...props}
   >
-    <CheckboxPrimitive.Indicator className="flex items-center justify-center text-current">
-      {props.checked === "indeterminate" ? (
-        <MinusIcon className="h-3 w-3" />
-      ) : (
-        <CheckIcon className="h-3 w-3" />
-      )}
+    {/* Both icons are rendered and the Indicator's own data-state picks one, so a controlled
+        `checked="indeterminate"` and an uncontrolled `defaultChecked="indeterminate"` both show the dash. */}
+    <CheckboxPrimitive.Indicator className="group flex items-center justify-center text-current">
+      <CheckIcon className="h-3 w-3 group-data-[state=indeterminate]:hidden" />
+      <MinusIcon className="hidden h-3 w-3 group-data-[state=indeterminate]:block" />
     </CheckboxPrimitive.Indicator>
   </CheckboxPrimitive.Root>
 ));

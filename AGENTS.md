@@ -816,6 +816,14 @@ dependencies. Docs: `docs-site/docs/ui/hooks.md`; tests:
 - DataGrid's native selection checkbox/radio inputs are `h-4 w-4 accent-primary dark:accent-ring`.
 - `Checkbox` primitive uses `rounded-[3px]` (`rounded-sm` is 6px in this theme).
 
+### Review fixes (ui 0.27.3 / datagrid 0.45.4)
+
+`Checkbox` (both packages) renders both the check and the minus icon and lets the Indicator's own
+`data-state` pick one (`group-data-[state=indeterminate]:hidden|block`), so an uncontrolled
+`defaultChecked="indeterminate"` shows the dash too, not just a controlled `checked`. The compact
+`FileInput` hint is `min-w-0 max-w-full` (not `shrink-0`), so a long hint wraps inside the zone.
+Storybook has a Brand toolbar control (`.storybook/brands.css`, OneSales' bms/proone/procasa tokens).
+
 ### Contrast round 9 (ui 0.26.3 / datagrid 0.45.3)
 
 Dark checked/indeterminate Checkbox fills use `bg-accent`/`text-accent-foreground` (both packages);
