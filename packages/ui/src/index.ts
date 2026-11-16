@@ -391,3 +391,6 @@ export type {
 export { FilterSheet, FilterSheetTrigger, defaultFilterSheetLabels } from "./patterns/filter-sheet/FilterSheet";
 export type { ResultCardProps, ResultListProps, ThumbnailProps } from "./patterns/result-card/ResultCard";
 export { ResultCard, ResultList, Thumbnail } from "./patterns/result-card/ResultCard";
+
+export { TreeSelect } from "./patterns/tree-select/TreeSelect";
+export type { TreeSelectNode, TreeSelectProps } from "./patterns/tree-select/TreeSelect";

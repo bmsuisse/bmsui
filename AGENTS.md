@@ -127,6 +127,7 @@ logic above, which already had its own extraction). Structure:
   after some of that app's call sites had already switched to this `Input`
   while others hadn't, mid-migration. Ref-forwarding was already correct,
   just untested — added a test for it alongside.
+- `TreeSelect` is a searchable single-select hierarchy with expandable branches, keyboard navigation, and `valueLabel` for saved values excluded from the available choices.
 - `packages/ui/src/patterns/` — components composed on top of the
   primitives, one subfolder per pattern, each addressing a specific
   duplication found in the survey:
