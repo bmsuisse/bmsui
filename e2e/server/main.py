@@ -17,7 +17,7 @@ the app failing to start.
 from __future__ import annotations
 
 import sqlite3
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 from bmsdna.datagrid.filters import GridState
@@ -39,7 +39,7 @@ def _require_known_entity(entity: str) -> None:
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     conn = sqlite3.connect(":memory:", check_same_thread=False)
     conn.row_factory = sqlite3.Row
     # SQLite's LIKE is case-insensitive for ASCII by default, regardless of

@@ -138,3 +138,8 @@ e2e/server/bin/
 e2e/server/*.db
 e2e/server/meili_data/
 storybook-static
+
+# Local agent/worktree state
+.worktrees/
+.claude/worktrees/
+.codegraph/

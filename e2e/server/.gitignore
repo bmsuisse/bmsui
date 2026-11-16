@@ -1,1 +1,6 @@
 bin/
+
+# Local agent/worktree state
+.worktrees/
+.claude/worktrees/
+.codegraph/

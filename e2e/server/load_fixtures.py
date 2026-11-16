@@ -59,8 +59,6 @@ def load_fixtures(conn: sqlite3.Connection) -> None:
         placeholders = ", ".join(f":{name}" for name in column_names)
         insert_sql = f"INSERT INTO {entity} ({', '.join(column_names)}) VALUES ({placeholders})"
 
-        coerced_rows = [
-            {name: _coerce(row.get(name), schema[name]) for name in column_names} for row in rows
-        ]
+        coerced_rows = [{name: _coerce(row.get(name), schema[name]) for name in column_names} for row in rows]
         cursor.executemany(insert_sql, coerced_rows)
     conn.commit()

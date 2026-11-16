@@ -42,77 +42,77 @@ _HANDLED_OR_REJECTED_OPERATORS = {
 }
 
 
-def test_every_filteroperator_is_handled():
-    assert _HANDLED_OR_REJECTED_OPERATORS == set(get_args(FilterOperator))
+def test_every_filteroperator_is_handled() -> None:
+    assert set(get_args(FilterOperator)) == _HANDLED_OR_REJECTED_OPERATORS
 
 
 class TestQuote:
-    def test_none(self):
+    def test_none(self) -> None:
         assert _quote(None) == "null"
 
-    def test_bool(self):
+    def test_bool(self) -> None:
         assert _quote(True) == "true"
         assert _quote(False) == "false"
 
-    def test_int(self):
+    def test_int(self) -> None:
         assert _quote(42) == "42"
 
-    def test_float(self):
+    def test_float(self) -> None:
         assert _quote(1.5) == "1.5"
 
-    def test_bool_before_int_int_subclass(self):
+    def test_bool_before_int_int_subclass(self) -> None:
         # bool is a subclass of int in Python; True must render as `true`,
         # never as the number `1`.
         assert _quote(True) != "1"
 
-    def test_plain_string(self):
+    def test_plain_string(self) -> None:
         assert _quote("active") == '"active"'
 
-    def test_string_with_embedded_double_quote(self):
+    def test_string_with_embedded_double_quote(self) -> None:
         assert _quote('He said "hi"') == '"He said \\"hi\\""'
 
-    def test_string_with_backslash(self):
+    def test_string_with_backslash(self) -> None:
         assert _quote("C:\\path") == '"C:\\\\path"'
 
-    def test_string_with_backslash_and_quote_together(self):
+    def test_string_with_backslash_and_quote_together(self) -> None:
         assert _quote('a\\b"c') == '"a\\\\b\\"c"'
 
-    def test_string_with_parens(self):
+    def test_string_with_parens(self) -> None:
         # Parens aren't special to the quoting itself, but must round-trip
         # untouched inside the quotes.
         assert _quote("(a AND b)") == '"(a AND b)"'
 
 
 class TestFieldRef:
-    def test_bare_identifier(self):
+    def test_bare_identifier(self) -> None:
         assert _field_ref("status") == "status"
 
-    def test_dotted_path(self):
+    def test_dotted_path(self) -> None:
         assert _field_ref("c.customer_name") == "c.customer_name"
 
-    def test_prequalified_list_path(self):
+    def test_prequalified_list_path(self) -> None:
         assert _field_ref(["c", "customer_name"]) == "c.customer_name"
 
-    def test_backtick_quotes_field_with_space(self):
+    def test_backtick_quotes_field_with_space(self) -> None:
         assert _field_ref("weird field") == "`weird field`"
 
-    def test_backtick_quotes_field_with_parens(self):
+    def test_backtick_quotes_field_with_parens(self) -> None:
         assert _field_ref("weird(field)") == "`weird(field)`"
 
-    def test_escapes_embedded_backtick(self):
+    def test_escapes_embedded_backtick(self) -> None:
         assert _field_ref("weird`field") == "`weird\\`field`"
 
 
 class TestBuildFilterExpr:
-    def test_none_filter_returns_none(self):
+    def test_none_filter_returns_none(self) -> None:
         assert build_filter_expr(None) is None
 
-    def test_eq(self):
+    def test_eq(self) -> None:
         assert build_filter_expr(FilterDescriptor(field="status", operator="eq", value="active")) == (
             'status = "active"'
         )
 
-    def test_neq(self):
+    def test_neq(self) -> None:
         assert build_filter_expr(FilterDescriptor(field="status", operator="neq", value="active")) == (
             'status != "active"'
         )
@@ -121,27 +121,25 @@ class TestBuildFilterExpr:
         ("operator", "symbol"),
         [("lt", "<"), ("lte", "<="), ("gt", ">"), ("gte", ">=")],
     )
-    def test_comparison_operators(self, operator, symbol):
-        assert build_filter_expr(FilterDescriptor(field="age", operator=operator, value=18)) == (
-            f"age {symbol} 18"
-        )
+    def test_comparison_operators(self, operator: FilterOperator, symbol: str) -> None:
+        assert build_filter_expr(FilterDescriptor(field="age", operator=operator, value=18)) == (f"age {symbol} 18")
 
-    def test_in(self):
+    def test_in(self) -> None:
         assert build_filter_expr(FilterDescriptor(field="status", operator="in", value=["a", "b"])) == (
             'status IN ["a", "b"]'
         )
 
-    def test_notin(self):
+    def test_notin(self) -> None:
         assert build_filter_expr(FilterDescriptor(field="status", operator="notIn", value=["a", "b"])) == (
             'NOT status IN ["a", "b"]'
         )
 
-    def test_between(self):
+    def test_between(self) -> None:
         assert build_filter_expr(FilterDescriptor(field="price", operator="between", value=[100, 200])) == (
             "price 100 TO 200"
         )
 
-    def test_between_is_order_independent(self):
+    def test_between_is_order_independent(self) -> None:
         # Meilisearch's `field a TO b` range is not symmetric either — a
         # reversed [max, min], e.g. from a hand-built or restored filter,
         # must render the same as if it had been given in order.
@@ -149,23 +147,21 @@ class TestBuildFilterExpr:
             "price 100 TO 200"
         )
 
-    def test_between_requires_two_elements(self):
+    def test_between_requires_two_elements(self) -> None:
         with pytest.raises(ValueError, match="between"):
             build_filter_expr(FilterDescriptor(field="price", operator="between", value=[100]))
 
-    def test_in_with_empty_value_list_raises(self):
+    def test_in_with_empty_value_list_raises(self) -> None:
         # No Meilisearch boolean literal to fall back to for "always false" —
         # raise rather than send a possibly-invalid `field IN []`.
         with pytest.raises(ValueError, match="empty value list"):
             build_filter_expr(FilterDescriptor(field="status", operator="in", value=[]))
 
-    def test_notin_with_empty_value_list_matches_non_null_rows(self):
-        assert build_filter_expr(FilterDescriptor(field="status", operator="notIn", value=[])) == (
-            "status IS NOT NULL"
-        )
+    def test_notin_with_empty_value_list_matches_non_null_rows(self) -> None:
+        assert build_filter_expr(FilterDescriptor(field="status", operator="notIn", value=[])) == ("status IS NOT NULL")
 
     @pytest.mark.parametrize("operator", ["eq", "neq", "in", "notIn"])
-    def test_ignore_case_raises_unsupported(self, operator):
+    def test_ignore_case_raises_unsupported(self, operator: FilterOperator) -> None:
         # Meilisearch's filter DSL has no case-insensitive comparison
         # operator; silently ignoring ignoreCase here would make the same
         # FilterDescriptor match differently across DataSource modes.
@@ -174,39 +170,35 @@ class TestBuildFilterExpr:
             build_filter_expr(FilterDescriptor(field="name", operator=operator, value=value, ignoreCase=True))
 
     @pytest.mark.parametrize("operator", ["eq", "neq"])
-    def test_ignore_case_does_not_raise_for_a_non_string_value(self, operator):
+    def test_ignore_case_does_not_raise_for_a_non_string_value(self, operator: FilterOperator) -> None:
         # ignoreCase has nothing to case-fold for a numeric value — sql.py
         # and evaluateFilter both simply ignore the flag in that case, so
         # raising here would reject a filter the other two engines handle
         # identically (by ignoring ignoreCase, not by mismatching).
-        assert build_filter_expr(
-            FilterDescriptor(field="age", operator=operator, value=30, ignoreCase=True)
-        ) is not None
+        assert (
+            build_filter_expr(FilterDescriptor(field="age", operator=operator, value=30, ignoreCase=True)) is not None
+        )
 
-    def test_ignore_case_does_not_raise_for_in_with_only_non_string_values(self):
-        assert build_filter_expr(
-            FilterDescriptor(field="age", operator="in", value=[30, 40], ignoreCase=True)
-        ) is not None
+    def test_ignore_case_does_not_raise_for_in_with_only_non_string_values(self) -> None:
+        assert (
+            build_filter_expr(FilterDescriptor(field="age", operator="in", value=[30, 40], ignoreCase=True)) is not None
+        )
 
-    def test_ignore_case_raises_for_in_with_a_mix_of_string_and_non_string_values(self):
+    def test_ignore_case_raises_for_in_with_a_mix_of_string_and_non_string_values(self) -> None:
         # At least one element is a string, so ignoreCase would matter for
         # that element — Meilisearch still has no way to honor it.
         with pytest.raises(UnsupportedOperatorError):
-            build_filter_expr(
-                FilterDescriptor(field="x", operator="in", value=[30, "ABC"], ignoreCase=True)
-            )
+            build_filter_expr(FilterDescriptor(field="x", operator="in", value=[30, "ABC"], ignoreCase=True))
 
-    def test_is_null(self):
-        assert build_filter_expr(FilterDescriptor(field="deleted_at", operator="isNull")) == (
-            "deleted_at IS NULL"
-        )
+    def test_is_null(self) -> None:
+        assert build_filter_expr(FilterDescriptor(field="deleted_at", operator="isNull")) == ("deleted_at IS NULL")
 
-    def test_is_not_null(self):
+    def test_is_not_null(self) -> None:
         assert build_filter_expr(FilterDescriptor(field="deleted_at", operator="isNotNull")) == (
             "deleted_at IS NOT NULL"
         )
 
-    def test_is_empty(self):
+    def test_is_empty(self) -> None:
         # ORs in IS NULL too: evaluateFilter/sql.py both treat a null value as
         # "empty", and Meilisearch's own IS EMPTY isn't guaranteed to agree
         # (it's documented against empty strings/arrays, not necessarily a
@@ -215,22 +207,23 @@ class TestBuildFilterExpr:
             "(tags IS NULL OR tags IS EMPTY)"
         )
 
-    def test_is_not_empty(self):
+    def test_is_not_empty(self) -> None:
         assert build_filter_expr(FilterDescriptor(field="tags", operator="isNotEmpty")) == (
             "(tags IS NOT NULL AND tags IS NOT EMPTY)"
         )
 
     @pytest.mark.parametrize("operator", ["contains", "doesNotContain", "startsWith", "endsWith"])
-    def test_unsupported_operators_raise(self, operator):
+    def test_unsupported_operators_raise(self, operator: FilterOperator) -> None:
         with pytest.raises(UnsupportedOperatorError):
             build_filter_expr(FilterDescriptor(field="name", operator=operator, value="a"))
 
-    def test_prequalified_field_path(self):
-        assert build_filter_expr(
-            FilterDescriptor(field=["c", "customer_name"], operator="eq", value="Acme")
-        ) == 'c.customer_name = "Acme"'
+    def test_prequalified_field_path(self) -> None:
+        assert (
+            build_filter_expr(FilterDescriptor(field=["c", "customer_name"], operator="eq", value="Acme"))
+            == 'c.customer_name = "Acme"'
+        )
 
-    def test_top_level_and(self):
+    def test_top_level_and(self) -> None:
         filter_ = CompositeFilterDescriptor(
             logic="and",
             filters=[
@@ -240,7 +233,7 @@ class TestBuildFilterExpr:
         )
         assert build_filter_expr(filter_) == 'status = "active" AND age >= 18'
 
-    def test_top_level_or(self):
+    def test_top_level_or(self) -> None:
         filter_ = CompositeFilterDescriptor(
             logic="or",
             filters=[
@@ -250,7 +243,7 @@ class TestBuildFilterExpr:
         )
         assert build_filter_expr(filter_) == 'status = "active" OR status = "pending"'
 
-    def test_two_levels_of_nesting_parenthesizes_composite_children(self):
+    def test_two_levels_of_nesting_parenthesizes_composite_children(self) -> None:
         # (status = 'active' AND age >= 18) OR (status = 'pending' AND age < 10)
         filter_ = CompositeFilterDescriptor(
             logic="or",
@@ -271,11 +264,9 @@ class TestBuildFilterExpr:
                 ),
             ],
         )
-        assert build_filter_expr(filter_) == (
-            '(status = "active" AND age >= 18) OR (status = "pending" AND age < 10)'
-        )
+        assert build_filter_expr(filter_) == ('(status = "active" AND age >= 18) OR (status = "pending" AND age < 10)')
 
-    def test_leaf_children_are_not_individually_parenthesized(self):
+    def test_leaf_children_are_not_individually_parenthesized(self) -> None:
         filter_ = CompositeFilterDescriptor(
             logic="and",
             filters=[
@@ -285,34 +276,32 @@ class TestBuildFilterExpr:
         )
         assert build_filter_expr(filter_) == "a = 1 AND b = 2"
 
-    def test_empty_composite_raises(self):
+    def test_empty_composite_raises(self) -> None:
         with pytest.raises(ValueError, match="empty composite"):
             build_filter_expr(CompositeFilterDescriptor(logic="and", filters=[]))
 
-    def test_a_bare_filterdescriptor_is_accepted_at_the_top_level(self):
+    def test_a_bare_filterdescriptor_is_accepted_at_the_top_level(self) -> None:
         # build_filter_expr's signature accepts a leaf directly, not just a composite.
         assert build_filter_expr(FilterDescriptor(field="x", operator="isNull")) == "x IS NULL"
 
 
 class TestBuildSort:
-    def test_empty(self):
+    def test_empty(self) -> None:
         assert build_sort([]) == []
 
-    def test_single(self):
+    def test_single(self) -> None:
         assert build_sort([SortDescriptor(field="created_at", dir="desc")]) == ["created_at:desc"]
 
-    def test_multiple_preserves_order(self):
-        result = build_sort(
-            [SortDescriptor(field="status", dir="asc"), SortDescriptor(field="created_at", dir="desc")]
-        )
+    def test_multiple_preserves_order(self) -> None:
+        result = build_sort([SortDescriptor(field="status", dir="asc"), SortDescriptor(field="created_at", dir="desc")])
         assert result == ["status:asc", "created_at:desc"]
 
 
 class TestBuildSearchParams:
-    def test_no_filter_no_sort(self):
+    def test_no_filter_no_sort(self) -> None:
         assert build_search_params(None, [], 0, 20) == {"offset": 0, "limit": 20}
 
-    def test_with_filter_and_sort(self):
+    def test_with_filter_and_sort(self) -> None:
         filter_ = FilterDescriptor(field="status", operator="eq", value="active")
         params = build_search_params(filter_, [SortDescriptor(field="age", dir="asc")], 40, 20)
         assert params == {
@@ -322,10 +311,10 @@ class TestBuildSearchParams:
             "sort": ["age:asc"],
         }
 
-    def test_ready_to_spread_into_index_search(self):
+    def test_ready_to_spread_into_index_search(self) -> None:
         params = build_search_params(None, [], 0, 10)
 
-        def fake_search(q, **kwargs):
+        def fake_search(q: str, **kwargs: object) -> tuple[str, dict[str, object]]:
             return q, kwargs
 
         assert fake_search("hello", **params) == ("hello", {"offset": 0, "limit": 10})

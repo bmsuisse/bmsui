@@ -24,8 +24,8 @@ Issues = "https://github.com/bmsuisse/bmsui/issues"
 
 [dependency-groups]
 dev = [
-    "ty>=0.0.59",
-    "ruff>=0.14.0",
+    "ty>=0.0.100",
+    "ruff>=0.17",
 ]
 test = [
     "pytest>=9.1.0",
@@ -33,3 +33,51 @@ test = [
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
+
+[tool.uv]
+exclude-newer = "5 days"
+
+[tool.ruff]
+line-length = 120
+indent-width = 4
+target-version = "py311"
+extend-exclude = ["*.md", ".worktrees", ".claude"]
+
+[tool.ruff.format]
+indent-style = "space"
+quote-style = "double"
+line-ending = "auto"
+
+[tool.ruff.lint]
+select = [
+    "E", "F", "I",   # pycodestyle, pyflakes, isort
+    "UP",            # pyupgrade - X | None, modern syntax
+    "B",             # bugbear - mutable defaults etc.
+    "ANN",           # full type annotations
+    "SIM", "C4",     # simplifiable code, needless comprehensions/casts
+    "PERF", "FURB",  # needless loops, manual list/dict building
+    "ASYNC",         # blocking calls inside async def
+    "RUF",
+    "N",             # PEP 8 naming
+    "PTH",           # pathlib instead of os.path
+    "TID",           # absolute imports only, banned APIs
+    "RET", "PIE",    # consistent returns, misc simplifications
+    "A",             # no shadowing builtins
+    "T20",           # no print()
+    "LOG",           # logging API misuse
+    "DTZ",           # timezone-aware datetimes
+    "FLY",           # f-string instead of str.join on literals
+    "PLE", "PLW",    # pylint errors + warnings
+]
+ignore = ["ANN401"]  # `Any` is a warning via the ruff-warn-any prek hook, not an error
+
+[tool.ruff.lint.per-file-ignores]
+# `filter` is a keyword parameter of the published public API; renaming it would break callers.
+"bmsdna/datagrid/meili.py" = ["A002"]
+"bmsdna/datagrid/sql.py" = ["A002"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ty.src]
+exclude = [".worktrees", ".claude"]

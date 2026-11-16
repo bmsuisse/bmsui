@@ -1,0 +1,2 @@
+# Workspace root: the Python projects (python/datagrid, e2e/server) carry their own prek.toml.
+repos = []
