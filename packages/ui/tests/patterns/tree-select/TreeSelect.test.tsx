@@ -43,7 +43,9 @@ describe("TreeSelect", () => {
     expect(screen.getByRole("treeitem", { name: "Team A" })).toHaveFocus();
     await user.keyboard("{ArrowLeft}{ArrowLeft}");
     expect(screen.getByRole("treeitem", { name: "West" })).toHaveAttribute("aria-expanded", "false");
-    await user.keyboard("{ArrowRight}{ArrowRight}{Enter}");
+    await user.keyboard("{ArrowRight}{ArrowRight}");
+    expect(screen.getAllByRole("treeitem").filter((item) => item.tabIndex === 0)).toHaveLength(1);
+    await user.keyboard("{Enter}");
     expect(onChange).toHaveBeenCalledWith("team");
   });
 
@@ -60,6 +62,9 @@ describe("TreeSelect", () => {
     const retry = vi.fn();
     const { rerender } = render(<TreeSelect nodes={nodes} value={null} onChange={vi.fn()} errorMessage="Unavailable" onRetry={retry} />);
     await user.click(screen.getByRole("combobox"));
+    await user.type(screen.getByRole("textbox"), "team{Enter}");
+    expect(screen.getByRole("tree")).toBeInTheDocument();
+    await user.clear(screen.getByRole("textbox"));
     await user.click(screen.getByRole("button", { name: "Retry" }));
     expect(retry).toHaveBeenCalledOnce();
     expect(screen.queryByRole("treeitem")).not.toBeInTheDocument();

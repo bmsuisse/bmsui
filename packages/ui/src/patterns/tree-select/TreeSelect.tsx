@@ -79,6 +79,7 @@ function ancestorsOf(nodes: TreeSelectNode[], value: string | null): string[] {
 interface TreeRowsProps {
   nodes: TreeSelectNode[];
   depth: number;
+  activeValue: string | undefined;
   value: string | null;
   expanded: ReadonlySet<string>;
   forceExpanded: boolean;
@@ -90,6 +91,7 @@ interface TreeRowsProps {
 function TreeRows({
   nodes,
   depth,
+  activeValue,
   value,
   expanded,
   forceExpanded,
@@ -131,6 +133,7 @@ function TreeRows({
               <button
                 type="button"
                 role="treeitem"
+                tabIndex={node.value === activeValue ? 0 : -1}
                 aria-level={depth + 1}
                 aria-selected={selected}
                 aria-expanded={hasChildren ? isOpen : undefined}
@@ -149,6 +152,7 @@ function TreeRows({
               <TreeRows
                 nodes={node.children}
                 depth={depth + 1}
+                activeValue={activeValue}
                 value={value}
                 expanded={expanded}
                 forceExpanded={forceExpanded}
@@ -185,6 +189,7 @@ export function TreeSelect({
   const treeRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
+  const [activeValue, setActiveValue] = useState<string | null>(value);
   const [query, setQuery] = useState("");
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
 
@@ -199,10 +204,12 @@ export function TreeSelect({
     setOpen(next);
     if (!next) return;
     setQuery("");
+    setActiveValue(value ?? nodes[0]?.value ?? null);
     setExpanded(new Set(ancestorsOf(nodes, value)));
   }
 
   function toggle(nodeValue: string): void {
+    setActiveValue(nodeValue);
     const next = new Set(expanded);
     if (!next.delete(nodeValue)) next.add(nodeValue);
     setExpanded(next);
@@ -279,6 +286,8 @@ export function TreeSelect({
           aria-label={searchPlaceholder}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => {
+            if (e.key === "Enter") e.preventDefault();
+            if (errorMessage || loading) return;
             if (e.key === "ArrowDown") {
               e.preventDefault();
               const selected = treeRef.current?.querySelector<HTMLElement>('[role="treeitem"][aria-selected="true"]');
@@ -299,6 +308,10 @@ export function TreeSelect({
           aria-label={placeholder}
           aria-busy={loading}
           onKeyDown={handleTreeKeyDown}
+          onFocusCapture={(event) => {
+            const target = event.target;
+            if (target instanceof HTMLElement && target.dataset.value) setActiveValue(target.dataset.value);
+          }}
           className="mt-2 max-h-64 overflow-y-auto"
           data-testid={testId ? `${testId}-tree` : undefined}
         >
@@ -319,6 +332,7 @@ export function TreeSelect({
             <TreeRows
               nodes={visibleNodes}
               depth={0}
+              activeValue={activeValue !== null && findLabel(visibleNodes, activeValue) !== null ? activeValue : visibleNodes[0]?.value}
               value={value}
               expanded={expanded}
               forceExpanded={normalizedQuery !== ""}
