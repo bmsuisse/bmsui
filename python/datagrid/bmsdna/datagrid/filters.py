@@ -39,9 +39,7 @@ FilterOperator = Literal[
 ]
 
 # Operators that never carry a `value` (unary presence/absence checks).
-UNARY_OPERATORS: frozenset[FilterOperator] = frozenset(
-    ["isEmpty", "isNotEmpty", "isNull", "isNotNull"]
-)
+UNARY_OPERATORS: frozenset[FilterOperator] = frozenset(["isEmpty", "isNotEmpty", "isNull", "isNotNull"])
 
 
 class FilterDescriptor(BaseModel):

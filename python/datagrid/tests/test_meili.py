@@ -43,7 +43,7 @@ _HANDLED_OR_REJECTED_OPERATORS = {
 
 
 def test_every_filteroperator_is_handled():
-    assert _HANDLED_OR_REJECTED_OPERATORS == set(get_args(FilterOperator))
+    assert set(get_args(FilterOperator)) == _HANDLED_OR_REJECTED_OPERATORS
 
 
 class TestQuote:
@@ -122,9 +122,7 @@ class TestBuildFilterExpr:
         [("lt", "<"), ("lte", "<="), ("gt", ">"), ("gte", ">=")],
     )
     def test_comparison_operators(self, operator, symbol):
-        assert build_filter_expr(FilterDescriptor(field="age", operator=operator, value=18)) == (
-            f"age {symbol} 18"
-        )
+        assert build_filter_expr(FilterDescriptor(field="age", operator=operator, value=18)) == (f"age {symbol} 18")
 
     def test_in(self):
         assert build_filter_expr(FilterDescriptor(field="status", operator="in", value=["a", "b"])) == (
@@ -160,9 +158,7 @@ class TestBuildFilterExpr:
             build_filter_expr(FilterDescriptor(field="status", operator="in", value=[]))
 
     def test_notin_with_empty_value_list_matches_non_null_rows(self):
-        assert build_filter_expr(FilterDescriptor(field="status", operator="notIn", value=[])) == (
-            "status IS NOT NULL"
-        )
+        assert build_filter_expr(FilterDescriptor(field="status", operator="notIn", value=[])) == ("status IS NOT NULL")
 
     @pytest.mark.parametrize("operator", ["eq", "neq", "in", "notIn"])
     def test_ignore_case_raises_unsupported(self, operator):
@@ -179,27 +175,23 @@ class TestBuildFilterExpr:
         # and evaluateFilter both simply ignore the flag in that case, so
         # raising here would reject a filter the other two engines handle
         # identically (by ignoring ignoreCase, not by mismatching).
-        assert build_filter_expr(
-            FilterDescriptor(field="age", operator=operator, value=30, ignoreCase=True)
-        ) is not None
+        assert (
+            build_filter_expr(FilterDescriptor(field="age", operator=operator, value=30, ignoreCase=True)) is not None
+        )
 
     def test_ignore_case_does_not_raise_for_in_with_only_non_string_values(self):
-        assert build_filter_expr(
-            FilterDescriptor(field="age", operator="in", value=[30, 40], ignoreCase=True)
-        ) is not None
+        assert (
+            build_filter_expr(FilterDescriptor(field="age", operator="in", value=[30, 40], ignoreCase=True)) is not None
+        )
 
     def test_ignore_case_raises_for_in_with_a_mix_of_string_and_non_string_values(self):
         # At least one element is a string, so ignoreCase would matter for
         # that element — Meilisearch still has no way to honor it.
         with pytest.raises(UnsupportedOperatorError):
-            build_filter_expr(
-                FilterDescriptor(field="x", operator="in", value=[30, "ABC"], ignoreCase=True)
-            )
+            build_filter_expr(FilterDescriptor(field="x", operator="in", value=[30, "ABC"], ignoreCase=True))
 
     def test_is_null(self):
-        assert build_filter_expr(FilterDescriptor(field="deleted_at", operator="isNull")) == (
-            "deleted_at IS NULL"
-        )
+        assert build_filter_expr(FilterDescriptor(field="deleted_at", operator="isNull")) == ("deleted_at IS NULL")
 
     def test_is_not_null(self):
         assert build_filter_expr(FilterDescriptor(field="deleted_at", operator="isNotNull")) == (
@@ -226,9 +218,10 @@ class TestBuildFilterExpr:
             build_filter_expr(FilterDescriptor(field="name", operator=operator, value="a"))
 
     def test_prequalified_field_path(self):
-        assert build_filter_expr(
-            FilterDescriptor(field=["c", "customer_name"], operator="eq", value="Acme")
-        ) == 'c.customer_name = "Acme"'
+        assert (
+            build_filter_expr(FilterDescriptor(field=["c", "customer_name"], operator="eq", value="Acme"))
+            == 'c.customer_name = "Acme"'
+        )
 
     def test_top_level_and(self):
         filter_ = CompositeFilterDescriptor(
@@ -271,9 +264,7 @@ class TestBuildFilterExpr:
                 ),
             ],
         )
-        assert build_filter_expr(filter_) == (
-            '(status = "active" AND age >= 18) OR (status = "pending" AND age < 10)'
-        )
+        assert build_filter_expr(filter_) == ('(status = "active" AND age >= 18) OR (status = "pending" AND age < 10)')
 
     def test_leaf_children_are_not_individually_parenthesized(self):
         filter_ = CompositeFilterDescriptor(
@@ -302,9 +293,7 @@ class TestBuildSort:
         assert build_sort([SortDescriptor(field="created_at", dir="desc")]) == ["created_at:desc"]
 
     def test_multiple_preserves_order(self):
-        result = build_sort(
-            [SortDescriptor(field="status", dir="asc"), SortDescriptor(field="created_at", dir="desc")]
-        )
+        result = build_sort([SortDescriptor(field="status", dir="asc"), SortDescriptor(field="created_at", dir="desc")])
         assert result == ["status:asc", "created_at:desc"]
 
 

@@ -300,9 +300,7 @@ def _build_leaf(node: FilterDescriptor, params: dict[str, object], namer: _Param
 
 def _apply_sort(query: exp.Select, sort: list[SortDescriptor]) -> exp.Select:
     for descriptor in sort:
-        query = query.order_by(
-            exp.Ordered(this=_field_expr(descriptor.field), desc=descriptor.dir == "desc")
-        )
+        query = query.order_by(exp.Ordered(this=_field_expr(descriptor.field), desc=descriptor.dir == "desc"))
     return query
 
 

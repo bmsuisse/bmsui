@@ -50,9 +50,7 @@ def test_every_operator(dialect, operator, kwargs, expected_where, expected_para
     sql, params = build_select("t", filter_, [], 0, 10, dialect=dialect)
 
     placeholder = "%({name})s" if dialect == "postgres" else ":{name}"
-    rendered_where = expected_where.format(
-        **{name: placeholder.format(name=name) for name in expected_params}
-    )
+    rendered_where = expected_where.format(**{name: placeholder.format(name=name) for name in expected_params})
     assert f"WHERE {rendered_where}" in sql
     assert params == expected_params
 
@@ -94,10 +92,7 @@ def test_two_levels_of_and_or_nesting(dialect):
     sql, params = build_select("t", filter_, [], 0, 10, dialect=dialect)
 
     p = "%({})s".format if dialect == "postgres" else ":{}".format
-    expected = (
-        f"WHERE (status = {p('p0')} AND age >= {p('p1')}) "
-        f"OR (status = {p('p2')} AND age < {p('p3')})"
-    )
+    expected = f"WHERE (status = {p('p0')} AND age >= {p('p1')}) OR (status = {p('p2')} AND age < {p('p3')})"
     assert expected in sql
     assert params == {"p0": "active", "p1": 18, "p2": "pending", "p3": 10}
 
@@ -262,9 +257,7 @@ class TestIgnoreCaseBeyondLike:
     def test_does_not_apply_to_a_non_string_value(self):
         # ignoreCase is meaningless for a numeric value; LOWER(numeric_column)
         # would be a type error against a real numeric column in most drivers.
-        sql, _ = build_select(
-            "t", FilterDescriptor(field="age", operator="eq", value=5, ignoreCase=True), [], 0, 10
-        )
+        sql, _ = build_select("t", FilterDescriptor(field="age", operator="eq", value=5, ignoreCase=True), [], 0, 10)
         assert "LOWER" not in sql
 
     def test_does_not_apply_to_in_with_only_non_string_values(self):
@@ -278,9 +271,7 @@ class TestLikeMetacharacterEscaping:
     def test_percent_and_underscore_are_escaped_in_contains(self):
         # Without escaping, a literal "_" or "%" in the search text would act
         # as a LIKE wildcard instead of matching itself.
-        sql, params = build_select(
-            "t", FilterDescriptor(field="sku", operator="contains", value="10_5%off"), [], 0, 10
-        )
+        sql, params = build_select("t", FilterDescriptor(field="sku", operator="contains", value="10_5%off"), [], 0, 10)
         assert "LIKE %(p0)s ESCAPE '\\'" in sql
         assert params == {"p0": "%10\\_5\\%off%"}
 
@@ -296,9 +287,7 @@ class TestContainsWithNonStringValue:
     def test_contains_with_none_value_matches_nothing(self):
         # An f-string pattern would have rendered `LIKE '%None%'`, matching
         # any row whose value literally contains the text "None".
-        sql, params = build_select(
-            "t", FilterDescriptor(field="name", operator="contains", value=None), [], 0, 10
-        )
+        sql, params = build_select("t", FilterDescriptor(field="name", operator="contains", value=None), [], 0, 10)
         assert "WHERE FALSE" in sql
         assert params == {}
 
