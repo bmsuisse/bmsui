@@ -33,3 +33,6 @@ test = [
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
+
+[tool.uv]
+exclude-newer = "5 days"

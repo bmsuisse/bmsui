@@ -16,6 +16,8 @@ dev = [
 ]
 
 [tool.uv]
+exclude-newer = "5 days"
+exclude-newer-package = { bmsdna-datagrid = false }
 # This is a standalone FastAPI app (`uv run uvicorn main:app`), not a library
 # meant to be built/installed as a package itself — only its dependencies
 # (notably the local bmsdna-datagrid path dependency below) matter.

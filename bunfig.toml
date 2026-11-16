@@ -1,0 +1,3 @@
+[install]
+minimumReleaseAge = 432000
+minimumReleaseAgeExcludes = ["@bmsuisse/ui", "@bmsuisse/datagrid", "@bmsuisse/ui-demo", "@bmsuisse/datagrid-demo"]
