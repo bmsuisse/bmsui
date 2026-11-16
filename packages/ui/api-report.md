@@ -7,7 +7,7 @@ Every public export with its kind and signature. Interfaces and object types
 list their own members one per line (inherited members come from the `extends`
 clause), so the diff of this file shows exactly what changed in the public API.
 
-## Components (174)
+## Components (175)
 
 ```text
 function ActiveFacets(props: ActiveFacetsProps): ReactElement | null
@@ -182,6 +182,7 @@ const Tooltip: react.FC<TooltipPrimitive.TooltipProps>
 const TooltipContent: react.ForwardRefExoticComponent<Omit<TooltipPrimitive.TooltipContentProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
 const TooltipProvider: react.FC<TooltipPrimitive.TooltipProviderProps>
 const TooltipTrigger: react.ForwardRefExoticComponent<TooltipPrimitive.TooltipTriggerProps & react.RefAttributes<HTMLButtonElement>>
+function TreeSelect(props: TreeSelectProps): ReactElement
 const VoiceInputButton: react.ForwardRefExoticComponent<VoiceInputButtonProps & react.RefAttributes<HTMLButtonElement>>
 function VoiceTranscript(props: VoiceTranscriptProps): ReactElement
 ```
@@ -277,7 +278,7 @@ const defaultToasterLabels: ToasterLabels
 const defaultToolbarLabels: ToolbarLabels
 ```
 
-## Interfaces (153)
+## Interfaces (155)
 
 ```text
 interface ActiveFacetsLabels
@@ -1340,6 +1341,25 @@ interface ToolbarProps extends HTMLAttributes<HTMLDivElement>
   orientation?: "horizontal" | "vertical"
   overflow?: boolean
   variant?: "outline" | "ghost"
+interface TreeSelectNode
+  children: TreeSelectNode[]
+  label: string
+  value: string
+interface TreeSelectProps
+  "data-testid"?: string
+  disabled?: boolean
+  emptyMessage?: string
+  errorMessage?: string | null
+  id?: string
+  loading?: boolean
+  nodes: TreeSelectNode[]
+  onChange: (value: string) => void
+  onRetry?: () => void
+  placeholder?: string
+  retryLabel?: string
+  searchPlaceholder?: string
+  value: string | null
+  valueLabel?: string | null
 interface UseClipboardOptions
   timeout?: number
 interface UseClipboardResult
