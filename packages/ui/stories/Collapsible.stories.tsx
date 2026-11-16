@@ -10,7 +10,7 @@ type Story = StoryObj;
 function Demo({ initial }: { initial: boolean }) {
   const [open, setOpen] = useState(initial);
   return (
-    <Collapsible open={open} onOpenChange={setOpen} className="w-72 space-y-2">
+    <Collapsible open={open} onOpenChange={setOpen} className="w-72 max-w-full space-y-2">
       <CollapsibleTrigger asChild>
         <Button variant="outline" size="sm" className="w-full justify-between">
           Details <ChevronDownIcon className={open ? "rotate-180" : ""} />

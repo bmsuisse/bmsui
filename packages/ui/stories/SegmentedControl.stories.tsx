@@ -26,7 +26,7 @@ type Story = StoryObj<typeof SegmentedControl>;
 
 export const Default: Story = {};
 export const Small: Story = { args: { size: "sm" } };
-export const FullWidth: Story = { args: { fullWidth: true } };
+export const FullWidth: Story = { args: { fullWidth: true }, decorators: [(Story) => <div className="w-80 max-w-full"><Story /></div>] };
 export const WithIcons: Story = {
   args: {
     value: "list",

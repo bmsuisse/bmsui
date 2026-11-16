@@ -10,7 +10,7 @@ export const Default: Story = {
   render: () => {
     const [tab, setTab] = useState("one");
     return (
-      <Tabs value={tab} onValueChange={setTab} className="w-80">
+      <Tabs value={tab} onValueChange={setTab} className="w-80 max-w-full">
         <TabsList>
           <TabsTrigger value="one">Overview</TabsTrigger>
           <TabsTrigger value="two">Items</TabsTrigger>
@@ -25,7 +25,7 @@ export const Default: Story = {
 };
 export const WithDisabledTab: Story = {
   render: () => (
-    <Tabs defaultValue="a" className="w-80">
+    <Tabs defaultValue="a" className="w-80 max-w-full">
       <TabsList>
         <TabsTrigger value="a">Active</TabsTrigger>
         <TabsTrigger value="b" disabled>Disabled</TabsTrigger>

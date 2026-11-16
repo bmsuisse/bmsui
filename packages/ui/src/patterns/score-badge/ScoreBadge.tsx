@@ -98,7 +98,7 @@ export interface RankBadgeProps extends HTMLAttributes<HTMLSpanElement> {
 export const RankBadge = ({ rank, className, ...props }: RankBadgeProps): ReactElement => (
   <span
     className={cn(
-      "flex h-[22px] min-w-[22px] shrink-0 items-center justify-center rounded-md px-1 bg-muted font-mono font-semibold text-[11px] text-muted-foreground tabular-nums",
+      "flex h-[22px] min-w-[22px] shrink-0 items-center justify-center rounded-md px-1 bg-foreground/[0.06] dark:bg-muted font-mono font-semibold text-[11px] text-muted-foreground tabular-nums",
       className,
     )}
     {...props}

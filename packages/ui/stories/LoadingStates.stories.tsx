@@ -17,17 +17,17 @@ export const Spinner: Story = {
   ),
 };
 export const Overlay: Story = {
-  render: () => <div className="relative h-40 max-w-sm rounded-md border"><LoadingOverlay /></div>,
+  render: () => <div className="relative h-40 w-80 max-w-full rounded-md border"><LoadingOverlay /></div>,
 };
 export const Skeleton: Story = {
-  render: () => <div className="max-w-sm"><LoadingState delayMs={0} lines={4} /></div>,
+  render: () => <div className="w-80 max-w-full"><LoadingState delayMs={0} lines={4} /></div>,
 };
 export const SpinnerVariant: Story = {
-  render: () => <div className="max-w-sm"><LoadingState delayMs={0} variant="spinner" label="Loading offers" /></div>,
+  render: () => <div className="w-80 max-w-full"><LoadingState delayMs={0} variant="spinner" label="Loading offers" /></div>,
 };
 export const Refresh: Story = {
   render: () => (
-    <div className="relative max-w-sm rounded-md border p-4 text-sm">
+    <div className="relative w-80 max-w-full rounded-md border p-4 text-sm">
       <RefreshBar active />
       Existing data stays visible while refetching.
     </div>

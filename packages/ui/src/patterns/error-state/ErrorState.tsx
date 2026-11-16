@@ -68,7 +68,7 @@ export const ErrorState = ({
         {info.message ? <p className={cn(!compact && "text-muted-foreground")}>{info.message}</p> : null}
         {info.details ? (
           <details className="mt-1 w-full max-w-full text-left text-xs">
-            <summary className="cursor-pointer select-none underline underline-offset-2">{l.showDetails}</summary>
+            <summary className={cn("cursor-pointer select-none underline underline-offset-2", !compact && "text-center")}>{l.showDetails}</summary>
             <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap break-words rounded bg-muted p-2 text-muted-foreground">
               {info.details}
             </pre>
@@ -98,6 +98,8 @@ export interface InlineErrorProps extends Omit<HTMLAttributes<HTMLSpanElement>, 
   /** Attributes for the Retry button, e.g. a `data-testid`. */
   retryProps?: RetryButtonProps;
   labels?: Partial<Pick<ErrorStateLabels, "title" | "retry">>;
+  /** Let a long message wrap over several lines instead of truncating to one. Default `false`. */
+  wrap?: boolean;
 }
 
 /** One-line error for tight spaces (dropdowns, filters, tree nodes, stale-data banners): "⚠ message · Retry". */
@@ -107,6 +109,7 @@ export const InlineError = ({
   retryProps,
   labels,
   className,
+  wrap = false,
   ...props
 }: InlineErrorProps): ReactElement | null => {
   const info = toErrorInfo(error);
@@ -118,15 +121,19 @@ export const InlineError = ({
       role="alert"
       data-testid="inline-error"
       title={info.details}
-      className={cn("inline-flex min-w-0 items-center gap-1.5 text-xs text-red-700 dark:text-red-300", className)}
+      className={cn(
+        wrap ? "flex items-start" : "inline-flex items-center",
+        "min-w-0 gap-1.5 text-xs text-red-700 dark:text-red-300",
+        className,
+      )}
       {...props}
     >
-      <ExclamationTriangleIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-      <span className="truncate">{text}</span>
+      <ExclamationTriangleIcon className={cn("h-3.5 w-3.5 shrink-0", wrap && "mt-0.5")} aria-hidden="true" />
+      <span className={wrap ? "min-w-0 break-words" : "truncate"}>{text}</span>
       {onRetry ? (
         <button
           {...retryProps}
-          className={cn("shrink-0 underline underline-offset-2", retryProps?.className)}
+          className={cn("-mx-0.5 shrink-0 rounded-sm px-0.5 underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", retryProps?.className)}
           type="button"
           onClick={onRetry}
         >

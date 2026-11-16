@@ -146,7 +146,7 @@ function Sidebar(props: SidebarProps): ReactElement
 function SidebarNav(props: SidebarNavProps): ReactElement
 const Skeleton: (props: HTMLAttributes<HTMLDivElement>) => ReactElement
 const Slider: react.ForwardRefExoticComponent<SliderProps & react.RefAttributes<HTMLSpanElement>>
-function Sparkline(props: { data: number[]; color: string }): ReactElement | null
+function Sparkline(props: { data: number[]; color?: string }): ReactElement | null
 function SplitPane(props: SplitPaneProps): ReactElement
 function SplitPanePanel(props: SplitPanePanelProps): ReactElement
 const StatusBadge: (props: StatusBadgeProps) => ReactElement
@@ -812,6 +812,7 @@ interface InlineErrorProps extends Omit<HTMLAttributes<HTMLSpanElement>, "title"
   labels?: Partial<Pick<ErrorStateLabels, "title" | "retry">>
   onRetry?: () => void
   retryProps?: RetryButtonProps
+  wrap?: boolean
 interface InputGroupProps extends HTMLAttributes<HTMLDivElement>
   size?: InputGroupSize
 interface KbdProps extends HTMLAttributes<HTMLElement>
@@ -1352,6 +1353,7 @@ interface TreeSelectProps
   errorMessage?: string | null
   id?: string
   loading?: boolean
+  loadingMessage?: string
   nodes: TreeSelectNode[]
   onChange: (value: string) => void
   onRetry?: () => void

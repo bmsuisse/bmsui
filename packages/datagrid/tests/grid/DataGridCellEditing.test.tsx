@@ -760,3 +760,30 @@ describe("DataGrid cellEditing — alwaysEdit", () => {
     expect(screen.getByTestId("edit-2-name")).toHaveValue("Charlie");
   });
 });
+
+describe("DataGrid cellEditing — Tab does not trap focus", () => {
+  it("Tab on the last column and Shift+Tab with no selection are left to the browser; mid-grid Tab is still handled", () => {
+    const { container } = render(<CellEditingGrid />);
+    const grid = cellAt(container, "1", "age");
+    // No selection yet: Shift+Tab leaves the grid.
+    expect(fireEvent.keyDown(grid, { key: "Tab", shiftKey: true })).toBe(true);
+    // Select the last (non-editable) column: Tab leaves, Shift+Tab moves within the grid.
+    fireEvent.mouseDown(cellAt(container, "1", "age"));
+    fireEvent.mouseUp(window);
+    expect(fireEvent.keyDown(grid, { key: "Tab", shiftKey: true })).toBe(false);
+    // Back on "status" (middle): Tab is handled, moving to "age" again.
+    expect(fireEvent.keyDown(grid, { key: "Tab" })).toBe(false);
+    // Now on the last column: Tab is not prevented.
+    expect(fireEvent.keyDown(grid, { key: "Tab" })).toBe(true);
+  });
+
+  it("Shift+Tab on the first column is not prevented", () => {
+    const { container } = render(<CellEditingGrid />);
+    const grid = cellAt(container, "1", "age");
+    fireEvent.mouseDown(cellAt(container, "1", "age"));
+    fireEvent.mouseUp(window);
+    fireEvent.keyDown(grid, { key: "Tab", shiftKey: true });
+    fireEvent.keyDown(grid, { key: "Tab", shiftKey: true });
+    expect(fireEvent.keyDown(grid, { key: "Tab", shiftKey: true })).toBe(true);
+  });
+});

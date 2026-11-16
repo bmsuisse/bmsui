@@ -11,7 +11,7 @@ const meta: Meta<typeof TagCombobox> = {
   render: (args) => {
     const [value, setValue] = useState(args.value);
     return (
-      <div className="w-96">
+      <div className="w-96 max-w-full">
         <TagCombobox {...args} value={value} onChange={setValue} />
       </div>
     );
@@ -34,7 +34,14 @@ export const Grouped: Story = {
       { value: "eve", label: "Eve" },
     ],
   },
+  play: async ({ canvasElement }) => { canvasElement.querySelector("input")?.focus(); },
 };
-export const Loading: Story = { args: { loading: true, value: [] } };
-export const Error: Story = { args: { error: "Could not load suppliers.", onRetry: () => {}, value: [] } };
+export const Loading: Story = {
+  args: { loading: true, value: [] },
+  play: async ({ canvasElement }) => { canvasElement.querySelector("input")?.focus(); },
+};
+export const Error: Story = {
+  args: { error: "Could not load suppliers.", onRetry: () => {}, value: [] },
+  play: async ({ canvasElement }) => { canvasElement.querySelector("input")?.focus(); },
+};
 export const Disabled: Story = { args: { disabled: true } };

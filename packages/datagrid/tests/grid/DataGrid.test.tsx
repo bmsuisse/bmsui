@@ -351,6 +351,25 @@ describe("DataGrid (row/header actions)", () => {
     expect(screen.getByText("0 selected")).toBeInTheDocument();
   });
 
+  it("select-all checkbox is indeterminate when only some rows on the page are selected", async () => {
+    render(
+      <DataGrid
+        columns={columns}
+        dataSource={{ mode: "client", data: rows }}
+        getRowId={(row) => row.id}
+        headerActions={[{ id: "bulk", label: "Bulk", onSelect: vi.fn() }]}
+      />,
+    );
+    const all = screen.getByRole("checkbox", { name: "Select all rows on this page" }) as HTMLInputElement;
+    expect(all.indeterminate).toBe(false);
+    await userEvent.click(screen.getByRole("checkbox", { name: `Select row ${rows[0]!.id}` }));
+    expect(all.indeterminate).toBe(true);
+    expect(all.checked).toBe(false);
+    await userEvent.click(all);
+    expect(all.indeterminate).toBe(false);
+    expect(all.checked).toBe(true);
+  });
+
   it("reads selection from a controlled `selectedIds` set, not just from clicks inside the grid", () => {
     render(
       <DataGrid
@@ -457,7 +476,7 @@ describe("DataGrid (columnVisibility)", () => {
     await userEvent.click(screen.getByRole("button", { name: "Filter Name" }));
     await userEvent.type(await screen.findByPlaceholderText("Filter name..."), "zzz-no-match");
 
-    const cell = screen.getByText("No results.");
+    const cell = screen.getByText("No results.").closest("td");
     expect(cell).toHaveAttribute("colspan", "1");
   });
 });
@@ -587,6 +606,15 @@ describe("DataGrid (filter display)", () => {
     expect(screen.getByRole("columnheader", { name: "Age Group" })).toBeInTheDocument();
   });
 
+  it("marks the table data-fixed-layout only with enableColumnResizing", () => {
+    const props = { columns, dataSource: { mode: "client" as const, data: rows }, getRowId: (row: { id: string }) => row.id };
+    const { unmount } = render(<DataGrid {...(props as any)} />);
+    expect(screen.getByRole("table")).not.toHaveAttribute("data-fixed-layout");
+    unmount();
+    render(<DataGrid {...(props as any)} enableColumnResizing />);
+    expect(screen.getByRole("table")).toHaveAttribute("data-fixed-layout");
+  });
+
   it("doesn't wrap a non-sortable column's renderHeader in a button, so nested interactive content stays clickable", async () => {
     // Regression test: the leaf header cell always wrapped `renderHeader` output
     // in a `<button disabled={!sortable}>` for the sort toggle. A *disabled*
@@ -691,7 +719,7 @@ describe("DataGrid (renderDetail)", () => {
     await userEvent.click(screen.getByRole("button", { name: "Filter Name" }));
     await userEvent.type(await screen.findByPlaceholderText("Filter name..."), "zzz-no-match");
 
-    expect(screen.getByText("No results.")).toHaveAttribute("colspan", "3");
+    expect(screen.getByText("No results.").closest("td")).toHaveAttribute("colspan", "3");
   });
 
   it("keeps an expanded detail row inside the SAME <tbody> as its main row, so a virtualizer measures both as one unit", async () => {

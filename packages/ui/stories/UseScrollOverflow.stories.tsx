@@ -11,7 +11,7 @@ export const Default: Story = {
     return (
       <div className="flex flex-col gap-2 text-sm">
         <p>top: <strong>{String(top)}</strong> · bottom: <strong>{String(bottom)}</strong></p>
-        <div className="relative w-64">
+        <div className="relative w-64 max-w-full">
           <div ref={ref} className="h-40 overflow-y-auto rounded-lg border border-border p-3">
             {Array.from({ length: 20 }, (_, i) => <p key={i} className="py-1">Row {i + 1}</p>)}
           </div>

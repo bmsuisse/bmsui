@@ -23,7 +23,7 @@ export interface KpiCardProps {
   /** Makes the icon (mini variant) or the whole card clickable. */
   href?: string;
   sparkline?: number[];
-  /** @default "var(--color-primary, #3b82f6)" */
+  /** Any CSS color. @default currentColor, i.e. `text-primary` in light mode and `text-ring` in dark (the dark `--primary` is too dark for a thin line) */
   sparklineColor?: string;
   /** Hero variant only: 0-100 achievement-vs-target bar rendered under `sub`. */
   progress?: number;
@@ -110,7 +110,7 @@ export function DonutChart({
   );
 }
 
-export function Sparkline({ data, color }: { data: number[]; color: string }): ReactElement | null {
+export function Sparkline({ data, color }: { data: number[]; color?: string }): ReactElement | null {
   if (data.length < 2) return null;
   const min = Math.min(...data);
   const max = Math.max(...data);
@@ -121,13 +121,13 @@ export function Sparkline({ data, color }: { data: number[]; color: string }): R
     .map((v, i) => `${(i / (data.length - 1)) * W},${H - ((v - min) / range) * (H - 2) - 1}`)
     .join(" ");
   return (
-    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="overflow-visible opacity-70">
-      <polyline points={pts} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className={cn("overflow-visible opacity-70", !color && "text-primary dark:text-ring")}>
+      <polyline points={pts} fill="none" stroke={color ?? "currentColor"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
 
-function AreaSparkline({ data, color }: { data: number[]; color: string }): ReactElement | null {
+function AreaSparkline({ data, color }: { data: number[]; color?: string }): ReactElement | null {
   if (data.length < 2) return null;
   const min = Math.min(...data);
   const max = Math.max(...data);
@@ -141,21 +141,23 @@ function AreaSparkline({ data, color }: { data: number[]; color: string }): Reac
   const areaPath = `M${xs[0]},${H} ` + xs.map((x, i) => `L${x},${ys[i]}`).join(" ") + ` L${xs[xs.length - 1]},${H} Z`;
 
   return (
-    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="overflow-visible" preserveAspectRatio="none">
+    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className={cn("overflow-visible", !color && "text-primary dark:text-ring")}
+      preserveAspectRatio="none"
+    >
       <defs>
         <linearGradient id="kpi-card-spark-fill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.22" />
-          <stop offset="100%" stopColor={color} stopOpacity="0" />
+          <stop offset="0%" stopColor={color ?? "currentColor"} stopOpacity="0.22" />
+          <stop offset="100%" stopColor={color ?? "currentColor"} stopOpacity="0" />
         </linearGradient>
       </defs>
       <path d={areaPath} fill="url(#kpi-card-spark-fill)" />
-      <polyline points={linePts} fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx={xs[xs.length - 1]} cy={ys[ys.length - 1]} r="2.5" fill={color} />
+      <polyline points={linePts} fill="none" stroke={color ?? "currentColor"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={xs[xs.length - 1]} cy={ys[ys.length - 1]} r="2.5" fill={color ?? "currentColor"} />
     </svg>
   );
 }
 
-const rowBetween = "flex items-center justify-between";
+const rowBetween = "flex items-center justify-between gap-2";
 
 /**
  * Dashboard KPI tile in three variants — `hero` (large, primary-colored,
@@ -178,7 +180,7 @@ export const KpiCard = memo(function KpiCard({
   subTone = "default",
   href,
   sparkline,
-  sparklineColor = "var(--color-primary, #3b82f6)",
+  sparklineColor,
   progress,
   progressLabel,
   segments,
@@ -227,7 +229,7 @@ export const KpiCard = memo(function KpiCard({
         }}
       >
         <div className="relative flex items-start justify-between">
-          <p className="text-[11px] font-bold tracking-[0.14em] text-white/70 uppercase">{label}</p>
+          <p className="text-[11px] font-bold tracking-[0.14em] text-white uppercase">{label}</p>
           {Icon && (
             <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-white/15 ring-1 ring-white/20">
               <Icon className="h-3 w-3 text-white/90" aria-hidden="true" />
@@ -251,18 +253,18 @@ export const KpiCard = memo(function KpiCard({
               <span
                 className={cn(
                   "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold tabular-nums ring-1",
-                  badge.positive ? "bg-white/15 text-white ring-white/25" : "bg-black/25 text-white ring-white/15",
+                  badge.positive ? "bg-black/10 text-white ring-white/40" : "bg-black/25 text-white ring-white/15",
                 )}
               >
                 {badge.text}
               </span>
             )}
-            {badgeLabel && <span className="text-[11px] text-white/70">{badgeLabel}</span>}
+            {badgeLabel && <span className="text-[11px] text-white">{badgeLabel}</span>}
           </div>
         )}
 
         {sub && !loading && (
-          <p className="relative -mt-1 text-[11px] font-medium text-white/75 tabular-nums">{sub}</p>
+          <p className="relative -mt-1 text-[11px] font-medium text-white tabular-nums">{sub}</p>
         )}
 
         {progress != null && !loading && (
@@ -270,7 +272,7 @@ export const KpiCard = memo(function KpiCard({
             <div className="h-1 flex-1 overflow-hidden rounded-full bg-white/20">
               <div className="h-1 rounded-full bg-white/85" style={{ width: `${Math.min(100, Math.max(0, progress))}%` }} />
             </div>
-            {progressLabel && <span className="shrink-0 text-[11px] font-semibold text-white/80 tabular-nums">{progressLabel}</span>}
+            {progressLabel && <span className="shrink-0 text-[11px] font-semibold text-white tabular-nums">{progressLabel}</span>}
           </div>
         )}
 
@@ -291,12 +293,12 @@ export const KpiCard = memo(function KpiCard({
       href ? (
         <a
           href={href}
-          className="tap-target flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-[background-color,scale] hover:bg-primary/20 active:scale-90 motion-reduce:transition-none md:h-6 md:w-6"
+          className="tap-target flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-primary/10 dark:bg-ring/15 text-primary dark:text-ring transition-[background-color,scale] hover:bg-primary/20 dark:hover:bg-ring/25 active:scale-90 motion-reduce:transition-none md:h-6 md:w-6"
         >
           <Icon className="h-4 w-4 md:h-3.5 md:w-3.5" aria-hidden="true" />
         </a>
       ) : (
-        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary md:h-6 md:w-6">
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-primary/10 dark:bg-ring/15 text-primary dark:text-ring md:h-6 md:w-6">
           <Icon className="h-4 w-4 md:h-3.5 md:w-3.5" aria-hidden="true" />
         </div>
       )
@@ -312,7 +314,7 @@ export const KpiCard = memo(function KpiCard({
         )}
       >
         <div className={rowBetween}>
-          <p className="text-[11px] font-bold tracking-[0.12em] text-muted-foreground uppercase">{label}</p>
+          <p className="min-w-0 text-[11px] font-bold tracking-[0.12em] text-muted-foreground uppercase">{label}</p>
           {iconSlot}
         </div>
 
@@ -347,7 +349,7 @@ export const KpiCard = memo(function KpiCard({
                 className={cn(
                   "text-[11px]",
                   subTone === "danger"
-                    ? "font-semibold text-red-600 dark:text-red-400"
+                    ? "font-semibold text-red-700 dark:text-red-300"
                     : subTone === "warn"
                       ? "font-semibold text-amber-700 dark:text-amber-300"
                       : "text-muted-foreground",
@@ -369,9 +371,9 @@ export const KpiCard = memo(function KpiCard({
     return (
       <div data-testid={testId} style={bgStyle} className="rounded-xl border border-border bg-card p-5">
         <div className={rowBetween}>
-          <p className="text-[11px] font-bold tracking-[0.12em] text-muted-foreground uppercase">{label}</p>
+          <p className="min-w-0 text-[11px] font-bold tracking-[0.12em] text-muted-foreground uppercase">{label}</p>
           {Icon && (
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-primary/8 text-primary">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-primary/8 dark:bg-ring/15 text-primary dark:text-ring">
               <Icon className="h-3.5 w-3.5" aria-hidden="true" />
             </div>
           )}
@@ -427,9 +429,9 @@ export const KpiCard = memo(function KpiCard({
   return (
     <div data-testid={testId} style={bgStyle} className="rounded-xl border border-border bg-card p-5">
       <div className={rowBetween}>
-        <p className="text-[11px] font-bold tracking-[0.12em] text-muted-foreground uppercase">{label}</p>
+        <p className="min-w-0 text-[11px] font-bold tracking-[0.12em] text-muted-foreground uppercase">{label}</p>
         {Icon && (
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-primary/8 text-primary">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-primary/8 dark:bg-ring/15 text-primary dark:text-ring">
             <Icon className="h-3.5 w-3.5" aria-hidden="true" />
           </div>
         )}

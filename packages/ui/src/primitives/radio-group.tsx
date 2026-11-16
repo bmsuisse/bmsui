@@ -20,7 +20,7 @@ export const RadioGroupItem = forwardRef<
   <RadioGroupPrimitive.Item
     ref={ref}
     className={cn(
-      "peer inline-flex aspect-square h-4 w-4 shrink-0 items-center justify-center rounded-full border border-muted-foreground/50 bg-background shadow-sm transition-[color,background-color,border-color,box-shadow] duration-150 ease-out",
+      "peer inline-flex aspect-square h-4 w-4 shrink-0 items-center justify-center rounded-full border border-muted-foreground/70 bg-background shadow-sm transition-[color,background-color,border-color,box-shadow] duration-150 ease-out",
       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
       "enabled:hover:border-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
       "data-[state=checked]:border-primary data-[state=checked]:bg-primary dark:data-[state=checked]:border-accent dark:data-[state=checked]:bg-accent",

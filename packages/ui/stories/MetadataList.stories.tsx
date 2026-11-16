@@ -22,4 +22,8 @@ type Story = StoryObj<typeof MetadataList>;
 export const Default: Story = {};
 export const Horizontal: Story = { args: { layout: "horizontal", divided: true } };
 export const TwoColumns: Story = { args: { columns: 2 } };
-export const AllCopyable: Story = { args: { copyable: true } };
+export const AllCopyable: Story = {
+  args: { copyable: true },
+  decorators: [(Story) => <div className="max-w-xl [&_[data-testid=metadata-copy]]:opacity-100"><Story /></div>],
+  parameters: { docs: { description: { story: "Copy buttons appear on row hover, keyboard focus and touch; forced visible here." } } },
+};

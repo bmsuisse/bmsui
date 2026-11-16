@@ -8,7 +8,7 @@ type Story = StoryObj<typeof Textarea>;
 export const Default: Story = {};
 export const WithLabel: Story = {
   render: (args) => (
-    <div className="grid w-80 gap-1.5">
+    <div className="grid w-80 max-w-full gap-1.5">
       <Label htmlFor="t1">Comment</Label>
       <Textarea id="t1" {...args} />
     </div>

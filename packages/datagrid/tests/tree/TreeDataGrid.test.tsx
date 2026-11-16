@@ -595,7 +595,7 @@ describe("TreeDataGrid (columnVisibility)", () => {
         columnVisibility={{ id: false }}
       />,
     );
-    const cell = screen.getByText("No results.");
+    const cell = screen.getByText("No results.").closest("td");
     expect(cell).toHaveAttribute("colspan", "1");
   });
 });
@@ -929,6 +929,14 @@ describe("TreeDataGrid (showTotals)", () => {
       expect(screen.getByTestId("resize-handle-name")).toBeInTheDocument();
       expect(screen.getByTestId("resize-handle-id")).toBeInTheDocument();
       expect(screen.getByRole("table")).toHaveClass("table-fixed");
+    });
+
+    it("marks the table data-fixed-layout only with enableColumnResizing", () => {
+      const { unmount } = renderGrid({});
+      expect(screen.getByRole("table")).not.toHaveAttribute("data-fixed-layout");
+      unmount();
+      renderGrid({ enableColumnResizing: true });
+      expect(screen.getByRole("table")).toHaveAttribute("data-fixed-layout");
     });
 
     it("resizes with the arrow keys from the rendered width and reports the new sizing", async () => {

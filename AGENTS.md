@@ -127,6 +127,17 @@ logic above, which already had its own extraction). Structure:
   after some of that app's call sites had already switched to this `Input`
   while others hadn't, mid-migration. Ref-forwarding was already correct,
   just untested — added a test for it alongside.
+- v0.25.2 visual-QA conventions: overlay primitives (`PopoverContent`,
+  `HoverCardContent`, `DropdownMenuContent`, both packages) default
+  `collisionPadding={8}` (overridable), and popover/hover-card content has
+  `max-w-[calc(100vw-1rem)]`, so nothing touches or overflows a phone's edge.
+  `DialogContent` is `w-[calc(100%-2rem)]` (16px phone gutter; `max-w-md` still
+  caps it). Dark `--accent-foreground` must be a dark colour whenever dark
+  `--accent` is a light/mid blue (reference theme: `oklch(0.165 0.022 265)`, 5.79:1
+  on `#6b90b8`; white was 3.33:1) — consuming apps must mirror it, since
+  Calendar's selected day, SearchBar's clear hover and other `bg-accent` fills
+  use `text-accent-foreground`/`dark:text-accent-foreground`.
+- `TabsContent` has `mt-2` (ui 0.25.3); override via `className`.
 - `TreeSelect` is a searchable single-select hierarchy with expandable branches, keyboard navigation, and `valueLabel` for saved values excluded from the available choices.
 - `packages/ui/src/patterns/` — components composed on top of the
   primitives, one subfolder per pattern, each addressing a specific
@@ -674,6 +685,31 @@ logic above, which already had its own extraction). Structure:
     + `Thumbnail` (falls back to an icon on error, no stale failure on `src`
     change); `SearchBar` `actions` slot (border and focus ring live on a
     wrapper, so `TableSearch` sizes the wrapper, not the input).
+- Visual QA round 6 (ui 0.25.5, datagrid 0.43.5): `DialogFooter`/`SheetFooter` are
+  `flex-wrap`, so many buttons wrap instead of overflowing on phones. `InlineError`
+  has an additive `wrap` prop (default `false`; datagrid's internal
+  `GridInlineError` too), used by `AsyncBoundary`'s and both grids' stale-data
+  banners so long messages wrap; the per-node tree error stays one line. Group
+  header buttons in both grids are `sticky left-2 w-[calc(var(--dg-viewport-w,100%_+_1rem)_-_1rem)]` (`--dg-viewport-w` is set on the scroll container by `useViewportWidthVar`, only while the table overflows; fallback 100%) so the label stays in
+  view under horizontal scroll. `ResultCard` titles clamp to 2 lines and the card wraps (`flex-wrap`, title `min-w-[min(10rem,100%)]`, trailing `ml-auto`) so on narrow cards or large text the trailing price/score moves to its own line instead of squeezing the title (ui 0.26.4), `FileInput`
+  `size="sm"` wraps (`min-h-9`), `Calendar` cells cap at `(100vw-3.5rem)/7`,
+  `MetadataList`'s label column is capped at 40%, `Toolbar`'s overflow-button
+  width follows the root font size. Story wrappers with a fixed width (`w-72`
+  etc.) need `max-w-full` so they don't overflow phone viewports.
+- Contrast/layout pass (ui 0.26.2 / datagrid 0.45.2): built-in editors carry `[[data-fixed-layout]_&]:min-w-0`
+  (the grids set `data-fixed-layout` on `<table>` only with `enableColumnResizing`), so their `min-w-*` floor
+  no longer overrides a dragged column width. Contrast: Calendar outside days are full `text-muted-foreground`
+  (in-range days stay `text-foreground`), `NavItem` inactive text `text-foreground/65`, StatusBadge/AlertBox
+  success/info light text is `-800` (dark unchanged), a checked `Switch` is `dark:bg-accent`.
+- Focus-ring pass (ui 0.25.6 / datagrid 0.43.6): the `default` `Button` gets a
+  `ring-offset-2` gap (light `--ring` equals `--primary`, so the ring was invisible on a
+  primary fill); Checkbox/Switch use one language, `ring-2 ring-ring ring-offset-1`;
+  `NumberHistogramFilter`'s drawn thumbs show the ring via `peer-focus-visible/min|max`
+  off the invisible range inputs; datagrid inputs/textarea/select style `aria-invalid`;
+  the grid's select-all checkbox is `indeterminate` when only some page rows are selected;
+  with `cellEditing`, Tab/Shift+Tab at the first/last column are no longer
+  `preventDefault`ed, so focus leaves the grid (WCAG 2.1.2). Small text buttons (retry,
+  clear, chip remove, sort, tree chevron) use the themed ring, not the browser outline.
 - `packages/ui/.storybook` + `packages/ui/stories/` — Storybook 10
   (`react-vite`, a11y + docs addons, light/dark toolbar toggle that sets `.dark`
   on `<html>`), published at <https://bmsuisse.github.io/bmsui/storybook/> by
@@ -743,6 +779,8 @@ logic above, which already had its own extraction). Structure:
   (no `bmsdna/__init__.py` at the root) — mirrors `bmsdna-devtools` in the
   `devtools` repo. Built with hatchling; see `python/datagrid/pyproject.toml`.
 
+**Dark-mode foreground trap:** `text-primary`/thin `bg-primary` as a foreground needs `dark:text-ring`/`dark:bg-ring` (the dark `--primary` stays navy, ~2:1 on dark surfaces; `--ring` measures 5.6:1).
+
 ### `@bmsuisse/ui` hooks (`packages/ui/src/hooks/`)
 
 Behaviour-only hooks, no styling, React 18 + 19, SSR-safe, no extra
@@ -769,6 +807,40 @@ dependencies. Docs: `docs-site/docs/ui/hooks.md`; tests:
   `useLocalStorageState(key, default)` → `[value, set, remove]`
   (`useSyncExternalStore`: hydration-safe, same-key hooks and other tabs stay
   in sync, never throws).
+
+### Visual QA round 5 notes (ui 0.25.4 / datagrid 0.43.4)
+
+- Active row tint is `bg-primary/20 dark:bg-ring/25` (dark `--primary` is navy).
+- `NumberHistogramFilter`: bins with zero count render nothing (height 0); non-zero bins are at least 3px.
+- `PageHeader` tabs divider lives on an outer wrapper, not on the `-mx-1` bleeding scroller, so it no longer overhangs.
+- DataGrid's native selection checkbox/radio inputs are `h-4 w-4 accent-primary dark:accent-ring`.
+- `Checkbox` primitive uses `rounded-[3px]` (`rounded-sm` is 6px in this theme).
+
+### Review fixes (ui 0.27.3 / datagrid 0.45.4)
+
+`Checkbox` (both packages) renders both the check and the minus icon and lets the Indicator's own
+`data-state` pick one (`group-data-[state=indeterminate]:hidden|block`), so an uncontrolled
+`defaultChecked="indeterminate"` shows the dash too, not just a controlled `checked`. The compact
+`FileInput` hint is `min-w-0 max-w-full` (not `shrink-0`), so a long hint wraps inside the zone.
+Storybook has a Brand toolbar control (`.storybook/brands.css`, OneSales' bms/proone/procasa tokens).
+
+### Round 10 (ui 0.27.4 / datagrid 0.45.5)
+
+`TreeSelect` error text is `text-red-700 dark:text-red-300` and it gained `loadingMessage` (default
+"Loading…", like `Combobox`) for the list and trigger, plus `aria-busy` on the trigger. The `danger`
+`DropdownMenuItem` (both packages) uses red-700/red-300 text. `KpiCard` hero text is solid white, its
+positive badge `bg-black/10 ring-white/40`, mini `subTone="danger"` red-700/red-300. Multi-brand token
+rules and recommended OneSales values: `docs-site/docs/ui/getting-started.md`; Storybook brands carry
+comment-only notes in `packages/ui/.storybook/brands.css`.
+
+### Contrast round 9 (ui 0.26.3 / datagrid 0.45.3)
+
+Dark checked/indeterminate Checkbox fills use `bg-accent`/`text-accent-foreground` (both packages);
+Stepper's active chip is `dark:bg-accent`; NavItem's active tint is `dark:bg-nav-primary/20`, and a
+consuming app's dark `--nav-primary` must be a light accent (e.g. `var(--ring)`), not navy
+`--primary`. Slider track has an inset `muted-foreground/70` ring; FileInput dashed border, SplitPane
+grip and Breadcrumbs separators use `muted-foreground/70`; Combobox chevron `opacity-70`;
+FacetFilter checkbox uses the primitive's default border.
 
 ## Public API reports — `packages/*/api-report.md`
 
@@ -861,6 +933,8 @@ row is **entirely opt-in**: it only appears at all once at least one visible,
 filterable column sets `filterDisplay: "row"`; columns that don't just get an
 empty cell in it, and every other page's `<DataGrid>` keeps rendering with no
 filter row whatsoever.
+
+Header labels (sort button / plain label, both grids) carry `-ml-1` on top of `px-1`, so header text lines up with body cell text (th+8 like td) (0.43.3).
 
 ### `renderHeader` — a rich header for a single column
 
@@ -1395,7 +1469,7 @@ rejection shows `filterLabels.loadFailed` + `retry` instead of an empty histogra
 datagrid package does not depend on `@bmsuisse/ui`, so these are small local copies
 (`src/components/status.tsx`) with the same `ErrorInput` shape — keep the two in sync when
 changing either. Error text uses `text-red-700 dark:text-red-300` (like `AlertBox`), not `text-destructive`,
-which fails WCAG AA as small text.
+which fails WCAG AA as small text. The loading/error/empty block sits in a `sticky left-4 w-[calc(var(--dg-viewport-w,100%_+_2rem)_-_2rem)]` wrapper inside the colSpan cell (`--dg-viewport-w` comes from `useViewportWidthVar`, set only while the table overflows its scroll container, fallback 100%; `container-type: inline-size` was dropped because it collapsed the grid in inline-block / w-fit / unsized flex parents), so it stays within the visible width on a grid wider than its container (0.43.1).
 
 ### `renderDetail` — expand a row to show more, without `<TreeDataGrid>`
 

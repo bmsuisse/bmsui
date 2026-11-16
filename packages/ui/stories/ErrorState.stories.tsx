@@ -17,3 +17,15 @@ export const Block: Story = {
 export const Compact: Story = { render: () => <ErrorState variant="compact" error="Network error" onRetry={() => {}} /> };
 export const FromError: Story = { render: () => <ErrorState error={new Error("Unexpected token < in JSON")} /> };
 export const Inline: Story = { render: () => <InlineError error="Search failed" onRetry={() => {}} /> };
+
+export const InlineWrap: Story = {
+  render: () => (
+    <div className="w-72 max-w-full">
+      <InlineError
+        wrap
+        error="The server could not be reached while refreshing the list. Showing the last loaded data."
+        onRetry={() => {}}
+      />
+    </div>
+  ),
+};

@@ -57,7 +57,7 @@ export function HeaderCellContent<TRow>({
       <FunnelIcon
         className={cn(
           "h-3 w-3 group-data-[state=open]:text-foreground group-data-[state=open]:opacity-100",
-          filterActive ? "opacity-100 text-primary" : "opacity-40",
+          filterActive ? "opacity-100 text-primary dark:text-ring" : "opacity-60",
         )}
         aria-hidden
       />
@@ -70,7 +70,7 @@ export function HeaderCellContent<TRow>({
           type="button"
           id={labelId}
           data-testid={`sort-button-${column.id}`}
-          className="flex items-center gap-1 rounded-sm px-1 hover:bg-accent hover:text-accent-foreground"
+          className="-ml-1 flex items-center gap-1 rounded-sm px-1 hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           onClick={onToggleSort}
         >
           {headerContent}
@@ -83,7 +83,7 @@ export function HeaderCellContent<TRow>({
         // silently breaking any interactive content a column's own `renderHeader`
         // embeds directly (bare filter inputs, "select/reject all" buttons) —
         // clicks never reach them at all, even though nothing looks wrong visually.
-        <div id={labelId} className="flex items-center gap-1 px-1">
+        <div id={labelId} className="-ml-1 flex items-center gap-1 px-1">
           {headerContent}
         </div>
       )}

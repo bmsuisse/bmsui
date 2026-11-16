@@ -223,7 +223,7 @@ export function NumberHistogramFilter<TRow>({
     const peak = Math.max(...counts);
     return counts.map((count, i) => ({
       count,
-      heightPx: peak > 0 ? Math.max((count / peak) * BAR_HEIGHT_PX, 2) : 2,
+      heightPx: count > 0 && peak > 0 ? Math.max((count / peak) * BAR_HEIGHT_PX, 3) : 0,
       active: tInv(logDataMin + i * step) < activeMax && tInv(logDataMin + (i + 1) * step) > activeMin,
     }));
   }, [nums, dataMin, dataMax, logDataMin, logDataMax, buckets, activeMin, activeMax]);
@@ -257,7 +257,7 @@ export function NumberHistogramFilter<TRow>({
   const summary = isFiltered ? `${format(activeMin)} – ${format(activeMax)}` : "";
 
   const panel = (
-    <div className={bare ? "flex w-full flex-col gap-3" : "flex w-80 flex-col gap-3"}>
+    <div className="flex w-full flex-col gap-3">
       {loading && (
         <p className="text-xs text-muted-foreground" data-testid={`filter-${column.id}-loading`}>
           {labels.loading}
@@ -267,12 +267,12 @@ export function NumberHistogramFilter<TRow>({
         <span
           role="alert"
           title={loadError}
-          className="flex items-center gap-1.5 text-xs text-destructive"
+          className="flex items-center gap-1.5 text-xs text-red-700 dark:text-red-300"
           data-testid={`filter-${column.id}-error`}
         >
           <ExclamationTriangleIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
           {labels.loadFailed}
-          <button type="button" className="underline underline-offset-2" onClick={() => setRetryKey((k) => k + 1)}>
+          <button type="button" className="rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring underline underline-offset-2" onClick={() => setRetryKey((k) => k + 1)}>
             {labels.retry}
           </button>
         </span>
@@ -281,7 +281,7 @@ export function NumberHistogramFilter<TRow>({
         {histBars.map((bar, i) => (
           <div
             key={i}
-            className={cn("flex-1 rounded-sm", bar.active ? "bg-primary/70" : "bg-muted-foreground/20")}
+            className={cn("flex-1 rounded-t-[2px]", bar.active ? "bg-primary/70 dark:bg-ring/70" : "bg-muted-foreground/20")}
             style={{ height: bar.heightPx }}
           />
         ))}
@@ -296,7 +296,7 @@ export function NumberHistogramFilter<TRow>({
           step={logStep}
           value={tLog(activeMin)}
           onChange={(event) => handleMinChange(tInv(Number.parseFloat(event.target.value)))}
-          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+          className="peer/min absolute inset-0 h-full w-full cursor-pointer opacity-0"
           style={{ zIndex: minOnTop ? 5 : 3 }}
         />
         <input
@@ -307,19 +307,24 @@ export function NumberHistogramFilter<TRow>({
           step={logStep}
           value={tLog(activeMax)}
           onChange={(event) => handleMaxChange(tInv(Number.parseFloat(event.target.value)))}
-          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+          className="peer/max absolute inset-0 h-full w-full cursor-pointer opacity-0"
           style={{ zIndex: minOnTop ? 3 : 5 }}
         />
         <div className="pointer-events-none absolute top-1/2 h-1.5 w-full -translate-y-1/2 rounded-full bg-muted">
           <div
-            className="absolute h-full rounded-full bg-primary"
+            className="absolute h-full rounded-full bg-primary dark:bg-ring"
             style={{ left: `${logPct(activeMin)}%`, right: `${100 - logPct(activeMax)}%` }}
           />
         </div>
         {[activeMin, activeMax].map((v, i) => (
           <div
             key={i}
-            className="pointer-events-none absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-primary bg-background shadow"
+            className={cn(
+              "pointer-events-none absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-primary dark:border-ring bg-background shadow",
+              i === 0
+                ? "peer-focus-visible/min:ring-2 peer-focus-visible/min:ring-ring peer-focus-visible/min:ring-offset-1 peer-focus-visible/min:ring-offset-background"
+                : "peer-focus-visible/max:ring-2 peer-focus-visible/max:ring-ring peer-focus-visible/max:ring-offset-1 peer-focus-visible/max:ring-offset-background",
+            )}
             style={{ left: `${logPct(v)}%` }}
           />
         ))}
@@ -374,13 +379,13 @@ export function NumberHistogramFilter<TRow>({
           data-testid={`filter-${column.id}`}
         >
           <FunnelIcon
-            className={cn("h-3.5 w-3.5 shrink-0", isFiltered ? "opacity-100 text-primary" : "opacity-40")}
+            className={cn("h-3.5 w-3.5 shrink-0", isFiltered ? "opacity-100 text-primary dark:text-ring" : "opacity-60")}
             aria-hidden
           />
           {isFiltered && <span className="truncate">{summary}</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80" onOpenAutoFocus={focusFirstTextInput}>{panel}</PopoverContent>
+      <PopoverContent className="w-[22rem]" onOpenAutoFocus={focusFirstTextInput}>{panel}</PopoverContent>
     </Popover>
   );
 }

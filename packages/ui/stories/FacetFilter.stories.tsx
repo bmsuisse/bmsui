@@ -22,7 +22,7 @@ const meta = {
   render: (args) => {
     const [value, setValue] = useState<FacetFilterValue>(args.value);
     return (
-      <div className="w-72">
+      <div className="w-72 max-w-full">
         <FacetFilter {...args} value={value} onValueChange={setValue} />
       </div>
     );
@@ -34,8 +34,24 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
 export const Preselected: Story = { args: { value: { category: ["Other"], own: ["true"] } } };
+const germanFacets: FacetDefinition[] = [
+  { ...facets[0]!, label: "Kategorie", maxVisible: 5 },
+  { ...facets[1]!, label: "Lieferant" },
+  { ...facets[2]!, label: "Eigenmarke" },
+];
 export const German: Story = {
-  args: { labels: { showMore: (n) => `${n} weitere anzeigen`, showLess: "Weniger", reset: "Filter zurücksetzen" } },
+  args: {
+    facets: germanFacets,
+    value: { category: ["Fasteners"] },
+    labels: {
+      showMore: (n) => `${n} weitere anzeigen`,
+      showLess: "Weniger",
+      reset: "Filter zurücksetzen",
+      searchPlaceholder: (l) => `${l} suchen`,
+      clear: "Löschen",
+      noMatches: "Keine Treffer",
+    },
+  },
 };
 
 /** Applied filters as chips above a result list; share `value` with the sidebar. */
@@ -44,7 +60,7 @@ export const WithActiveChips: Story = {
   render: (args) => {
     const [value, setValue] = useState<FacetFilterValue>(args.value);
     return (
-      <div className="w-80 space-y-4">
+      <div className="w-80 max-w-full space-y-4">
         <ActiveFacets facets={facets} value={value} onValueChange={setValue} />
         <FacetFilter {...args} value={value} onValueChange={setValue} />
       </div>
@@ -58,7 +74,7 @@ export const CollapsibleAndSingle: Story = {
     collapsible: true,
     value: { category: ["Safety"] },
     facets: [
-      { key: "sort", label: "Sort by", type: "single", options: [{ value: "rel", label: "Relevance", count: 128 }, { value: "price", label: "Price", count: 128 }] },
+      { key: "sort", label: "Sort by", type: "single", options: [{ value: "rel", label: "Relevance" }, { value: "price", label: "Price" }] },
       { ...facets[0]!, defaultCollapsed: true },
       { key: "brand", label: "Brand", defaultCollapsed: true, options: [{ value: "a", label: "Acme", count: 12 }, { value: "b", label: "Bolt", count: 0 }] },
     ],
@@ -67,7 +83,7 @@ export const CollapsibleAndSingle: Story = {
 
 export const Loading: Story = {
   render: () => (
-    <div className="w-72">
+    <div className="w-72 max-w-full">
       <FacetFilterSkeleton />
     </div>
   ),
@@ -97,7 +113,7 @@ export const LoadMore: Story = {
     const [query, setQuery] = useState("");
     const matching = all.filter((option) => option.label.toLowerCase().includes(query.toLowerCase()));
     return (
-      <div className="w-80">
+      <div className="w-80 max-w-full">
         <FacetFilter
           value={value}
           onValueChange={setValue}
@@ -148,7 +164,7 @@ export const SingleGroup: Story = {
   render: () => {
     const [selected, setSelected] = useState<string[]>(["acme"]);
     return (
-      <div className="w-72">
+      <div className="w-72 max-w-full">
         <FacetGroup
           facet={{ key: "supplier", label: "Supplier", options: [{ value: "acme", label: "Acme AG", count: 42 }, { value: "bolt", label: "Bolt GmbH", count: 17 }] }}
           selected={selected}

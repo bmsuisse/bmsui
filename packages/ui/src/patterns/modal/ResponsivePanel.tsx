@@ -273,7 +273,7 @@ export const ResponsivePanel = ({
           style={resizable || draggable ? geometry.style : undefined}
           className={cn(
             "max-h-[85vh] transition-shadow duration-150 ease-out",
-            geometry.isDragging && "shadow-2xl ring-2 ring-primary/30",
+            geometry.isDragging && "shadow-2xl ring-2 ring-primary/30 dark:ring-ring/30",
             desktopSizeClasses[size],
             className,
           )}

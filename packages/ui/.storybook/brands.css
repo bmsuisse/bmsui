@@ -1,0 +1,131 @@
+/*
+ * Brand themes for Storybook, ported from OneSales (frontend/src/index.css,
+ * `html[data-brand="..."]`). Pick one with the "Brand" toolbar control; "Default"
+ * is the reference theme from demo/src/globals.css with no brand attribute.
+ *
+ * OneSales is multi-brand: `data-brand` on <html> swaps a handful of tokens per
+ * tenant on top of one shared component set, which is exactly the situation
+ * @bmsuisse/ui's `--nav-primary` / `--sidebar` tokens exist for. These rules sit
+ * after `html.dark` in the cascade (as in OneSales), so a brand's light value of a
+ * token that its `.dark` block does not redefine (e.g. `--nav-primary`) also wins in
+ * dark mode. That is OneSales' behaviour, kept on purpose so the stories show what a
+ * consumer of these brands actually gets.
+ *
+ * Only tokens @bmsuisse/ui reads are ported (OneSales also carries its own
+ * `--color-*`, `--accent-soft/ink`, `--ink-*` and `--surface-*` tokens). OneSales'
+ * `--seg-1..5` chart segments map to this package's `--chart-1..5`; `--popover`
+ * takes OneSales' `--card` value.
+ *
+ * Differences from OneSales to keep in mind:
+ *  (a) OneSales has an unlayered `.text-primary { color: var(--accent-ink) }` that is
+ *      not ported here, so text using `text-primary dark:text-ring` renders in
+ *      --accent-ink there but in --primary / --ring in these stories.
+ *  (b) The base theme under the brands here is the bmsui reference (navy dark
+ *      surfaces, dark --accent-foreground, dark --destructive 0.56), not OneSales'
+ *      graphite base.
+ *  (c) procasa --popover / --popover-foreground use OneSales' --card value (its
+ *      procasa block does not set them).
+ *
+ * Lines marked "recommended:" are comment-only contrast notes (values unchanged);
+ * see docs-site/docs/ui/getting-started.md, "Using @bmsuisse/ui with multiple brands".
+ */
+
+/* ── BMS (corporate red) ─────────────────────────────────────────────────── */
+html[data-brand="bms"] {
+  --nav-primary: #dc001a;
+  --primary: #dc001a;
+  --primary-foreground: oklch(1 0 0);
+  --ring: #dc001a;
+  --accent: oklch(0.58 0.2 27);
+}
+html[data-brand="bms"].dark {
+  /* recommended: --nav-primary here (not redefined, so light #dc001a wins, 3.73:1): oklch(0.68 0.21 27) -> 6.05:1 */
+  /* recommended: --accent-foreground (base light ink, 2.74:1 on --accent): oklch(0.165 0.022 265) -> 6.05:1 */
+  --primary: oklch(0.58 0.2 27);
+  --primary-foreground: oklch(1 0 0);
+  /* recommended: --ring oklch(0.68 0.21 27) -> 6.05:1 (now 4.06:1) */
+  --ring: oklch(0.58 0.2 27);
+  --accent: oklch(0.68 0.21 27);
+}
+
+/* ── ProOne (navy + green) ───────────────────────────────────────────────── */
+html[data-brand="proone"] {
+  --nav-primary: oklch(0.3 0.11 252);
+  --primary: oklch(0.3 0.11 252);
+  --primary-foreground: oklch(0.99 0.005 110);
+  --ring: oklch(0.3 0.11 252);
+  --accent: oklch(0.52 0.18 155);
+  --accent-foreground: oklch(0.99 0.005 110);
+  --destructive: oklch(0.56 0.22 27);
+  --chart-1: oklch(0.3 0.11 252);
+  --chart-2: oklch(0.52 0.18 155);
+  --chart-3: oklch(0.55 0.15 220);
+  --chart-4: oklch(0.65 0.14 90);
+  --chart-5: oklch(0.6 0.1 290);
+}
+html[data-brand="proone"].dark {
+  /* recommended: --nav-primary here (not redefined, light value wins, 1.43:1): oklch(0.72 0.12 252) -> 7.55:1 */
+  /* recommended: --primary oklch(0.53 0.15 252) -> 5.15:1 (now 3.86:1 under white) */
+  --primary: oklch(0.6 0.15 252);
+  --primary-foreground: oklch(0.99 0.005 110);
+  /* recommended: --ring oklch(0.72 0.12 252) -> 7.83/7.28/6.61:1 (now 4.85/4.51/4.10:1) */
+  --ring: oklch(0.6 0.15 252);
+  --accent: oklch(0.65 0.18 155);
+  /* recommended: --accent-foreground oklch(0.165 0.022 265) -> 6.55:1 (now 2.86:1) */
+  --accent-foreground: oklch(0.99 0.005 110);
+  --chart-1: oklch(0.6 0.15 252);
+  --chart-2: oklch(0.65 0.18 155);
+  --chart-3: oklch(0.62 0.14 220);
+  --chart-4: oklch(0.7 0.14 90);
+  --chart-5: oklch(0.65 0.1 290);
+}
+
+/* ── ProCasa (warm clay on cream / charcoal) ─────────────────────────────── */
+html[data-brand="procasa"] {
+  --nav-primary: oklch(0.47 0.07 47);
+  --primary: oklch(0.47 0.07 47);
+  --primary-foreground: oklch(0.99 0.005 80);
+  --ring: oklch(0.47 0.07 47);
+  --background: oklch(0.977 0.01 80);
+  --foreground: oklch(0.17 0.005 55);
+  --popover: oklch(0.977 0.01 80);
+  --popover-foreground: oklch(0.17 0.005 55);
+  --muted: oklch(0.94 0.008 80);
+  /* recommended: --muted-foreground oklch(0.46 0.015 70) -> 6.66/5.98/5.40:1 (now 4.57/4.10/3.70:1) */
+  --muted-foreground: oklch(0.55 0.015 70);
+  --border: oklch(0.88 0.008 80);
+  --input: oklch(0.88 0.008 80);
+  --accent: oklch(0.54 0.08 72);
+  --accent-foreground: oklch(0.99 0.005 80);
+  --sidebar: oklch(0.97 0.008 80);
+  --chart-1: oklch(0.47 0.07 47);
+  --chart-2: oklch(0.54 0.08 72);
+  --chart-3: oklch(0.55 0.03 70);
+  --chart-4: oklch(0.6 0.06 130);
+  --chart-5: oklch(0.58 0.04 200);
+}
+html[data-brand="procasa"].dark {
+  /* recommended: --nav-primary here (not redefined, light value wins, 2.68:1): oklch(0.75 0.07 47) -> 8.29:1 */
+  /* recommended: --primary oklch(0.54 0.07 47) -> 5.02:1 (now 3.48:1 under white) */
+  --primary: oklch(0.63 0.07 47);
+  --primary-foreground: oklch(0.99 0.005 80);
+  /* recommended: --ring oklch(0.75 0.07 47) -> 8.79/8.29/7.61:1 */
+  --ring: oklch(0.63 0.07 47);
+  --background: oklch(0.14 0.008 60);
+  --foreground: oklch(0.95 0.008 80);
+  --popover: oklch(0.18 0.008 55);
+  --popover-foreground: oklch(0.95 0.008 80);
+  --muted: oklch(0.22 0.008 55);
+  --muted-foreground: oklch(0.74 0.01 75);
+  --border: oklch(0.27 0.008 60);
+  --input: oklch(0.27 0.008 60);
+  --accent: oklch(0.63 0.07 72);
+  /* recommended: --accent-foreground oklch(0.14 0.008 60) -> 5.62:1 (now 3.44:1) */
+  --accent-foreground: oklch(0.99 0.005 80);
+  --sidebar: oklch(0.18 0.008 55);
+  --chart-1: oklch(0.63 0.07 47);
+  --chart-2: oklch(0.63 0.07 72);
+  --chart-3: oklch(0.6 0.03 70);
+  --chart-4: oklch(0.65 0.06 130);
+  --chart-5: oklch(0.62 0.04 200);
+}

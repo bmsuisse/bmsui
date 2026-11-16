@@ -35,8 +35,8 @@ export interface AlertBoxProps {
 const variantStyles: Record<AlertBoxVariant, string> = {
   error: "border-destructive bg-destructive/10 text-red-800 dark:text-red-300",
   warning: "border-amber-500 bg-amber-500/10 text-amber-900 dark:text-amber-200",
-  info: "border-sky-500 bg-sky-500/10 text-sky-700 dark:text-sky-300",
-  success: "border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
+  info: "border-sky-500 bg-sky-500/10 text-sky-800 dark:text-sky-300",
+  success: "border-emerald-500 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300",
 };
 
 const defaultIcons: Record<AlertBoxVariant, ReactElement> = {

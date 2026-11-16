@@ -59,7 +59,7 @@ export interface FileInputProps {
   locale?: string;
   /** Hide the file list (render your own from `files`). */
   hideFileList?: boolean;
-  /** `sm`: a single-row zone (h-9) for tight forms. @default "default" */
+  /** `sm`: a compact zone (min-h-9, wraps on narrow widths) for tight forms. @default "default" */
   size?: "sm" | "default";
   /** Rows fade/slide in when added and collapse out when removed; the zone lifts on drag-over. @default true */
   animated?: boolean;
@@ -271,10 +271,10 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
           onDragLeave={(e) => onDrag(e, "leave")}
           onDrop={(e) => onDrag(e, "drop")}
           className={cn(
-            "group flex items-center rounded-md border border-dashed border-muted-foreground/35 bg-background text-sm transition-[color,background-color,border-color,box-shadow,translate] duration-150 ease-out",
-            !disabled && "cursor-pointer hover:border-muted-foreground/60 hover:bg-muted-foreground/5",
+            "group flex items-center rounded-md border border-dashed border-muted-foreground/70 bg-background text-sm transition-[color,background-color,border-color,box-shadow,translate] duration-150 ease-out",
+            !disabled && "cursor-pointer hover:border-muted-foreground hover:bg-muted-foreground/5",
             "focus-visible:border-solid focus-visible:border-ring focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-            sm ? "h-9 gap-2 px-3" : "flex-col justify-center gap-2 px-6 py-6 text-center",
+            sm ? "min-h-9 gap-2 px-3 py-1.5" : "flex-col justify-center gap-2 px-6 py-6 text-center",
             dragOver && "border-solid border-ring bg-accent/10 ring-4 ring-ring/10 hover:border-ring hover:bg-accent/10",
             dragOver && animated && "-translate-y-0.5 shadow-md motion-reduce:translate-none!",
             errors.length > 0 && !dragOver && "border-destructive/60",
@@ -293,10 +293,10 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
           >
             <ArrowUpTrayIcon aria-hidden="true" className={sm ? "h-4 w-4" : "h-5 w-5"} />
           </span>
-          <span className={cn("min-w-0", sm && "flex items-baseline gap-2 truncate")}>
-            <span className="font-medium text-foreground">{dragOver ? l.dropHere : multiple ? l.prompt : l.promptSingle}</span>
+          <span className={cn("min-w-0", sm && "flex flex-wrap items-baseline gap-x-2")}>
+            <span className={cn("font-medium text-foreground")}>{dragOver ? l.dropHere : multiple ? l.prompt : l.promptSingle}</span>
             {hint ? (
-              <span className={cn("text-xs text-muted-foreground", sm ? "truncate" : "mt-0.5 block")}>{hint}</span>
+              <span className={cn("text-xs text-muted-foreground", sm ? "min-w-0 max-w-full" : "mt-0.5 block")}>{hint}</span>
             ) : null}
           </span>
           <input
@@ -321,7 +321,7 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
           />
         </div>
         {errors.length ? (
-          <ul id={errorId} role="alert" className="grid gap-0.5 text-xs text-destructive">
+          <ul id={errorId} role="alert" className="grid gap-0.5 text-xs text-red-700 dark:text-red-300">
             {errors.map((message) => (
               <li key={message}>{message}</li>
             ))}

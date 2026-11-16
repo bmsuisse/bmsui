@@ -9,7 +9,7 @@ const meta: Meta<typeof FileInput> = {
   render: (args) => {
     const [files, setFiles] = useState<File[]>(args.files);
     return (
-      <div className="w-96">
+      <div className="w-96 max-w-full">
         <FileInput {...args} files={files} onFilesChange={setFiles} />
       </div>
     );

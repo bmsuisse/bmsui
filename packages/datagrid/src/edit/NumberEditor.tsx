@@ -50,7 +50,7 @@ export function NumberEditor<TRow>({
     <div>
       <Input
         type="number"
-        className="h-8"
+        className="h-8 min-w-16 [[data-fixed-layout]_&]:min-w-0"
         aria-label={`Edit ${column.header}`}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}

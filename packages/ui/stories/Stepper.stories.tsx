@@ -10,7 +10,7 @@ const steps = [
   { n: 5, label: "Done", phase: "Finish" },
 ];
 
-const meta: Meta<typeof Stepper> = { title: "Patterns/Stepper", component: Stepper };
+const meta: Meta<typeof Stepper> = { title: "Patterns/Stepper", component: Stepper, parameters: { layout: "padded" } };
 
 export default meta;
 type Story = StoryObj<typeof Stepper>;

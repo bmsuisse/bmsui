@@ -8,7 +8,7 @@ const meta: Meta<typeof Toaster> = {
     (Story) => (
       <>
         <Story />
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => toast.success("Saved")}>Success</Button>
           <Button variant="outline" onClick={() => toast.error("Could not save", { description: "Try again." })}>Error</Button>
           <Button variant="outline" onClick={() => toast.info("Offer sent", { action: { label: "Undo", onClick: () => {} } })}>With action</Button>

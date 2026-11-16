@@ -7,7 +7,7 @@ type Story = StoryObj<typeof Separator>;
 
 export const Horizontal: Story = {
   render: () => (
-    <div className="w-64 text-sm">
+    <div className="w-64 max-w-full text-sm">
       <p>Above</p>
       <Separator className="my-3" />
       <p className="text-muted-foreground">Below</p>

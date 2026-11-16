@@ -40,7 +40,7 @@ export const Slider = forwardRef<ElementRef<typeof SliderPrimitive.Root>, Slider
         )}
         {...props}
       >
-        <SliderPrimitive.Track className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-muted-foreground/20 data-[orientation=vertical]:h-full data-[orientation=vertical]:w-1.5">
+        <SliderPrimitive.Track className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-muted-foreground/20 ring-1 ring-inset ring-muted-foreground/70 data-[orientation=vertical]:h-full data-[orientation=vertical]:w-1.5">
           <SliderPrimitive.Range
             className={cn(
               "absolute h-full bg-primary data-[orientation=vertical]:w-full dark:bg-accent",

@@ -23,6 +23,6 @@ export const BusinessUnits: Story = {
   },
 };
 
-export const Empty: Story = { render: () => <TreeSelect nodes={[]} value={null} onChange={() => {}} /> };
-export const Loading: Story = { render: () => <TreeSelect nodes={[]} value={null} onChange={() => {}} loading /> };
-export const Failed: Story = { render: () => <TreeSelect nodes={[]} value={null} onChange={() => {}} errorMessage="Could not load business units" onRetry={() => {}} /> };
+export const Empty: Story = { render: () => <div className="w-80 max-w-full"><TreeSelect nodes={[]} value={null} onChange={() => {}} /></div> };
+export const Loading: Story = { render: () => <div className="w-80 max-w-full"><TreeSelect nodes={[]} value={null} onChange={() => {}} loading /></div> };
+export const Failed: Story = { render: () => <div className="w-80 max-w-full"><TreeSelect nodes={[]} value={null} onChange={() => {}} errorMessage="Could not load business units" onRetry={() => {}} /></div> };

@@ -25,6 +25,7 @@ import { withColumnFilter, withToggledSort } from "../grid/useGridState";
 import { useGroupExpansion } from "../hooks/useGroupExpansion";
 import { useColumnSizing } from "../hooks/useColumnSizing";
 import { useStickyGroupHeaderTop } from "../hooks/useStickyGroupHeaderTop";
+import { useViewportWidthVar } from "../hooks/useViewportWidthVar";
 import { useVisibleColumns } from "../hooks/useVisibleColumns";
 import { SELECTION_COLUMN_WIDTH } from "../lib/structuralColumns";
 import { ACTIVE_ROW_CLASS, activeRowProps } from "../lib/activeRow";
@@ -92,7 +93,7 @@ function TreeCell<TRow>({
           disabled={isLoading}
           aria-label={flatRow.isExpanded ? "Collapse" : "Expand"}
           aria-expanded={flatRow.isExpanded}
-          className="flex h-4 w-4 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-50"
+          className="flex h-4 w-4 shrink-0 items-center justify-center rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring text-muted-foreground hover:text-foreground disabled:opacity-50"
         >
           {isLoading ? (
             <ArrowPathIcon className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
@@ -456,6 +457,7 @@ export function TreeDataGrid<TRow>({
   }
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  useViewportWidthVar(scrollRef);
   // Interleaving synthetic group-header rows needs a flattened index space
   // to virtualize correctly — out of scope for this pass, so `groupBy`
   // forces virtualization off rather than silently mis-rendering, same as
@@ -578,7 +580,7 @@ export function TreeDataGrid<TRow>({
     <div className="flex h-full min-h-0 flex-col gap-2" data-testid="tree-datagrid">
       {hasError && data.length > 0 && (
         <div className="flex shrink-0 items-center rounded-md border border-destructive/40 bg-destructive/10 px-2 py-1">
-          <GridInlineError error={error} onRetry={onRetry} labels={labels} />
+          <GridInlineError error={error} onRetry={onRetry} labels={labels} wrap />
         </div>
       )}
       {editing && editingState.pendingEdits.size > 0 && (
@@ -608,6 +610,7 @@ export function TreeDataGrid<TRow>({
         style={{ maxHeight: maxBodyHeight }}
       >
         <table
+          data-fixed-layout={enableColumnResizing ? "" : undefined}
           className={cn(
             "border-collapse text-sm",
             fixedTableWidth === undefined && "w-full",
@@ -698,7 +701,7 @@ export function TreeDataGrid<TRow>({
                     >
                       <button
                         type="button"
-                        className="flex w-full items-center gap-1 text-left"
+                        className="sticky left-2 flex w-[calc(var(--dg-viewport-w,100%_+_1rem)_-_1rem)] max-w-full items-center gap-1 text-left"
                         onClick={() => toggleGroupExpanded(bucket.key)}
                         aria-expanded={groupExpanded}
                       >
@@ -747,13 +750,15 @@ export function TreeDataGrid<TRow>({
             {viewRoots.length === 0 ? (
               <tr>
                 <td colSpan={totalColumnCount} className="p-4 text-center text-muted-foreground">
-                  {loading ? (
-                    <LoadingRows label={labels.loading} />
-                  ) : hasError ? (
-                    <GridErrorState error={error} onRetry={onRetry} labels={labels} />
-                  ) : (
-                    labels.noResults
-                  )}
+                  <div className="sticky left-4 w-[calc(var(--dg-viewport-w,100%_+_2rem)_-_2rem)] max-w-full">
+                    {loading ? (
+                      <LoadingRows label={labels.loading} />
+                    ) : hasError ? (
+                      <GridErrorState error={error} onRetry={onRetry} labels={labels} />
+                    ) : (
+                      labels.noResults
+                    )}
+                  </div>
                 </td>
               </tr>
             ) : shouldVirtualize ? (

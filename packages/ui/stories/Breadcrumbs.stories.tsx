@@ -19,6 +19,6 @@ const meta: Meta<typeof Breadcrumbs> = {
 export default meta;
 type Story = StoryObj<typeof Breadcrumbs>;
 
-export const Default: Story = {};
+export const Default: Story = { args: { items: items.slice(0, 4) } };
 export const Collapsed: Story = { args: { maxItems: 3 } };
 export const CustomSeparator: Story = { args: { items: items.slice(0, 3), separator: "/" } };

@@ -2,7 +2,7 @@ import type { KeyboardEvent, MouseEvent } from "react";
 
 /** Wash on the active row; comes after the zebra stripe and the caller's row class so it wins. */
 export const ACTIVE_ROW_CLASS =
-  "bg-primary/10 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring";
+  "bg-primary/20 dark:bg-ring/25 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring";
 
 // A click that lands on (or inside) one of these is that control's, not the row's.
 const INTERACTIVE = "button, a, input, select, textarea, label, [role=button], [role=checkbox], [role=radio], [tabindex]";

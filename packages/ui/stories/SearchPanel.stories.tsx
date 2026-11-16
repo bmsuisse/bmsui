@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
-import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { MicrophoneIcon } from "@heroicons/react/24/outline";
 import { SearchPanel, SearchTrigger } from "@bmsuisse/ui";
 
 const meta: Meta<typeof SearchPanel> = {
@@ -10,7 +10,7 @@ const meta: Meta<typeof SearchPanel> = {
   render: (args) => {
     const [value, setValue] = useState(args.value);
     return (
-      <div className="w-[420px]">
+      <div className="w-[420px] max-w-full">
         <SearchPanel {...args} value={value} onChange={setValue} />
       </div>
     );
@@ -31,7 +31,7 @@ export const WithModes: Story = {
     const [value, setValue] = useState("");
     const [mode, setMode] = useState("all");
     return (
-      <div className="w-[420px]">
+      <div className="w-[420px] max-w-full">
         <SearchPanel {...args} value={value} onChange={setValue} activeMode={mode} onModeChange={setMode} />
       </div>
     );
@@ -41,7 +41,7 @@ export const WithTrailingSlot: Story = {
   args: {
     trailingSlot: (
       <button type="button" className="text-muted-foreground hover:text-foreground" aria-label="Voice search">
-        <MagnifyingGlassIcon className="h-4 w-4" aria-hidden="true" />
+        <MicrophoneIcon className="h-4 w-4" aria-hidden="true" />
       </button>
     ),
   },

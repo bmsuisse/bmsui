@@ -17,7 +17,7 @@ export const SelectTrigger = forwardRef<ElementRef<typeof SelectPrimitive.Trigge
     <SelectPrimitive.Trigger
       ref={ref}
       className={cn(
-        "flex w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
+        "flex w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring aria-invalid:border-destructive aria-invalid:focus:ring-destructive disabled:cursor-not-allowed disabled:opacity-50",
         size === "sm" ? "h-8" : "h-9",
         className,
       )}
@@ -47,7 +47,9 @@ export const SelectContent = forwardRef<
       )}
       {...props}
     >
-      <SelectPrimitive.Viewport className="p-1">{children}</SelectPrimitive.Viewport>
+      <SelectPrimitive.Viewport
+        className={cn("p-1", position === "popper" && "w-full min-w-[var(--radix-select-trigger-width)]")}
+      >{children}</SelectPrimitive.Viewport>
     </SelectPrimitive.Content>
   </SelectPrimitive.Portal>
 ));

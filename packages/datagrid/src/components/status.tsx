@@ -59,7 +59,7 @@ export function LoadingRows({ label, rows = 4 }: { label: string; rows?: number 
     <div role="status" aria-busy="true" data-testid="grid-loading-rows" className="flex flex-col gap-2 p-1">
       <span className="sr-only">{label}</span>
       {Array.from({ length: rows }, (_, i) => (
-        <div key={i} className="h-4 animate-pulse rounded-md bg-muted" style={{ width: i === rows - 1 ? "60%" : "100%" }} />
+        <div key={i} className="h-4 animate-pulse rounded-md bg-foreground/10" style={{ width: i === rows - 1 ? "60%" : "100%" }} />
       ))}
     </div>
   );
@@ -74,7 +74,7 @@ export function RefreshBar(props: { "data-testid"?: string }): ReactElement {
       className="pointer-events-none absolute inset-x-0 top-0 z-30 h-0.5 overflow-hidden bg-muted"
       {...props}
     >
-      <div className="h-full w-1/3 animate-pulse bg-primary motion-reduce:animate-none" />
+      <div className="h-full w-1/3 animate-pulse bg-primary dark:bg-ring motion-reduce:animate-none" />
     </div>
   );
 }
@@ -102,7 +102,7 @@ export function GridErrorState({
       {info.message ? <p className="text-muted-foreground">{info.message}</p> : null}
       {info.details ? (
         <details className="w-full max-w-lg text-left text-xs">
-          <summary className="cursor-pointer select-none underline underline-offset-2">{labels.showDetails}</summary>
+          <summary className="cursor-pointer select-none text-center underline underline-offset-2">{labels.showDetails}</summary>
           <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap break-words rounded bg-muted p-2 text-muted-foreground">
             {info.details}
           </pre>
@@ -124,11 +124,14 @@ export function GridInlineError({
   onRetry,
   labels,
   className,
+  wrap = false,
 }: {
   error: ErrorInput;
   onRetry?: () => void;
   labels: GridStatusLabels;
   className?: string;
+  /** Let a long message wrap instead of truncating (stale-rows banners). */
+  wrap?: boolean;
 }): ReactElement | null {
   const info = toErrorInfo(error);
   if (!info) return null;
@@ -137,12 +140,16 @@ export function GridInlineError({
       role="alert"
       data-testid="grid-inline-error"
       title={info.details}
-      className={cn("inline-flex min-w-0 items-center gap-1.5 text-xs text-red-700 dark:text-red-300", className)}
+      className={cn(
+        wrap ? "flex items-start" : "inline-flex items-center",
+        "min-w-0 gap-1.5 text-xs text-red-700 dark:text-red-300",
+        className,
+      )}
     >
-      <ExclamationTriangleIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-      <span className="truncate">{info.message ?? info.title ?? labels.errorTitle}</span>
+      <ExclamationTriangleIcon className={cn("h-3.5 w-3.5 shrink-0", wrap && "mt-0.5")} aria-hidden="true" />
+      <span className={wrap ? "min-w-0 break-words" : "truncate"}>{info.message ?? info.title ?? labels.errorTitle}</span>
       {onRetry ? (
-        <button type="button" className="shrink-0 underline underline-offset-2" onClick={onRetry}>
+        <button type="button" className="shrink-0 rounded-sm underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={onRetry}>
           {labels.retry}
         </button>
       ) : null}

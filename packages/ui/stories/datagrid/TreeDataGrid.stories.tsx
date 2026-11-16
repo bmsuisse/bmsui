@@ -9,7 +9,11 @@ import {
 } from "@bmsuisse/datagrid";
 import { useRef, useState } from "react";
 
-const meta: Meta = { title: "DataGrid/TreeDataGrid", parameters: { layout: "padded" } };
+const meta: Meta = {
+  title: "DataGrid/TreeDataGrid",
+  parameters: { layout: "padded" },
+  decorators: [(S) => <div className="max-w-2xl"><S /></div>],
+};
 export default meta;
 type Story = StoryObj;
 
@@ -44,7 +48,7 @@ const DEPT_TREE: DeptRow[] = [
 ];
 
 const deptColumns: ColumnDef<DeptRow>[] = [
-  { id: "name", type: "string", header: "Name", accessorKey: "name", width: 220 },
+  { id: "name", type: "string", header: "Name", accessorKey: "name", width: 220, summary: () => "Total" },
   {
     id: "headcount",
     type: "number",
@@ -321,8 +325,8 @@ export const ColumnResizing: Story = {
   render: () => (
     <TreeDataGrid
       columns={[
-        { id: "name", type: "string", header: "Name", accessorKey: "name", width: 260 },
-        { id: "headcount", type: "number", header: "Headcount", accessorKey: "headcount", width: 140 },
+        { id: "name", type: "string", header: "Name", accessorKey: "name", width: 180 },
+        { id: "headcount", type: "number", header: "Headcount", accessorKey: "headcount", width: 110 },
       ] satisfies ColumnDef<DeptRow>[]}
       data={DEPT_TREE}
       getRowId={(row) => row.id}

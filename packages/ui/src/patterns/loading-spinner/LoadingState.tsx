@@ -73,6 +73,6 @@ export const RefreshBar = ({ active, className }: { active: boolean; className?:
       data-testid="refresh-bar"
       className={cn("absolute inset-x-0 top-0 z-30 h-0.5 overflow-hidden bg-muted", className)}
     >
-      <div className="h-full w-1/3 animate-pulse bg-primary motion-reduce:animate-none" />
+      <div className="h-full w-1/3 animate-pulse bg-primary dark:bg-ring motion-reduce:animate-none" />
     </div>
   ) : null;

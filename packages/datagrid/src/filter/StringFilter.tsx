@@ -124,7 +124,7 @@ export function StringFilter<TRow>({
           data-testid={`filter-${column.id}`}
         >
           <FunnelIcon
-            className={cn("h-3.5 w-3.5 shrink-0", isFiltered ? "opacity-100 text-primary" : "opacity-40")}
+            className={cn("h-3.5 w-3.5 shrink-0", isFiltered ? "opacity-100 text-primary dark:text-ring" : "opacity-60")}
             aria-hidden
           />
           {isFiltered && <span className="truncate">{text}</span>}

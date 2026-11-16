@@ -49,7 +49,7 @@ export const DialogContent = forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-1/2 top-1/2 z-50 flex max-h-[85vh] [--dialog-divider:color-mix(in_oklab,var(--color-foreground)_12%,transparent)] dark:[--dialog-divider:var(--color-border)] w-full max-w-md -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-lg border bg-background shadow-lg",
+        "fixed left-1/2 top-1/2 z-50 flex max-h-[85vh] [--dialog-divider:color-mix(in_oklab,var(--color-foreground)_12%,transparent)] dark:[--dialog-divider:var(--color-border)] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-lg border bg-background shadow-lg",
         className,
       )}
       {...props}
@@ -206,7 +206,7 @@ export const DialogFooter = ({
   <div
     data-slot="dialog-footer"
     className={cn(
-      "flex shrink-0 justify-end gap-2 bg-background px-6 pb-6 pt-3 transition-shadow [[data-overflow-bottom]+&]:shadow-[inset_0_1px_0_var(--dialog-divider)] [[data-slot=dialog-body]:empty+&]:pt-1 [[data-slot=dialog-header]+&]:pt-1",
+      "flex shrink-0 flex-wrap justify-end gap-2 bg-background px-6 pb-6 pt-3 transition-shadow [[data-overflow-bottom]+&]:shadow-[inset_0_1px_0_var(--dialog-divider)] [[data-slot=dialog-body]:empty+&]:pt-1 [[data-slot=dialog-header]+&]:pt-1",
       className,
     )}
     {...props}

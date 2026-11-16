@@ -37,7 +37,7 @@ export const Disabled: Story = {
 };
 export const Horizontal: Story = {
   render: () => (
-    <RadioGroup defaultValue="a" className="flex gap-4">
+    <RadioGroup defaultValue="a" className="flex flex-wrap gap-4">
       {items.map(([v, l]) => (
         <div key={v} className="flex items-center gap-2">
           <RadioGroupItem value={v} id={"h-" + v} />

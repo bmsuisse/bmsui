@@ -73,7 +73,7 @@ describe.each([
     renderGrid({ activeRowId: "2" });
     expect(rowById("2")).toHaveAttribute("aria-selected", "true");
     expect(rowById("2")).toHaveAttribute("data-active", "true");
-    expect(rowById("2")).toHaveClass("bg-primary/10");
+    expect(rowById("2")).toHaveClass("bg-primary/20");
     expect(rowById("2")).not.toHaveClass("bg-foreground/5");
     expect(rowById("1")).toHaveAttribute("aria-selected", "false");
   });

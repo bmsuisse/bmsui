@@ -31,7 +31,7 @@ function Shell({ initialCollapsed = false, resizable = false }: { initialCollaps
         onCollapsedChange={setCollapsed}
         resizable={resizable}
         header={(isCollapsed) => <span className="truncate text-sm font-semibold">{isCollapsed ? "D" : "Demo App"}</span>}
-        footer="v0.7.0"
+        footer={(c) => (c ? null : <span className="px-2 text-xs text-muted-foreground">v0.7.0</span>)}
       >
         <NavGroup label="Work">
           {item("overview", Squares2X2Icon, "Overview")}
@@ -56,7 +56,7 @@ export const RailCollapsed: Story = { render: () => <Shell initialCollapsed /> }
 export const Resizable: Story = { render: () => <Shell resizable /> };
 export const NavOnly: Story = {
   render: () => (
-    <div className="flex h-72 w-64 flex-col rounded-lg border border-border">
+    <div className="flex h-72 w-64 max-w-full flex-col rounded-lg border border-border">
       <SidebarNav>
         <NavGroup label="Menu">
           <NavItem as="button" type="button" icon={Squares2X2Icon} label="Overview" active />

@@ -117,13 +117,13 @@ export function Stepper({
                       className={cn(
                         "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold transition-colors",
                         done
-                          ? "bg-primary/15 text-primary"
+                          ? "bg-primary/15 text-primary dark:text-ring"
                           : active
-                            ? "bg-primary text-primary-foreground"
+                            ? "bg-primary text-primary-foreground dark:bg-accent dark:text-accent-foreground"
                             : "bg-muted text-muted-foreground",
                       )}
                     >
-                      {done ? <CheckIcon className="h-3 w-3" /> : n}
+                      {done ? <CheckIcon className="h-3 w-3" strokeWidth={2.5} /> : n}
                     </div>
                     <span
                       className={cn(
@@ -131,14 +131,14 @@ export function Stepper({
                         active
                           ? "text-[12px] font-semibold text-foreground"
                           : done
-                            ? "text-[12px] font-medium text-primary"
+                            ? "text-[12px] font-medium text-primary dark:text-ring"
                             : "text-[12px] font-medium text-muted-foreground",
                       )}
                     >
                       {label}
                     </span>
                     {phase && (
-                      <span className="text-[9px] tracking-[0.5px] text-muted-foreground/50 uppercase">
+                      <span className="text-[9px] tracking-[0.5px] text-muted-foreground uppercase">
                         {phase}
                       </span>
                     )}
@@ -146,8 +146,8 @@ export function Stepper({
                   {!last && (
                     <div
                       className={cn(
-                        "mx-1.5 mt-3.5 h-px flex-1 transition-colors",
-                        done ? "bg-primary" : "bg-border",
+                        "mx-1.5 mt-3.5 h-px min-w-3 flex-1 transition-colors",
+                        done ? "bg-primary dark:bg-ring" : "bg-border",
                       )}
                     />
                   )}

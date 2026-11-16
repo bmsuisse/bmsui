@@ -20,6 +20,8 @@ export interface TreeSelectProps {
   searchPlaceholder?: string;
   emptyMessage?: string;
   loading?: boolean;
+  /** Text shown in the list and on the trigger while `loading` is true. Defaults to `"Loading…"`. */
+  loadingMessage?: string;
   disabled?: boolean;
   /** Displays a saved value absent from nodes without adding it to the choices. */
   valueLabel?: string | null;
@@ -180,6 +182,7 @@ export function TreeSelect({
   valueLabel = null,
   disabled = false,
   loading = false,
+  loadingMessage = "Loading…",
   errorMessage = null,
   onRetry,
   retryLabel = "Retry",
@@ -259,13 +262,14 @@ export function TreeSelect({
           aria-haspopup="tree"
           aria-controls={open ? treeId : undefined}
           aria-expanded={open}
+          aria-busy={loading || undefined}
           className="w-full justify-between font-normal"
           data-testid={testId}
         >
           <span
             className={selectedLabel ? "truncate" : "text-muted-foreground"}
           >
-            {selectedLabel ?? placeholder}
+            {loading && !selectedLabel ? loadingMessage : (selectedLabel ?? placeholder)}
           </span>
           <ChevronDownIcon className="size-4 shrink-0 opacity-50" />
         </Button>
@@ -320,7 +324,7 @@ export function TreeSelect({
         >
           {errorMessage ? (
             <div className="flex flex-col items-start gap-2 p-2 text-sm">
-              <span className="text-destructive">{errorMessage}</span>
+              <span className="text-red-700 dark:text-red-300">{errorMessage}</span>
               {onRetry && (
                 <Button size="sm" variant="outline" onClick={onRetry}>
                   {retryLabel}
@@ -329,7 +333,7 @@ export function TreeSelect({
             </div>
           ) : visibleNodes.length === 0 ? (
             <p className="p-2 text-muted-foreground text-sm">
-              {loading ? "…" : emptyMessage}
+              {loading ? loadingMessage : emptyMessage}
             </p>
           ) : (
             <TreeRows

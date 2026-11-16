@@ -89,7 +89,7 @@ export function SearchBar({
             type="button"
             onClick={() => (onClear ? onClear() : onChange(""))}
             aria-label={clearLabel}
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <XMarkIcon className="h-4 w-4" aria-hidden="true" />
           </button>

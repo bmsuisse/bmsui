@@ -44,6 +44,7 @@ import type { FilterDescriptor } from "../filter/types";
 import { useGroupExpansion } from "../hooks/useGroupExpansion";
 import { useStickyGroupHeaderTop } from "../hooks/useStickyGroupHeaderTop";
 import { useVisibleColumns } from "../hooks/useVisibleColumns";
+import { useViewportWidthVar } from "../hooks/useViewportWidthVar";
 import { cn, stopRowClick } from "../lib/utils";
 import { SELECTION_COLUMN_WIDTH } from "../lib/structuralColumns";
 import { ACTIVE_ROW_CLASS, activeRowProps } from "../lib/activeRow";
@@ -415,6 +416,7 @@ export function DataGrid<TRow extends RowData>({
     [rows, selectedIds, getRowId],
   );
   const allOnPageSelected = rows.length > 0 && rows.every((row) => selectedIds.has(getRowId(row)));
+  const someOnPageSelected = rows.some((row) => selectedIds.has(getRowId(row)));
 
   const singleSelect = selectionMode === "single";
   const selectionGroupName = useId();
@@ -605,7 +607,7 @@ export function DataGrid<TRow extends RowData>({
       return { className: `sticky z-10 ${bg}`, classNameOdd: `sticky z-10 ${bgOdd}`, style: { left: leftPinnedOffsets.get(column.id), width: columnSize(column.id), minWidth: columnSize(column.id) } };
     }
     if (column.pinned === "right") {
-      return { className: `sticky z-10 ${bg}`, classNameOdd: `sticky z-10 ${bgOdd}`, style: { right: rightPinnedOffsets.get(column.id), width: columnSize(column.id), minWidth: columnSize(column.id) } };
+      return { className: `sticky z-10 border-l border-border ${bg}`, classNameOdd: `sticky z-10 border-l border-border ${bgOdd}`, style: { right: rightPinnedOffsets.get(column.id), width: columnSize(column.id), minWidth: columnSize(column.id) } };
     }
     if (enableColumnResizing) return { style: { width: columnSize(column.id) } };
     return { style: column.width ? { width: column.width } : undefined };
@@ -817,6 +819,7 @@ export function DataGrid<TRow extends RowData>({
   }, [shouldVirtualize, groupedBuckets, tableRows, isGroupExpanded]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  useViewportWidthVar(scrollRef);
   const virtualizer = useVirtualizer({
     count: flatItems.length,
     getScrollElement: () => scrollRef.current,
@@ -1255,6 +1258,11 @@ export function DataGrid<TRow extends RowData>({
       return;
     }
     if (event.key === "Tab") {
+      // Let focus leave the grid at either edge (WCAG 2.1.2 No Keyboard Trap);
+      // moveSelection clamps columns, so the first/last column is the edge.
+      const focusColId = cellSelection.selection?.focus.columnId;
+      const colIdx = focusColId === undefined ? -1 : cellEditingColumnIds.indexOf(focusColId);
+      if (event.shiftKey ? colIdx <= 0 : colIdx === cellEditingColumnIds.length - 1) return;
       event.preventDefault();
       cellSelection.moveSelection(event.shiftKey ? "left" : "right");
       return;
@@ -1458,6 +1466,7 @@ export function DataGrid<TRow extends RowData>({
               <input
                 type={singleSelect ? "radio" : "checkbox"}
                 name={singleSelect ? selectionGroupName : undefined}
+                className="h-4 w-4 accent-primary dark:accent-ring"
                 aria-label={`Select row ${row.id}`}
                 checked={selectedIds.has(row.id)}
                 onClick={stopRowClick}
@@ -1623,7 +1632,7 @@ export function DataGrid<TRow extends RowData>({
           >
             <button
               type="button"
-              className="flex w-full items-center gap-1 text-left"
+              className="sticky left-2 flex w-[calc(var(--dg-viewport-w,100%_+_1rem)_-_1rem)] max-w-full items-center gap-1 text-left"
               onClick={() => toggleGroupExpanded(key)}
               aria-expanded={expanded}
             >
@@ -1699,14 +1708,14 @@ export function DataGrid<TRow extends RowData>({
         />
       )}
       {showSelectionColumn && headerActions && (
-        <div className="flex shrink-0 items-center justify-between text-sm">
+        <div className="flex shrink-0 items-center justify-between gap-3 text-sm">
           <span>{selectedRows.length} selected</span>
           <ActionsMenu items={headerActions} ctx={{ selectedRows }} triggerLabel="Bulk actions" />
         </div>
       )}
       {hasError && rows.length > 0 && (
         <div className="flex shrink-0 items-center rounded-md border border-destructive/40 bg-destructive/10 px-2 py-1">
-          <GridInlineError error={error} onRetry={onRetry} labels={labels} />
+          <GridInlineError error={error} onRetry={onRetry} labels={labels} wrap />
         </div>
       )}
       <div className="relative min-h-0 flex-1">
@@ -1718,6 +1727,10 @@ export function DataGrid<TRow extends RowData>({
             "h-full overflow-auto rounded-md border",
             // `select-none`: dragging a range would otherwise paint the browser's own blue text selection over the cells (copy/paste is handled by the grid, editors stay selectable).
             hasCellEditing && "relative select-none [&_input]:select-text [&_textarea]:select-text",
+            hasCellEditing &&
+              (cellSelection.selection
+                ? "focus-visible:outline-none"
+                : "focus-visible:outline-2 focus-visible:-outline-offset-1 focus-visible:outline-ring"),
           )}
           style={shouldVirtualize ? { maxHeight: virtualize?.maxBodyHeight ?? 480 } : maxHeight !== undefined ? { maxHeight } : undefined}
           // `tabIndex`/`onKeyDown` only under `cellEditing` — the scroll
@@ -1746,6 +1759,7 @@ export function DataGrid<TRow extends RowData>({
           keeps natural, content-driven column sizing.
         */}
         <table
+          data-fixed-layout={enableColumnResizing ? "" : undefined}
           className={cn(
             "border-collapse text-sm",
             fixedTableWidth === undefined && "w-full",
@@ -1849,8 +1863,12 @@ export function DataGrid<TRow extends RowData>({
                         {!singleSelect && (
                           <input
                             type="checkbox"
+                            className="h-4 w-4 accent-primary dark:accent-ring"
                             aria-label="Select all rows on this page"
                             checked={allOnPageSelected}
+                            ref={(el) => {
+                              if (el) el.indeterminate = someOnPageSelected && !allOnPageSelected;
+                            }}
                             onChange={toggleAllOnPageSelected}
                           />
                         )}
@@ -1895,8 +1913,12 @@ export function DataGrid<TRow extends RowData>({
                       {!singleSelect && (
                         <input
                           type="checkbox"
+                          className="h-4 w-4 accent-primary dark:accent-ring"
                           aria-label="Select all rows on this page"
                           checked={allOnPageSelected}
+                          ref={(el) => {
+                            if (el) el.indeterminate = someOnPageSelected && !allOnPageSelected;
+                            }}
                           onChange={toggleAllOnPageSelected}
                         />
                       )}
@@ -1954,13 +1976,15 @@ export function DataGrid<TRow extends RowData>({
           <tbody>
             <tr>
               <td colSpan={totalColumnCount} className="p-4 text-center text-muted-foreground">
-                {loading ? (
-                  <LoadingRows label={labels.loading} />
-                ) : hasError ? (
-                  <GridErrorState error={error} onRetry={onRetry} labels={labels} />
-                ) : (
-                  labels.noResults
-                )}
+                <div className="sticky left-4 w-[calc(var(--dg-viewport-w,100%_+_2rem)_-_2rem)] max-w-full">
+                  {loading ? (
+                    <LoadingRows label={labels.loading} />
+                  ) : hasError ? (
+                    <GridErrorState error={error} onRetry={onRetry} labels={labels} />
+                  ) : (
+                    labels.noResults
+                  )}
+                </div>
               </td>
             </tr>
           </tbody>

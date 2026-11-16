@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { useState } from "react";
+import { useLayoutEffect, useState, type ReactElement } from "react";
 import { BookOpenIcon, SparklesIcon } from "@heroicons/react/24/outline";
 import {
   AiButton,
@@ -60,7 +60,7 @@ export const InFlight: Story = {
   render: () => {
     const [loading, setLoading] = useState(false);
     return (
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3">
         <AiButton
           loading={loading}
           onClick={() => {
@@ -78,9 +78,9 @@ export const InFlight: Story = {
 
 export const ExplainButton: Story = {
   render: () => (
-    <div className="flex items-center gap-4 rounded-xl border border-border p-4">
+    <div className="flex w-fit items-center gap-4 rounded-xl border border-border p-4">
       <div>
-        <p className="text-2xl font-semibold tabular-nums">CHF 2.4M</p>
+        <p className="text-2xl font-semibold tabular-nums">{"CHF\u00a02.4M"}</p>
         <p className="text-xs text-muted-foreground">Revenue, last 30 days</p>
       </div>
       <AiExplainButton
@@ -106,9 +106,28 @@ export const VoiceInput: Story = {
   },
 };
 
+type SpeechWindow = { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown };
+
+/** Hides the browser speech API while mounted so the disabled state renders in any browser. */
+function WithoutSpeechApi(): ReactElement | null {
+  const [ready, setReady] = useState(false);
+  useLayoutEffect(() => {
+    const w = window as unknown as SpeechWindow;
+    const saved = { a: w.SpeechRecognition, b: w.webkitSpeechRecognition };
+    w.SpeechRecognition = undefined;
+    w.webkitSpeechRecognition = undefined;
+    setReady(true);
+    return () => {
+      w.SpeechRecognition = saved.a;
+      w.webkitSpeechRecognition = saved.b;
+    };
+  }, []);
+  return ready ? <VoiceInputButton onTranscript={() => {}} /> : null;
+}
+
 export const VoiceInputUnsupported: Story = {
-  name: "Voice input (browser API, may be disabled)",
-  render: () => <VoiceInputButton onTranscript={() => {}} />,
+  name: "Voice input (unsupported browser)",
+  render: () => <WithoutSpeechApi />,
 };
 
 export const Transcript: Story = {

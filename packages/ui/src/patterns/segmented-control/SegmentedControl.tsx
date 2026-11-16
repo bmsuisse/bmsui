@@ -140,7 +140,7 @@ export function SegmentedControl<T extends string = string>({
             className={cn(
               "inline-flex h-full items-center justify-center gap-1.5 whitespace-nowrap rounded-[calc(var(--radius-md,0.375rem)-2px)] font-medium transition-[color,box-shadow] duration-150 ease-out",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              "disabled:cursor-not-allowed disabled:opacity-50",
+              "disabled:cursor-not-allowed", !disabled && "disabled:opacity-50",
               sm ? "px-2.5 text-xs [&_svg]:size-3.5" : "px-3 text-sm [&_svg]:size-4",
               fullWidth && "flex-1",
               checked ? "text-foreground" : "text-muted-foreground hover:text-foreground",

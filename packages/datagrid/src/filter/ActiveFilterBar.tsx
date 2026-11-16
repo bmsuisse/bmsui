@@ -69,7 +69,7 @@ function Chip<TRow>({
   return (
     <span
       data-testid={`filter-chip-${fieldKey(filter.field)}`}
-      className="inline-flex min-w-0 max-w-[22rem] shrink items-center gap-1 rounded-full border border-primary/25 bg-primary/10 py-0.5 pl-2.5 pr-1 text-xs font-medium text-primary"
+      className="inline-flex min-w-0 max-w-[22rem] shrink items-center gap-1 rounded-full border border-primary/25 bg-primary/10 py-0.5 pl-2.5 pr-1 text-xs font-medium text-primary dark:border-ring/40 dark:bg-ring/15 dark:text-ring"
       title={text}
     >
       <span className="truncate">
@@ -133,10 +133,10 @@ export function ActiveFilterBar<TRow>({
       )}
     >
       <span className="flex flex-none items-center gap-1.5 font-semibold text-muted-foreground">
-        <FunnelIcon className={cn("h-3 w-3", count > 0 && "text-primary")} aria-hidden />
+        <FunnelIcon className={cn("h-3 w-3", count > 0 && "text-primary dark:text-ring")} aria-hidden />
         {count > 0 ? labels.activeFilters(count) : labels.noActiveFilters}
       </span>
-      {count === 0 && <span className="truncate text-muted-foreground/70">{labels.noActiveFiltersHint}</span>}
+      {count === 0 && <span className="truncate text-muted-foreground">{labels.noActiveFiltersHint}</span>}
       {shown.map(chip)}
       {hidden.length > 0 && (
         <Popover>

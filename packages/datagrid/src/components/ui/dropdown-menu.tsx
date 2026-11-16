@@ -10,11 +10,12 @@ export const DropdownMenuGroup = DropdownMenuPrimitive.Group;
 export const DropdownMenuContent = forwardRef<
   ElementRef<typeof DropdownMenuPrimitive.Content>,
   ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content>
->(({ className, sideOffset = 4, ...props }, ref) => (
+>(({ className, sideOffset = 4, collisionPadding = 8, ...props }, ref) => (
   <DropdownMenuPrimitive.Portal>
     <DropdownMenuPrimitive.Content
       ref={ref}
       sideOffset={sideOffset}
+      collisionPadding={collisionPadding}
       className={cn(
         "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md",
         className,
@@ -33,7 +34,7 @@ export const DropdownMenuItem = forwardRef<
     ref={ref}
     className={cn(
       "relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-      danger && "text-destructive focus:bg-destructive/10 focus:text-destructive",
+      danger && "text-red-700 dark:text-red-300 focus:bg-destructive/10 focus:text-red-700 dark:focus:text-red-300",
       className,
     )}
     {...props}

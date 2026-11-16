@@ -21,7 +21,7 @@ export const Vertical: Story = {
 };
 export const Horizontal: Story = {
   render: () => (
-    <ScrollArea className="w-72 whitespace-nowrap rounded-md border">
+    <ScrollArea className="w-72 max-w-full whitespace-nowrap rounded-md border">
       <div className="flex gap-3 p-3">
         {Array.from({ length: 15 }, (_, i) => (
           <div key={i} className="grid h-16 w-24 shrink-0 place-items-center rounded-md bg-muted text-sm text-muted-foreground">{i + 1}</div>

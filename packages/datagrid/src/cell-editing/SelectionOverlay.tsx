@@ -242,14 +242,14 @@ export function SelectionOverlay({
       <div
         data-testid="cell-selection-overlay"
         aria-hidden
-        className="pointer-events-none absolute z-20 border-2 border-primary"
+        className="pointer-events-none absolute z-20 border-2 border-primary dark:border-ring"
         style={{ top: rect.top, left: rect.left, width: rect.width, height: rect.height }}
       />
       {previewRect && (
         <div
           data-testid="cell-fill-preview-overlay"
           aria-hidden
-          className="pointer-events-none absolute z-20 border-2 border-dashed border-primary"
+          className="pointer-events-none absolute z-20 border-2 border-dashed border-primary dark:border-ring"
           style={{ top: previewRect.top, left: previewRect.left, width: previewRect.width, height: previewRect.height }}
         />
       )}
@@ -273,7 +273,7 @@ export function SelectionOverlay({
           data-testid="cell-fill-handle"
           role="button"
           aria-label="Fill handle: drag to fill adjacent cells"
-          className="absolute z-30 cursor-crosshair border border-background bg-primary"
+          className="absolute z-30 cursor-crosshair border border-background bg-primary dark:bg-ring"
           style={{
             top: rect.top + rect.height - HANDLE_SIZE / 2 - 1,
             left: rect.left + rect.width - HANDLE_SIZE / 2 - 1,

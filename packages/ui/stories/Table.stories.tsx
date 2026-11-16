@@ -11,7 +11,7 @@ const rows = [["INV-001", "Paid", 250], ["INV-002", "Pending", 150], ["INV-003",
 
 export const Default: Story = {
   render: () => (
-    <Table className="w-[28rem]">
+    <Table className="w-[28rem] max-w-full">
       <TableCaption>Recent invoices</TableCaption>
       <TableHeader>
         <TableRow><TableHead>Invoice</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Amount</TableHead></TableRow>
@@ -29,7 +29,7 @@ export const Default: Story = {
 };
 export const Minimal: Story = {
   render: () => (
-    <Table className="w-72">
+    <Table className="w-72 max-w-full">
       <TableBody>
         <TableRow><TableCell>Alpha</TableCell><TableCell>1</TableCell></TableRow>
         <TableRow><TableCell>Beta</TableCell><TableCell>2</TableCell></TableRow>

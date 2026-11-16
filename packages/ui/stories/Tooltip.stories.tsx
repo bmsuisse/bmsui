@@ -19,7 +19,7 @@ export const Default: Story = {
 };
 export const Sides: Story = {
   render: () => (
-    <div className="flex gap-3">
+    <div className="flex flex-wrap gap-3">
       {(["top", "right", "bottom", "left"] as const).map((side) => (
         <Tooltip key={side}>
           <TooltipTrigger asChild><Button variant="outline" size="sm">{side}</Button></TooltipTrigger>

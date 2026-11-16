@@ -83,7 +83,7 @@ export function Breadcrumbs({
   const lastIndex = items.length - 1;
 
   const sep = (
-    <li role="presentation" aria-hidden="true" className="flex shrink-0 items-center text-muted-foreground/50">
+    <li role="presentation" aria-hidden="true" className="flex shrink-0 items-center text-muted-foreground/70">
       {separator ?? <ChevronRightIcon className="h-3.5 w-3.5" />}
     </li>
   );

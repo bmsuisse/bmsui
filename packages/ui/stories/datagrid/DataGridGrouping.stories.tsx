@@ -7,13 +7,13 @@ const meta: Meta = { title: "DataGrid/DataGridGrouping", parameters: { layout: "
 export default meta;
 type Story = StoryObj;
 
-const chf = new Intl.NumberFormat("de-CH", { style: "currency", currency: "CHF" });
+const chf = new Intl.NumberFormat("en-US", { style: "currency", currency: "CHF" });
 const sum = (rows: Order[], key: "amount" | "qty") => rows.reduce((total, r) => total + r[key], 0);
 
 const summaryColumns: ColumnDef<Order>[] = orderColumns.map((c) => {
   if (c.id === "amount") return { ...c, summary: (rows: Order[]) => chf.format(sum(rows, "amount")) };
   if (c.id === "qty") return { ...c, summary: (rows: Order[]) => sum(rows, "qty") };
-  if (c.id === "id") return { ...c, summary: (rows: Order[]) => `${rows.length} orders` };
+  if (c.id === "id") return { ...c, summary: (rows: Order[]) => rows.length };
   return c;
 });
 
@@ -27,7 +27,7 @@ export const GroupBySummary: Story = {
       dataSource={{ mode: "client", data: grouped }}
       getRowId={getOrderId}
       groupBy={(row) => row.customer}
-      renderGroupHeader={(key, rows, expanded) => `${expanded ? "▾" : "▸"} ${key} (${rows.length} orders, ${chf.format(sum(rows, "amount"))})`}
+      renderGroupHeader={(key, rows) => `${key} (${rows.length} orders, ${chf.format(sum(rows, "amount"))})`}
       showPagination={false}
     />
   ),

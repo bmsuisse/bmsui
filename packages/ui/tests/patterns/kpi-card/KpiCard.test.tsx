@@ -46,7 +46,7 @@ describe("KpiCard", () => {
 
   it("colors the mini variant's sub text by subTone", () => {
     render(<KpiCard label="Overdue" value="3" variant="mini" sub="2 days late" subTone="danger" />);
-    expect(screen.getByText("2 days late")).toHaveClass("text-red-600");
+    expect(screen.getByText("2 days late")).toHaveClass("text-red-700");
   });
 
   it("renders a sparkline once given at least two data points", () => {

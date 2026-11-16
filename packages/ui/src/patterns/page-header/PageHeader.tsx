@@ -146,14 +146,14 @@ export function PageHeader({
         ) : null}
       </div>
       {tabs ? (
+        <div className={cn("mt-1 min-w-0", divider && "border-b border-foreground/10 pb-[7px] dark:border-border")}>
         <div
           ref={tabsRef}
           data-testid="page-header-tabs"
           className={cn(
-            "relative -mx-1 mt-1 min-w-0 overflow-x-auto px-1 pb-px",
+            "relative -mx-1 min-w-0 overflow-x-auto px-1 pb-px",
             // While the sliding pill is placed, triggers sit above it and drop their own active surface.
             "[&_[role=tab]]:relative [&[data-indicator]_[role=tab][data-state=active]]:bg-transparent [&[data-indicator]_[role=tab][data-state=active]]:shadow-none",
-            divider && "border-b border-foreground/10 pb-2 dark:border-border",
           )}
         >
           <span
@@ -162,6 +162,7 @@ export function PageHeader({
             className={cn(slidingIndicatorClass, "rounded-md bg-background shadow-sm")}
           />
           {tabs}
+        </div>
         </div>
       ) : null}
     </header>

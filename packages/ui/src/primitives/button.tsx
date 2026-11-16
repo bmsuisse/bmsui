@@ -9,12 +9,12 @@ export const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        default: "bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         secondary: "bg-muted text-muted-foreground hover:bg-muted/80",
-        link: "text-primary underline-offset-4 hover:underline",
+        link: "text-primary dark:text-ring underline-offset-4 hover:underline",
         // "Swiss design" red CTA, ported from akeneo_editor's old .btn-primary-swiss
         // naive-ui override. Relies on --color-swiss-primary/-hover and
         // --color-swiss-primary-foreground tokens defined by the consuming app's own

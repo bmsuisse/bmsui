@@ -151,7 +151,9 @@ export function Toolbar({
       }
       const known = ws as number[];
       const flags = overflowableRef.current;
-      const more = 32;
+      const rootFont =
+        typeof document !== "undefined" ? Number.parseFloat(getComputedStyle(document.documentElement).fontSize) : Number.NaN;
+      const more = 2 * (rootFont || 16);
       const widthFor = (c: number): number => {
         let total = 0;
         let n = 0;
