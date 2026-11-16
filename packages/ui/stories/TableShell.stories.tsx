@@ -99,7 +99,7 @@ export const WithFooter: Story = {
 
 export const Flush: Story = {
   render: () => (
-    <div className="rounded-xl border border-border p-2">
+    <div className="overflow-hidden rounded-xl border border-border">
       <TableShell flush meta={<TableResultCount shown={ROWS.length} total={ROWS.length} />}>
         <Body rows={ROWS} />
       </TableShell>

@@ -229,7 +229,7 @@ export const KpiCard = memo(function KpiCard({
         }}
       >
         <div className="relative flex items-start justify-between">
-          <p className="text-[11px] font-bold tracking-[0.14em] text-white/70 uppercase">{label}</p>
+          <p className="text-[11px] font-bold tracking-[0.14em] text-white uppercase">{label}</p>
           {Icon && (
             <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-white/15 ring-1 ring-white/20">
               <Icon className="h-3 w-3 text-white/90" aria-hidden="true" />
@@ -253,18 +253,18 @@ export const KpiCard = memo(function KpiCard({
               <span
                 className={cn(
                   "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold tabular-nums ring-1",
-                  badge.positive ? "bg-white/15 text-white ring-white/25" : "bg-black/25 text-white ring-white/15",
+                  badge.positive ? "bg-black/10 text-white ring-white/40" : "bg-black/25 text-white ring-white/15",
                 )}
               >
                 {badge.text}
               </span>
             )}
-            {badgeLabel && <span className="text-[11px] text-white/70">{badgeLabel}</span>}
+            {badgeLabel && <span className="text-[11px] text-white">{badgeLabel}</span>}
           </div>
         )}
 
         {sub && !loading && (
-          <p className="relative -mt-1 text-[11px] font-medium text-white/75 tabular-nums">{sub}</p>
+          <p className="relative -mt-1 text-[11px] font-medium text-white tabular-nums">{sub}</p>
         )}
 
         {progress != null && !loading && (
@@ -272,7 +272,7 @@ export const KpiCard = memo(function KpiCard({
             <div className="h-1 flex-1 overflow-hidden rounded-full bg-white/20">
               <div className="h-1 rounded-full bg-white/85" style={{ width: `${Math.min(100, Math.max(0, progress))}%` }} />
             </div>
-            {progressLabel && <span className="shrink-0 text-[11px] font-semibold text-white/80 tabular-nums">{progressLabel}</span>}
+            {progressLabel && <span className="shrink-0 text-[11px] font-semibold text-white tabular-nums">{progressLabel}</span>}
           </div>
         )}
 
@@ -349,7 +349,7 @@ export const KpiCard = memo(function KpiCard({
                 className={cn(
                   "text-[11px]",
                   subTone === "danger"
-                    ? "font-semibold text-red-600 dark:text-red-400"
+                    ? "font-semibold text-red-700 dark:text-red-300"
                     : subTone === "warn"
                       ? "font-semibold text-amber-700 dark:text-amber-300"
                       : "text-muted-foreground",

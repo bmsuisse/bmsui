@@ -9,7 +9,11 @@ import {
 } from "@bmsuisse/datagrid";
 import { useRef, useState } from "react";
 
-const meta: Meta = { title: "DataGrid/TreeDataGrid", parameters: { layout: "padded" } };
+const meta: Meta = {
+  title: "DataGrid/TreeDataGrid",
+  parameters: { layout: "padded" },
+  decorators: [(S) => <div className="max-w-2xl"><S /></div>],
+};
 export default meta;
 type Story = StoryObj;
 

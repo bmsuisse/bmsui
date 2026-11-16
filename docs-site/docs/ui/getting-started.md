@@ -66,6 +66,48 @@ In dark mode point `--nav-primary` at a light accent such as `--ring`
 (`html.dark { --nav-primary: var(--ring); }`), because `--primary` stays navy
 (~2:1 on dark surfaces) and the active-row tint and label would vanish.
 
+### Using @bmsuisse/ui with multiple brands (OneSales example)
+
+OneSales is multi-brand: a `data-brand` attribute on `<html>` (`bms`, `proone`,
+`procasa`) swaps a handful of tokens per tenant on top of one shared component
+set, layered with the usual `.dark` class. Storybook reproduces this with the
+"Brand" toolbar control (`packages/ui/.storybook/brands.css`), which makes it
+easy to check a brand's tokens against the components in light and dark.
+
+Rules a brand's tokens must follow:
+
+1. White on `--primary` must reach 4.5:1 in both modes (KpiCard hero, the
+   default Button).
+2. Dark `--ring` is also used as a foreground (`dark:text-ring`, `dark:bg-ring`,
+   `dark:stroke-ring`), so it must reach 4.5:1 on `--background`, `--popover`
+   and `--muted`. Don't set it equal to a dark `--primary`.
+3. Dark `--accent-foreground` must be a dark colour whenever dark `--accent` is
+   light or mid.
+4. Redefine `--nav-primary` inside each brand's `.dark` block:
+   `html[data-brand=x]` has the same specificity as `html.dark` and comes
+   later, so the light value otherwise wins in dark mode.
+5. `--muted-foreground` must reach 4.5:1 on `--muted` and on `foreground/10`
+   tints.
+6. `--destructive` is a fill token; the library uses `red-700` / `red-300` for
+   error text.
+
+Recommended values for the OneSales brands (contrast, now → after):
+
+| Token | Now | Recommended | Contrast |
+|---|---|---|---|
+| bms dark `--ring` | `oklch(0.58 0.2 27)` | `oklch(0.68 0.21 27)` | 4.06 → 6.05 |
+| bms dark `--nav-primary` | `#dc001a` | `oklch(0.68 0.21 27)` | 3.73 → 6.05 |
+| bms dark `--accent-foreground` | light ink | `oklch(0.165 0.022 265)` | 2.74 → 6.05 |
+| proone dark `--primary` | `oklch(0.6 0.15 252)` | `oklch(0.53 0.15 252)` | 3.86 → 5.15 |
+| proone dark `--ring` | `oklch(0.6 0.15 252)` (= primary) | `oklch(0.72 0.12 252)` | 4.85/4.51/4.10 → 7.83/7.28/6.61 |
+| proone dark `--accent-foreground` | light ink | `oklch(0.165 0.022 265)` | 2.86 → 6.55 |
+| proone dark `--nav-primary` | `oklch(0.3 0.11 252)` | `oklch(0.72 0.12 252)` | 1.43 → 7.55 |
+| procasa dark `--primary` | `oklch(0.63 0.07 47)` | `oklch(0.54 0.07 47)` | 3.48 → 5.02 |
+| procasa dark `--ring` | `oklch(0.63 0.07 47)` (= primary) | `oklch(0.75 0.07 47)` | → 8.79/8.29/7.61 |
+| procasa dark `--accent-foreground` | light ink | `oklch(0.14 0.008 60)` | 3.44 → 5.62 |
+| procasa dark `--nav-primary` | `oklch(0.47 0.07 47)` | `oklch(0.75 0.07 47)` | 2.68 → 8.29 |
+| procasa light `--muted-foreground` | `oklch(0.55 0.015 70)` | `oklch(0.46 0.015 70)` | 4.57/4.10/3.70 → 6.66/5.98/5.40 |
+
 ### Chart tokens
 
 `KpiCard`'s `donut` variant (and any future multi-series chart in the

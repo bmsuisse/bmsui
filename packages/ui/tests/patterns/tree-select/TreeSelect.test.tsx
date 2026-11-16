@@ -11,6 +11,16 @@ const nodes: TreeSelectNode[] = [
 ];
 
 describe("TreeSelect", () => {
+  it("shows the loading message and aria-busy while loading", async () => {
+    const user = userEvent.setup();
+    render(<TreeSelect nodes={[]} value={null} onChange={() => {}} loading loadingMessage="Fetching…" />);
+    const trigger = screen.getByRole("combobox");
+    expect(trigger).toHaveAttribute("aria-busy", "true");
+    expect(trigger).toHaveTextContent("Fetching…");
+    await user.click(trigger);
+    expect(screen.getAllByText("Fetching…").length).toBeGreaterThan(1);
+  });
+
   it("expands branches and selects a parent or leaf", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();

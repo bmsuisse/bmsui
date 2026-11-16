@@ -1353,6 +1353,7 @@ interface TreeSelectProps
   errorMessage?: string | null
   id?: string
   loading?: boolean
+  loadingMessage?: string
   nodes: TreeSelectNode[]
   onChange: (value: string) => void
   onRetry?: () => void

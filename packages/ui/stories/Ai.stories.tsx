@@ -78,7 +78,7 @@ export const InFlight: Story = {
 
 export const ExplainButton: Story = {
   render: () => (
-    <div className="flex items-center gap-4 rounded-xl border border-border p-4">
+    <div className="flex w-fit items-center gap-4 rounded-xl border border-border p-4">
       <div>
         <p className="text-2xl font-semibold tabular-nums">{"CHF\u00a02.4M"}</p>
         <p className="text-xs text-muted-foreground">Revenue, last 30 days</p>

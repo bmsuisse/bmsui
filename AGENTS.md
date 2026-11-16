@@ -824,6 +824,15 @@ dependencies. Docs: `docs-site/docs/ui/hooks.md`; tests:
 `FileInput` hint is `min-w-0 max-w-full` (not `shrink-0`), so a long hint wraps inside the zone.
 Storybook has a Brand toolbar control (`.storybook/brands.css`, OneSales' bms/proone/procasa tokens).
 
+### Round 10 (ui 0.27.4 / datagrid 0.45.5)
+
+`TreeSelect` error text is `text-red-700 dark:text-red-300` and it gained `loadingMessage` (default
+"Loading…", like `Combobox`) for the list and trigger, plus `aria-busy` on the trigger. The `danger`
+`DropdownMenuItem` (both packages) uses red-700/red-300 text. `KpiCard` hero text is solid white, its
+positive badge `bg-black/10 ring-white/40`, mini `subTone="danger"` red-700/red-300. Multi-brand token
+rules and recommended OneSales values: `docs-site/docs/ui/getting-started.md`; Storybook brands carry
+comment-only notes in `packages/ui/.storybook/brands.css`.
+
 ### Contrast round 9 (ui 0.26.3 / datagrid 0.45.3)
 
 Dark checked/indeterminate Checkbox fills use `bg-accent`/`text-accent-foreground` (both packages);

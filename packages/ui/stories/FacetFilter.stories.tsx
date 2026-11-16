@@ -74,7 +74,7 @@ export const CollapsibleAndSingle: Story = {
     collapsible: true,
     value: { category: ["Safety"] },
     facets: [
-      { key: "sort", label: "Sort by", type: "single", options: [{ value: "rel", label: "Relevance", count: 128 }, { value: "price", label: "Price", count: 128 }] },
+      { key: "sort", label: "Sort by", type: "single", options: [{ value: "rel", label: "Relevance" }, { value: "price", label: "Price" }] },
       { ...facets[0]!, defaultCollapsed: true },
       { key: "brand", label: "Brand", defaultCollapsed: true, options: [{ value: "a", label: "Acme", count: 12 }, { value: "b", label: "Bolt", count: 0 }] },
     ],

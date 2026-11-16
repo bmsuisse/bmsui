@@ -248,7 +248,7 @@ const productColumns: ColumnDef<Product>[] = [
 
 export const FacetedNumberFiltersInGrid: Story = {
   render: () => (
-    <div className="flex flex-col gap-2">
+    <div className="flex max-w-3xl flex-col gap-2">
       <p className="text-sm text-muted-foreground">
         Each histogram's domain ignores its own filter but respects the other column's.
       </p>
