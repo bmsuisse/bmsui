@@ -394,3 +394,22 @@ export { ResultCard, ResultList, Thumbnail } from "./patterns/result-card/Result
 
 export { TreeSelect } from "./patterns/tree-select/TreeSelect";
 export type { TreeSelectNode, TreeSelectProps } from "./patterns/tree-select/TreeSelect";
+export type {
+  TreeViewLabels,
+  TreeViewNode,
+  TreeViewNodeState,
+  TreeViewProps,
+} from "./patterns/tree-view/TreeView";
+export { TreeView, defaultTreeViewLabels } from "./patterns/tree-view/TreeView";
+export type {
+  BottomNavigationActionProps,
+  BottomNavigationItem,
+  BottomNavigationLabels,
+  BottomNavigationLinkRenderProps,
+  BottomNavigationProps,
+} from "./patterns/bottom-navigation/BottomNavigation";
+export {
+  BottomNavigation,
+  BottomNavigationAction,
+  defaultBottomNavigationLabels,
+} from "./patterns/bottom-navigation/BottomNavigation";
