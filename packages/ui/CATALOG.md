@@ -99,6 +99,12 @@ repo's `AGENTS.md`.
 | `AvatarGroup`, `defaultAvatarGroupLabels` | Overlapping avatars with "+N" overflow whose tooltip lists the rest. |
 | `CollapsibleSection` | Foldable titled section with chevron, count pill, actions, smooth height. |
 | `Kbd` | A single keycap. |
+| `ToolCallCard`, `ToolCallGroup`, `defaultToolCallLabels`, `formatToolDuration` | One agent tool call (name, status icon, summary, duration, foldable input/output/error; open while running or failed, folds when done) and a "4 steps" fold for a run of them. Data in, no chat runtime. |
+| `Reasoning`, `defaultReasoningLabels` | Collapsible "thinking" block of an assistant message: shimmering header and live-following text while `streaming`, "Thought for 4 s" once done. |
+| `Citation`, `SourceList`, `getSourceDomain`, `defaultCitationLabels` | Numbered `[n]` chip inside generated text with title/domain tooltip, opens the source in a new tab (bare `[n]` when unknown); `SourceList` is the numbered list below the message. |
+| `CodeBlock`, `defaultCodeBlockLabels` | Code/log snippet: language title, copy button, optional line numbers, wrap or scroll in `maxHeight`, `highlight` slot to inject shiki/prism. |
+| `JsonView`, `defaultJsonViewLabels` | Collapsible pretty-printed JSON for API/tool payloads: key count, size, copy, scrolling body. Same frame as `CodeBlock`. |
+| `TypingIndicator` | Three bouncing dots with a screen-reader label for "assistant is typing". |
 | `KeyCombo`, `formatKey`, `defaultKeyComboLabels` | Shortcut as keycaps per platform: `Mod+K` → "⌘ K" / "Ctrl K"; sequences ("g o"). |
 | `ShortcutSheet`, `defaultShortcutSheetLabels` | The "?" dialog listing all shortcuts in groups. |
 
