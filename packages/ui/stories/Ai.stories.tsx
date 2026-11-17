@@ -3,6 +3,7 @@ import { useLayoutEffect, useState, type ReactElement } from "react";
 import { BookOpenIcon, SparklesIcon } from "@heroicons/react/24/outline";
 import {
   AiButton,
+  Button,
   AiExplainButton,
   Input,
   type SpeechRecognitionEngine,
@@ -54,6 +55,45 @@ export const Variants: Story = {
       <AiButton variant="ai" disabled>Disabled</AiButton>
     </div>
   ),
+};
+
+/**
+ * PROPOSAL: a quieter AI accent that follows the theme instead of fixed violet. Same three weights
+ * as `ai` / `ai-subtle` / `ai-ghost`, built from `--primary` / `--ring` plus a soft glow
+ * (a blurred `--ring` shadow; the sparkle icon carries the "AI" signal). Top row = current violet.
+ */
+export const SubtleGlowProposal: Story = {
+  render: () => {
+    const glow = "shadow-[0_0_0_1px_color-mix(in_oklab,var(--ring)_35%,transparent),0_0_16px_-2px_color-mix(in_oklab,var(--ring)_55%,transparent)] hover:shadow-[0_0_0_1px_color-mix(in_oklab,var(--ring)_55%,transparent),0_0_22px_-1px_color-mix(in_oklab,var(--ring)_70%,transparent)] transition-shadow";
+    return (
+      <div className="flex flex-col gap-5">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="w-24 text-xs text-muted-foreground">Current (violet)</span>
+          <AiButton variant="ai">Generate</AiButton>
+          <AiButton variant="ai-subtle" icon={SparklesIcon}>Rewrite</AiButton>
+          <AiButton variant="ai-ghost" icon={BookOpenIcon}>Suggest tags</AiButton>
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="w-24 text-xs text-muted-foreground">Glow (theme)</span>
+          <Button className={`bg-primary text-primary-foreground dark:bg-ring dark:text-background ${glow}`}>
+            <SparklesIcon className="size-4" /> Generate
+          </Button>
+          <Button
+            variant="outline"
+            className={`border-transparent bg-ring/10 text-primary dark:text-ring ${glow}`}
+          >
+            <SparklesIcon className="size-4" /> Rewrite
+          </Button>
+          <Button
+            variant="ghost"
+            className="text-primary hover:bg-ring/10 hover:shadow-[0_0_16px_-2px_color-mix(in_oklab,var(--ring)_50%,transparent)] dark:text-ring"
+          >
+            <BookOpenIcon className="size-4" /> Suggest tags
+          </Button>
+        </div>
+      </div>
+    );
+  },
 };
 
 export const InFlight: Story = {
