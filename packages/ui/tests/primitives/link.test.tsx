@@ -21,6 +21,7 @@ describe("Link", () => {
     expect(a).toHaveAttribute("target", "_blank");
     expect(a.getAttribute("rel")?.split(" ").sort()).toEqual(["author", "noopener", "noreferrer"]);
     expect(a.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+    expect(a.querySelector("svg")?.parentElement).toHaveClass("whitespace-nowrap");
   });
 
   it("takes translated labels", () => {
@@ -59,5 +60,6 @@ describe("Link", () => {
     const a = screen.getByRole("link");
     expect(a.className).toContain("underline");
     expect(a.className).toContain("custom");
+    expect(a.className).toContain("box-decoration-clone");
   });
 });

@@ -57,7 +57,7 @@ RouterLink.displayName = "RouterLink";
 
 export const AsChildRouterLink: Story = {
   render: () => (
-    <Link asChild external>
+    <Link asChild>
       <RouterLink to="/orders/42">Order 42 (a router Link)</RouterLink>
     </Link>
   ),
