@@ -1,0 +1,63 @@
+import { type HTMLAttributes, type ReactElement, useEffect, useRef } from "react";
+import { EASE_OUT, animate, prefersReducedMotion } from "../../lib/motion";
+import { cn } from "../../lib/utils";
+
+export interface TypingIndicatorProps extends Omit<HTMLAttributes<HTMLSpanElement>, "children"> {
+  /** Spoken (and, with `showLabel`, shown) text. @default "Assistant is typing" */
+  label?: string;
+  /** Show the label next to the dots. @default false */
+  showLabel?: boolean;
+  /** @default "md" */
+  size?: "sm" | "md";
+  /** Bounce the dots. Off (or under reduced motion) they sit still. @default true */
+  animated?: boolean;
+}
+
+/**
+ * Three dots for "the assistant is typing / thinking" before the first token of a reply.
+ * Staggered Web Animations (rise + fade, ~1.2 s loop); static under reduced motion.
+ */
+export const TypingIndicator = ({
+  label = "Assistant is typing",
+  showLabel = false,
+  size = "md",
+  animated = true,
+  className,
+  ...props
+}: TypingIndicatorProps): ReactElement => {
+  const root = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    if (!animated || prefersReducedMotion()) return;
+    const dots = Array.from(root.current?.querySelectorAll("[data-dot]") ?? []);
+    const anims = dots.map((dot, i) =>
+      animate(
+        dot,
+        [
+          { transform: "translateY(0)", opacity: 0.35 },
+          { transform: "translateY(-25%)", opacity: 1, offset: 0.3 },
+          { transform: "translateY(0)", opacity: 0.35, offset: 0.6 },
+          { transform: "translateY(0)", opacity: 0.35 },
+        ],
+        { duration: 1200, delay: i * 160, iterations: Infinity, easing: EASE_OUT },
+      ),
+    );
+    return () => anims.forEach((a) => a?.cancel());
+  }, [animated]);
+  const dot = size === "sm" ? "h-1.5 w-1.5" : "h-2 w-2";
+  return (
+    <span
+      ref={root}
+      role="status"
+      data-slot="typing-indicator"
+      className={cn("inline-flex items-center gap-2 text-sm text-muted-foreground", className)}
+      {...props}
+    >
+      <span aria-hidden="true" className="inline-flex items-center gap-1">
+        {[0, 1, 2].map((i) => (
+          <span key={i} data-dot className={cn("rounded-full bg-muted-foreground opacity-60", dot)} />
+        ))}
+      </span>
+      <span className={cn(!showLabel && "sr-only")}>{label}</span>
+    </span>
+  );
+};

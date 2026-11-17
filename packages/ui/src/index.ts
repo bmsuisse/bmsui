@@ -283,6 +283,18 @@ export { StatStrip, StatStripItem } from "./patterns/stat-strip/StatStrip";
 
 export type { SkipLink, SkipLinksProps } from "./patterns/skip-links/SkipLinks";
 export { SkipLinks } from "./patterns/skip-links/SkipLinks";
+export type { CodeBlockLabels, CodeBlockProps } from "./patterns/code-block/CodeBlock";
+export { CodeBlock, defaultCodeBlockLabels } from "./patterns/code-block/CodeBlock";
+export type { JsonViewLabels, JsonViewProps } from "./patterns/json-view/JsonView";
+export { defaultJsonViewLabels, JsonView } from "./patterns/json-view/JsonView";
+export type { ToolCallCardProps, ToolCallGroupProps, ToolCallLabels, ToolCallStatus } from "./patterns/tool-call/ToolCall";
+export { defaultToolCallLabels, formatToolDuration, ToolCallCard, ToolCallGroup } from "./patterns/tool-call/ToolCall";
+export type { ReasoningLabels, ReasoningProps } from "./patterns/reasoning/Reasoning";
+export { defaultReasoningLabels, Reasoning } from "./patterns/reasoning/Reasoning";
+export type { CitationLabels, CitationProps, CitationSource, SourceListProps } from "./patterns/citation/Citation";
+export { Citation, defaultCitationLabels, getSourceDomain, SourceList } from "./patterns/citation/Citation";
+export type { TypingIndicatorProps } from "./patterns/typing-indicator/TypingIndicator";
+export { TypingIndicator } from "./patterns/typing-indicator/TypingIndicator";
 export type { BreadcrumbItem, BreadcrumbLinkRenderProps, BreadcrumbsLabels, BreadcrumbsProps } from "./patterns/breadcrumbs/Breadcrumbs";
 export { Breadcrumbs, defaultBreadcrumbsLabels } from "./patterns/breadcrumbs/Breadcrumbs";
 
