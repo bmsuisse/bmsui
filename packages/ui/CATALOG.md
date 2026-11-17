@@ -29,6 +29,7 @@ repo's `AGENTS.md`.
 | `Tooltip`, `TooltipTrigger`, `TooltipContent`, `TooltipProvider` | Hover/focus hint text. |
 | `HoverCard`, `HoverCardTrigger`, `HoverCardContent` | Rich preview on hover (contact card, linked record). Mouse-only extra; never the only path to info. Click-to-open → `Popover`. |
 | `Collapsible`, `CollapsibleTrigger`, `CollapsibleContent` | Bare show/hide region. For a titled foldable section use `CollapsibleSection`. |
+| `ContextMenu`, `ContextMenuTrigger`, `ContextMenuContent`, `ContextMenuItem`, `ContextMenuCheckboxItem`, `ContextMenuRadioGroup`, `ContextMenuRadioItem`, `ContextMenuLabel`, `ContextMenuSeparator`, `ContextMenuShortcut`, `ContextMenuGroup`, `ContextMenuPortal`, `ContextMenuSub`, `ContextMenuSubTrigger`, `ContextMenuSubContent` | Right-click / long-press menu on rows and cards, same look as `DropdownMenu` (`danger` item too). Always also offer the actions through a visible "⋯" `DropdownMenu`. |
 | `DropdownMenu`, `DropdownMenuTrigger`, `DropdownMenuContent`, `DropdownMenuItem`, `DropdownMenuCheckboxItem`, `DropdownMenuRadioGroup`, `DropdownMenuRadioItem`, `DropdownMenuLabel`, `DropdownMenuSeparator`, `DropdownMenuShortcut`, `DropdownMenuGroup`, `DropdownMenuPortal`, `DropdownMenuSub`, `DropdownMenuSubTrigger`, `DropdownMenuSubContent` | Action menus ("⋯" menus, row actions). |
 | `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent` | Switching between views of one page. |
 | `Table`, `TableHeader`, `TableBody`, `TableFooter`, `TableRow`, `TableHead`, `TableCell`, `TableCaption` | Static HTML table. For sorting/filtering/paging data use `@bmsuisse/datagrid`. |
@@ -97,6 +98,8 @@ repo's `AGENTS.md`.
 | `formatRelativeTime` | Relative time string outside a component (de-CH default via `Intl.RelativeTimeFormat`). |
 | `Avatar`, `getInitials`, `avatarColorIndex` | Person/company picture with initials fallback in a stable color, optional status dot. |
 | `AvatarGroup`, `defaultAvatarGroupLabels` | Overlapping avatars with "+N" overflow whose tooltip lists the rest. |
+| `Timeline`, `TimelineItem`, `TimelineGroup`, `defaultTimelineLabels` | Vertical rail of events or process steps (`<ol>`): marker per `status` (done/active/pending/error) or `tone`, title, `time` (via `Timestamp`), description, foldable detail, trailing `pending` loader, `TimelineGroup` date headers. Activity history, audit trail, running steps; not a wizard header (`Stepper`). |
+| `Accordion`, `AccordionItem`, `AccordionTrigger`, `AccordionContent` | Several titled panels where one (`type="single"`) or many (`"multiple"`) are open: FAQ, settings groups. Several items under arrow-key navigation; for one standalone foldable section use `CollapsibleSection`. |
 | `CollapsibleSection` | Foldable titled section with chevron, count pill, actions, smooth height. |
 | `Kbd` | A single keycap. |
 | `KeyCombo`, `formatKey`, `defaultKeyComboLabels` | Shortcut as keycaps per platform: `Mod+K` → "⌘ K" / "Ctrl K"; sequences ("g o"). |
