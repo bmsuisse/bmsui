@@ -270,14 +270,14 @@ export function TagCombobox({
           {selectedOptions.map((option) => (
             <span
               key={option.value}
-              className="inline-flex items-center gap-1 rounded-full bg-muted py-0.5 pr-1 pl-2.5 text-xs font-medium text-muted-foreground"
+              className="inline-flex items-center gap-1 rounded-[var(--radius-pill,9999px)] bg-muted py-0.5 pr-1 pl-2.5 text-xs font-medium text-muted-foreground"
             >
               <span className="max-w-48 truncate">{option.label}</span>
               {!disabled && (
                 <button
                   type="button"
                   aria-label={`Remove ${option.label}`}
-                  className="rounded-full p-0.5 hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="rounded-[var(--radius-pill,9999px)] p-0.5 hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   onClick={(event) => {
                     event.stopPropagation();
                     removeValue(option.value);

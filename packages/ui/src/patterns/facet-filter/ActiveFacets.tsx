@@ -71,7 +71,7 @@ export function ActiveFacets({
             type="button"
             aria-label={labels.remove(text)}
             onClick={() => remove(facet.key, selected)}
-            className="inline-flex h-7 items-center gap-1 rounded-full border border-foreground/15 bg-background pr-1.5 pl-2.5 text-xs hover:bg-foreground/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none dark:border-border"
+            className="inline-flex h-7 items-center gap-1 rounded-[var(--radius-pill,9999px)] border border-foreground/15 bg-background pr-1.5 pl-2.5 text-xs hover:bg-foreground/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none dark:border-border"
           >
             {text}
             <XMarkIcon aria-hidden="true" className="size-3.5 text-muted-foreground" />
@@ -82,7 +82,7 @@ export function ActiveFacets({
         <button
           type="button"
           onClick={() => onValueChange({})}
-          className="rounded px-1 font-medium text-foreground/80 text-xs underline underline-offset-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="rounded-[min(4px,var(--radius,0.625rem))] px-1 font-medium text-foreground/80 text-xs underline underline-offset-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           {labels.clearAll}
         </button>

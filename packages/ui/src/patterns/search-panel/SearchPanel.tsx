@@ -90,7 +90,7 @@ export function SearchPanel({
         {shortcutHint && (
           <kbd
             aria-hidden="true"
-            className="hidden shrink-0 items-center rounded border border-border bg-muted/60 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground select-none sm:inline-flex"
+            className="hidden shrink-0 items-center rounded-[min(4px,var(--radius,0.625rem))] border border-border bg-muted/60 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground select-none sm:inline-flex"
           >
             {shortcutHint}
           </kbd>
@@ -111,7 +111,7 @@ export function SearchPanel({
               type="button"
               onClick={() => onModeChange?.(key)}
               className={cn(
-                "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors",
+                "flex items-center gap-1.5 rounded-[var(--radius-pill,9999px)] px-3 py-1.5 text-[13px] font-medium transition-colors",
                 activeMode === key
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:bg-muted",

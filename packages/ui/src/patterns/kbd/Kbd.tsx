@@ -65,7 +65,7 @@ export const Kbd = ({ size = "md", pressed, className, ...props }: KbdProps): Re
     data-testid="kbd"
     data-pressed={pressed || undefined}
     className={cn(
-      "inline-flex items-center justify-center rounded border border-foreground/15 border-b-foreground/25 bg-muted font-sans font-medium leading-none text-muted-foreground dark:bg-foreground/10 dark:text-foreground/80",
+      "inline-flex items-center justify-center rounded-[min(4px,var(--radius,0.625rem))] border border-foreground/15 border-b-foreground/25 bg-muted font-sans font-medium leading-none text-muted-foreground dark:bg-foreground/10 dark:text-foreground/80",
       // Press-down: translate is motion-safe only; the flatter edge and tint always show.
       "transition-[translate,border-color,background-color] duration-100 ease-out motion-reduce:transition-none",
       "data-[pressed]:border-b-foreground/15 data-[pressed]:bg-foreground/[0.07] motion-safe:data-[pressed]:translate-y-px",

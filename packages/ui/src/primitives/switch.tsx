@@ -12,7 +12,7 @@ export const Switch = forwardRef<ElementRef<typeof SwitchPrimitive.Root>, Switch
     <SwitchPrimitive.Root
       ref={ref}
       className={cn(
-        "peer inline-flex shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary dark:data-[state=checked]:bg-accent data-[state=unchecked]:bg-muted-foreground/70",
+        "peer inline-flex shrink-0 cursor-pointer items-center rounded-[var(--radius-pill,9999px)] border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary dark:data-[state=checked]:bg-accent data-[state=unchecked]:bg-muted-foreground/70",
         size === "sm" ? "h-3.5 w-6" : "h-5 w-9",
         className,
       )}
@@ -20,7 +20,7 @@ export const Switch = forwardRef<ElementRef<typeof SwitchPrimitive.Root>, Switch
     >
       <SwitchPrimitive.Thumb
         className={cn(
-          "pointer-events-none block rounded-full bg-background shadow-lg ring-0 transition-transform data-[state=unchecked]:translate-x-0",
+          "pointer-events-none block rounded-[var(--radius-pill,9999px)] bg-background shadow-lg ring-0 transition-transform data-[state=unchecked]:translate-x-0",
           size === "sm"
             ? "h-3 w-3 data-[state=checked]:translate-x-2.5"
             : "h-4 w-4 data-[state=checked]:translate-x-4",

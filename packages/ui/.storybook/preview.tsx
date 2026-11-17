@@ -8,6 +8,9 @@ const withTheme: Decorator = (Story, context) => {
   const dark = context.globals.theme === "dark";
   document.documentElement.classList.toggle("dark", dark);
   document.documentElement.style.colorScheme = dark ? "dark" : "light";
+  const corners = context.globals.corners as string | undefined;
+  if (corners && corners !== "rounded") document.documentElement.dataset.corners = corners;
+  else delete document.documentElement.dataset.corners;
   const brand = context.globals.brand as string | undefined;
   if (brand && brand !== "default") document.documentElement.dataset.brand = brand;
   else delete document.documentElement.dataset.brand;
@@ -33,6 +36,18 @@ const preview: Preview = {
         dynamicTitle: true,
       },
     },
+    corners: {
+      description: "Corner style: rounded (reference radius) or square",
+      toolbar: {
+        title: "Corners",
+        icon: "box",
+        items: [
+          { value: "rounded", title: "Rounded", icon: "circle" },
+          { value: "square", title: "Square", icon: "square" },
+        ],
+        dynamicTitle: true,
+      },
+    },
     brand: {
       description: "Brand theme (OneSales tenants)",
       toolbar: {
@@ -48,7 +63,7 @@ const preview: Preview = {
       },
     },
   },
-  initialGlobals: { theme: "light", brand: "default" },
+  initialGlobals: { theme: "light", brand: "default", corners: "rounded" },
   parameters: {
     layout: "centered",
     backgrounds: { disable: true },

@@ -529,12 +529,20 @@ describe("DateInput review fixes (calendar PR)", () => {
   });
 
   it("arrow steps clamp to min first, then hop blocked days inside the bounds", () => {
-    const onChange = vi.fn();
-    render(
-      <DateInput aria-label="d" value="" onValueChange={onChange} min="2026-11-14" isDateDisabled={weekend} native="never" />,
-    );
-    fireEvent.keyDown(screen.getByLabelText("d"), { key: "ArrowUp" }); // starts at today <= min -> Sat 14th -> Mon 16th
-    expect(onChange).toHaveBeenCalledWith("2026-11-16");
+    // The step starts from "today", which must be on or before `min`; pin the clock so the test
+    // does not start failing once the real date passes 2026-11-14.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 10, 10, 12));
+    try {
+      const onChange = vi.fn();
+      render(
+        <DateInput aria-label="d" value="" onValueChange={onChange} min="2026-11-14" isDateDisabled={weekend} native="never" />,
+      );
+      fireEvent.keyDown(screen.getByLabelText("d"), { key: "ArrowUp" }); // starts at today <= min -> Sat 14th -> Mon 16th
+      expect(onChange).toHaveBeenCalledWith("2026-11-16");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("arrow steps give up when no allowed day is left before max", () => {

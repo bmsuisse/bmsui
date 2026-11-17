@@ -55,7 +55,7 @@ export const EmptyState = ({
         // tile gets a hairline ring and a faint foreground tint that reads in both modes.
         <div
           className={cn(
-            "flex items-center justify-center rounded-full bg-foreground/[0.04] ring-1 ring-inset ring-foreground/10 dark:bg-foreground/[0.06]",
+            "flex items-center justify-center rounded-[var(--radius-pill,9999px)] bg-foreground/[0.04] ring-1 ring-inset ring-foreground/10 dark:bg-foreground/[0.06]",
             sm ? "mb-1 h-8 w-8" : "mb-2 h-11 w-11",
             // One-shot entrance via @starting-style: no keyframes, no JS.
             animated &&

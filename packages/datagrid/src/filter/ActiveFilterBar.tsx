@@ -69,7 +69,7 @@ function Chip<TRow>({
   return (
     <span
       data-testid={`filter-chip-${fieldKey(filter.field)}`}
-      className="inline-flex min-w-0 max-w-[22rem] shrink items-center gap-1 rounded-full border border-primary/25 bg-primary/10 py-0.5 pl-2.5 pr-1 text-xs font-medium text-primary dark:border-ring/40 dark:bg-ring/15 dark:text-ring"
+      className="inline-flex min-w-0 max-w-[22rem] shrink items-center gap-1 rounded-[var(--radius-pill,9999px)] border border-primary/25 bg-primary/10 py-0.5 pl-2.5 pr-1 text-xs font-medium text-primary dark:border-ring/40 dark:bg-ring/15 dark:text-ring"
       title={text}
     >
       <span className="truncate">
@@ -80,7 +80,7 @@ function Chip<TRow>({
         type="button"
         aria-label={labels.removeFilter(text)}
         onClick={onRemove}
-        className="flex-none rounded-full p-0.5 hover:bg-primary/20"
+        className="flex-none rounded-[var(--radius-pill,9999px)] p-0.5 hover:bg-primary/20"
       >
         <XMarkIcon className="h-3 w-3" aria-hidden />
       </button>
@@ -143,7 +143,7 @@ export function ActiveFilterBar<TRow>({
           <PopoverTrigger asChild>
             <button
               type="button"
-              className="flex-none rounded-full border border-border bg-background px-2.5 py-0.5 font-medium text-foreground hover:bg-muted"
+              className="flex-none rounded-[var(--radius-pill,9999px)] border border-border bg-background px-2.5 py-0.5 font-medium text-foreground hover:bg-muted"
             >
               {labels.moreFilters(hidden.length)}
             </button>

@@ -103,7 +103,7 @@ export function GridErrorState({
       {info.details ? (
         <details className="w-full max-w-lg text-left text-xs">
           <summary className="cursor-pointer select-none text-center underline underline-offset-2">{labels.showDetails}</summary>
-          <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap break-words rounded bg-muted p-2 text-muted-foreground">
+          <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap break-words rounded-[min(4px,var(--radius,0.625rem))] bg-muted p-2 text-muted-foreground">
             {info.details}
           </pre>
         </details>

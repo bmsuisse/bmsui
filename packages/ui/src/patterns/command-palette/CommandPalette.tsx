@@ -430,7 +430,7 @@ function Kbd({ children, className }: { children: ReactNode; className?: string 
   return (
     <kbd
       className={cn(
-        "inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded border border-foreground/10 bg-background px-1 font-sans text-[11px] font-medium leading-none text-muted-foreground shadow-[0_1px_0_0] shadow-foreground/10 dark:border-foreground/15 dark:bg-foreground/5",
+        "inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-[min(4px,var(--radius,0.625rem))] border border-foreground/10 bg-background px-1 font-sans text-[11px] font-medium leading-none text-muted-foreground shadow-[0_1px_0_0] shadow-foreground/10 dark:border-foreground/15 dark:bg-foreground/5",
         className,
       )}
     >
@@ -505,7 +505,7 @@ export const CommandPaletteTrigger = forwardRef<HTMLButtonElement, CommandPalett
         aria-keyshortcuts={hint ? (isApplePlatform() ? "Meta+K" : "Control+K") : undefined}
         data-testid="command-palette-trigger"
         className={cn(
-          "inline-flex h-9 items-center gap-2 rounded-full border border-foreground/10 bg-background px-3 text-sm text-muted-foreground shadow-xs transition-colors hover:border-foreground/20 hover:text-foreground dark:border-input dark:hover:border-foreground/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-sm:w-9 max-sm:justify-center max-sm:px-0 sm:min-w-56",
+          "inline-flex h-9 items-center gap-2 rounded-[var(--radius-pill,9999px)] border border-foreground/10 bg-background px-3 text-sm text-muted-foreground shadow-xs transition-colors hover:border-foreground/20 hover:text-foreground dark:border-input dark:hover:border-foreground/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-sm:w-9 max-sm:justify-center max-sm:px-0 sm:min-w-56",
           className,
         )}
         {...props}

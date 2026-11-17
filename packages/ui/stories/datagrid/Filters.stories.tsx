@@ -34,7 +34,7 @@ function Show({ value, children }: { value: FilterDescriptor | undefined; childr
   return (
     <div className="flex flex-col gap-3">
       <div>{children}</div>
-      <pre className="rounded bg-muted p-2 text-xs">{JSON.stringify(value ?? null, null, 2)}</pre>
+      <pre className="rounded-[min(4px,var(--radius,0.625rem))] bg-muted p-2 text-xs">{JSON.stringify(value ?? null, null, 2)}</pre>
     </div>
   );
 }
@@ -355,8 +355,8 @@ export const UrlCodec: Story = {
           gridState={gridState}
           onGridStateChange={setGridState}
         />
-        <pre className="rounded bg-muted p-2 text-xs">encodeGridStateSearch: {JSON.stringify(encoded, null, 2)}</pre>
-        <pre className="rounded bg-muted p-2 text-xs">
+        <pre className="rounded-[min(4px,var(--radius,0.625rem))] bg-muted p-2 text-xs">encodeGridStateSearch: {JSON.stringify(encoded, null, 2)}</pre>
+        <pre className="rounded-[min(4px,var(--radius,0.625rem))] bg-muted p-2 text-xs">
           decodeGridStateSearch: {JSON.stringify({ filter: roundTrip.filter, sort: roundTrip.sort }, null, 2)}
         </pre>
       </div>

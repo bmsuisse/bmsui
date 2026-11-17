@@ -6,3 +6,14 @@
 /* Tailwind scans only this project; the data grid's classes live in its own package. */
 @source "../../datagrid/src";
 .sb-main-centered #storybook-root { max-width: 100%; }
+
+/*
+ * Corners control (toolbar "Corners"): `data-corners` on <html>. "square" zeroes --radius, so
+ * every rounded-sm/md/lg/xl follows, and --radius-pill, so pill-shaped controls (Badge, SearchBar,
+ * chips, tracks, Switch, Slider) square off too. True circles (Avatar, Radio, status dots) stay round.
+ * Any app can do the same with one rule; see docs-site/docs/ui/getting-started.md "Corner radius".
+ */
+html[data-corners="square"] {
+  --radius: 0px;
+  --radius-pill: 0px;
+}

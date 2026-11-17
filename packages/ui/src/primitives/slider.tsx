@@ -40,7 +40,7 @@ export const Slider = forwardRef<ElementRef<typeof SliderPrimitive.Root>, Slider
         )}
         {...props}
       >
-        <SliderPrimitive.Track className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-muted-foreground/20 ring-1 ring-inset ring-muted-foreground/70 data-[orientation=vertical]:h-full data-[orientation=vertical]:w-1.5">
+        <SliderPrimitive.Track className="relative h-1.5 w-full grow overflow-hidden rounded-[var(--radius-pill,9999px)] bg-muted-foreground/20 ring-1 ring-inset ring-muted-foreground/70 data-[orientation=vertical]:h-full data-[orientation=vertical]:w-1.5">
           <SliderPrimitive.Range
             className={cn(
               "absolute h-full bg-primary data-[orientation=vertical]:w-full dark:bg-accent",
@@ -55,7 +55,7 @@ export const Slider = forwardRef<ElementRef<typeof SliderPrimitive.Root>, Slider
             aria-label={Array.isArray(thumbLabels) ? thumbLabels[i] : thumbLabels}
             aria-valuetext={getValueText && value?.[i] != null ? getValueText(value[i] as number, i) : undefined}
             className={cn(
-              "block h-4 w-4 rounded-full border-2 border-primary bg-background shadow-sm transition-[box-shadow,scale] duration-150 ease-out dark:border-accent",
+              "block h-4 w-4 rounded-[var(--radius-pill,9999px)] border-2 border-primary bg-background shadow-sm transition-[box-shadow,scale] duration-150 ease-out dark:border-accent",
               "cursor-grab hover:scale-110 active:scale-110 active:cursor-grabbing group-active/slider:scale-110 motion-reduce:scale-none!",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
               "data-[disabled]:pointer-events-none",
