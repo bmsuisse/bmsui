@@ -190,6 +190,29 @@ export type {
   UseSpeechRecognitionOptions,
 } from "./patterns/ai/useSpeechRecognition";
 export { describeSpeechError, useSpeechRecognition } from "./patterns/ai/useSpeechRecognition";
+export type {
+  ChatMessageLabels,
+  ChatMessageProps,
+  ChatMessageStatus,
+  ChatRole,
+} from "./patterns/chat-message/ChatMessage";
+export { ChatMessage, defaultChatMessageLabels } from "./patterns/chat-message/ChatMessage";
+export type {
+  ChatConversationLabels,
+  ChatConversationProps,
+} from "./patterns/chat-conversation/ChatConversation";
+export { ChatConversation, defaultChatConversationLabels } from "./patterns/chat-conversation/ChatConversation";
+export type { PromptInputLabels, PromptInputProps } from "./patterns/prompt-input/PromptInput";
+export { PromptInput, defaultPromptInputLabels } from "./patterns/prompt-input/PromptInput";
+export type { PromptSuggestion, PromptSuggestionsProps } from "./patterns/prompt-suggestions/PromptSuggestions";
+export { PromptSuggestions } from "./patterns/prompt-suggestions/PromptSuggestions";
+export type {
+  ApprovalCardLabels,
+  ApprovalCardProps,
+  ApprovalChoice,
+  ApprovalStatus,
+} from "./patterns/approval-card/ApprovalCard";
+export { ApprovalCard, defaultApprovalCardLabels } from "./patterns/approval-card/ApprovalCard";
 export type { StepperProps, StepperStep } from "./patterns/stepper/Stepper";
 export { Stepper } from "./patterns/stepper/Stepper";
 

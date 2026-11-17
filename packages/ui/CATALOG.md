@@ -125,6 +125,11 @@ repo's `AGENTS.md`.
 | `AiButton` | "Do it with AI" button with in-flight state. |
 | `AiExplainButton` | Sparkle button that opens a popover with a lazily generated explanation. |
 | `VoiceInputButton`, `VoiceTranscript`, `useSpeechRecognition`, `describeSpeechError` | Dictation button; dictate-then-rewrite workflow; the hook underneath. |
+| `ChatMessage`, `defaultChatMessageLabels` | One chat turn: user bubble vs plain assistant text, avatar/name/time, sending/streaming/error status with retry, actions slot. Data in; you own streaming. |
+| `ChatConversation`, `defaultChatConversationLabels` | Scrolling `role="log"` message list: sticks to the bottom while content streams in, "Jump to latest" when scrolled up, `onReachTop` for history paging, empty slot. |
+| `PromptInput`, `defaultPromptInputLabels` | Chat composer: auto-growing field, Enter sends / Shift+Enter newline (IME-safe), Send becomes Stop while streaming, attachments/leading/actions slots. |
+| `PromptSuggestions` | One scrolling row of suggested-prompt / follow-up pills with edge fades; `onSelect(prompt)`. |
+| `ApprovalCard`, `defaultApprovalCardLabels` | Human-in-the-loop "allow this action?" card: details, Approve/Decline or pick-one choices, frozen outcome once decided. |
 
 ## Utilities
 
