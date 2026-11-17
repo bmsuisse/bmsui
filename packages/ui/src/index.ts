@@ -88,6 +88,25 @@ export {
 } from "./primitives/sheet";
 export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./primitives/tooltip";
 export { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./primitives/collapsible";
+export {
+  ContextMenu,
+  ContextMenuCheckboxItem,
+  ContextMenuContent,
+  ContextMenuGroup,
+  ContextMenuItem,
+  ContextMenuLabel,
+  ContextMenuPortal,
+  ContextMenuRadioGroup,
+  ContextMenuRadioItem,
+  ContextMenuSeparator,
+  ContextMenuShortcut,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
+  ContextMenuTrigger,
+} from "./primitives/context-menu";
+export type { LinkLabels, LinkProps } from "./primitives/link";
+export { defaultLinkLabels, Link, linkVariants } from "./primitives/link";
 export { HoverCard, HoverCardContent, HoverCardTrigger } from "./primitives/hover-card";
 export { RadioGroup, RadioGroupItem } from "./primitives/radio-group";
 export type { SliderProps } from "./primitives/slider";
@@ -190,6 +209,29 @@ export type {
   UseSpeechRecognitionOptions,
 } from "./patterns/ai/useSpeechRecognition";
 export { describeSpeechError, useSpeechRecognition } from "./patterns/ai/useSpeechRecognition";
+export type {
+  ChatMessageLabels,
+  ChatMessageProps,
+  ChatMessageStatus,
+  ChatRole,
+} from "./patterns/chat-message/ChatMessage";
+export { ChatMessage, defaultChatMessageLabels } from "./patterns/chat-message/ChatMessage";
+export type {
+  ChatConversationLabels,
+  ChatConversationProps,
+} from "./patterns/chat-conversation/ChatConversation";
+export { ChatConversation, defaultChatConversationLabels } from "./patterns/chat-conversation/ChatConversation";
+export type { PromptInputLabels, PromptInputProps } from "./patterns/prompt-input/PromptInput";
+export { PromptInput, defaultPromptInputLabels } from "./patterns/prompt-input/PromptInput";
+export type { PromptSuggestion, PromptSuggestionsProps } from "./patterns/prompt-suggestions/PromptSuggestions";
+export { PromptSuggestions } from "./patterns/prompt-suggestions/PromptSuggestions";
+export type {
+  ApprovalCardLabels,
+  ApprovalCardProps,
+  ApprovalChoice,
+  ApprovalStatus,
+} from "./patterns/approval-card/ApprovalCard";
+export { ApprovalCard, defaultApprovalCardLabels } from "./patterns/approval-card/ApprovalCard";
 export type { StepperProps, StepperStep } from "./patterns/stepper/Stepper";
 export { Stepper } from "./patterns/stepper/Stepper";
 
@@ -207,7 +249,20 @@ export { defaultToasterLabels, Toaster } from "./patterns/toast/Toaster";
 
 export type { DateInputError, DateInputLabels, DateInputProps } from "./patterns/date-input/DateInput";
 export { DateInput, defaultDateInputLabels } from "./patterns/date-input/DateInput";
-export { datePlaceholder, formatIsoDay, parseIsoDay, shiftIsoDay, toLocalIsoDay } from "./lib/dateField";
+export { datePlaceholder, formatIsoDay, parseIsoDay, shiftIsoDay, toLocalIsoDay, toLocalIsoDateTime } from "./lib/dateField";
+
+export type { TimeInputError, TimeInputLabels, TimeInputProps } from "./patterns/time-input/TimeInput";
+export { defaultTimeInputLabels, TimeInput } from "./patterns/time-input/TimeInput";
+export type { DateTimeInputLabels, DateTimeInputProps } from "./patterns/time-input/DateTimeInput";
+export { DateTimeInput, defaultDateTimeInputLabels } from "./patterns/time-input/DateTimeInput";
+export { formatTime, parseTime, shiftTime, timePlaceholder, toTime } from "./lib/timeField";
+
+export type { PhoneInputProps } from "./patterns/phone-input/PhoneInput";
+export { PhoneInput } from "./patterns/phone-input/PhoneInput";
+export { formatSwissPhone, normalizePhone } from "./lib/swissPhone";
+
+export type { RatingLabels, RatingProps } from "./patterns/rating/Rating";
+export { defaultRatingLabels, Rating } from "./patterns/rating/Rating";
 
 export type { MetadataItem, MetadataListLabels, MetadataListProps } from "./patterns/metadata-list/MetadataList";
 export { defaultMetadataListLabels, MetadataList } from "./patterns/metadata-list/MetadataList";
@@ -234,11 +289,57 @@ export type {
 } from "./patterns/avatar/Avatar";
 export { Avatar, AvatarGroup, avatarColorIndex, defaultAvatarGroupLabels, getInitials } from "./patterns/avatar/Avatar";
 
+export type {
+  TimelineGroupProps,
+  TimelineItemProps,
+  TimelineLabels,
+  TimelineProps,
+  TimelineSize,
+  TimelineStatus,
+} from "./patterns/timeline/Timeline";
+export { defaultTimelineLabels, Timeline, TimelineGroup, TimelineItem } from "./patterns/timeline/Timeline";
+
+export type { AccordionContentProps, AccordionProps, AccordionTriggerProps, AccordionVariant } from "./patterns/accordion/Accordion";
+export { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./patterns/accordion/Accordion";
+
 export type { CollapsibleSectionProps } from "./patterns/collapsible-section/CollapsibleSection";
 export { CollapsibleSection } from "./patterns/collapsible-section/CollapsibleSection";
 
 export type { StatusDotProps } from "./patterns/status-dot/StatusDot";
 export { StatusDot } from "./patterns/status-dot/StatusDot";
+
+export type { ChipClassOptions, ChipLabels, ChipProps, ChipSize, ChipTone } from "./patterns/chip/Chip";
+export { Chip, chipClass, defaultChipLabels } from "./patterns/chip/Chip";
+
+export type { BannerLabels, BannerProps, BannerTone } from "./patterns/banner/Banner";
+export { Banner, BannerAction, defaultBannerLabels } from "./patterns/banner/Banner";
+
+export type { ConfirmPopoverLabels, ConfirmPopoverProps } from "./patterns/confirm-popover/ConfirmPopover";
+export { ConfirmPopover, defaultConfirmPopoverLabels } from "./patterns/confirm-popover/ConfirmPopover";
+
+export type { CopyButtonLabels, CopyButtonProps } from "./patterns/copy-button/CopyButton";
+export { CopyButton, defaultCopyButtonLabels } from "./patterns/copy-button/CopyButton";
+
+export type { LiveIndicatorLabels, LiveIndicatorProps } from "./patterns/live-indicator/LiveIndicator";
+export { LiveIndicator, defaultLiveIndicatorLabels } from "./patterns/live-indicator/LiveIndicator";
+
+export type { StatStripItemProps, StatStripProps, StatStripTone } from "./patterns/stat-strip/StatStrip";
+export { StatStrip, StatStripItem } from "./patterns/stat-strip/StatStrip";
+
+export type { SkipLink, SkipLinksProps } from "./patterns/skip-links/SkipLinks";
+export { SkipLinks } from "./patterns/skip-links/SkipLinks";
+export type { CodeBlockLabels, CodeBlockProps } from "./patterns/code-block/CodeBlock";
+export { CodeBlock, defaultCodeBlockLabels } from "./patterns/code-block/CodeBlock";
+export type { JsonViewLabels, JsonViewProps } from "./patterns/json-view/JsonView";
+export { defaultJsonViewLabels, JsonView } from "./patterns/json-view/JsonView";
+export type { ToolCallCardProps, ToolCallGroupProps, ToolCallLabels, ToolCallStatus } from "./patterns/tool-call/ToolCall";
+export { defaultToolCallLabels, formatToolDuration, ToolCallCard, ToolCallGroup } from "./patterns/tool-call/ToolCall";
+export type { ReasoningLabels, ReasoningProps } from "./patterns/reasoning/Reasoning";
+export { defaultReasoningLabels, Reasoning } from "./patterns/reasoning/Reasoning";
+export type { CitationLabels, CitationProps, CitationSource, SourceListProps } from "./patterns/citation/Citation";
+export { Citation, defaultCitationLabels, getSourceDomain, SourceList } from "./patterns/citation/Citation";
+export type { TypingIndicatorProps } from "./patterns/typing-indicator/TypingIndicator";
+export { TypingIndicator } from "./patterns/typing-indicator/TypingIndicator";
 export type { BreadcrumbItem, BreadcrumbLinkRenderProps, BreadcrumbsLabels, BreadcrumbsProps } from "./patterns/breadcrumbs/Breadcrumbs";
 export { Breadcrumbs, defaultBreadcrumbsLabels } from "./patterns/breadcrumbs/Breadcrumbs";
 
@@ -347,6 +448,7 @@ export type { Hotkey, UseHotkeysOptions } from "./hooks/useHotkeys";
 export { formatHotkey, useHotkeys } from "./hooks/useHotkeys";
 export type { UseClipboardOptions, UseClipboardResult } from "./hooks/useClipboard";
 export { useClipboard } from "./hooks/useClipboard";
+export { useOnlineStatus } from "./hooks/useOnlineStatus";
 export type { AnnounceOptions, AnnouncePoliteness } from "./hooks/useAnnounce";
 export { announce, Announcer, useAnnounce } from "./hooks/useAnnounce";
 export { useMergedRefs } from "./hooks/useMergedRefs";
@@ -394,3 +496,22 @@ export { ResultCard, ResultList, Thumbnail } from "./patterns/result-card/Result
 
 export { TreeSelect } from "./patterns/tree-select/TreeSelect";
 export type { TreeSelectNode, TreeSelectProps } from "./patterns/tree-select/TreeSelect";
+export type {
+  TreeViewLabels,
+  TreeViewNode,
+  TreeViewNodeState,
+  TreeViewProps,
+} from "./patterns/tree-view/TreeView";
+export { TreeView, defaultTreeViewLabels } from "./patterns/tree-view/TreeView";
+export type {
+  BottomNavigationActionProps,
+  BottomNavigationItem,
+  BottomNavigationLabels,
+  BottomNavigationLinkRenderProps,
+  BottomNavigationProps,
+} from "./patterns/bottom-navigation/BottomNavigation";
+export {
+  BottomNavigation,
+  BottomNavigationAction,
+  defaultBottomNavigationLabels,
+} from "./patterns/bottom-navigation/BottomNavigation";

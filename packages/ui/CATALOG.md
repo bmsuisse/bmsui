@@ -16,6 +16,7 @@ repo's `AGENTS.md`.
 | `Button`, `buttonVariants` | Every button. Variants `default` `secondary` `outline` `ghost` `destructive` `link` `ai*`; sizes `xs` `sm` `default` `lg` `icon*`. |
 | `Input` | Single-line text input. For dates use `DateInput`; numbers `NumberInput`; search `SearchBar`; icons/units around it `InputGroup`. |
 | `Textarea` | Multi-line text. |
+| `Link`, `linkVariants`, `defaultLinkLabels` | Text link: `variant` default/subtle/inline, `asChild` for a router link, `external` (new tab, safe `rel`, icon, screen-reader hint). Instead of a hand-styled `<a>`; for a button-looking link use `Button asChild`. |
 | `Label` | Form label. Prefer `FormField`, which wires label + error + ids. |
 | `Checkbox`, `Switch` | Boolean inputs. |
 | `RadioGroup`, `RadioGroupItem` | Radix radio group + circle, for your own layout. With labels/descriptions use `RadioList`. |
@@ -29,6 +30,7 @@ repo's `AGENTS.md`.
 | `Tooltip`, `TooltipTrigger`, `TooltipContent`, `TooltipProvider` | Hover/focus hint text. |
 | `HoverCard`, `HoverCardTrigger`, `HoverCardContent` | Rich preview on hover (contact card, linked record). Mouse-only extra; never the only path to info. Click-to-open → `Popover`. |
 | `Collapsible`, `CollapsibleTrigger`, `CollapsibleContent` | Bare show/hide region. For a titled foldable section use `CollapsibleSection`. |
+| `ContextMenu`, `ContextMenuTrigger`, `ContextMenuContent`, `ContextMenuItem`, `ContextMenuCheckboxItem`, `ContextMenuRadioGroup`, `ContextMenuRadioItem`, `ContextMenuLabel`, `ContextMenuSeparator`, `ContextMenuShortcut`, `ContextMenuGroup`, `ContextMenuPortal`, `ContextMenuSub`, `ContextMenuSubTrigger`, `ContextMenuSubContent` | Right-click / long-press menu on rows and cards, same look as `DropdownMenu` (`danger` item too). Always also offer the actions through a visible "⋯" `DropdownMenu`. |
 | `DropdownMenu`, `DropdownMenuTrigger`, `DropdownMenuContent`, `DropdownMenuItem`, `DropdownMenuCheckboxItem`, `DropdownMenuRadioGroup`, `DropdownMenuRadioItem`, `DropdownMenuLabel`, `DropdownMenuSeparator`, `DropdownMenuShortcut`, `DropdownMenuGroup`, `DropdownMenuPortal`, `DropdownMenuSub`, `DropdownMenuSubTrigger`, `DropdownMenuSubContent` | Action menus ("⋯" menus, row actions). |
 | `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent` | Switching between views of one page. |
 | `Table`, `TableHeader`, `TableBody`, `TableFooter`, `TableRow`, `TableHead`, `TableCell`, `TableCaption` | Static HTML table. For sorting/filtering/paging data use `@bmsuisse/datagrid`. |
@@ -41,6 +43,7 @@ repo's `AGENTS.md`.
 | Export | Use for |
 | --- | --- |
 | `Modal` | Generic dialog: title, description, body, footer. |
+| `ConfirmPopover`, `defaultConfirmPopoverLabels` | In-page confirm next to a risky button (no modal): message, Keep/Confirm, focus on the safe action, async-aware. |
 | `FormModal` | Dialog wrapping a form; does **not** auto-close on submit (server validation). |
 | `ConfirmDialog` | "Are you sure?"; closes itself after a successful confirm. |
 | `QuestionDialog` | Question with several actions + Cancel ("Save changes before closing?"). |
@@ -53,7 +56,13 @@ repo's `AGENTS.md`.
 | --- | --- |
 | `FormField` | Label + control + error/description with ids wired. Wrap every form control. |
 | `DateInput`, `defaultDateInputLabels` | Day field in the app locale (dd.mm.yyyy), ISO value, `min`/`max`, `isDateDisabled`, calendar button (`picker="calendar"` for the app-styled lazy `Calendar`), native `<input type="date">` on touch devices. Instead of `<input type="date">`. |
-| `parseIsoDay`, `formatIsoDay`, `shiftIsoDay`, `datePlaceholder`, `toLocalIsoDay` | Date helpers. `toLocalIsoDay(new Date())` instead of `toISOString().slice(0, 10)` (UTC day bug). |
+| `TimeInput`, `defaultTimeInputLabels` | Time-of-day field in the app clock (`14:30`, `en-US` 12 h), `HH:mm` value, accepts `9`/`930`/`9.30`, `min`/`max`, ArrowUp/Down by `step` minutes, native `<input type="time">` on touch. Instead of `<input type="time">`. |
+| `DateTimeInput`, `defaultDateTimeInputLabels` | Date + time in one box with a calendar popover; value is a local ISO `yyyy-mm-ddTHH:mm`, `min`/`max` datetimes. Instead of `<input type="datetime-local">`. |
+| `parseTime`, `formatTime`, `toTime`, `shiftTime`, `timePlaceholder` | Time helpers behind `TimeInput`, for use outside the field. |
+| `PhoneInput` | `tel` field that reformats a Swiss number (`079…`, `0041…`, `+41…`) to `+41 79 123 45 67` on blur; other numbers stay as typed. Wrap in `FormField`. |
+| `formatSwissPhone`, `normalizePhone` | The phone normalisation behind `PhoneInput` (Swiss-only vs. any number), for display and import code. |
+| `Rating`, `defaultRatingLabels` | Star rating: radiogroup with arrow keys and hover preview, `allowHalf`, `readOnly` average display, `max`, `size`. Not a score badge (`ScoreBadge`) or a progress bar. |
+| `parseIsoDay`, `formatIsoDay`, `shiftIsoDay`, `datePlaceholder`, `toLocalIsoDay`, `toLocalIsoDateTime` | Date helpers. `toLocalIsoDay(new Date())` instead of `toISOString().slice(0, 10)` (UTC day bug); `toLocalIsoDateTime` likewise for `DateTimeInput` values. |
 | `DateRangePicker`, `defaultDateRangePickerLabels` | "from – to" day fields in one box + range calendar popover; native inputs on touch. Period filters, validity ranges. |
 | `Calendar`, `defaultCalendarLabels` | Always-visible month grid, `mode` single or `range`, min/max, keyboard nav, locale week start. ISO days. |
 | `NumberInput`, `defaultNumberInputLabels` | Locale number field (`1’234.50`, reads `1234,5`), commit on blur/Enter, min/max clamp, ArrowUp/Down, optional `stepper`. Instead of `type="number"`. |
@@ -64,6 +73,7 @@ repo's `AGENTS.md`.
 | `RangeSlider`, `defaultRangeSliderLabels` | Two-thumb numeric range with typed min/max inputs (price/area filters). |
 | `FileInput`, `defaultFileInputLabels`, `formatFileSize`, `matchesAccept` | Drop zone + click to browse, `accept`/`maxSize`/`maxFiles` errors, removable file list. Controlled `files`. |
 | `TreeSelect` | Searchable single selection from an expandable hierarchy; keyboard navigation, parent selection, and display of saved values outside the available choices. |
+| `TreeView`, `defaultTreeViewLabels` | Always-visible tree (file/category/org browser): single or multiple selection or tri-state `checkable`, lazy `onLoadChildren` with loading + retry row, WAI-ARIA keyboard + typeahead, `renderNode`. Not a dropdown: to pick one value in a form use `TreeSelect`; for a tree with columns use `TreeDataGrid`. |
 | `Combobox` | Searchable dropdown, single or `multiple`; `searchable={false}` drops the search box for a short list. |
 | `TagCombobox` | Multi-select with chips inline in the field. |
 | `ButtonGroup` | Connected single-select segment buttons. |
@@ -85,6 +95,9 @@ repo's `AGENTS.md`.
 | `AlertBox` | Inline error/warning/info/success banner. |
 | `StatusBadge` | Status string → colored badge. |
 | `StatusDot` | Quiet status: colored dot + label (table cells, presence). Same tones/vocabulary as `StatusBadge`. |
+| `Chip`, `chipClass`, `defaultChipLabels` | Pill for a value the user picked: static, `selected`, toggle (`onClick`, `aria-pressed`) or removable (`onRemove`, x/Backspace). Not `Badge`/`StatusBadge` (static labels/statuses). |
+| `Banner`, `BannerAction`, `defaultBannerLabels` | Slim full-width app-shell bar (offline, update available, impersonating, test env, session expired) with tone, actions, dismiss; live region stays mounted. Not `AlertBox` (inline in content). |
+| `LiveIndicator`, `defaultLiveIndicatorLabels` | Pulsing dot + "Updated 14:02:11" for a polled page; fetching/paused states. |
 | `ProgressBar`, `CircularProgress` | Determinate or indeterminate progress (`role=progressbar`) with label, value, tones. Ring for tight spots. |
 
 ## Data display
@@ -97,8 +110,17 @@ repo's `AGENTS.md`.
 | `formatRelativeTime` | Relative time string outside a component (de-CH default via `Intl.RelativeTimeFormat`). |
 | `Avatar`, `getInitials`, `avatarColorIndex` | Person/company picture with initials fallback in a stable color, optional status dot. |
 | `AvatarGroup`, `defaultAvatarGroupLabels` | Overlapping avatars with "+N" overflow whose tooltip lists the rest. |
+| `StatStrip`, `StatStripItem` | One bordered row of label-over-value cells for dense admin metrics (flash on change, optional link/button cell). Lighter than `KpiCard`. |
+| `Timeline`, `TimelineItem`, `TimelineGroup`, `defaultTimelineLabels` | Vertical rail of events or process steps (`<ol>`): marker per `status` (done/active/pending/error) or `tone`, title, `time` (via `Timestamp`), description, foldable detail, trailing `pending` loader, `TimelineGroup` date headers. Activity history, audit trail, running steps; not a wizard header (`Stepper`). |
+| `Accordion`, `AccordionItem`, `AccordionTrigger`, `AccordionContent` | Several titled panels where one (`type="single"`) or many (`"multiple"`) are open: FAQ, settings groups. Several items under arrow-key navigation; for one standalone foldable section use `CollapsibleSection`. |
 | `CollapsibleSection` | Foldable titled section with chevron, count pill, actions, smooth height. |
 | `Kbd` | A single keycap. |
+| `ToolCallCard`, `ToolCallGroup`, `defaultToolCallLabels`, `formatToolDuration` | One agent tool call (name, status icon, summary, duration, foldable input/output/error; open while running or failed, folds when done) and a "4 steps" fold for a run of them. Data in, no chat runtime. |
+| `Reasoning`, `defaultReasoningLabels` | Collapsible "thinking" block of an assistant message: shimmering header and live-following text while `streaming`, "Thought for 4 s" once done. |
+| `Citation`, `SourceList`, `getSourceDomain`, `defaultCitationLabels` | Numbered `[n]` chip inside generated text with title/domain tooltip, opens the source in a new tab (bare `[n]` when unknown); `SourceList` is the numbered list below the message. |
+| `CodeBlock`, `defaultCodeBlockLabels` | Code/log snippet: language title, copy button, optional line numbers, wrap or scroll in `maxHeight`, `highlight` slot to inject shiki/prism. |
+| `JsonView`, `defaultJsonViewLabels` | Collapsible pretty-printed JSON for API/tool payloads: key count, size, copy, scrolling body. Same frame as `CodeBlock`. |
+| `TypingIndicator` | Three bouncing dots with a screen-reader label for "assistant is typing". |
 | `KeyCombo`, `formatKey`, `defaultKeyComboLabels` | Shortcut as keycaps per platform: `Mod+K` → "⌘ K" / "Ctrl K"; sequences ("g o"). |
 | `ShortcutSheet`, `defaultShortcutSheetLabels` | The "?" dialog listing all shortcuts in groups. |
 
@@ -107,6 +129,7 @@ repo's `AGENTS.md`.
 | Export | Use for |
 | --- | --- |
 | `Sidebar`, `SidebarNav`, `NavGroup`, `NavItem`, `useSidebarCollapsed` | App left navigation, resizable and rail-collapsible. |
+| `BottomNavigation`, `BottomNavigationAction`, `defaultBottomNavigationLabels` | Phone tab bar: 2–5 icon + label destinations with badges, optional centre action, safe-area padding, `aria-current="page"`, `renderLink` for routers, `hideFrom="md"`. The phone counterpart of `Sidebar`. |
 | `PageHeader`, `defaultPageHeaderLabels` | Top of every page: breadcrumbs, back arrow, title + badge, description, actions (wrap on phones), tabs row. Same props as OneSales's `ui/PageHeader`. |
 | `Breadcrumbs`, `defaultBreadcrumbsLabels` | Where-am-I trail (`nav` > `ol`, current page last); collapses the middle into a "…" menu past `maxItems`. `renderLink` for router links. |
 | `TablePage` | Whole table/list page: `PageHeader` + `TableShell` filling the remaining height. Start here for any list page. |
@@ -115,6 +138,8 @@ repo's `AGENTS.md`.
 | `CommandPalette`, `CommandPaletteTrigger`, `useCommandPaletteHotkey`, `useRecentCommands`, `formatCommandPaletteShortcut`, `defaultCommandPaletteLabels`, `scoreCommand` | ⌘K / Ctrl+K "do anything" dialog: grouped commands with icons and shortcut hints, fuzzy-ish filter, recent commands, keyboard navigation. Trigger = top-bar search pill. |
 | `CommandRegistryProvider`, `useRegisterCommands`, `useRegisteredCommands` | Let pages add their own commands to the app-wide `CommandPalette` while mounted. |
 | `SplitPane`, `SplitPanePanel`, `defaultSplitPaneLabels` | Two or more panes with draggable, keyboard-operable separators (master/detail, editor/preview); min/max in % or px; `storageKey` remembers the layout. Not for the app nav (use `Sidebar resizable`). |
+| `SkipLinks` | Hidden "skip to main content / search" links, visible on first Tab; mount first in the app root. |
+| `CopyButton`, `defaultCopyButtonLabels` | Icon (or text) button that copies a value, flips to a check and announces the result. |
 | `Toolbar`, `ToolbarButton`, `ToolbarSeparator`, `defaultToolbarLabels` | Row of related controls as one Tab stop (roving tabindex, arrow keys); toggle buttons; `overflow` folds `ToolbarButton`s that don't fit into a "…" menu (other children stay visible). |
 | `AnimatedBrand`, `BRAND_ANIMATIONS` | One* product wordmark with optional intro animation. |
 
@@ -125,6 +150,11 @@ repo's `AGENTS.md`.
 | `AiButton` | "Do it with AI" button with in-flight state. |
 | `AiExplainButton` | Sparkle button that opens a popover with a lazily generated explanation. |
 | `VoiceInputButton`, `VoiceTranscript`, `useSpeechRecognition`, `describeSpeechError` | Dictation button; dictate-then-rewrite workflow; the hook underneath. |
+| `ChatMessage`, `defaultChatMessageLabels` | One chat turn: user bubble vs plain assistant text, avatar/name/time, sending/streaming/error status with retry, actions slot. Data in; you own streaming. |
+| `ChatConversation`, `defaultChatConversationLabels` | Scrolling `role="log"` message list: sticks to the bottom while content streams in, "Jump to latest" when scrolled up, `onReachTop` for history paging, empty slot. |
+| `PromptInput`, `defaultPromptInputLabels` | Chat composer: auto-growing field, Enter sends / Shift+Enter newline (IME-safe), Send becomes Stop while streaming, attachments/leading/actions slots. |
+| `PromptSuggestions` | One scrolling row of suggested-prompt / follow-up pills with edge fades; `onSelect(prompt)`. |
+| `ApprovalCard`, `defaultApprovalCardLabels` | Human-in-the-loop "allow this action?" card: details, Approve/Decline or pick-one choices, frozen outcome once decided. |
 
 ## Utilities
 
@@ -141,6 +171,7 @@ repo's `AGENTS.md`.
 | --- | --- |
 | `useHotkeys` | Keyboard shortcuts: `useHotkeys([{ keys: "mod+k", handler }])`. `mod` = ⌘/Ctrl, chords (`"g i"`), skips inputs unless `allowInInputs`, `enabled`, `preventDefault`. |
 | `formatHotkey` | Shortcut label for the platform: `formatHotkey("mod+k")` → `⌘K` / `Ctrl+K`. Use in menus, tooltips, `DropdownMenuShortcut`. |
+| `useOnlineStatus` | `false` while the browser is offline (`online`/`offline` events), SSR-safe; drives an offline `Banner`. |
 | `useClipboard` | Copy button: `{ copy, copied, error, reset }`; `copied` resets after `timeout`; falls back without `navigator.clipboard`. |
 | `useAnnounce` | Screen-reader announcement: `announce("3 results", { politeness })` through a shared hidden live region. |
 | `announce` | Same as `useAnnounce()`'s function, callable outside React (stores, query callbacks). |
