@@ -115,7 +115,7 @@ export function Stepper({
                   >
                     <div
                       className={cn(
-                        "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold transition-colors",
+                        "flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--radius-pill,9999px)] text-[11px] font-bold transition-colors",
                         done
                           ? "bg-primary/15 text-primary dark:text-ring"
                           : active

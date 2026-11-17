@@ -69,7 +69,7 @@ export const ErrorState = ({
         {info.details ? (
           <details className="mt-1 w-full max-w-full text-left text-xs">
             <summary className={cn("cursor-pointer select-none underline underline-offset-2", !compact && "text-center")}>{l.showDetails}</summary>
-            <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap break-words rounded bg-muted p-2 text-muted-foreground">
+            <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap break-words rounded-[min(4px,var(--radius,0.625rem))] bg-muted p-2 text-muted-foreground">
               {info.details}
             </pre>
           </details>

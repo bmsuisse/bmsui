@@ -281,7 +281,7 @@ export function NumberHistogramFilter<TRow>({
         {histBars.map((bar, i) => (
           <div
             key={i}
-            className={cn("flex-1 rounded-t-[2px]", bar.active ? "bg-primary/70 dark:bg-ring/70" : "bg-muted-foreground/20")}
+            className={cn("flex-1 rounded-t-[min(2px,var(--radius,0.625rem))]", bar.active ? "bg-primary/70 dark:bg-ring/70" : "bg-muted-foreground/20")}
             style={{ height: bar.heightPx }}
           />
         ))}
@@ -310,9 +310,9 @@ export function NumberHistogramFilter<TRow>({
           className="peer/max absolute inset-0 h-full w-full cursor-pointer opacity-0"
           style={{ zIndex: minOnTop ? 3 : 5 }}
         />
-        <div className="pointer-events-none absolute top-1/2 h-1.5 w-full -translate-y-1/2 rounded-full bg-muted">
+        <div className="pointer-events-none absolute top-1/2 h-1.5 w-full -translate-y-1/2 rounded-[var(--radius-pill,9999px)] bg-muted">
           <div
-            className="absolute h-full rounded-full bg-primary dark:bg-ring"
+            className="absolute h-full rounded-[var(--radius-pill,9999px)] bg-primary dark:bg-ring"
             style={{ left: `${logPct(activeMin)}%`, right: `${100 - logPct(activeMax)}%` }}
           />
         </div>
@@ -320,7 +320,7 @@ export function NumberHistogramFilter<TRow>({
           <div
             key={i}
             className={cn(
-              "pointer-events-none absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-primary dark:border-ring bg-background shadow",
+              "pointer-events-none absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-[var(--radius-pill,9999px)] border-2 border-primary dark:border-ring bg-background shadow",
               i === 0
                 ? "peer-focus-visible/min:ring-2 peer-focus-visible/min:ring-ring peer-focus-visible/min:ring-offset-1 peer-focus-visible/min:ring-offset-background"
                 : "peer-focus-visible/max:ring-2 peer-focus-visible/max:ring-ring peer-focus-visible/max:ring-offset-1 peer-focus-visible/max:ring-offset-background",

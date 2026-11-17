@@ -56,7 +56,7 @@ export function SearchBar({
     <div className={className}>
       <div
         className={cn(
-          "relative flex h-11 w-full items-center gap-1 rounded-full border bg-background pr-2 has-[input:focus-visible]:ring-1 has-[input:focus-visible]:ring-ring",
+          "relative flex h-11 w-full items-center gap-1 rounded-[var(--radius-pill,9999px)] border bg-background pr-2 has-[input:focus-visible]:ring-1 has-[input:focus-visible]:ring-ring",
           hasError ? "border-destructive" : "border-input",
         )}
       >
@@ -76,7 +76,7 @@ export function SearchBar({
           value={value}
           onChange={(event) => onChange(event.target.value)}
           className={cn(
-            "h-full min-w-0 flex-1 rounded-full bg-transparent pr-2 pl-11 text-[15px] text-foreground placeholder:text-muted-foreground focus-visible:outline-none",
+            "h-full min-w-0 flex-1 rounded-[var(--radius-pill,9999px)] bg-transparent pr-2 pl-11 text-[15px] text-foreground placeholder:text-muted-foreground focus-visible:outline-none",
             // Chromium/Safari render their own native clear (×) control on
             // type="search" inputs -- left alone, it stacks on top of our own
             // custom clear button below instead of replacing it.
@@ -89,7 +89,7 @@ export function SearchBar({
             type="button"
             onClick={() => (onClear ? onClear() : onChange(""))}
             aria-label={clearLabel}
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--radius-pill,9999px)] text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <XMarkIcon className="h-4 w-4" aria-hidden="true" />
           </button>

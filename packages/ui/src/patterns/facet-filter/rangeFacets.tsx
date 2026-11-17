@@ -87,7 +87,7 @@ export function RangeFacetBody({ config, selected, onSelectedChange, animated, l
                 // biome-ignore lint/suspicious/noArrayIndexKey: buckets are positional
                 key={index}
                 className={cn(
-                  "flex-1 rounded-t-[1px] transition-colors duration-150 motion-reduce:transition-none",
+                  "flex-1 rounded-t-[min(1px,var(--radius,0.625rem))] transition-colors duration-150 motion-reduce:transition-none",
                   inside ? "bg-foreground/55" : "bg-foreground/15",
                 )}
                 style={{ height: `${Math.max(count > 0 ? 6 : 0, (count / peak) * 100)}%` }}

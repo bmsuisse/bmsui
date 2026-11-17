@@ -315,7 +315,7 @@ export function SplitPane({
                 <span
                   aria-hidden="true"
                   className={cn(
-                    "pointer-events-none absolute rounded-full border border-muted-foreground/70 bg-background shadow-xs transition-[border-color,background-color,height,width] duration-150 ease-out motion-reduce:transition-colors group-hover:border-ring/70 group-focus-visible:border-ring group-focus-visible:bg-ring group-data-[active]:border-ring group-data-[active]:bg-ring dark:bg-muted dark:group-focus-visible:bg-ring dark:group-data-[active]:bg-ring",
+                    "pointer-events-none absolute rounded-[var(--radius-pill,9999px)] border border-muted-foreground/70 bg-background shadow-xs transition-[border-color,background-color,height,width] duration-150 ease-out motion-reduce:transition-colors group-hover:border-ring/70 group-focus-visible:border-ring group-focus-visible:bg-ring group-data-[active]:border-ring group-data-[active]:bg-ring dark:bg-muted dark:group-focus-visible:bg-ring dark:group-data-[active]:bg-ring",
                     horizontal
                       ? "h-6 w-1.5 group-hover:h-8 group-data-[active]:h-8"
                       : "h-1.5 w-6 group-hover:w-8 group-data-[active]:w-8",

@@ -108,6 +108,34 @@ Recommended values for the OneSales brands (contrast, now → after):
 | procasa dark `--nav-primary` | `oklch(0.47 0.07 47)` | `oklch(0.75 0.07 47)` | 2.68 → 8.29 |
 | procasa light `--muted-foreground` | `oklch(0.55 0.015 70)` | `oklch(0.46 0.015 70)` | 4.57/4.10/3.70 → 6.66/5.98/5.40 |
 
+### Corner radius (rounded vs square)
+
+Corners come from one token, `--radius`. Register the scale as **multiples** of it (OneSales' scale) so
+every step reaches 0, and add `--radius-pill` for pill-shaped controls:
+
+```css
+@theme inline {
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.6);
+}
+:root {
+  --radius: 0.625rem;      /* rounded */
+  --radius-pill: 9999px;   /* Badge, SearchBar, chips, tracks, Switch, Slider */
+}
+/* A square theme (or one brand): zero both tokens. */
+html[data-corners="square"] { --radius: 0px; --radius-pill: 0px; }
+```
+
+At `0.625rem` the multiples are 6 / 8 / 10 / 14 / 16px, the same values as the older `radius ± Npx`
+formulas, so switching changes nothing visually. `--radius-pill` is optional: components fall back to
+fully round when it is undefined. True circles (`Avatar`, `RadioGroup`, status dots) stay round in a
+square theme on purpose. Small fixed corners (`Kbd` keycaps, text link buttons, `Checkbox`) use
+`min(4px | 3px, var(--radius))`, so they square off too but never exceed their fixed size. Storybook has
+a **Corners** toolbar control (Rounded / Square) that sets `data-corners` on `<html>`.
+
 ### Chart tokens
 
 `KpiCard`'s `donut` variant (and any future multi-series chart in the

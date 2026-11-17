@@ -331,7 +331,7 @@ export function FacetGroup({
           aria-expanded={expanded}
           aria-controls={listId}
           onClick={() => setExpanded((value) => !value)}
-          className="rounded px-1.5 py-0.5 font-medium text-foreground/80 text-xs underline-offset-2 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="rounded-[min(4px,var(--radius,0.625rem))] px-1.5 py-0.5 font-medium text-foreground/80 text-xs underline-offset-2 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           {expanded ? labels.showLess : labels.showMore(hidden)}
         </button>
@@ -365,7 +365,7 @@ export function FacetGroup({
             onClick={() => setFolded((value) => !value)}
             className={cn(
               headingClass,
-              "flex min-w-0 flex-1 items-center gap-1 rounded text-left hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              "flex min-w-0 flex-1 items-center gap-1 rounded-[min(4px,var(--radius,0.625rem))] text-left hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
             )}
           >
             <ChevronDownIcon
@@ -375,7 +375,7 @@ export function FacetGroup({
             <span className="truncate">{facet.label}</span>
             {folded && selected.length > 0 && (
               <>
-                <span aria-hidden="true" className="rounded-full bg-foreground px-1.5 text-[10px] text-background tabular-nums">
+                <span aria-hidden="true" className="rounded-[var(--radius-pill,9999px)] bg-foreground px-1.5 text-[10px] text-background tabular-nums">
                   {selected.length}
                 </span>
                 <span className="sr-only">{labels.selectedCount(selected.length)}</span>
@@ -392,7 +392,7 @@ export function FacetGroup({
             type="button"
             aria-label={labels.clearFacet(facet.label)}
             onClick={() => onSelectedChange([])}
-            className="shrink-0 rounded px-1 font-medium text-[11px] text-foreground/70 underline underline-offset-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="shrink-0 rounded-[min(4px,var(--radius,0.625rem))] px-1 font-medium text-[11px] text-foreground/70 underline underline-offset-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {labels.clear}
           </button>

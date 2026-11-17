@@ -284,7 +284,7 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
         >
           <span
             className={cn(
-              "flex shrink-0 items-center justify-center rounded-full transition-[color,background-color,translate] duration-150 ease-out",
+              "flex shrink-0 items-center justify-center rounded-[var(--radius-pill,9999px)] transition-[color,background-color,translate] duration-150 ease-out",
               animated && !disabled && "group-hover:-translate-y-0.5 motion-reduce:translate-none!",
               animated && dragOver && "-translate-y-0.5 motion-reduce:translate-none!",
               sm ? "" : "h-10 w-10 bg-muted-foreground/10",

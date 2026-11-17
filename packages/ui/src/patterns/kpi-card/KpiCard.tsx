@@ -252,7 +252,7 @@ export const KpiCard = memo(function KpiCard({
             {badge && (
               <span
                 className={cn(
-                  "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold tabular-nums ring-1",
+                  "inline-flex items-center gap-1 rounded-[var(--radius-pill,9999px)] px-2.5 py-0.5 text-[11px] font-bold tabular-nums ring-1",
                   badge.positive ? "bg-black/10 text-white ring-white/40" : "bg-black/25 text-white ring-white/15",
                 )}
               >
@@ -269,8 +269,8 @@ export const KpiCard = memo(function KpiCard({
 
         {progress != null && !loading && (
           <div className="relative flex items-center gap-1.5">
-            <div className="h-1 flex-1 overflow-hidden rounded-full bg-white/20">
-              <div className="h-1 rounded-full bg-white/85" style={{ width: `${Math.min(100, Math.max(0, progress))}%` }} />
+            <div className="h-1 flex-1 overflow-hidden rounded-[var(--radius-pill,9999px)] bg-white/20">
+              <div className="h-1 rounded-[var(--radius-pill,9999px)] bg-white/85" style={{ width: `${Math.min(100, Math.max(0, progress))}%` }} />
             </div>
             {progressLabel && <span className="shrink-0 text-[11px] font-semibold text-white tabular-nums">{progressLabel}</span>}
           </div>

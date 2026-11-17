@@ -112,14 +112,14 @@ export const ProgressBar = ({
         aria-valuetext={valueText}
         aria-busy={indeterminate || undefined}
         data-state={indeterminate ? "indeterminate" : percent >= 100 ? "complete" : "loading"}
-        className={cn("relative w-full overflow-hidden rounded-full bg-foreground/10", HEIGHT[size])}
+        className={cn("relative w-full overflow-hidden rounded-[var(--radius-pill,9999px)] bg-foreground/10", HEIGHT[size])}
       >
         {indeterminate ? (
-          <div ref={slider} className={cn("h-full w-2/5 rounded-full motion-reduce:opacity-60", FILL[tone])} />
+          <div ref={slider} className={cn("h-full w-2/5 rounded-[var(--radius-pill,9999px)] motion-reduce:opacity-60", FILL[tone])} />
         ) : (
           <div
             className={cn(
-              "h-full rounded-full transition-[width,background-color] duration-300 ease-out motion-reduce:transition-none",
+              "h-full rounded-[var(--radius-pill,9999px)] transition-[width,background-color] duration-300 ease-out motion-reduce:transition-none",
               FILL[tone],
             )}
             style={{ width: `${percent}%` }}

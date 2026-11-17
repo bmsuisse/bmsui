@@ -84,7 +84,7 @@ export const CollapsibleSection = ({
               {count != null ? (
                 <span
                   data-testid={`${testId}-count`}
-                  className="inline-flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full bg-foreground/[0.07] px-1.5 text-[11px] font-medium leading-none tabular-nums text-muted-foreground dark:bg-foreground/10"
+                  className="inline-flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-[var(--radius-pill,9999px)] bg-foreground/[0.07] px-1.5 text-[11px] font-medium leading-none tabular-nums text-muted-foreground dark:bg-foreground/10"
                 >
                   {count}
                 </span>

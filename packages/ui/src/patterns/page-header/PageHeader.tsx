@@ -119,7 +119,7 @@ export function PageHeader({
                   <span
                     data-testid="page-header-badge"
                     className={cn(
-                      "inline-flex h-5 shrink-0 items-center rounded-full border px-1.5 text-[10px] font-semibold uppercase leading-none tracking-wider",
+                      "inline-flex h-5 shrink-0 items-center rounded-[var(--radius-pill,9999px)] border px-1.5 text-[10px] font-semibold uppercase leading-none tracking-wider",
                       badgeTone[badge],
                     )}
                   >

@@ -833,6 +833,17 @@ positive badge `bg-black/10 ring-white/40`, mini `subTone="danger"` red-700/red-
 rules and recommended OneSales values: `docs-site/docs/ui/getting-started.md`; Storybook brands carry
 comment-only notes in `packages/ui/.storybook/brands.css`.
 
+### Corner radius (ui 0.27.5 / datagrid 0.45.6)
+
+Corners follow `--radius` (scale as multiples: sm 0.6, md 0.8, lg 1, xl 1.4, 2xl 1.6, identical to the old
+`radius ± Npx` values at 0.625rem) and pill-shaped controls (Badge, SearchBar, chips, progress/slider
+tracks, Switch, ScrollArea thumb) use `rounded-[var(--radius-pill,9999px)]`; the fallback keeps them fully
+round for apps that do not define it. Bare `rounded` (4px) and `rounded-[3px]` became
+`rounded-[min(4px|3px,var(--radius,0.625rem))]`. True circles (Avatar, Radio, status dots, skeleton
+avatars) keep `rounded-full`. New pill-shaped control: use the pill token; new circle: `rounded-full`;
+anything else: `rounded-sm|md|lg|xl|2xl`, never a fixed `rounded` / `rounded-[Npx]`. Storybook's Corners
+toolbar (`data-corners="square"`, `.storybook/storybook.css`) zeroes `--radius` and `--radius-pill`.
+
 ### Contrast round 9 (ui 0.26.3 / datagrid 0.45.3)
 
 Dark checked/indeterminate Checkbox fills use `bg-accent`/`text-accent-foreground` (both packages);
