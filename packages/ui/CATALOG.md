@@ -66,6 +66,7 @@ repo's `AGENTS.md`.
 | `RangeSlider`, `defaultRangeSliderLabels` | Two-thumb numeric range with typed min/max inputs (price/area filters). |
 | `FileInput`, `defaultFileInputLabels`, `formatFileSize`, `matchesAccept` | Drop zone + click to browse, `accept`/`maxSize`/`maxFiles` errors, removable file list. Controlled `files`. |
 | `TreeSelect` | Searchable single selection from an expandable hierarchy; keyboard navigation, parent selection, and display of saved values outside the available choices. |
+| `TreeView`, `defaultTreeViewLabels` | Always-visible tree (file/category/org browser): single or multiple selection or tri-state `checkable`, lazy `onLoadChildren` with loading + retry row, WAI-ARIA keyboard + typeahead, `renderNode`. Not a dropdown: to pick one value in a form use `TreeSelect`; for a tree with columns use `TreeDataGrid`. |
 | `Combobox` | Searchable dropdown, single or `multiple`; `searchable={false}` drops the search box for a short list. |
 | `TagCombobox` | Multi-select with chips inline in the field. |
 | `ButtonGroup` | Connected single-select segment buttons. |
@@ -121,6 +122,7 @@ repo's `AGENTS.md`.
 | Export | Use for |
 | --- | --- |
 | `Sidebar`, `SidebarNav`, `NavGroup`, `NavItem`, `useSidebarCollapsed` | App left navigation, resizable and rail-collapsible. |
+| `BottomNavigation`, `BottomNavigationAction`, `defaultBottomNavigationLabels` | Phone tab bar: 2–5 icon + label destinations with badges, optional centre action, safe-area padding, `aria-current="page"`, `renderLink` for routers, `hideFrom="md"`. The phone counterpart of `Sidebar`. |
 | `PageHeader`, `defaultPageHeaderLabels` | Top of every page: breadcrumbs, back arrow, title + badge, description, actions (wrap on phones), tabs row. Same props as OneSales's `ui/PageHeader`. |
 | `Breadcrumbs`, `defaultBreadcrumbsLabels` | Where-am-I trail (`nav` > `ol`, current page last); collapses the middle into a "…" menu past `maxItems`. `renderLink` for router links. |
 | `TablePage` | Whole table/list page: `PageHeader` + `TableShell` filling the remaining height. Start here for any list page. |
