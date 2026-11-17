@@ -59,7 +59,7 @@ export interface BottomNavigationProps extends Omit<HTMLAttributes<HTMLElement>,
   onValueChange?: (id: string) => void;
   /** Centre slot between the items, typically a `BottomNavigationAction`. */
   action?: ReactNode;
-  /** `fixed` (default) pins to the viewport bottom: reserve space for it (72px + safe area). */
+  /** `fixed` (default) pins to the viewport bottom: reserve space for it (at least 72px + safe area; taller with large text). */
   position?: keyof typeof POSITION;
   /** Hide from this breakpoint up, for a nav that is phone-only. Default: always shown. */
   hideFrom?: keyof typeof HIDE_FROM | false;
@@ -229,7 +229,7 @@ export const BottomNavigation = forwardRef<HTMLElement, BottomNavigationProps>(f
       )}
       {...props}
     >
-      <ul className="m-0 flex h-[72px] list-none items-stretch p-0">
+      <ul className="m-0 flex min-h-[72px] list-none items-stretch p-0">
         {items.slice(0, half).map(renderItem)}
         {action && <li className="flex shrink-0 items-center justify-center px-2">{action}</li>}
         {items.slice(half).map(renderItem)}
