@@ -88,6 +88,8 @@ export {
 } from "./primitives/sheet";
 export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./primitives/tooltip";
 export { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./primitives/collapsible";
+export type { LinkLabels, LinkProps } from "./primitives/link";
+export { defaultLinkLabels, Link, linkVariants } from "./primitives/link";
 export { HoverCard, HoverCardContent, HoverCardTrigger } from "./primitives/hover-card";
 export { RadioGroup, RadioGroupItem } from "./primitives/radio-group";
 export type { SliderProps } from "./primitives/slider";
@@ -207,7 +209,20 @@ export { defaultToasterLabels, Toaster } from "./patterns/toast/Toaster";
 
 export type { DateInputError, DateInputLabels, DateInputProps } from "./patterns/date-input/DateInput";
 export { DateInput, defaultDateInputLabels } from "./patterns/date-input/DateInput";
-export { datePlaceholder, formatIsoDay, parseIsoDay, shiftIsoDay, toLocalIsoDay } from "./lib/dateField";
+export { datePlaceholder, formatIsoDay, parseIsoDay, shiftIsoDay, toLocalIsoDay, toLocalIsoDateTime } from "./lib/dateField";
+
+export type { TimeInputError, TimeInputLabels, TimeInputProps } from "./patterns/time-input/TimeInput";
+export { defaultTimeInputLabels, TimeInput } from "./patterns/time-input/TimeInput";
+export type { DateTimeInputLabels, DateTimeInputProps } from "./patterns/time-input/DateTimeInput";
+export { DateTimeInput, defaultDateTimeInputLabels } from "./patterns/time-input/DateTimeInput";
+export { formatTime, parseTime, shiftTime, timePlaceholder, toTime } from "./lib/timeField";
+
+export type { PhoneInputProps } from "./patterns/phone-input/PhoneInput";
+export { PhoneInput } from "./patterns/phone-input/PhoneInput";
+export { formatSwissPhone, normalizePhone } from "./lib/swissPhone";
+
+export type { RatingLabels, RatingProps } from "./patterns/rating/Rating";
+export { defaultRatingLabels, Rating } from "./patterns/rating/Rating";
 
 export type { MetadataItem, MetadataListLabels, MetadataListProps } from "./patterns/metadata-list/MetadataList";
 export { defaultMetadataListLabels, MetadataList } from "./patterns/metadata-list/MetadataList";
