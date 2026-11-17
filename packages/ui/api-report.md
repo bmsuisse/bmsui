@@ -7,19 +7,28 @@ Every public export with its kind and signature. Interfaces and object types
 list their own members one per line (inherited members come from the `extends`
 clause), so the diff of this file shows exactly what changed in the public API.
 
-## Components (175)
+## Components (227)
 
 ```text
+const Accordion: react.ForwardRefExoticComponent<AccordionProps & react.RefAttributes<HTMLDivElement>>
+const AccordionContent: react.ForwardRefExoticComponent<Omit<AccordionPrimitive.AccordionContentProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
+const AccordionItem: react.ForwardRefExoticComponent<Omit<AccordionPrimitive.AccordionItemProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
+const AccordionTrigger: react.ForwardRefExoticComponent<AccordionTriggerProps & react.RefAttributes<HTMLButtonElement>>
 function ActiveFacets(props: ActiveFacetsProps): ReactElement | null
 const AiButton: react.ForwardRefExoticComponent<AiButtonProps & react.RefAttributes<HTMLButtonElement>>
 function AiExplainButton(props: AiExplainButtonProps): ReactElement
 const AlertBox: (props: AlertBoxProps) => ReactElement
 function AnimatedBrand(props: AnimatedBrandProps): ReactElement
 function Announcer(): react.JSX.Element
+const ApprovalCard: react.ForwardRefExoticComponent<ApprovalCardProps & react.RefAttributes<HTMLElement>>
 const AsyncBoundary: (props: AsyncBoundaryProps) => ReactElement
 const Avatar: (props: AvatarProps) => ReactElement
 const AvatarGroup: (props: AvatarGroupProps) => ReactElement
 const Badge: (props: BadgeProps) => ReactElement
+const Banner: react.ForwardRefExoticComponent<BannerProps & react.RefAttributes<HTMLDivElement>>
+const BannerAction: react.ForwardRefExoticComponent<ButtonHTMLAttributes<HTMLButtonElement> & react.RefAttributes<HTMLButtonElement>>
+const BottomNavigation: react.ForwardRefExoticComponent<BottomNavigationProps & react.RefAttributes<HTMLElement>>
+const BottomNavigationAction: react.ForwardRefExoticComponent<BottomNavigationActionProps & react.RefAttributes<HTMLButtonElement>>
 function Breadcrumbs(props: BreadcrumbsProps): ReactElement
 const Button: react.ForwardRefExoticComponent<ButtonProps & react.RefAttributes<HTMLButtonElement>>
 function ButtonGroup<T extends string = string>(props: ButtonGroupProps<T>): ReactElement
@@ -30,8 +39,13 @@ const CardDescription: (props: HTMLAttributes<HTMLDivElement>) => ReactElement
 const CardFooter: (props: HTMLAttributes<HTMLDivElement>) => ReactElement
 const CardHeader: (props: HTMLAttributes<HTMLDivElement>) => ReactElement
 const CardTitle: (props: HTMLAttributes<HTMLDivElement>) => ReactElement
+const ChatConversation: react.ForwardRefExoticComponent<ChatConversationProps & react.RefAttributes<HTMLDivElement>>
+const ChatMessage: react.ForwardRefExoticComponent<ChatMessageProps & react.RefAttributes<HTMLElement>>
 const Checkbox: react.ForwardRefExoticComponent<Omit<CheckboxPrimitive.CheckboxProps & react.RefAttributes<HTMLButtonElement>, "ref"> & react.RefAttributes<HTMLButtonElement>>
+const Chip: react.ForwardRefExoticComponent<ChipProps & react.RefAttributes<HTMLElement>>
 const CircularProgress: (props: CircularProgressProps) => ReactElement
+const Citation: (props: CitationProps) => ReactElement
+const CodeBlock: react.ForwardRefExoticComponent<CodeBlockProps & react.RefAttributes<HTMLDivElement>>
 const Collapsible: react.ForwardRefExoticComponent<CollapsiblePrimitive.CollapsibleProps & react.RefAttributes<HTMLDivElement>>
 const CollapsibleContent: react.ForwardRefExoticComponent<Omit<CollapsiblePrimitive.CollapsibleContentProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
 const CollapsibleSection: (props: CollapsibleSectionProps) => ReactElement
@@ -41,8 +55,26 @@ function CommandPalette(props: CommandPaletteProps): ReactElement
 const CommandPaletteTrigger: react.ForwardRefExoticComponent<CommandPaletteTriggerProps & react.RefAttributes<HTMLButtonElement>>
 function CommandRegistryProvider(props: { children: ReactNode }): ReactElement
 const ConfirmDialog: (props: ConfirmDialogProps) => ReactElement
+const ConfirmPopover: (props: ConfirmPopoverProps) => ReactElement
+const ContextMenu: react.FC<ContextMenuPrimitive.ContextMenuProps>
+const ContextMenuCheckboxItem: react.ForwardRefExoticComponent<Omit<ContextMenuPrimitive.ContextMenuCheckboxItemProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
+const ContextMenuContent: react.ForwardRefExoticComponent<Omit<ContextMenuPrimitive.ContextMenuContentProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
+const ContextMenuGroup: react.ForwardRefExoticComponent<ContextMenuPrimitive.ContextMenuGroupProps & react.RefAttributes<HTMLDivElement>>
+const ContextMenuItem: react.ForwardRefExoticComponent<Omit<ContextMenuPrimitive.ContextMenuItemProps & react.RefAttributes<HTMLDivElement>, "ref"> & { danger?: boolean } & react.RefAttributes<HTMLDivElement>>
+const ContextMenuLabel: react.ForwardRefExoticComponent<Omit<ContextMenuPrimitive.ContextMenuLabelProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
+const ContextMenuPortal: react.FC<ContextMenuPrimitive.ContextMenuPortalProps>
+const ContextMenuRadioGroup: react.ForwardRefExoticComponent<ContextMenuPrimitive.ContextMenuRadioGroupProps & react.RefAttributes<HTMLDivElement>>
+const ContextMenuRadioItem: react.ForwardRefExoticComponent<Omit<ContextMenuPrimitive.ContextMenuRadioItemProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
+const ContextMenuSeparator: react.ForwardRefExoticComponent<Omit<ContextMenuPrimitive.ContextMenuSeparatorProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
+const ContextMenuShortcut: (props: HTMLAttributes<HTMLSpanElement>) => react.JSX.Element
+const ContextMenuSub: react.FC<ContextMenuPrimitive.ContextMenuSubProps>
+const ContextMenuSubContent: react.ForwardRefExoticComponent<Omit<ContextMenuPrimitive.ContextMenuSubContentProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
+const ContextMenuSubTrigger: react.ForwardRefExoticComponent<Omit<ContextMenuPrimitive.ContextMenuSubTriggerProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
+const ContextMenuTrigger: react.ForwardRefExoticComponent<ContextMenuPrimitive.ContextMenuTriggerProps & react.RefAttributes<HTMLSpanElement>>
+const CopyButton: react.ForwardRefExoticComponent<CopyButtonProps & react.RefAttributes<HTMLButtonElement>>
 const DateInput: react.ForwardRefExoticComponent<DateInputProps & react.RefAttributes<HTMLInputElement>>
 function DateRangePicker(props: DateRangePickerProps): ReactElement
+function DateTimeInput(props: DateTimeInputProps): ReactElement
 const Dialog: react.FC<DialogPrimitive.DialogProps>
 function DialogActions(props: DialogActionsProps): ReactElement
 const DialogBody: react.ForwardRefExoticComponent<HTMLAttributes<HTMLDivElement> & react.RefAttributes<HTMLDivElement>>
@@ -88,10 +120,13 @@ const InputGroup: react.ForwardRefExoticComponent<InputGroupProps & react.RefAtt
 const InputGroupAddon: react.ForwardRefExoticComponent<HTMLAttributes<HTMLDivElement> & react.RefAttributes<HTMLDivElement>>
 const InputGroupButton: react.ForwardRefExoticComponent<ButtonProps & react.RefAttributes<HTMLButtonElement>>
 const InputGroupInput: react.ForwardRefExoticComponent<InputProps & react.RefAttributes<HTMLInputElement>>
+const JsonView: (props: JsonViewProps) => ReactElement
 const Kbd: (props: KbdProps) => ReactElement
 const KeyCombo: (props: KeyComboProps) => ReactElement
 const KpiCard: react.NamedExoticComponent<KpiCardProps>
 const Label: react.ForwardRefExoticComponent<LabelHTMLAttributes<HTMLLabelElement> & react.RefAttributes<HTMLLabelElement>>
+const Link: react.ForwardRefExoticComponent<LinkProps & react.RefAttributes<HTMLAnchorElement>>
+const LiveIndicator: (props: LiveIndicatorProps) => ReactElement
 const LoadingOverlay: (props: LoadingOverlayProps) => ReactElement
 const LoadingSpinner: (props: LoadingSpinnerProps) => ReactElement
 const LoadingState: (props: LoadingStateProps) => ReactElement
@@ -102,17 +137,22 @@ function NavItem<T extends ElementType = "a">(props: NavItemProps<T>): ReactElem
 const NumberInput: react.ForwardRefExoticComponent<NumberInputProps & react.RefAttributes<HTMLInputElement>>
 function PageHeader(props: PageHeaderProps): ReactElement
 function Pagination(props: PaginationProps): ReactElement
+const PhoneInput: react.ForwardRefExoticComponent<PhoneInputProps & react.RefAttributes<HTMLInputElement>>
 const Popover: react.FC<PopoverPrimitive.PopoverProps>
 const PopoverAnchor: react.ForwardRefExoticComponent<PopoverPrimitive.PopoverAnchorProps & react.RefAttributes<HTMLDivElement>>
 const PopoverContent: react.ForwardRefExoticComponent<Omit<PopoverPrimitive.PopoverContentProps & react.RefAttributes<HTMLDivElement>, "ref"> & { container?: ComponentPropsWithoutRef<typeof PopoverPrimitive.Portal>["container"] } & react.RefAttributes<HTMLDivElement>>
 const PopoverTrigger: react.ForwardRefExoticComponent<PopoverPrimitive.PopoverTriggerProps & react.RefAttributes<HTMLButtonElement>>
 const ProgressBar: (props: ProgressBarProps) => ReactElement
+const PromptInput: react.ForwardRefExoticComponent<PromptInputProps & react.RefAttributes<HTMLFormElement>>
+const PromptSuggestions: (props: PromptSuggestionsProps) => ReactElement | null
 const QuestionDialog: (props: QuestionDialogProps) => ReactElement
 const RadioGroup: react.ForwardRefExoticComponent<Omit<RadioGroupPrimitive.RadioGroupProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
 const RadioGroupItem: react.ForwardRefExoticComponent<Omit<RadioGroupPrimitive.RadioGroupItemProps & react.RefAttributes<HTMLButtonElement>, "ref"> & react.RefAttributes<HTMLButtonElement>>
 function RadioList<T extends string = string>(props: RadioListProps<T>): ReactElement
 function RangeSlider(props: RangeSliderProps): ReactElement
 const RankBadge: (props: RankBadgeProps) => ReactElement
+function Rating(props: RatingProps): ReactElement
+const Reasoning: react.ForwardRefExoticComponent<ReasoningProps & react.RefAttributes<HTMLDivElement>>
 const RefreshBar: (props: { active: boolean; className?: string }) => ReactElement | null
 const ResponsivePanel: (props: ResponsivePanelProps) => ReactElement
 const ResultCard: (props: ResultCardProps) => ReactElement
@@ -145,10 +185,14 @@ const ShortcutSheet: (props: ShortcutSheetProps) => ReactElement
 function Sidebar(props: SidebarProps): ReactElement
 function SidebarNav(props: SidebarNavProps): ReactElement
 const Skeleton: (props: HTMLAttributes<HTMLDivElement>) => ReactElement
+const SkipLinks: (props: SkipLinksProps) => ReactElement
 const Slider: react.ForwardRefExoticComponent<SliderProps & react.RefAttributes<HTMLSpanElement>>
+const SourceList: (props: SourceListProps) => ReactElement | null
 function Sparkline(props: { data: number[]; color?: string }): ReactElement | null
 function SplitPane(props: SplitPaneProps): ReactElement
 function SplitPanePanel(props: SplitPanePanelProps): ReactElement
+const StatStrip: react.ForwardRefExoticComponent<StatStripProps & react.RefAttributes<HTMLUListElement>>
+const StatStripItem: react.ForwardRefExoticComponent<StatStripItemProps & react.RefAttributes<HTMLLIElement>>
 const StatusBadge: (props: StatusBadgeProps) => ReactElement
 const StatusDot: (props: StatusDotProps) => ReactElement
 function Stepper(props: StepperProps): react.JSX.Element
@@ -173,8 +217,14 @@ const TabsTrigger: react.ForwardRefExoticComponent<Omit<TabsPrimitive.TabsTrigge
 function TagCombobox(props: TagComboboxProps): ReactElement
 const Textarea: react.ForwardRefExoticComponent<TextareaProps & react.RefAttributes<HTMLTextAreaElement>>
 const Thumbnail: (props: ThumbnailProps) => ReactElement
+const TimeInput: react.ForwardRefExoticComponent<TimeInputProps & react.RefAttributes<HTMLInputElement>>
+const Timeline: (props: TimelineProps) => ReactElement
+const TimelineGroup: (props: TimelineGroupProps) => ReactElement
+const TimelineItem: (props: TimelineItemProps) => ReactElement
 const Timestamp: (props: TimestampProps) => ReactElement
 const Toaster: (props: ToasterProps) => ReactElement
+const ToolCallCard: react.ForwardRefExoticComponent<ToolCallCardProps & react.RefAttributes<HTMLDivElement>>
+const ToolCallGroup: react.ForwardRefExoticComponent<ToolCallGroupProps & react.RefAttributes<HTMLDivElement>>
 function Toolbar(props: ToolbarProps): ReactElement
 const ToolbarButton: react.ForwardRefExoticComponent<ToolbarButtonProps & react.RefAttributes<HTMLButtonElement>>
 function ToolbarSeparator(props: HTMLAttributes<HTMLDivElement>): ReactElement
@@ -183,11 +233,13 @@ const TooltipContent: react.ForwardRefExoticComponent<Omit<TooltipPrimitive.Tool
 const TooltipProvider: react.FC<TooltipPrimitive.TooltipProviderProps>
 const TooltipTrigger: react.ForwardRefExoticComponent<TooltipPrimitive.TooltipTriggerProps & react.RefAttributes<HTMLButtonElement>>
 function TreeSelect(props: TreeSelectProps): ReactElement
+const TreeView: react.ForwardRefExoticComponent<TreeViewProps & react.RefAttributes<HTMLDivElement>>
+const TypingIndicator: (props: TypingIndicatorProps) => ReactElement
 const VoiceInputButton: react.ForwardRefExoticComponent<VoiceInputButtonProps & react.RefAttributes<HTMLButtonElement>>
 function VoiceTranscript(props: VoiceTranscriptProps): ReactElement
 ```
 
-## Hooks (16)
+## Hooks (17)
 
 ```text
 function useAnnounce(): (message: string, options?: AnnounceOptions) => void
@@ -200,6 +252,7 @@ function useLocalStorageState<T>(key: string, defaultValue: T, options?: UseLoca
 function useLongPress(callback: (event: PointerEvent<Element>) => void, options?: UseLongPressOptions): LongPressHandlers
 function useMediaQuery(query: string): boolean
 function useMergedRefs<T>(...refs: Array<Ref<T> | undefined>): RefCallback<T>
+function useOnlineStatus(): boolean
 function useRecentCommands(storageKey: string, max?: number): { recent: string[]; push: (command: CommandItem | string) => void; clear: () => void }
 function useRegisterCommands(commands: CommandItem[]): void
 function useRegisteredCommands(): CommandItem[]
@@ -208,13 +261,14 @@ function useSidebarCollapsed(): boolean
 function useSpeechRecognition(props?: UseSpeechRecognitionOptions): SpeechRecognitionState
 ```
 
-## Functions (34)
+## Functions (46)
 
 ```text
 function announce(message: string, options?: AnnounceOptions): void
 function avatarColorIndex(name: string): number
 const badgeVariants: (props?: ({ variant?: "default" | "outline" | "destructive" | "secondary" | "warning" | null | undefined } & class_variance_authority_types.ClassProp) | undefined) => string
 const buttonVariants: (props?: ({ variant?: "default" | "outline" | "ghost" | "destructive" | "secondary" | "link" | "swiss-primary" | "swiss-secondary" | "ai" | "ai-subtle" | "ai-ghost" | null | undefined; size?: "default" | "xs" | "sm" | "lg" | "icon" | "icon-xs" | "icon-sm" | "icon-lg" | null | undefined } & class_variance_authority_types.ClassProp) | undefined) => string
+function chipClass(props?: ChipClassOptions): string
 function cn(...inputs: ClassValue[]): string
 function countActiveFacets(value: FacetFilterValue): number
 function datePlaceholder(locale: string): string
@@ -227,60 +281,96 @@ function formatIsoDay(iso: string, locale: string): string
 function formatKey(key: string, mac?: boolean): string
 function formatLocaleNumber(value: number | null, locale: string, options?: FormatNumberOptions): string
 function formatRelativeTime(date: Date, now: Date, locale: string, style?: RelativeTimeStyle): string
+function formatSwissPhone(value: string): string
+function formatTime(value: string, locale: string): string
+function formatToolDuration(ms: number): string
 function getConfirmButtonPlacement(): ConfirmButtonPlacement
 function getInitials(name: string): string
 function getPageRange(page: number, pageCount: number, siblingCount?: number): PageRangeItem[]
+function getSourceDomain(source: Pick<CitationSource, "url" | "domain">): string
 function isMacPlatform(): boolean
 function isWindowsPlatform(): boolean
+const linkVariants: (props?: ({ variant?: "default" | "inline" | "subtle" | null | undefined } & class_variance_authority_types.ClassProp) | undefined) => string
 const loadingSpinnerIconVariants: (props?: ({ size?: "default" | "sm" | "lg" | null | undefined } & class_variance_authority_types.ClassProp) | undefined) => string
 function matchesAccept(file: File, accept?: string): boolean
+function normalizePhone(value: string): string
 function parseFacetRange(entry: string | undefined): [string, string]
 function parseIsoDay(text: string, locale: string): string | null
 function parseLocaleNumber(text: string, locale: string, formatOptions?: Intl.NumberFormatOptions): number | null
+function parseTime(text: string): string | null
 function resetToasts(): void
 function resolveScoreTone(percent: number, thresholds?: ScoreThreshold[]): StatusTone
 function scoreCommand(query: string, label: string, keywords?: readonly string[]): number
 const sheetVariants: (props?: ({ side?: "top" | "right" | "bottom" | "left" | null | undefined } & class_variance_authority_types.ClassProp) | undefined) => string
 function shiftIsoDay(iso: string, by: { days?: number; months?: number }): string
+function shiftTime(value: string, by: number, min?: string, max?: string): string
+function timePlaceholder(locale: string): string
 function toErrorInfo(error: unknown): ErrorInfo | undefined
+function toLocalIsoDateTime(d: Date): string
 function toLocalIsoDay(d: Date): string
+function toTime(value: string | undefined): string
 const toast: typeof show & { info: (message: string, options?: ToneOptions) => number; success: (message: string, options?: ToneOptions) => number; warning: (message: string, options?: ToneOptions) => number; error: (message: string, options?: ToneOptions) => number; dismiss: typeof dismissToast }
 ```
 
-## Constants (26)
+## Constants (47)
 
 ```text
 const BRAND_ANIMATIONS: readonly [{ readonly id: "bounce"; readonly label: "Bounce home" }, { readonly id: "orbit"; readonly label: "Orbit and settle" }, { readonly id: "impact"; readonly label: "Shot in, boom" }, { readonly id: "liquid"; readonly label: "Liquid split" }, { readonly id: "signature"; readonly label: "Solid to signature" }, { readonly id: "burst"; readonly label: "Big bang, small dot" }, { readonly id: "gravity"; readonly label: "Gravity press" }]
 const MAX_TOASTS: 3
 const defaultActiveFacetsLabels: ActiveFacetsLabels
+const defaultApprovalCardLabels: ApprovalCardLabels
 const defaultAvatarGroupLabels: AvatarGroupLabels
+const defaultBannerLabels: BannerLabels
+const defaultBottomNavigationLabels: BottomNavigationLabels
 const defaultBreadcrumbsLabels: BreadcrumbsLabels
 const defaultCalendarLabels: CalendarLabels
+const defaultChatConversationLabels: ChatConversationLabels
+const defaultChatMessageLabels: ChatMessageLabels
+const defaultChipLabels: ChipLabels
+const defaultCitationLabels: CitationLabels
+const defaultCodeBlockLabels: CodeBlockLabels
 const defaultCommandPaletteLabels: CommandPaletteLabels
+const defaultConfirmPopoverLabels: ConfirmPopoverLabels
+const defaultCopyButtonLabels: CopyButtonLabels
 const defaultDateInputLabels: DateInputLabels
 const defaultDateRangePickerLabels: DateRangePickerLabels
+const defaultDateTimeInputLabels: DateTimeInputLabels
 const defaultErrorStateLabels: ErrorStateLabels
 const defaultFacetFilterLabels: FacetFilterLabels
 const defaultFileInputLabels: FileInputLabels
 const defaultFilterSheetLabels: FilterSheetLabels
 const defaultFilteredEmptyStateLabels: FilteredEmptyStateLabels
+const defaultJsonViewLabels: JsonViewLabels
 const defaultKeyComboLabels: KeyComboLabels
+const defaultLinkLabels: LinkLabels
+const defaultLiveIndicatorLabels: LiveIndicatorLabels
 const defaultMetadataListLabels: MetadataListLabels
 const defaultNumberInputLabels: NumberInputLabels
 const defaultPageHeaderLabels: PageHeaderLabels
 const defaultPaginationLabels: PaginationLabels
+const defaultPromptInputLabels: PromptInputLabels
 const defaultRangeSliderLabels: RangeSliderLabels
+const defaultRatingLabels: RatingLabels
+const defaultReasoningLabels: ReasoningLabels
 const defaultScoreThresholds: ScoreThreshold[]
 const defaultShortcutSheetLabels: ShortcutSheetLabels
 const defaultSplitPaneLabels: SplitPaneLabels
 const defaultTableResultCountLabels: TableResultCountLabels
+const defaultTimeInputLabels: TimeInputLabels
+const defaultTimelineLabels: TimelineLabels
 const defaultToasterLabels: ToasterLabels
+const defaultToolCallLabels: ToolCallLabels
 const defaultToolbarLabels: ToolbarLabels
+const defaultTreeViewLabels: TreeViewLabels
 ```
 
-## Interfaces (155)
+## Interfaces (218)
 
 ```text
+interface AccordionTriggerProps extends ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger>
+  description?: ReactNode
+  icon?: ReactNode
+  meta?: ReactNode
 interface ActiveFacetsLabels
   clearAll: string
   listLabel: string
@@ -324,6 +414,32 @@ interface AnimatedBrandProps
   textColor?: string
 interface AnnounceOptions
   politeness?: AnnouncePoliteness
+interface ApprovalCardLabels
+  approve: string
+  approved: string
+  choices: string
+  pending: string
+  reject: string
+  rejected: string
+  working: string
+interface ApprovalCardProps extends Omit<HTMLAttributes<HTMLElement>, "title">
+  choices?: ReadonlyArray<ApprovalChoice>
+  description?: ReactNode
+  details?: ReactNode
+  labels?: Partial<ApprovalCardLabels>
+  onApprove?: () => void
+  onChoose?: (id: string) => void
+  onReject?: () => void
+  pending?: boolean | "approve" | "reject"
+  result?: ReactNode
+  selectedChoiceId?: string
+  status?: ApprovalStatus
+  title: ReactNode
+interface ApprovalChoice
+  description?: string
+  disabled?: boolean
+  id: string
+  label: string
 interface AsyncBoundaryProps
   children: ReactNode
   empty?: boolean
@@ -359,6 +475,58 @@ interface AvatarProps extends Omit<HTMLAttributes<HTMLSpanElement>, "children">
   status?: StatusTone
   statusLabel?: string
 interface BadgeProps extends HTMLAttributes<HTMLDivElement>, VariantProps<typeof badgeVariants>
+interface BannerLabels
+  dismiss: string
+interface BannerProps extends Omit<HTMLAttributes<HTMLDivElement>, "role">
+  "data-testid"?: string
+  actions?: ReactNode
+  animated?: boolean
+  children?: ReactNode
+  icon?: ReactNode
+  labels?: Partial<BannerLabels>
+  onDismiss?: () => void
+  open?: boolean
+  role?: "status" | "alert"
+  tone?: BannerTone
+interface BottomNavigationActionProps extends HTMLAttributes<HTMLButtonElement>
+  "data-testid"?: string
+  disabled?: boolean
+  icon: ComponentType<SVGProps<SVGSVGElement>>
+  label: string
+interface BottomNavigationItem
+  "data-testid"?: string
+  badge?: number | string | boolean
+  disabled?: boolean
+  href?: string
+  icon: ComponentType<SVGProps<SVGSVGElement>>
+  id: string
+  label: string
+  onClick?: () => void
+interface BottomNavigationLabels
+  badge: (badge: number | string) => string
+  dot: string
+interface BottomNavigationLinkRenderProps
+  "aria-current"?: "page"
+  "aria-disabled"?: true
+  children: ReactNode
+  className: string
+  href: string
+  item: BottomNavigationItem
+  onClick: (event: MouseEvent<HTMLElement>) => void
+  tabIndex?: number
+interface BottomNavigationProps extends Omit<HTMLAttributes<HTMLElement>, "onChange" | "defaultValue">
+  "aria-label": string
+  action?: ReactNode
+  animated?: boolean
+  defaultValue?: string | null
+  hideFrom?: keyof typeof HIDE_FROM | false
+  items: BottomNavigationItem[]
+  labels?: Partial<BottomNavigationLabels>
+  maxBadge?: number
+  onValueChange?: (id: string) => void
+  position?: keyof typeof POSITION
+  renderLink?: (props: BottomNavigationLinkRenderProps) => ReactNode
+  value?: string | null
 interface BreadcrumbItem
   href?: string
   icon?: ComponentType<SVGProps<SVGSVGElement>>
@@ -434,6 +602,60 @@ interface CalendarSingleProps extends CalendarBaseProps
   onMonthChange?: (month: string) => void  (from CalendarBaseProps)
   today?: string  (from CalendarBaseProps)
   weekStartsOn?: number  (from CalendarBaseProps)
+interface ChatConversationLabels
+  conversation: string
+  jumpToLatest: string
+  loadingHistory: string
+interface ChatConversationProps extends Omit<HTMLAttributes<HTMLDivElement>, "onScroll">
+  children?: ReactNode
+  contentClassName?: string
+  empty?: ReactNode
+  followKey?: unknown
+  labels?: Partial<ChatConversationLabels>
+  loadingHistory?: boolean
+  onReachTop?: () => void
+  stickToBottom?: boolean
+interface ChatMessageLabels
+  failed: string
+  retry: string
+  roleAssistant: string
+  roleSystem: string
+  roleUser: string
+  sending: string
+  streaming: string
+interface ChatMessageProps extends Omit<HTMLAttributes<HTMLElement>, "title">
+  actions?: ReactNode
+  avatar?: ReactNode | boolean
+  children?: ReactNode
+  error?: ErrorInput
+  labels?: Partial<ChatMessageLabels>
+  name?: string
+  onRetry?: () => void
+  role: ChatRole
+  status?: ChatMessageStatus
+  time?: Date | string | number | ReactNode
+interface ChipClassOptions
+  className?: string
+  dashed?: boolean
+  interactive?: boolean
+  selected?: boolean
+  size?: ChipSize
+  tone?: ChipTone
+interface ChipLabels
+  remove: string
+interface ChipProps extends Omit<HTMLAttributes<HTMLElement>, "onClick" | "children">
+  "data-testid"?: string
+  children: ReactNode
+  dashed?: boolean
+  disabled?: boolean
+  icon?: ReactNode
+  labels?: Partial<ChipLabels>
+  onClick?: () => void
+  onRemove?: () => void
+  removeLabel?: string
+  selected?: boolean
+  size?: ChipSize
+  tone?: ChipTone
 interface CircularProgressProps extends Omit<HTMLAttributes<HTMLDivElement>, "children">
   formatValue?: (value: number, max: number) => string
   max?: number
@@ -442,6 +664,28 @@ interface CircularProgressProps extends Omit<HTMLAttributes<HTMLDivElement>, "ch
   strokeWidth?: number
   tone?: ProgressTone
   value?: number | null
+interface CitationLabels
+  source: (index: number, title: string) => string
+  sources: string
+interface CitationProps
+  className?: string
+  index: number
+  labels?: Partial<CitationLabels>
+  source?: CitationSource
+interface CitationSource
+  domain?: string
+  title: string
+  url: string
+interface CodeBlockProps extends Omit<HTMLAttributes<HTMLDivElement>, "children" | "title">
+  code: string
+  copyable?: boolean
+  highlight?: (code: string, language: string | undefined) => ReactNode
+  labels?: Partial<CodeBlockLabels>
+  language?: string
+  lineNumbers?: boolean
+  maxHeight?: number | string
+  title?: ReactNode
+  wrap?: boolean
 interface CollapsibleSectionProps
   "data-testid"?: string
   actions?: ReactNode
@@ -561,6 +805,39 @@ interface ConfirmDialogProps
   open: boolean
   title: string
   variant?: "default" | "destructive"
+interface ConfirmPopoverLabels
+  confirm: string
+  keep: string
+interface ConfirmPopoverProps
+  align?: "start" | "center" | "end"
+  className?: string
+  confirmLabel?: string
+  container?: HTMLElement | null
+  defaultOpen?: boolean
+  keepLabel?: string
+  labels?: Partial<ConfirmPopoverLabels>
+  message: ReactNode
+  onConfirm: () => void | Promise<unknown>
+  onOpenChange?: (open: boolean) => void
+  open?: boolean
+  pending?: boolean
+  side?: "top" | "right" | "bottom" | "left"
+  tone?: "destructive" | "default"
+  trigger: ReactElement
+interface CopyButtonLabels
+  copied: string
+  failed: string
+  label: string
+interface CopyButtonProps extends Omit<ButtonProps, "value" | "onClick" | "onCopy" | "asChild" | "children" | "size">
+  children?: ReactNode
+  copiedLabel?: string
+  failedLabel?: string
+  label?: string
+  labels?: Partial<CopyButtonLabels>
+  onCopy?: (value: string) => void
+  size?: "sm" | "md"
+  timeout?: number
+  value: string
 interface DateInputLabels
   calendarLoadFailed: string
   invalid: string
@@ -612,6 +889,38 @@ interface DateRangePickerProps extends PassThroughCalendarProps
   showError?: boolean
   size?: "sm" | "default"
   value: DateRange
+interface DateTimeInputLabels
+  calendarLoadFailed: string
+  date: string
+  dateOutOfRange: string
+  dateUnavailable: string
+  invalidDate: string
+  invalidTime: string
+  nextMonth: string
+  openCalendar: string
+  previousMonth: string
+  retry: string
+  time: string
+  timeOutOfRange: string
+interface DateTimeInputProps extends PassThroughCalendarProps$1
+  "aria-describedby"?: string
+  "data-testid"?: string
+  className?: string
+  container?: HTMLElement | null
+  defaultTime?: string
+  disabled?: boolean
+  labels?: Partial<DateTimeInputLabels>
+  locale?: string
+  max?: string
+  min?: string
+  name?: string
+  onInvalidChange?: (invalid: boolean, reason?: DateInputError | TimeInputError) => void
+  onValueChange: (iso: string) => void
+  readOnly?: boolean
+  showError?: boolean
+  size?: "sm" | "default"
+  step?: number
+  value: string
 interface DialogActionsProps
   actions: ReactNode[]
   cancel: ReactNode
@@ -815,6 +1124,20 @@ interface InlineErrorProps extends Omit<HTMLAttributes<HTMLSpanElement>, "title"
   wrap?: boolean
 interface InputGroupProps extends HTMLAttributes<HTMLDivElement>
   size?: InputGroupSize
+interface JsonViewLabels extends CopyIconButtonLabels
+  items: (n: number) => string
+  keys: (n: number) => string
+  copied: string  (from CopyIconButtonLabels)
+  copy: string  (from CopyIconButtonLabels)
+  copyFailed: string  (from CopyIconButtonLabels)
+interface JsonViewProps extends Omit<HTMLAttributes<HTMLDivElement>, "children" | "defaultValue">
+  defaultOpen?: boolean
+  label?: string
+  labels?: Partial<JsonViewLabels>
+  maxHeight?: number | string
+  onOpenChange?: (open: boolean) => void
+  open?: boolean
+  value: unknown
 interface KbdProps extends HTMLAttributes<HTMLElement>
   pressed?: boolean
   size?: "sm" | "md"
@@ -848,6 +1171,25 @@ interface KpiCardProps
   testId?: string
   value?: string | number | null
   variant?: "hero" | "mini" | "default" | "donut"
+interface LinkLabels
+  newTab: string
+interface LinkProps extends AnchorHTMLAttributes<HTMLAnchorElement>, VariantProps<typeof linkVariants>
+  asChild?: boolean
+  external?: boolean
+  labels?: Partial<LinkLabels>
+interface LiveIndicatorLabels
+  paused: string
+  refreshEvery: (seconds: number) => string
+  updated: (time: string) => string
+  updating: string
+interface LiveIndicatorProps extends Omit<HTMLAttributes<HTMLSpanElement>, "children">
+  animated?: boolean
+  fetching?: boolean
+  intervalMs?: number
+  labels?: Partial<LiveIndicatorLabels>
+  locale?: string
+  paused?: boolean
+  updatedAt?: number | Date | string
 interface LoadingOverlayProps extends HTMLAttributes<HTMLDivElement>, Pick<LoadingSpinnerProps, "label">
   size?: LoadingSpinnerProps["size"]
 interface LoadingSpinnerProps extends HTMLAttributes<HTMLSpanElement>, VariantProps<typeof loadingSpinnerIconVariants>
@@ -960,6 +1302,11 @@ interface PaginationProps extends Omit<HTMLAttributes<HTMLElement>, "onChange">
   pageSizeOptions?: number[]
   siblingCount?: number
   totalItems?: number
+interface PhoneInputProps extends Omit<InputProps, "value" | "defaultValue" | "onChange" | "type">
+  defaultValue?: string
+  normalize?: (value: string) => string
+  onValueChange?: (value: string) => void
+  value?: string
 interface ProgressBarProps extends Omit<HTMLAttributes<HTMLDivElement>, "children">
   formatValue?: (value: number, max: number) => string
   label?: ReactNode
@@ -968,6 +1315,38 @@ interface ProgressBarProps extends Omit<HTMLAttributes<HTMLDivElement>, "childre
   size?: "sm" | "md" | "lg"
   tone?: ProgressTone
   value?: number | null
+interface PromptInputLabels
+  message: string
+  placeholder: string
+  send: string
+  stop: string
+interface PromptInputProps extends Omit<FormHTMLAttributes<HTMLFormElement>, "onSubmit" | "onChange" | "children">
+  actions?: ReactNode
+  attachments?: ReactNode
+  defaultValue?: string
+  disabled?: boolean
+  labels?: Partial<PromptInputLabels>
+  leading?: ReactNode
+  maxRows?: number
+  onStop?: () => void
+  onSubmit?: (text: string) => void | false
+  onValueChange?: (value: string) => void
+  placeholder?: string
+  streaming?: boolean
+  submitOn?: "enter" | "mod-enter"
+  textareaProps?: Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, "value" | "defaultValue" | "onChange" | "disabled" | "rows">
+  textareaRef?: Ref<HTMLTextAreaElement>
+  value?: string
+interface PromptSuggestion
+  id: string
+  label: ReactNode
+  prompt?: string
+interface PromptSuggestionsProps extends Omit<HTMLAttributes<HTMLDivElement>, "onSelect">
+  "aria-label"?: string
+  disabled?: boolean
+  onSelect?: (prompt: string, suggestion: PromptSuggestion) => void
+  suggestions: ReadonlyArray<string | PromptSuggestion>
+  wrap?: boolean
 interface QuestionDialogAction
   label: string
   onClick: () => void | Promise<void>
@@ -1021,6 +1400,36 @@ interface RangeSliderProps
   value: [number, number]
 interface RankBadgeProps extends HTMLAttributes<HTMLSpanElement>
   rank: number
+interface RatingLabels
+  rating: string
+  star: (value: number, max: number) => string
+  unrated: string
+  valueText: (value: number, max: number) => string
+interface RatingProps extends Omit<HTMLAttributes<HTMLDivElement>, "onChange" | "defaultValue">
+  allowClear?: boolean
+  allowHalf?: boolean
+  defaultValue?: number
+  disabled?: boolean
+  labels?: Partial<RatingLabels>
+  max?: number
+  name?: string
+  onValueChange?: (value: number) => void
+  readOnly?: boolean
+  size?: "sm" | "md" | "lg"
+  value?: number
+interface ReasoningLabels
+  thinking: string
+  thought: string
+  thoughtFor: (seconds: number) => string
+interface ReasoningProps extends Omit<HTMLAttributes<HTMLDivElement>, "children">
+  children: ReactNode
+  defaultOpen?: boolean
+  duration?: number
+  labels?: Partial<ReasoningLabels>
+  maxHeight?: number | string
+  onOpenChange?: (open: boolean) => void
+  open?: boolean
+  streaming?: boolean
 interface ResponsivePanelProps
   breakpoint?: string
   children: ReactNode
@@ -1153,10 +1562,24 @@ interface SidebarProps
   railWidth?: number
   resizable?: boolean
   width?: number
+interface SkipLink
+  href?: string
+  label: string
+  onSelect?: (event: MouseEvent<HTMLElement>) => void
+interface SkipLinksProps
+  "data-testid"?: string
+  className?: string
+  label?: string
+  links: SkipLink[]
 interface SliderProps extends ComponentPropsWithoutRef<typeof SliderPrimitive.Root>
   animated?: boolean
   getValueText?: (value: number, index: number) => string
   thumbLabels?: string | string[]
+interface SourceListProps
+  className?: string
+  labels?: Partial<CitationLabels>
+  sources: CitationSource[]
+  start?: number
 interface SpeechRecognitionEngine
   abort(): void
   continuous: boolean
@@ -1192,6 +1615,19 @@ interface SplitPaneProps extends Omit<HTMLAttributes<HTMLDivElement>, "children"
   onSizesCommit?: (sizes: number[]) => void
   sizes?: number[]
   storageKey?: string
+interface StatStripItemProps extends Omit<HTMLAttributes<HTMLLIElement>, "onClick" | "children">
+  animated?: boolean
+  href?: string
+  label: ReactNode
+  linkAs?: ElementType
+  loading?: boolean
+  loadingLabel?: string
+  onClick?: () => void
+  sub?: ReactNode
+  tone?: StatStripTone
+  value: ReactNode
+interface StatStripProps extends HTMLAttributes<HTMLUListElement>
+  children: ReactNode
 interface StatusBadgeProps extends Omit<HTMLAttributes<HTMLDivElement>, "children">
   label?: string
   status: string
@@ -1285,12 +1721,55 @@ interface TagComboboxProps
   options: TagComboboxOption[]
   placeholder?: string
   value: string[]
+interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement>
+  autoResize?: boolean
+  maxRows?: number
 interface ThumbnailProps extends Omit<HTMLAttributes<HTMLSpanElement>, "children">
   alt?: string
   fallback?: ReactNode
   fit?: "contain" | "cover"
   size?: keyof typeof THUMB_SIZES | number
   src?: string | null
+interface TimeInputLabels
+  invalid: string
+  outOfRange: string
+interface TimeInputProps extends Omit<InputProps, "value" | "defaultValue" | "onChange" | "type" | "min" | "max" | "step">
+  bare?: boolean
+  labels?: Partial<TimeInputLabels>
+  locale?: string
+  max?: string
+  min?: string
+  native?: "auto" | "always" | "never"
+  onInvalidChange?: (invalid: boolean, reason?: TimeInputError) => void
+  onValueChange: (time: string) => void
+  showError?: boolean
+  step?: number
+  value: string
+interface TimelineGroupProps extends Omit<LiHTMLAttributes<HTMLLIElement>, "title">
+  label: ReactNode
+interface TimelineItemProps extends Omit<LiHTMLAttributes<HTMLLIElement>, "title">
+  "data-testid"?: string
+  children?: ReactNode
+  collapsible?: boolean
+  defaultOpen?: boolean
+  description?: ReactNode
+  icon?: IconComponent | ReactNode
+  onOpenChange?: (open: boolean) => void
+  open?: boolean
+  status?: TimelineStatus
+  time?: ReactNode | Date
+  timeFormat?: TimestampFormat
+  title: ReactNode
+  tone?: StatusTone
+interface TimelineLabels
+  pending: string
+interface TimelineProps extends OlHTMLAttributes<HTMLOListElement>
+  animated?: boolean
+  labels?: Partial<TimelineLabels>
+  locale?: string
+  pending?: boolean | ReactNode
+  size?: TimelineSize
+  timeFormat?: TimestampFormat
 interface TimestampProps extends Omit<HTMLAttributes<HTMLElement>, "children">
   animated?: boolean
   format?: TimestampFormat
@@ -1327,6 +1806,37 @@ interface ToasterProps
   duration?: number | Partial<Record<ToastTone, number>>
   labels?: Partial<ToasterLabels>
   position?: ToasterPosition
+interface ToolCallCardProps extends Omit<HTMLAttributes<HTMLDivElement>, "children">
+  children?: ReactNode
+  defaultOpen?: boolean
+  duration?: number | string
+  error?: ReactNode
+  icon?: ReactNode
+  input?: unknown
+  labels?: Partial<ToolCallLabels>
+  name: string
+  onOpenChange?: (open: boolean) => void
+  open?: boolean
+  output?: unknown
+  status?: ToolCallStatus
+  summary?: ReactNode
+interface ToolCallGroupProps extends Omit<HTMLAttributes<HTMLDivElement>, "children">
+  active?: boolean
+  children: ReactNode
+  count?: number
+  defaultOpen?: boolean
+  labels?: Partial<Pick<ToolCallLabels, "steps" | "running">>
+  onOpenChange?: (open: boolean) => void
+  open?: boolean
+interface ToolCallLabels
+  done: string
+  error: string
+  errorDetails: string
+  input: string
+  output: string
+  pending: string
+  running: string
+  steps: (n: number) => string
 interface ToolbarButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "onClick" | "children">
   children?: ReactNode
   icon?: ComponentType<SVGProps<SVGSVGElement>>
@@ -1362,6 +1872,48 @@ interface TreeSelectProps
   searchPlaceholder?: string
   value: string | null
   valueLabel?: string | null
+interface TreeViewLabels
+  empty: string
+  loadFailed: string
+  loading: string
+  retry: string
+interface TreeViewNode
+  children?: TreeViewNode[]
+  disabled?: boolean
+  hasChildren?: boolean
+  icon?: ReactNode
+  id: string
+  label: string
+interface TreeViewNodeState
+  checked: boolean | "indeterminate"
+  error: boolean
+  expanded: boolean
+  isBranch: boolean
+  level: number
+  loading: boolean
+  selected: boolean
+interface TreeViewProps extends Omit<HTMLAttributes<HTMLDivElement>, "children" | "onSelect" | "defaultValue">
+  "aria-label"?: string
+  animated?: boolean
+  checkable?: boolean
+  defaultExpandedIds?: string[]
+  defaultSelectedIds?: string[]
+  expandedIds?: string[]
+  indent?: number
+  labels?: Partial<TreeViewLabels>
+  nodes: TreeViewNode[]
+  onActivate?: (node: TreeViewNode) => void
+  onExpandedChange?: (ids: string[]) => void
+  onLoadChildren?: (node: TreeViewNode) => Promise<TreeViewNode[]>
+  onSelectedChange?: (ids: string[]) => void
+  renderNode?: (node: TreeViewNode, state: TreeViewNodeState) => ReactNode
+  selectedIds?: string[]
+  selectionMode?: "none" | "single" | "multiple"
+interface TypingIndicatorProps extends Omit<HTMLAttributes<HTMLSpanElement>, "children">
+  animated?: boolean
+  label?: string
+  showLabel?: boolean
+  size?: "sm" | "md"
 interface UseClipboardOptions
   timeout?: number
 interface UseClipboardResult
@@ -1420,16 +1972,28 @@ interface VoiceTranscriptProps extends Omit<HTMLAttributes<HTMLDivElement>, "onC
   value: string
 ```
 
-## Types (30)
+## Types (44)
 
 ```text
+type AccordionContentProps = ComponentPropsWithoutRef<typeof AccordionPrimitive.Content>
+type AccordionProps = ComponentPropsWithoutRef<typeof AccordionPrimitive.Root> & {…}
+  animated?: boolean
+  variant?: AccordionVariant
+type AccordionVariant = "plain" | "card"
 type AiButtonVariant = "ai" | "ai-subtle" | "ai-ghost"
 type AlertBoxVariant = "error" | "warning" | "info" | "success"
 type AnnouncePoliteness = "polite" | "assertive"
+type ApprovalStatus = "pending" | "approved" | "rejected"
 type AvatarSize = "xs" | "sm" | "md" | "lg" | "xl"
+type BannerTone = "neutral" | "info" | "warning" | "brand" | "danger"
 type BrandAnimation = (typeof BRAND_ANIMATIONS)[number]["id"]
 type BrandMode = "full" | "mark" | "one"
 type CalendarProps = CalendarSingleProps | CalendarRangeProps
+type ChatMessageStatus = "sending" | "streaming" | "error" | "done"
+type ChatRole = "user" | "assistant" | "system"
+type ChipSize = "sm" | "md"
+type ChipTone = "neutral" | "primary"
+type CodeBlockLabels = CopyIconButtonLabels
 type ComboboxProps = ComboboxSingleProps | ComboboxMultiProps
 type ConfirmButtonPlacement = "leading" | "trailing"
 type DateInputError = "invalid" | "range" | "disabled"
@@ -1456,10 +2020,14 @@ type SidebarNavProps = Omit<ComponentPropsWithoutRef<"div">, "className" | "chil
   className?: string
 type SpeechRecognitionEngineFactory = () => SpeechRecognitionEngine
 type SplitPaneLimit = number | `${number}px`
+type StatStripTone = "default" | "success" | "warning" | "danger"
 type StatusTone = "success" | "warning" | "error" | "info" | "neutral"
 type TableSearchProps = SearchBarProps
-type TextareaProps = TextareaHTMLAttributes<HTMLTextAreaElement>
+type TimeInputError = "invalid" | "range"
+type TimelineSize = "sm" | "md"
+type TimelineStatus = "done" | "active" | "pending" | "error"
 type TimestampFormat = "relative" | "date" | "datetime" | "time"
 type ToastTone = "info" | "success" | "warning" | "error"
 type ToasterPosition = "bottom-center" | "bottom-left" | "bottom-right" | "top-center" | "top-left" | "top-right"
+type ToolCallStatus = "pending" | "running" | "done" | "error"
 ```
