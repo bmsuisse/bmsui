@@ -107,13 +107,14 @@ export const BottomNavigation = forwardRef<HTMLElement, BottomNavigationProps>(f
   const [inner, setInner] = useState<string | null>(defaultValue);
   const current = value !== undefined ? value : inner;
   const half = Math.ceil(items.length / 2);
+  const dense = items.length + (action ? 1 : 0) >= 5;
 
   const renderItem = (item: BottomNavigationItem): ReactElement => {
     const active = item.id === current;
     const text = badgeText(item.badge, maxBadge);
     const Icon = item.icon;
     const cls = cn(
-      "group flex h-full min-w-0 flex-1 touch-manipulation flex-col items-center justify-center gap-1 rounded-md px-1 outline-none",
+      "group flex h-full min-w-0 flex-1 touch-manipulation flex-col items-center justify-center gap-1 rounded-md px-0.5 outline-none",
       "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
       "active:opacity-60 aria-disabled:pointer-events-none aria-disabled:opacity-50 disabled:pointer-events-none disabled:opacity-50",
     );
@@ -141,7 +142,7 @@ export const BottomNavigation = forwardRef<HTMLElement, BottomNavigationProps>(f
             ) : (
               <span
                 aria-hidden
-                className="absolute -top-1 left-[calc(50%+6px)] flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-700 px-1 text-[11px] leading-none font-semibold text-white tabular-nums ring-2 ring-background"
+                className="absolute -top-1 left-[calc(50%+6px)] flex h-[18px] min-w-[18px] items-center justify-center rounded-[var(--radius-pill,9999px)] bg-red-700 px-1 text-[11px] leading-none font-semibold text-white tabular-nums ring-2 ring-background"
               >
                 {text}
               </span>
@@ -149,7 +150,8 @@ export const BottomNavigation = forwardRef<HTMLElement, BottomNavigationProps>(f
         </span>
         <span
           className={cn(
-            "max-w-full truncate text-[13px] leading-4",
+            "line-clamp-2 max-w-full text-center leading-[14px] [overflow-wrap:anywhere] hyphens-auto",
+            dense ? "text-[11px]" : "text-[13px]",
             active ? "font-semibold text-foreground" : "font-medium text-muted-foreground",
           )}
         >
@@ -256,9 +258,9 @@ export const BottomNavigationAction = forwardRef<HTMLButtonElement, BottomNaviga
       type="button"
       aria-label={label}
       className={cn(
-        "flex size-[52px] shrink-0 touch-manipulation items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm outline-none transition-colors active:opacity-80",
+        "flex size-[52px] shrink-0 touch-manipulation items-center justify-center rounded-[var(--radius-pill,9999px)] bg-primary text-primary-foreground shadow-sm outline-none transition-colors active:opacity-80",
         "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        "dark:bg-accent dark:text-accent-foreground disabled:opacity-50",
+        "disabled:opacity-50",
         className,
       )}
       {...props}

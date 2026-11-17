@@ -51,8 +51,8 @@ export const SingleSelection: Story = {
 
 export const MultipleSelection: Story = {
   render: () => {
-    const [ids, setIds] = useState<string[]>(["readme"]);
-    return <TreeView aria-label="Files" nodes={files} selectionMode="multiple" selectedIds={ids} onSelectedChange={setIds} defaultExpandedIds={["docs"]} />;
+    const [ids, setIds] = useState<string[]>(["c1", "c2", "readme"]);
+    return <TreeView aria-label="Files" nodes={files} selectionMode="multiple" selectedIds={ids} onSelectedChange={setIds} defaultExpandedIds={["docs", "contracts"]} />;
   },
 };
 
@@ -81,8 +81,9 @@ export const LazyLoadingWithError: Story = {
       <TreeView
         aria-label="Regions"
         nodes={lazyRoot}
+        defaultExpandedIds={["apac"]}
         onLoadChildren={async (node) => {
-          await new Promise((r) => setTimeout(r, 900));
+          await new Promise((r) => setTimeout(r, node.id === "apac" ? 0 : 900));
           if (node.id === "apac" && attempts < 1) {
             setAttempts((a) => a + 1);
             throw new Error("offline");
@@ -105,7 +106,7 @@ export const CustomRows: Story = {
       defaultExpandedIds={["docs"]}
       renderNode={(node, state) => (
         <>
-          <span className="min-w-0 flex-1 truncate">{node.label}</span>
+          <span className="min-w-0 flex-1 break-words">{node.label}</span>
           {state.isBranch && <span className="shrink-0 rounded-md bg-foreground/10 px-1.5 text-xs">{node.children?.length ?? 0}</span>}
         </>
       )}
