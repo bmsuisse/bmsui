@@ -62,7 +62,7 @@ export const LiveIndicator = ({
       className={cn("inline-flex min-w-0 items-center gap-1.5 text-xs tabular-nums text-muted-foreground", className)}
       {...props}
     >
-      <StatusDot tone={paused ? "neutral" : "success"} pulse={!paused} label={text} hideLabel />
+      <StatusDot tone={paused || (!time && !fetching) ? "neutral" : "success"} pulse={!paused && (fetching || !!time)} label={text} hideLabel />
       <span
         key={text}
         aria-hidden="true"

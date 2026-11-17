@@ -40,7 +40,7 @@ export const LongText: Story = {
 };
 export const CustomIcon: Story = { args: { icon: <MagnifyingGlassIcon aria-hidden="true" className="h-4 w-4 shrink-0" /> } };
 export const GermanLabels: Story = {
-  args: { status: "error", summary: "Abgebrochen nach 30 s", output: undefined, error: "Zeitüberschreitung", labels: { error: "Fehlgeschlagen", input: "Eingabe", output: "Ausgabe", errorDetails: "Fehler" } },
+  args: { status: "error", summary: "Abgebrochen nach 30 s", duration: 30000, output: undefined, error: "Zeitüberschreitung", labels: { error: "Fehlgeschlagen", input: "Eingabe", output: "Ausgabe", errorDetails: "Fehler" } },
 };
 
 export const Group: StoryObj<typeof ToolCallGroup> = {

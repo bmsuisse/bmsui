@@ -60,7 +60,7 @@ export const SmallDisabledTwelveHour: Story = {
 export const LocalIsoHelper: Story = {
   name: "toLocalIsoDateTime",
   render: () => (
-    <p className="overflow-x-auto whitespace-nowrap text-sm">
+    <p className="break-words text-sm">
       <code>toLocalIsoDateTime(new Date(2026, 0, 5, 23, 30))</code> = <code>{toLocalIsoDateTime(new Date(2026, 0, 5, 23, 30))}</code>
     </p>
   ),

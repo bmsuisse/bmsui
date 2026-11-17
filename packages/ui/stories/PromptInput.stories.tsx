@@ -52,8 +52,10 @@ export const WithSlots: Story = {
     attachments: (
       <span className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-foreground/10 bg-muted py-1 pr-1 pl-2 text-xs dark:border-border">
         <DocumentIcon className="size-3.5 text-muted-foreground" aria-hidden="true" />
-        <span className="truncate">offerte-muster-ag-2026</span>
-        <span className="shrink-0">.pdf</span>
+        <span className="flex min-w-0">
+          <span className="truncate">offerte-muster-ag-2026</span>
+          <span className="shrink-0">.pdf</span>
+        </span>
         <button type="button" aria-label="Remove attachment" className="grid size-5 place-items-center rounded-sm hover:bg-foreground/10">
           <XMarkIcon className="size-3" />
         </button>

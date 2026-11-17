@@ -18,7 +18,7 @@ type Story = StoryObj<typeof SkipLinks>;
 export const Default: Story = {
   render: (args) => (
     <div className="relative min-h-40 text-sm">
-      <SkipLinks {...args} className="absolute" />
+      <SkipLinks {...args} className="absolute w-max" />
       <p className="mb-3 text-muted-foreground">Click here, then press Tab: the links appear in the top-left corner.</p>
       <input id="search" placeholder="Search" className="rounded-md border border-input bg-background px-2 py-1" />
       <main id="main" tabIndex={-1} className="mt-3">Main content</main>
@@ -31,7 +31,7 @@ const focusFirst = async ({ canvasElement }: { canvasElement: HTMLElement }) => 
 export const ShownForReview: Story = {
   render: (args) => (
     <div className="relative min-h-24">
-      <SkipLinks {...args} className="absolute" />
+      <SkipLinks {...args} className="absolute w-max" />
     </div>
   ),
   play: focusFirst,

@@ -44,7 +44,7 @@ export const Helpers: Story = {
   render: () => (
     <ul className="space-y-1 font-mono text-sm">
       {["079 123 45 67", "0041 79 123 45 67", "+41 (0)79 123 45 67", "+49 30 123456"].map((v) => (
-        <li key={v} className="overflow-x-auto whitespace-nowrap">
+        <li key={v} className="whitespace-normal break-words">
           {v} → {formatSwissPhone(v)}
         </li>
       ))}

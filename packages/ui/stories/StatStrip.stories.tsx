@@ -54,7 +54,7 @@ export const FlashesOnChange: Story = {
     }, []);
     return (
       <StatStrip aria-label="Live">
-        <StatStripItem label="Requests" value={n} sub="updates every 2.5 s" />
+        <StatStripItem label="Requests" value={n} sub="updates every 2.5 s" />
         <StatStripItem label="Errors" value="0" />
       </StatStrip>
     );
