@@ -239,6 +239,27 @@ export { CollapsibleSection } from "./patterns/collapsible-section/CollapsibleSe
 
 export type { StatusDotProps } from "./patterns/status-dot/StatusDot";
 export { StatusDot } from "./patterns/status-dot/StatusDot";
+
+export type { ChipClassOptions, ChipLabels, ChipProps, ChipSize, ChipTone } from "./patterns/chip/Chip";
+export { Chip, chipClass, defaultChipLabels } from "./patterns/chip/Chip";
+
+export type { BannerLabels, BannerProps, BannerTone } from "./patterns/banner/Banner";
+export { Banner, BannerAction, defaultBannerLabels } from "./patterns/banner/Banner";
+
+export type { ConfirmPopoverLabels, ConfirmPopoverProps } from "./patterns/confirm-popover/ConfirmPopover";
+export { ConfirmPopover, defaultConfirmPopoverLabels } from "./patterns/confirm-popover/ConfirmPopover";
+
+export type { CopyButtonLabels, CopyButtonProps } from "./patterns/copy-button/CopyButton";
+export { CopyButton, defaultCopyButtonLabels } from "./patterns/copy-button/CopyButton";
+
+export type { LiveIndicatorLabels, LiveIndicatorProps } from "./patterns/live-indicator/LiveIndicator";
+export { LiveIndicator, defaultLiveIndicatorLabels } from "./patterns/live-indicator/LiveIndicator";
+
+export type { StatStripItemProps, StatStripProps, StatStripTone } from "./patterns/stat-strip/StatStrip";
+export { StatStrip, StatStripItem } from "./patterns/stat-strip/StatStrip";
+
+export type { SkipLink, SkipLinksProps } from "./patterns/skip-links/SkipLinks";
+export { SkipLinks } from "./patterns/skip-links/SkipLinks";
 export type { BreadcrumbItem, BreadcrumbLinkRenderProps, BreadcrumbsLabels, BreadcrumbsProps } from "./patterns/breadcrumbs/Breadcrumbs";
 export { Breadcrumbs, defaultBreadcrumbsLabels } from "./patterns/breadcrumbs/Breadcrumbs";
 
@@ -347,6 +368,7 @@ export type { Hotkey, UseHotkeysOptions } from "./hooks/useHotkeys";
 export { formatHotkey, useHotkeys } from "./hooks/useHotkeys";
 export type { UseClipboardOptions, UseClipboardResult } from "./hooks/useClipboard";
 export { useClipboard } from "./hooks/useClipboard";
+export { useOnlineStatus } from "./hooks/useOnlineStatus";
 export type { AnnounceOptions, AnnouncePoliteness } from "./hooks/useAnnounce";
 export { announce, Announcer, useAnnounce } from "./hooks/useAnnounce";
 export { useMergedRefs } from "./hooks/useMergedRefs";
