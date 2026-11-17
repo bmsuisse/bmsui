@@ -16,6 +16,7 @@ repo's `AGENTS.md`.
 | `Button`, `buttonVariants` | Every button. Variants `default` `secondary` `outline` `ghost` `destructive` `link` `ai*`; sizes `xs` `sm` `default` `lg` `icon*`. |
 | `Input` | Single-line text input. For dates use `DateInput`; numbers `NumberInput`; search `SearchBar`; icons/units around it `InputGroup`. |
 | `Textarea` | Multi-line text. |
+| `Link`, `linkVariants`, `defaultLinkLabels` | Text link: `variant` default/subtle/inline, `asChild` for a router link, `external` (new tab, safe `rel`, icon, screen-reader hint). Instead of a hand-styled `<a>`; for a button-looking link use `Button asChild`. |
 | `Label` | Form label. Prefer `FormField`, which wires label + error + ids. |
 | `Checkbox`, `Switch` | Boolean inputs. |
 | `RadioGroup`, `RadioGroupItem` | Radix radio group + circle, for your own layout. With labels/descriptions use `RadioList`. |
@@ -55,7 +56,13 @@ repo's `AGENTS.md`.
 | --- | --- |
 | `FormField` | Label + control + error/description with ids wired. Wrap every form control. |
 | `DateInput`, `defaultDateInputLabels` | Day field in the app locale (dd.mm.yyyy), ISO value, `min`/`max`, `isDateDisabled`, calendar button (`picker="calendar"` for the app-styled lazy `Calendar`), native `<input type="date">` on touch devices. Instead of `<input type="date">`. |
-| `parseIsoDay`, `formatIsoDay`, `shiftIsoDay`, `datePlaceholder`, `toLocalIsoDay` | Date helpers. `toLocalIsoDay(new Date())` instead of `toISOString().slice(0, 10)` (UTC day bug). |
+| `TimeInput`, `defaultTimeInputLabels` | Time-of-day field in the app clock (`14:30`, `en-US` 12 h), `HH:mm` value, accepts `9`/`930`/`9.30`, `min`/`max`, ArrowUp/Down by `step` minutes, native `<input type="time">` on touch. Instead of `<input type="time">`. |
+| `DateTimeInput`, `defaultDateTimeInputLabels` | Date + time in one box with a calendar popover; value is a local ISO `yyyy-mm-ddTHH:mm`, `min`/`max` datetimes. Instead of `<input type="datetime-local">`. |
+| `parseTime`, `formatTime`, `toTime`, `shiftTime`, `timePlaceholder` | Time helpers behind `TimeInput`, for use outside the field. |
+| `PhoneInput` | `tel` field that reformats a Swiss number (`079…`, `0041…`, `+41…`) to `+41 79 123 45 67` on blur; other numbers stay as typed. Wrap in `FormField`. |
+| `formatSwissPhone`, `normalizePhone` | The phone normalisation behind `PhoneInput` (Swiss-only vs. any number), for display and import code. |
+| `Rating`, `defaultRatingLabels` | Star rating: radiogroup with arrow keys and hover preview, `allowHalf`, `readOnly` average display, `max`, `size`. Not a score badge (`ScoreBadge`) or a progress bar. |
+| `parseIsoDay`, `formatIsoDay`, `shiftIsoDay`, `datePlaceholder`, `toLocalIsoDay`, `toLocalIsoDateTime` | Date helpers. `toLocalIsoDay(new Date())` instead of `toISOString().slice(0, 10)` (UTC day bug); `toLocalIsoDateTime` likewise for `DateTimeInput` values. |
 | `DateRangePicker`, `defaultDateRangePickerLabels` | "from – to" day fields in one box + range calendar popover; native inputs on touch. Period filters, validity ranges. |
 | `Calendar`, `defaultCalendarLabels` | Always-visible month grid, `mode` single or `range`, min/max, keyboard nav, locale week start. ISO days. |
 | `NumberInput`, `defaultNumberInputLabels` | Locale number field (`1’234.50`, reads `1234,5`), commit on blur/Enter, min/max clamp, ArrowUp/Down, optional `stepper`. Instead of `type="number"`. |

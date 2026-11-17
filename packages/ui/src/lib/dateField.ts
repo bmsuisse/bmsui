@@ -112,6 +112,15 @@ export function toLocalIsoDay(d: Date): string {
   return `${pad(d.getFullYear(), 4)}-${pad(d.getMonth() + 1, 2)}-${pad(d.getDate(), 2)}`;
 }
 
+/**
+ * Local date and time as ISO `yyyy-mm-ddTHH:mm` (no seconds, no zone). Not
+ * `d.toISOString().slice(0, 16)`: that is UTC, an hour or two behind Swiss time
+ * and so possibly still yesterday's date.
+ */
+export function toLocalIsoDateTime(d: Date): string {
+  return `${toLocalIsoDay(d)}T${pad(d.getHours(), 2)}:${pad(d.getMinutes(), 2)}`;
+}
+
 const daysInMonth = (year: number, month: number): number => new Date(year, month, 0).getDate();
 
 /**
