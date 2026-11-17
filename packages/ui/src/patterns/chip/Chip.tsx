@@ -149,7 +149,7 @@ export const Chip = forwardRef<HTMLElement, ChipProps>(
             aria-label={removeLabel ?? (text ? `${l.remove} ${text}` : l.remove)}
             onClick={onRemove}
             className={cn(
-              "inline-flex shrink-0 items-center justify-center rounded-full outline-none transition-[background-color,scale] hover:bg-foreground/10 focus-visible:ring-2 focus-visible:ring-ring active:scale-90 motion-reduce:transition-none motion-reduce:active:scale-100",
+              "inline-flex shrink-0 items-center justify-center rounded-[var(--radius-pill,9999px)] outline-none transition-[background-color,scale] hover:bg-foreground/10 focus-visible:ring-2 focus-visible:ring-ring active:scale-90 motion-reduce:transition-none motion-reduce:active:scale-100",
               size === "sm" ? "size-4" : "size-5 pointer-coarse:size-7",
             )}
           >

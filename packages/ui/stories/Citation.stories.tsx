@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
+import type { Decorator, Meta, StoryObj } from "@storybook/react-vite";
 import { Citation, SourceList, type CitationSource } from "@bmsuisse/ui";
 
 const SOURCES: CitationSource[] = [
@@ -12,12 +12,17 @@ const meta: Meta<typeof Citation> = {
   component: Citation,
   args: { index: 1, source: SOURCES[0] },
 };
+const inSentence: Decorator = (Story) => (
+  <p className="text-sm leading-6">
+    Turnover grew by 4 %<Story />.
+  </p>
+);
 export default meta;
 type Story = StoryObj<typeof Citation>;
 
-export const Default: Story = {};
-export const UnknownSource: Story = { args: { source: undefined, index: 4 } };
-export const UnsafeUrl: Story = { args: { source: SOURCES[2] } };
+export const Default: Story = { decorators: [inSentence] };
+export const UnknownSource: Story = { decorators: [inSentence], args: { source: undefined, index: 4 } };
+export const UnsafeUrl: Story = { decorators: [inSentence], args: { source: SOURCES[2] } };
 
 export const InText: Story = {
   render: () => (
@@ -40,5 +45,6 @@ export const WithSourceList: StoryObj<typeof SourceList> = {
 };
 
 export const GermanLabels: Story = {
+  decorators: [inSentence],
   args: { labels: { source: (n, title) => `Quelle ${n}: ${title}` } },
 };

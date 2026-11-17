@@ -116,7 +116,7 @@ export const BannerAction = forwardRef<HTMLButtonElement, ButtonHTMLAttributes<H
       ref={ref}
       type={type}
       className={cn(
-        "inline-flex shrink-0 items-center gap-1 rounded-[var(--radius-pill,9999px)] bg-current/15 px-3 py-1.5 text-xs font-semibold outline-none transition-colors hover:bg-current/25 focus-visible:ring-2 focus-visible:ring-current disabled:pointer-events-none disabled:opacity-50 motion-reduce:transition-none max-md:min-h-11 max-md:px-4 [&_svg]:size-3.5 [&_svg]:shrink-0",
+        "inline-flex shrink-0 items-center gap-1 rounded-[var(--radius-pill,9999px)] bg-transparent px-3 py-1.5 ring-1 ring-inset ring-current/40 text-xs font-semibold outline-none transition-colors hover:bg-current/15 focus-visible:ring-2 focus-visible:ring-current disabled:pointer-events-none disabled:opacity-50 motion-reduce:transition-none max-md:min-h-11 max-md:px-4 [&_svg]:size-3.5 [&_svg]:shrink-0",
         className,
       )}
       {...props}

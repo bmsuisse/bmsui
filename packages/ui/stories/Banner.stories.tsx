@@ -66,6 +66,8 @@ export const OfflineWithHook: Story = {
       <div className="flex flex-col gap-3">
         <Banner open={!online} icon={<SignalSlashIcon />}>You are offline.</Banner>
         <p className="px-4 text-sm text-muted-foreground">Status: {online ? "online" : "offline"}. Toggle the network in dev tools.</p>
+        <p className="px-4 text-sm text-muted-foreground">The offline state, always shown:</p>
+        <Banner open icon={<SignalSlashIcon />}>You are offline.</Banner>
       </div>
     );
   },
