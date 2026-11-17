@@ -16,3 +16,15 @@ export const WithLabel: Story = {
 };
 export const Disabled: Story = { args: { disabled: true, value: "Read only" } };
 export const Invalid: Story = { args: { "aria-invalid": true, defaultValue: "Too short" } };
+export const AutoResize: Story = {
+  args: { autoResize: true, defaultValue: "Type more lines and this grows with the content.\nSecond line." },
+  render: (args) => <Textarea className="w-80 max-w-full" {...args} />,
+};
+export const AutoResizeMaxRows: Story = {
+  args: {
+    autoResize: true,
+    maxRows: 4,
+    defaultValue: "One\nTwo\nThree\nFour\nFive\nSix - scrolls after four rows",
+  },
+  render: (args) => <Textarea className="w-80 max-w-full" {...args} />,
+};
