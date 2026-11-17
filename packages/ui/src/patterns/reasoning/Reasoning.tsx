@@ -1,7 +1,8 @@
 import { ChevronRightIcon } from "@heroicons/react/20/solid";
 import { LightBulbIcon } from "@heroicons/react/24/outline";
-import { type HTMLAttributes, type ReactNode, forwardRef, useEffect, useRef, useState } from "react";
+import { type HTMLAttributes, type ReactNode, forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { FoldPanel } from "../../lib/FoldPanel";
+import { SCROLL_FOCUS_WRAPPER, SCROLL_REGION, useScrollFade } from "../../lib/scrollFade";
 import { SHIMMER_CLASSES, useShimmer } from "../../lib/useShimmer";
 import { cn } from "../../lib/utils";
 import { Collapsible, CollapsibleTrigger } from "../../primitives/collapsible";
@@ -54,7 +55,16 @@ export const Reasoning = forwardRef<HTMLDivElement, ReasoningProps>(
     const shimmer = useShimmer<HTMLSpanElement>(streaming);
 
     // Follow the newest text while streaming; stop following once the reader scrolls up.
-    const scroller = useRef<HTMLDivElement>(null);
+    const scroller = useRef<HTMLDivElement | null>(null);
+    const fade = useScrollFade<HTMLDivElement>();
+    const fadeRef = fade.ref;
+    const setScroller = useCallback(
+      (node: HTMLDivElement | null) => {
+        scroller.current = node;
+        fadeRef(node);
+      },
+      [fadeRef],
+    );
     const inner = useRef<HTMLDivElement>(null);
     useEffect(() => {
       const scrollEl = scroller.current;
@@ -108,14 +118,22 @@ export const Reasoning = forwardRef<HTMLDivElement, ReasoningProps>(
           />
         </CollapsibleTrigger>
         <FoldPanel open={open}>
-          <div
-            ref={scroller}
-            style={{ maxHeight }}
-            aria-busy={streaming || undefined}
-            className="ml-[7px] overflow-y-auto border-l border-foreground/10 pl-4 text-sm leading-relaxed text-muted-foreground [overflow-wrap:anywhere] dark:border-border"
-          >
-            <div ref={inner} className="space-y-3 py-1.5">
-              {children}
+          <div className={cn("ml-[7px]", SCROLL_FOCUS_WRAPPER)}>
+            <div
+              ref={setScroller}
+              tabIndex={open ? 0 : -1}
+              role="region"
+              aria-label={label}
+              style={{ maxHeight, ...fade.style }}
+              aria-busy={streaming || undefined}
+              className={cn(
+                "overflow-y-auto border-l border-foreground/10 pl-4 text-sm leading-relaxed text-muted-foreground [overflow-wrap:anywhere] dark:border-border",
+                SCROLL_REGION,
+              )}
+            >
+              <div ref={inner} className="space-y-3 py-1.5">
+                {children}
+              </div>
             </div>
           </div>
         </FoldPanel>

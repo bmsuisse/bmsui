@@ -1,5 +1,5 @@
 import { ChevronRightIcon } from "@heroicons/react/20/solid";
-import { ArrowPathIcon, CheckCircleIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, CheckCircleIcon, ClockIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import {
   Children,
   type HTMLAttributes,
@@ -77,7 +77,7 @@ const StatusIcon = ({ status, label }: { status: ToolCallStatus; label: string }
     ) : status === "error" ? (
       <ExclamationTriangleIcon aria-hidden="true" className={cn(STATUS_ICON_CLASS, "text-red-700 dark:text-red-300")} />
     ) : (
-      <span aria-hidden="true" className="h-3 w-3 rounded-full border border-dashed border-muted-foreground" />
+      <ClockIcon aria-hidden="true" className={cn(STATUS_ICON_CLASS, "text-muted-foreground")} />
     )}
   </span>
 );
@@ -132,14 +132,14 @@ export const ToolCallCard = forwardRef<HTMLDivElement, ToolCallCardProps>(
     const head = (
       <>
         {icon ?? <StatusIcon status={status} label={statusLabel} />}
-        <span className="flex min-w-0 flex-1 flex-col sm:flex-row sm:items-center sm:gap-2">
+        <span className="flex min-w-0 flex-1 flex-col sm:flex-row sm:items-start sm:gap-2">
           <span
             ref={shimmer}
-            className={cn("min-w-0 truncate font-mono text-xs font-medium text-foreground sm:max-w-[60%] sm:shrink-0", status === "running" && SHIMMER_CLASSES)}
+            className={cn("min-w-0 font-mono text-xs font-medium text-foreground [overflow-wrap:anywhere] sm:max-w-[60%] sm:shrink-0", status === "running" && SHIMMER_CLASSES)}
           >
             {name}
           </span>
-          {summary != null ? <span className="min-w-0 truncate text-xs text-muted-foreground sm:flex-1">{summary}</span> : null}
+          {summary != null ? <span title={typeof summary === "string" ? summary : undefined} className="line-clamp-2 min-w-0 text-xs text-muted-foreground [overflow-wrap:anywhere] sm:flex-1">{summary}</span> : null}
         </span>
         {time ? <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">{time}</span> : null}
       </>
@@ -162,7 +162,7 @@ export const ToolCallCard = forwardRef<HTMLDivElement, ToolCallCardProps>(
         {...props}
       >
         {hasBody ? (
-          <CollapsibleTrigger className="group/tc flex min-h-9 w-full items-center gap-2 rounded-[inherit] px-3 py-1.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          <CollapsibleTrigger className="group/tc flex min-h-9 w-full items-start gap-2 rounded-[inherit] px-3 py-1.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             {head}
             <ChevronRightIcon
               aria-hidden="true"
@@ -170,7 +170,7 @@ export const ToolCallCard = forwardRef<HTMLDivElement, ToolCallCardProps>(
             />
           </CollapsibleTrigger>
         ) : (
-          <div className="flex min-h-9 items-center gap-2 px-3 py-1.5">{head}</div>
+          <div className="flex min-h-9 items-start gap-2 px-3 py-1.5">{head}</div>
         )}
         {hasBody ? (
           <FoldPanel open={open}>

@@ -318,7 +318,7 @@ export const TimelineItem = ({
       >
         <div
           className={cn(
-            "min-h-0",
+            "min-h-0 min-w-0",
             animated &&
               "transition-opacity duration-200 ease-out group-data-[state=closed]/tid:opacity-0 group-data-[state=closed]/tid:duration-150 group-data-[state=closed]/tid:ease-in motion-reduce:transition-none",
           )}

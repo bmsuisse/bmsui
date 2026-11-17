@@ -33,7 +33,7 @@ export const FoldPanel = ({
     >
       <div
         className={cn(
-          "min-h-0 transition-opacity duration-200 ease-out group-data-[state=closed]/fp:opacity-0 group-data-[state=closed]/fp:duration-150 group-data-[state=closed]/fp:ease-in motion-reduce:transition-none",
+          "min-h-0 min-w-0 transition-opacity duration-200 ease-out group-data-[state=closed]/fp:opacity-0 group-data-[state=closed]/fp:duration-150 group-data-[state=closed]/fp:ease-in motion-reduce:transition-none",
           innerClassName,
         )}
       >

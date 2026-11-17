@@ -35,4 +35,13 @@ describe("Reasoning", () => {
     fireEvent.click(trigger);
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
+
+  it("makes the scrolling text a focusable labelled region only while open", () => {
+    const { rerender } = render(<Reasoning streaming>so far</Reasoning>);
+    const region = screen.getByText("so far").closest("[role=region]");
+    expect(region).toHaveAttribute("tabindex", "0");
+    expect(region).toHaveAttribute("aria-label", "Thinking…");
+    rerender(<Reasoning duration={2}>so far</Reasoning>);
+    expect(screen.getByText("so far").closest("[role=region]")).toHaveAttribute("tabindex", "-1");
+  });
 });

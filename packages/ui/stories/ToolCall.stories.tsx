@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { ToolCallCard, ToolCallGroup } from "@bmsuisse/ui";
 
@@ -29,7 +30,7 @@ export const ErrorState: Story = {
   args: { status: "error", summary: "Timed out after 30 s", duration: 30000, output: undefined, error: "Query exceeded the 30 s limit. Narrow the date range and retry." },
 };
 export const NoDetails: Story = { args: { input: undefined, output: undefined, summary: "Loaded the sales skill" } };
-export const TextPayload: Story = { args: { input: "SELECT 1;", output: "1 row affected", name: "execute_sql", summary: undefined } };
+export const TextPayload: Story = { args: { input: "SELECT 1;", output: "1 row affected", name: "execute_sql", summary: undefined, defaultOpen: true } };
 export const LongText: Story = {
   args: {
     name: "search_products_by_manufacturer_article_identifier",
@@ -37,9 +38,9 @@ export const LongText: Story = {
     duration: 125000,
   },
 };
-export const CustomIcon: Story = { args: { icon: <span aria-hidden>🔎</span> } };
+export const CustomIcon: Story = { args: { icon: <MagnifyingGlassIcon aria-hidden="true" className="h-4 w-4 shrink-0" /> } };
 export const GermanLabels: Story = {
-  args: { status: "error", error: "Zeitüberschreitung", labels: { error: "Fehlgeschlagen", input: "Eingabe", output: "Ausgabe", errorDetails: "Fehler" } },
+  args: { status: "error", summary: "Abgebrochen nach 30 s", output: undefined, error: "Zeitüberschreitung", labels: { error: "Fehlgeschlagen", input: "Eingabe", output: "Ausgabe", errorDetails: "Fehler" } },
 };
 
 export const Group: StoryObj<typeof ToolCallGroup> = {

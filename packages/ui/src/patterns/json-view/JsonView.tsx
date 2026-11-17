@@ -1,6 +1,7 @@
 import { ChevronRightIcon } from "@heroicons/react/20/solid";
 import { type HTMLAttributes, type ReactElement, useMemo, useState } from "react";
 import { FoldPanel } from "../../lib/FoldPanel";
+import { SCROLL_FOCUS_WRAPPER, SCROLL_REGION, useScrollFade } from "../../lib/scrollFade";
 import { cn } from "../../lib/utils";
 import { Collapsible, CollapsibleTrigger } from "../../primitives/collapsible";
 import { CopyIconButton, type CopyIconButtonLabels, defaultCopyIconButtonLabels } from "../code-block/CopyIconButton";
@@ -65,6 +66,7 @@ export const JsonView = ({
   const l = { ...defaultJsonViewLabels, ...labels };
   const [uncontrolled, setUncontrolled] = useState(defaultOpen);
   const open = openProp ?? uncontrolled;
+  const fade = useScrollFade<HTMLDivElement>();
   const text = useMemo(() => serialise(value), [value]);
   const size = formatBytes(new TextEncoder().encode(text).length);
   const count = Array.isArray(value)
@@ -87,12 +89,12 @@ export const JsonView = ({
       {...props}
     >
       <div className={cn("flex min-h-9 items-center gap-1 px-1", open && "border-b border-foreground/10 dark:border-border")}>
-        <CollapsibleTrigger className="group/jv flex min-h-8 min-w-0 flex-1 items-center gap-1.5 rounded-md px-1.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        <CollapsibleTrigger className="group/jv flex min-h-8 min-w-0 flex-1 items-center gap-1.5 rounded-md px-1.5 py-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
           <ChevronRightIcon
             aria-hidden="true"
             className="h-4 w-4 shrink-0 text-muted-foreground transition-[rotate] duration-200 ease-out group-data-[state=open]/jv:rotate-90 motion-reduce:transition-none"
           />
-          <span className="truncate text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</span>
+          <span className="min-w-0 [overflow-wrap:anywhere] text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</span>
           <span className="ml-auto shrink-0 pl-2 text-[11px] tabular-nums text-muted-foreground">
             {count ? `${count} · ` : ""}
             {size}
@@ -101,14 +103,17 @@ export const JsonView = ({
         <CopyIconButton value={text} labels={l} label={`${l.copy} ${label}`} testId="json-view-copy" />
       </div>
       <FoldPanel open={open}>
-        <div
-          tabIndex={open ? 0 : -1}
-          role="region"
-          aria-label={label}
-          style={{ maxHeight }}
-          className="overflow-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-        >
-          <pre className="m-0 min-w-fit whitespace-pre p-3 font-mono text-xs leading-5">{text}</pre>
+        <div className={SCROLL_FOCUS_WRAPPER}>
+          <div
+            ref={fade.ref}
+            tabIndex={open ? 0 : -1}
+            role="region"
+            aria-label={label}
+            style={{ maxHeight, ...fade.style }}
+            className={cn("overflow-auto", SCROLL_REGION)}
+          >
+            <pre className="m-0 min-w-fit whitespace-pre p-3 font-mono text-xs leading-5">{text}</pre>
+          </div>
         </div>
       </FoldPanel>
     </Collapsible>

@@ -1,4 +1,5 @@
 import { type HTMLAttributes, type ReactNode, forwardRef, useMemo } from "react";
+import { SCROLL_FOCUS_WRAPPER, SCROLL_REGION, useScrollFade } from "../../lib/scrollFade";
 import { cn } from "../../lib/utils";
 import { CopyIconButton, type CopyIconButtonLabels, defaultCopyIconButtonLabels } from "./CopyIconButton";
 
@@ -42,6 +43,7 @@ export const CodeBlock = forwardRef<HTMLDivElement, CodeBlockProps>(
     const lineCount = useMemo(() => code.split("\n").length, [code]);
     const gutter = lineNumbers && !wrap;
     const heading = title ?? language;
+    const fade = useScrollFade<HTMLDivElement>();
     return (
       <div
         ref={ref}
@@ -58,12 +60,14 @@ export const CodeBlock = forwardRef<HTMLDivElement, CodeBlockProps>(
             {copyable ? <CopyIconButton value={code} labels={l} testId="code-block-copy" /> : null}
           </div>
         ) : null}
+        <div className={SCROLL_FOCUS_WRAPPER}>
         <div
+          ref={fade.ref}
           tabIndex={0}
           role="region"
           aria-label={typeof heading === "string" ? heading : "Code"}
-          style={maxHeight != null ? { maxHeight } : undefined}
-          className="overflow-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+          style={{ ...(maxHeight != null ? { maxHeight } : null), ...fade.style }}
+          className={cn("overflow-auto", SCROLL_REGION)}
         >
           <div className="flex min-w-fit font-mono text-xs leading-5">
             {gutter ? (
@@ -79,6 +83,7 @@ export const CodeBlock = forwardRef<HTMLDivElement, CodeBlockProps>(
               <code data-language={language}>{highlight ? highlight(code, language) : code}</code>
             </pre>
           </div>
+        </div>
         </div>
       </div>
     );
