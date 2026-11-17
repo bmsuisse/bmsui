@@ -6,7 +6,7 @@ import { forwardRef } from "react";
 import { cn } from "../lib/utils";
 
 export const linkVariants = cva(
-  "inline-flex items-center gap-1 rounded-sm underline-offset-4 transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background aria-disabled:pointer-events-none aria-disabled:opacity-50",
+  "inline rounded-sm box-decoration-clone underline-offset-4 transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background aria-disabled:pointer-events-none aria-disabled:opacity-50",
   {
     variants: {
       variant: {
@@ -15,7 +15,7 @@ export const linkVariants = cva(
         // Quiet navigation (breadcrumb-like, "Back", table cells): muted until hovered.
         subtle: "text-muted-foreground hover:text-foreground hover:underline",
         // Link inside running text: takes the surrounding colour and size, always underlined.
-        inline: "inline gap-0 font-medium text-inherit underline decoration-current/40 hover:decoration-current",
+        inline: "font-medium text-inherit underline decoration-current/40 hover:decoration-current",
       },
     },
     defaultVariants: { variant: "default" },
@@ -38,7 +38,7 @@ export interface LinkProps extends AnchorHTMLAttributes<HTMLAnchorElement>, Vari
 }
 
 /**
- * Text link. Underlines on hover, shows a focus ring, and keeps `rel` safe for new tabs.
+ * Text link (inline, so long labels wrap and the icon stays with the last word; a leading icon child needs its own margin). Underlines on hover, shows a focus ring, and keeps `rel` safe for new tabs.
  * `variant`: `default` accent, `subtle` muted, `inline` for links inside a sentence.
  * With `asChild` the child element carries the link (`<Link asChild><RouterLink to="/x">Orders</RouterLink></Link>`),
  * so client-side routing keeps working. For a link that looks like a button use `Button asChild`.
@@ -63,7 +63,10 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(
         {asChild ? <Slottable>{children}</Slottable> : children}
         {external ? (
           <>
-            <ArrowTopRightOnSquareIcon aria-hidden="true" className={cn("inline-block h-[0.85em] w-[0.85em] shrink-0", variant === "inline" && "ml-1 align-[-0.1em]")} />
+            <span className="whitespace-nowrap">
+              <span aria-hidden="true">&#8288;</span>
+              <ArrowTopRightOnSquareIcon aria-hidden="true" className="ml-1 inline-block h-[0.85em] w-[0.85em] shrink-0 align-[-0.1em]" />
+            </span>
             <span className="sr-only">{l.newTab}</span>
           </>
         ) : null}

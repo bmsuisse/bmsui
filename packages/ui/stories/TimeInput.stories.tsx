@@ -26,10 +26,13 @@ export const Step15: Story = { args: { step: 15 }, parameters: { docs: { descrip
 export const TwelveHour: Story = { args: { locale: "en-US", value: "14:30" } };
 export const NativeControl: Story = { args: { native: "always" }, parameters: { docs: { description: { story: "What touch devices get with `native=\"auto\"`." } } } };
 export const Disabled: Story = { args: { disabled: true } };
-export const ReadOnly: Story = { args: { readOnly: true } };
+export const ReadOnly: Story = {
+  args: { readOnly: true },
+  parameters: { docs: { description: { story: "Read-only has no visual cue (same as DateInput and NumberInput): the value just cannot be edited." } } },
+};
 export const Invalid: Story = { args: { value: "09:30", "aria-invalid": true } };
 export const German: Story = {
-  args: { value: "", labels: { invalid: "Bitte eine gültige Uhrzeit eingeben", outOfRange: "Uhrzeit ausserhalb des Bereichs" }, min: "08:00" },
+  args: { value: "14:30", locale: "de-CH", labels: { invalid: "Bitte eine gültige Uhrzeit eingeben", outOfRange: "Uhrzeit ausserhalb des Bereichs" }, min: "08:00" },
 };
 export const InFormField: Story = {
   render: (args) => {

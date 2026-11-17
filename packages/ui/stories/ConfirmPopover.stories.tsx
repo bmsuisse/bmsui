@@ -19,7 +19,16 @@ type Story = StoryObj<typeof ConfirmPopover>;
 
 export const Default: Story = {};
 export const DefaultTone: Story = { args: { tone: "default", message: "Publish this version to all users?", confirmLabel: "Publish", trigger: <Button>Publish</Button> } };
-export const OpenOnTop: Story = { args: { defaultOpen: true, side: "bottom" } };
+export const OpenOnTop: Story = {
+  args: { defaultOpen: true, side: "top" },
+  decorators: [
+    (Story) => (
+      <div className="flex min-h-56 items-end justify-end">
+        <Story />
+      </div>
+    ),
+  ],
+};
 export const Pending: Story = { args: { defaultOpen: true, pending: true } };
 export const LabelsOverride: Story = { args: { defaultOpen: true, labels: { confirm: "Löschen", keep: "Behalten" }, message: "Entwurf löschen?" } };
 export const AsyncConfirm: Story = {
