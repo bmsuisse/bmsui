@@ -38,7 +38,11 @@ export interface ChatConversationProps extends Omit<HTMLAttributes<HTMLDivElemen
   stickToBottom?: boolean;
   /** Changing this value scrolls to the latest message and re-attaches (pass the id of the last message you sent). */
   followKey?: unknown;
-  /** Fires once each time the user scrolls to the top: load the previous page of history. */
+  /**
+   * Fires once each time the user scrolls to the top: load the previous page of history. The component does
+   * not keep the scroll position when history is prepended (Safari has no CSS scroll anchoring), so callers
+   * that prepend should restore `scrollTop` themselves.
+   */
   onReachTop?: () => void;
   /** Shows a spinner row at the top while a history page loads. */
   loadingHistory?: boolean;

@@ -67,8 +67,10 @@ export const JsonView = ({
   const [uncontrolled, setUncontrolled] = useState(defaultOpen);
   const open = openProp ?? uncontrolled;
   const fade = useScrollFade<HTMLDivElement>();
-  const text = useMemo(() => serialise(value), [value]);
-  const size = formatBytes(new TextEncoder().encode(text).length);
+  const { text, size } = useMemo(() => {
+    const serialised = serialise(value);
+    return { text: serialised, size: formatBytes(new TextEncoder().encode(serialised).length) };
+  }, [value]);
   const count = Array.isArray(value)
     ? l.items(value.length)
     : value && typeof value === "object"

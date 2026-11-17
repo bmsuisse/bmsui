@@ -52,8 +52,12 @@ export interface ChatMessageProps extends Omit<HTMLAttributes<HTMLElement>, "tit
   children?: ReactNode;
 }
 
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}/;
+
+/** A Date, epoch ms or ISO string becomes a `Timestamp`; any other node ("Just now") is shown as given. */
 function isTime(value: unknown): value is Date | string | number {
-  return value instanceof Date || typeof value === "string" || typeof value === "number";
+  if (typeof value === "string") return ISO_DAY.test(value) && !Number.isNaN(Date.parse(value));
+  return value instanceof Date || typeof value === "number";
 }
 
 /**

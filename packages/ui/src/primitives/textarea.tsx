@@ -1,5 +1,5 @@
 import type { TextareaHTMLAttributes } from "react";
-import { forwardRef, useCallback, useLayoutEffect, useRef } from "react";
+import { forwardRef, useCallback, useEffect, useLayoutEffect as useReactLayoutEffect, useRef } from "react";
 import { useMergedRefs } from "../hooks/useMergedRefs";
 import { cn } from "../lib/utils";
 
@@ -30,6 +30,9 @@ function fit(el: HTMLTextAreaElement, maxRows: number | undefined) {
   el.style.overflowY = capped ? "auto" : "hidden";
 }
 
+// `useLayoutEffect` warns during server rendering in React 18.
+const useLayoutEffect = typeof window === "undefined" ? useEffect : useReactLayoutEffect;
+
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ className, autoResize = false, maxRows, onInput, rows, ...props }, ref) => {
     const inner = useRef<HTMLTextAreaElement>(null);
@@ -38,7 +41,9 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
       if (autoResize && inner.current) fit(inner.current, maxRows);
     }, [autoResize, maxRows]);
     // Runs after every render: covers controlled value changes, `defaultValue`, and a changed `maxRows`.
-    useLayoutEffect(resize);
+    useLayoutEffect(() => {
+      if (autoResize) resize();
+    });
     useLayoutEffect(() => {
       const el = inner.current;
       if (!autoResize || !el || typeof ResizeObserver === "undefined") return undefined;

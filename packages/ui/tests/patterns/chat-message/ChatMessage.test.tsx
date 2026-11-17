@@ -29,6 +29,11 @@ describe("ChatMessage", () => {
     expect(container.querySelector("time")).not.toBeNull();
   });
 
+  it("shows a non-date string time as given", () => {
+    render(<ChatMessage role="assistant" time="Just now">x</ChatMessage>);
+    expect(screen.getByText("Just now")).toBeInTheDocument();
+  });
+
   it("marks streaming as busy with screen-reader text", () => {
     render(<ChatMessage role="assistant" status="streaming">partial</ChatMessage>);
     expect(screen.getByRole("article")).toHaveAttribute("aria-busy", "true");

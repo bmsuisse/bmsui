@@ -128,6 +128,7 @@ export function DateTimeInput({
   const dateRef = useRef<HTMLInputElement>(null);
   const focusInputOnClose = useRef(false);
   const [open, setOpen] = useState(false);
+  const [timeSync, setTimeSync] = useState(0);
   const messageId = useId();
   const id = props["data-testid"];
   const locked = disabled || readOnly;
@@ -160,6 +161,8 @@ export function DateTimeInput({
     if (lo && combined < lo) combined = lo;
     if (hi && combined > hi) combined = hi;
     setTime(combined.slice(11));
+    // The box was emptied and refilled with the default: remount it, since `value` may not have changed (no resync).
+    if (!nextTime) setTimeSync((n) => n + 1);
     lastEmitted.current = combined;
     if (combined !== value) onValueChange(combined);
   };
@@ -217,6 +220,7 @@ export function DateTimeInput({
             />
             <span aria-hidden="true" className="h-4 w-px shrink-0 bg-foreground/10 dark:bg-border" />
             <TimeInput
+              key={timeSync}
               bare
               aria-label={l.time}
               aria-describedby={describedBy}

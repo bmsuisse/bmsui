@@ -450,7 +450,10 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
             onFocus={(e) => {
               if (e.target === e.currentTarget) setActiveId(node.id);
             }}
-            onClick={() => {
+            onClick={(e) => {
+              // Controls rendered by `renderNode` (buttons, links, menus) handle their own clicks.
+              const inner = (e.target as HTMLElement).closest?.("button, a, input, select, textarea, [role=menuitem]");
+              if (inner && inner !== e.currentTarget && e.currentTarget.contains(inner)) return;
               setActiveId(node.id);
               if (node.disabled) return;
               if (mode !== "none") select(node);

@@ -11,6 +11,7 @@ import {
   useEffect,
   useRef,
 } from "react";
+import { useMergedRefs } from "../../hooks/useMergedRefs";
 import { cn } from "../../lib/utils";
 
 export type AccordionVariant = "plain" | "card";
@@ -139,14 +140,11 @@ export const AccordionContent = forwardRef<ElementRef<typeof AccordionPrimitive.
   ({ className, children, ...props }, ref) => {
     const { variant, animated } = useContext(AccordionContext);
     const [attach] = useInertWhenClosed();
+    const mergedRef = useMergedRefs(attach, ref);
     return (
       <AccordionPrimitive.Content
         forceMount
-        ref={(node) => {
-          attach(node);
-          if (typeof ref === "function") ref(node);
-          else if (ref) ref.current = node;
-        }}
+        ref={mergedRef}
         className={cn(
           "group/accc grid grid-rows-[0fr] overflow-hidden text-sm data-[state=open]:grid-rows-[1fr]",
           animated && "transition-[grid-template-rows] duration-200 ease-out motion-reduce:transition-none",

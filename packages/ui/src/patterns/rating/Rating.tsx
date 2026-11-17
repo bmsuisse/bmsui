@@ -147,7 +147,10 @@ export function Rating({
                 )}
                 onMouseEnter={() => setHover(v)}
                 onFocus={() => setHover(null)}
-                onClick={() => choose(allowClear && v === current ? 0 : v)}
+                onClick={() => {
+                  choose(allowClear && v === current ? 0 : v);
+                  setHover(null);
+                }}
               />
             ))
           : null}

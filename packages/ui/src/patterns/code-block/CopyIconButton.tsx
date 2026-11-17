@@ -1,5 +1,6 @@
 import { CheckIcon, ClipboardDocumentIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import type { ReactElement } from "react";
+import { useEffect } from "react";
 import { announce } from "../../hooks/useAnnounce";
 import { useClipboard } from "../../hooks/useClipboard";
 import { cn } from "../../lib/utils";
@@ -33,7 +34,13 @@ export const CopyIconButton = ({
   className?: string;
   testId?: string;
 }): ReactElement => {
-  const { copy, copied, error } = useClipboard();
+  const { copy, copied, error, reset } = useClipboard();
+  // A failed copy is not sticky: drop the warning state again after a moment.
+  useEffect(() => {
+    if (!error) return undefined;
+    const id = setTimeout(reset, 2000);
+    return () => clearTimeout(id);
+  }, [error, reset]);
   const name = error ? labels.copyFailed : copied ? labels.copied : (label ?? labels.copy);
   return (
     <button
