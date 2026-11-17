@@ -4,6 +4,13 @@ import { describe, expect, it, vi } from "vitest";
 import { PromptSuggestions } from "../../../src/patterns/prompt-suggestions/PromptSuggestions";
 
 describe("PromptSuggestions", () => {
+  it("lets chips wrap their text in wrap mode", () => {
+    render(<PromptSuggestions wrap suggestions={["One"]} />);
+    const chip = screen.getByRole("button", { name: "One" });
+    expect(chip).toHaveClass("whitespace-normal", "max-w-full");
+    expect(chip).not.toHaveClass("whitespace-nowrap");
+  });
+
   it("renders strings as buttons and selects them", async () => {
     const onSelect = vi.fn();
     render(<PromptSuggestions suggestions={["One", "Two"]} onSelect={onSelect} aria-label="Ideas" />);

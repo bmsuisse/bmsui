@@ -33,10 +33,10 @@ export const TypingIndicator = ({
       animate(
         dot,
         [
-          { transform: "translateY(0)", opacity: 0.35 },
+          { transform: "translateY(0)", opacity: 0.5 },
           { transform: "translateY(-25%)", opacity: 1, offset: 0.3 },
-          { transform: "translateY(0)", opacity: 0.35, offset: 0.6 },
-          { transform: "translateY(0)", opacity: 0.35 },
+          { transform: "translateY(0)", opacity: 0.5, offset: 0.6 },
+          { transform: "translateY(0)", opacity: 0.5 },
         ],
         { duration: 1200, delay: i * 160, iterations: Infinity, easing: EASE_OUT },
       ),
@@ -54,7 +54,7 @@ export const TypingIndicator = ({
     >
       <span aria-hidden="true" className="inline-flex items-center gap-1">
         {[0, 1, 2].map((i) => (
-          <span key={i} data-dot className={cn("rounded-full bg-muted-foreground opacity-60", dot)} />
+          <span key={i} data-dot className={cn("rounded-full bg-muted-foreground opacity-70", dot)} />
         ))}
       </span>
       <span className={cn(!showLabel && "sr-only")}>{label}</span>

@@ -72,8 +72,9 @@ export const PromptSuggestions = ({
               onClick={() => onSelect?.(prompt, item)}
               onFocus={(event) => event.currentTarget.scrollIntoView?.({ block: "nearest", inline: "nearest" })}
               className={cn(
-                "inline-flex min-h-8 shrink-0 items-center whitespace-nowrap rounded-[var(--radius-pill,9999px)] border border-foreground/10 bg-background px-3 text-sm text-foreground transition-colors dark:border-border",
+                "inline-flex min-h-8 items-center rounded-[var(--radius-pill,9999px)] border border-foreground/10 bg-background px-3 text-sm text-foreground transition-colors dark:border-border",
                 "hover:bg-foreground/6 active:bg-foreground/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+                wrap ? "max-w-full shrink whitespace-normal py-1 text-left" : "shrink-0 whitespace-nowrap",
                 "disabled:pointer-events-none disabled:opacity-50 max-sm:min-h-9",
               )}
             >
