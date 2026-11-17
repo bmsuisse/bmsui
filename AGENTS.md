@@ -853,6 +853,24 @@ consuming app's dark `--nav-primary` must be a light accent (e.g. `var(--ring)`)
 grip and Breadcrumbs separators use `muted-foreground/70`; Combobox chevron `opacity-70`;
 FacetFilter checkbox uses the primitive's default border.
 
+### Suggested components (ui 0.28.0)
+
+Added after comparing against MUI/Untitled UI/HeroUI/Ant (no charts), porting from OneDocs/OneSales/OneHub
+where an implementation existed. Each has a story, tests and a `CATALOG.md` line.
+
+- General: `Chip`, `Banner`, `useOnlineStatus`, `ConfirmPopover`, `CopyButton`, `LiveIndicator`, `StatStrip`,
+  `SkipLinks`, `Timeline`, `Accordion`, `ContextMenu`, `TimeInput`/`DateTimeInput`, `PhoneInput` (Swiss),
+  `Rating`, `Link`, `TreeView`, `BottomNavigation`; `Textarea` gained additive `autoResize`/`maxRows`.
+- AI/chat: `ChatMessage`, `ChatConversation`, `PromptInput`, `PromptSuggestions`, `ApprovalCard`,
+  `ToolCallCard`/`ToolCallGroup`, `Reasoning`, `Citation`/`SourceList`, `CodeBlock`, `JsonView`, `TypingIndicator`.
+- Conventions learned in review: the user bubble, `PromptInput` send button and `BottomNavigation` FAB use
+  plain `bg-primary` (the `dark:bg-accent` override failed contrast there); `lib/FoldPanel` inner div needs
+  `min-w-0` or wide `<pre>`/JSON is clipped; scrollable code/JSON/reasoning regions are focusable and use
+  `lib/scrollFade.ts` (edge-fade mask); text that can be long wraps (`line-clamp`/`[overflow-wrap:anywhere]`)
+  instead of `truncate`; fixed-height bars use `min-h-*` so large root font sizes grow them.
+- Known follow-ups: `ChatConversation` scroll anchoring on iOS Safari is untested; `text-[11px]/[13px]` do not
+  scale with root font size.
+
 ## Public API reports — `packages/*/api-report.md`
 
 `bun run api-report` (`scripts/api-report.ts`) reads the **built**
