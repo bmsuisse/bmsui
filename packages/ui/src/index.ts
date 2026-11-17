@@ -88,6 +88,23 @@ export {
 } from "./primitives/sheet";
 export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./primitives/tooltip";
 export { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./primitives/collapsible";
+export {
+  ContextMenu,
+  ContextMenuCheckboxItem,
+  ContextMenuContent,
+  ContextMenuGroup,
+  ContextMenuItem,
+  ContextMenuLabel,
+  ContextMenuPortal,
+  ContextMenuRadioGroup,
+  ContextMenuRadioItem,
+  ContextMenuSeparator,
+  ContextMenuShortcut,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
+  ContextMenuTrigger,
+} from "./primitives/context-menu";
 export { HoverCard, HoverCardContent, HoverCardTrigger } from "./primitives/hover-card";
 export { RadioGroup, RadioGroupItem } from "./primitives/radio-group";
 export type { SliderProps } from "./primitives/slider";
@@ -256,6 +273,19 @@ export type {
   AvatarSize,
 } from "./patterns/avatar/Avatar";
 export { Avatar, AvatarGroup, avatarColorIndex, defaultAvatarGroupLabels, getInitials } from "./patterns/avatar/Avatar";
+
+export type {
+  TimelineGroupProps,
+  TimelineItemProps,
+  TimelineLabels,
+  TimelineProps,
+  TimelineSize,
+  TimelineStatus,
+} from "./patterns/timeline/Timeline";
+export { defaultTimelineLabels, Timeline, TimelineGroup, TimelineItem } from "./patterns/timeline/Timeline";
+
+export type { AccordionContentProps, AccordionProps, AccordionTriggerProps, AccordionVariant } from "./patterns/accordion/Accordion";
+export { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./patterns/accordion/Accordion";
 
 export type { CollapsibleSectionProps } from "./patterns/collapsible-section/CollapsibleSection";
 export { CollapsibleSection } from "./patterns/collapsible-section/CollapsibleSection";
