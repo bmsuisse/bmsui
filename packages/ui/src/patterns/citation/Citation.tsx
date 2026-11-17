@@ -111,7 +111,7 @@ export const SourceList = ({ sources, start = 1, labels, className }: SourceList
           const n = start + i;
           const body = (
             <>
-              <span className="min-w-0 truncate font-medium">{source.title}</span>
+              <span className="min-w-0 line-clamp-2 [overflow-wrap:anywhere] font-medium">{source.title}</span>
               <span className="shrink-0 text-muted-foreground">{getSourceDomain(source)}</span>
             </>
           );

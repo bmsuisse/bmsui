@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { LiveIndicator } from "@bmsuisse/ui";
 
 // Fixed instant so screenshots are stable (time shown in the viewer's zone).
-const AT = Date.UTC(2026, 10, 17, 13, 2, 11);
+const AT = new Date(2026, 10, 17, 14, 2, 11).getTime();
 
 const meta: Meta<typeof LiveIndicator> = {
   title: "Patterns/LiveIndicator",

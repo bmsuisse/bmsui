@@ -76,20 +76,20 @@ export const StatStripItem = forwardRef<HTMLLIElement, StatStripItemProps>(
     const flashing = useFlashing(typeof value === "object" ? null : value, animated);
     const inner = (
       <>
-        <span className="block truncate text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</span>
+        <span className="block line-clamp-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</span>
         {loading ? (
           <Skeleton role="status" aria-label={loadingLabel} className="mt-1 h-6 w-16" />
         ) : (
           <span
             className={cn(
-              "-mx-1 block w-fit max-w-full truncate rounded-sm px-1 text-lg font-semibold tabular-nums text-foreground",
+              "-mx-1 block w-fit max-w-full break-words rounded-sm px-1 text-lg leading-tight font-semibold tabular-nums text-foreground",
               flashing ? "bg-primary/15 dark:bg-ring/25" : "bg-transparent transition-colors duration-700 ease-out motion-reduce:transition-none",
             )}
           >
             {value}
           </span>
         )}
-        {sub ? <span className={cn("block truncate text-xs tabular-nums", TONE[tone])}>{sub}</span> : null}
+        {sub ? <span className={cn("block break-words text-xs tabular-nums", TONE[tone])}>{sub}</span> : null}
       </>
     );
     const cell = "block w-full min-w-0 bg-background px-3 py-2 text-left";
