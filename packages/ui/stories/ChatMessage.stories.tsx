@@ -47,6 +47,9 @@ export const AssistantError: Story = {
   },
 };
 export const WithActions: Story = {
+  play: async ({ canvasElement }) => {
+    canvasElement.querySelector("button")?.focus();
+  },
   args: {
     role: "assistant",
     name: "Assistant",

@@ -101,8 +101,8 @@ export const ApprovalCard = forwardRef<HTMLElement, ApprovalCardProps>(
         )}
         {...props}
       >
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-foreground/10 px-3 py-2.5 dark:border-border">
-          <ShieldCheckIcon className="size-4 shrink-0 text-primary dark:text-ring" aria-hidden="true" />
+        <div className="flex flex-wrap items-start gap-x-3 gap-y-1 border-b border-foreground/10 px-3 py-2.5 dark:border-border">
+          <ShieldCheckIcon className="mt-0.5 size-4 shrink-0 text-primary dark:text-ring" aria-hidden="true" />
           <h3 id={titleId} className="min-w-0 flex-1 basis-40 font-semibold [overflow-wrap:anywhere]">
             {title}
           </h3>
@@ -113,7 +113,7 @@ export const ApprovalCard = forwardRef<HTMLElement, ApprovalCardProps>(
         <div className="flex flex-col gap-3 p-3">
           {description ? <div className="text-muted-foreground [overflow-wrap:anywhere]">{description}</div> : null}
           {details ? (
-            <div className="min-w-0 max-h-72 overflow-auto rounded-md border border-foreground/10 p-2 dark:border-border [overflow-wrap:anywhere]">
+            <div tabIndex={0} className="min-w-0 max-h-72 overflow-auto rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring border border-foreground/10 p-2 dark:border-border [overflow-wrap:anywhere]">
               {details}
             </div>
           ) : null}

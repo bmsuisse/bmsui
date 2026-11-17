@@ -24,7 +24,7 @@ export const Empty: Story = {
     <ChatConversation empty={<p className="text-center text-sm text-muted-foreground">Ask anything to get started.</p>} />
   ),
 };
-export const LoadingHistory: Story = { render: () => <ChatConversation loadingHistory>{messages.slice(0, 6)}</ChatConversation> };
+export const LoadingHistory: Story = { render: () => <ChatConversation loadingHistory>{messages.slice(0, 2)}</ChatConversation> };
 export const WithComposer: Story = {
   render: () => {
     const [items, setItems] = useState<string[]>(["First message", "Second message"]);

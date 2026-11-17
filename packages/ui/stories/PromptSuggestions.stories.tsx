@@ -34,6 +34,9 @@ export const ObjectsWithPrompt: Story = {
   },
 };
 export const Selecting: Story = {
+  play: async ({ canvasElement }) => {
+    canvasElement.querySelectorAll("button")[1]?.click();
+  },
   render: (args) => {
     const [picked, setPicked] = useState<string>("");
     return (

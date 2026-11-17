@@ -40,7 +40,7 @@ export interface ChatMessageProps extends Omit<HTMLAttributes<HTMLElement>, "tit
   avatar?: ReactNode | boolean;
   /** Date, ISO string or epoch ms (rendered with `Timestamp`), or any node. */
   time?: Date | string | number | ReactNode;
-  /** `sending` dims the bubble, `streaming` shows a live caret and sets `aria-busy`, `error` shows the error line with Retry. */
+  /** `sending` shows a "Sending…" caption, `streaming` shows a live caret and sets `aria-busy`, `error` shows the error line with Retry. */
   status?: ChatMessageStatus;
   /** Error shown for `status="error"`; defaults to `labels.failed`. */
   error?: ErrorInput;
@@ -114,9 +114,8 @@ export const ChatMessage = forwardRef<HTMLElement, ChatMessageProps>(
             className={cn(
               "min-w-0 max-w-full text-sm leading-6 [overflow-wrap:anywhere] [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto",
               user
-                ? "whitespace-pre-wrap rounded-2xl bg-primary px-3.5 py-2 text-primary-foreground sm:max-w-[85%] dark:bg-accent dark:text-accent-foreground"
+                ? "whitespace-pre-wrap rounded-2xl bg-primary px-3.5 py-2 text-primary-foreground sm:max-w-[85%]"
                 : "w-full text-foreground",
-              status === "sending" && "opacity-70",
               status === "error" && user && "ring-2 ring-red-700 ring-offset-1 ring-offset-background dark:ring-red-300",
             )}
           >

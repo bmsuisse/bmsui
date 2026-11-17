@@ -191,7 +191,7 @@ export const PromptInput = forwardRef<HTMLFormElement, PromptInputProps>(
                 aria-label={l.send}
                 title={l.send}
                 disabled={!canSend}
-                className="size-9 rounded-[var(--radius-pill,9999px)] sm:size-8 dark:bg-accent dark:text-accent-foreground dark:hover:bg-accent/90"
+                className="size-9 rounded-[var(--radius-pill,9999px)] sm:size-8"
               >
                 <ArrowUpIcon className="stroke-[2.25]" aria-hidden="true" />
               </Button>
