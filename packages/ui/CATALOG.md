@@ -41,6 +41,7 @@ repo's `AGENTS.md`.
 | Export | Use for |
 | --- | --- |
 | `Modal` | Generic dialog: title, description, body, footer. |
+| `ConfirmPopover`, `defaultConfirmPopoverLabels` | In-page confirm next to a risky button (no modal): message, Keep/Confirm, focus on the safe action, async-aware. |
 | `FormModal` | Dialog wrapping a form; does **not** auto-close on submit (server validation). |
 | `ConfirmDialog` | "Are you sure?"; closes itself after a successful confirm. |
 | `QuestionDialog` | Question with several actions + Cancel ("Save changes before closing?"). |
@@ -85,6 +86,9 @@ repo's `AGENTS.md`.
 | `AlertBox` | Inline error/warning/info/success banner. |
 | `StatusBadge` | Status string → colored badge. |
 | `StatusDot` | Quiet status: colored dot + label (table cells, presence). Same tones/vocabulary as `StatusBadge`. |
+| `Chip`, `chipClass`, `defaultChipLabels` | Pill for a value the user picked: static, `selected`, toggle (`onClick`, `aria-pressed`) or removable (`onRemove`, x/Backspace). Not `Badge`/`StatusBadge` (static labels/statuses). |
+| `Banner`, `BannerAction`, `defaultBannerLabels` | Slim full-width app-shell bar (offline, update available, impersonating, test env, session expired) with tone, actions, dismiss; live region stays mounted. Not `AlertBox` (inline in content). |
+| `LiveIndicator`, `defaultLiveIndicatorLabels` | Pulsing dot + "Updated 14:02:11" for a polled page; fetching/paused states. |
 | `ProgressBar`, `CircularProgress` | Determinate or indeterminate progress (`role=progressbar`) with label, value, tones. Ring for tight spots. |
 
 ## Data display
@@ -97,6 +101,7 @@ repo's `AGENTS.md`.
 | `formatRelativeTime` | Relative time string outside a component (de-CH default via `Intl.RelativeTimeFormat`). |
 | `Avatar`, `getInitials`, `avatarColorIndex` | Person/company picture with initials fallback in a stable color, optional status dot. |
 | `AvatarGroup`, `defaultAvatarGroupLabels` | Overlapping avatars with "+N" overflow whose tooltip lists the rest. |
+| `StatStrip`, `StatStripItem` | One bordered row of label-over-value cells for dense admin metrics (flash on change, optional link/button cell). Lighter than `KpiCard`. |
 | `CollapsibleSection` | Foldable titled section with chevron, count pill, actions, smooth height. |
 | `Kbd` | A single keycap. |
 | `KeyCombo`, `formatKey`, `defaultKeyComboLabels` | Shortcut as keycaps per platform: `Mod+K` → "⌘ K" / "Ctrl K"; sequences ("g o"). |
@@ -115,6 +120,8 @@ repo's `AGENTS.md`.
 | `CommandPalette`, `CommandPaletteTrigger`, `useCommandPaletteHotkey`, `useRecentCommands`, `formatCommandPaletteShortcut`, `defaultCommandPaletteLabels`, `scoreCommand` | ⌘K / Ctrl+K "do anything" dialog: grouped commands with icons and shortcut hints, fuzzy-ish filter, recent commands, keyboard navigation. Trigger = top-bar search pill. |
 | `CommandRegistryProvider`, `useRegisterCommands`, `useRegisteredCommands` | Let pages add their own commands to the app-wide `CommandPalette` while mounted. |
 | `SplitPane`, `SplitPanePanel`, `defaultSplitPaneLabels` | Two or more panes with draggable, keyboard-operable separators (master/detail, editor/preview); min/max in % or px; `storageKey` remembers the layout. Not for the app nav (use `Sidebar resizable`). |
+| `SkipLinks` | Hidden "skip to main content / search" links, visible on first Tab; mount first in the app root. |
+| `CopyButton`, `defaultCopyButtonLabels` | Icon (or text) button that copies a value, flips to a check and announces the result. |
 | `Toolbar`, `ToolbarButton`, `ToolbarSeparator`, `defaultToolbarLabels` | Row of related controls as one Tab stop (roving tabindex, arrow keys); toggle buttons; `overflow` folds `ToolbarButton`s that don't fit into a "…" menu (other children stay visible). |
 | `AnimatedBrand`, `BRAND_ANIMATIONS` | One* product wordmark with optional intro animation. |
 
@@ -141,6 +148,7 @@ repo's `AGENTS.md`.
 | --- | --- |
 | `useHotkeys` | Keyboard shortcuts: `useHotkeys([{ keys: "mod+k", handler }])`. `mod` = ⌘/Ctrl, chords (`"g i"`), skips inputs unless `allowInInputs`, `enabled`, `preventDefault`. |
 | `formatHotkey` | Shortcut label for the platform: `formatHotkey("mod+k")` → `⌘K` / `Ctrl+K`. Use in menus, tooltips, `DropdownMenuShortcut`. |
+| `useOnlineStatus` | `false` while the browser is offline (`online`/`offline` events), SSR-safe; drives an offline `Banner`. |
 | `useClipboard` | Copy button: `{ copy, copied, error, reset }`; `copied` resets after `timeout`; falls back without `navigator.clipboard`. |
 | `useAnnounce` | Screen-reader announcement: `announce("3 results", { politeness })` through a shared hidden live region. |
 | `announce` | Same as `useAnnounce()`'s function, callable outside React (stores, query callbacks). |
