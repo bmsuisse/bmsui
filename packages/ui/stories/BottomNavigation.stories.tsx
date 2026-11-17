@@ -132,7 +132,12 @@ export const GermanLabels: Story = {
     <Phone>
       <BottomNavigation
         aria-label="Hauptnavigation"
-        items={items}
+        items={[
+          { ...cockpit, label: "Cockpit" },
+          { ...calendar, label: "Kalender" },
+          { ...customers, label: "Kunden" },
+          { ...chat, label: "Assistent" },
+        ]}
         defaultValue="cockpit"
         labels={{ badge: (b) => `${b} neu`, dot: "Neu" }}
       />

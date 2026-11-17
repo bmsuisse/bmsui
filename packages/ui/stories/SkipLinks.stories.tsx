@@ -25,19 +25,23 @@ export const Default: Story = {
     </div>
   ),
 };
+const focusFirst = async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+  canvasElement.querySelector("a")?.focus();
+};
 export const ShownForReview: Story = {
   render: (args) => (
     <div className="relative min-h-24">
-      <nav aria-label="Preview" className="flex max-w-full flex-wrap gap-2">
-        {args.links.map((l) => (
-          <span key={l.label} className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground shadow-lg">
-            {l.label}
-          </span>
-        ))}
-      </nav>
+      <SkipLinks {...args} className="absolute" />
     </div>
   ),
+  play: focusFirst,
 };
 export const LabelOverride: Story = {
   args: { label: "Direkt springen", links: [{ label: "Zum Inhalt", href: "#main" }] },
+  render: (args) => (
+    <div className="relative min-h-24">
+      <SkipLinks {...args} className="absolute" />
+    </div>
+  ),
+  play: focusFirst,
 };
