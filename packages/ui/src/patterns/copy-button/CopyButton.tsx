@@ -4,6 +4,8 @@ import { announce } from "../../hooks/useAnnounce";
 import { useClipboard } from "../../hooks/useClipboard";
 import { cn } from "../../lib/utils";
 import { Button, type ButtonProps } from "../../primitives/button";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export interface CopyButtonLabels {
   label: string;
@@ -11,11 +13,13 @@ export interface CopyButtonLabels {
   failed: string;
 }
 
-export const defaultCopyButtonLabels: CopyButtonLabels = {
-  label: "Copy",
-  copied: "Copied",
-  failed: "Copy failed. Try again.",
-};
+export const copyButtonLabelsFor = ({ t }: IntegratedI18n): CopyButtonLabels => ({
+  label: t("copyButton.label"),
+  copied: t("copyButton.copied"),
+  failed: t("copyButton.failed"),
+});
+
+export const defaultCopyButtonLabels: CopyButtonLabels = copyButtonLabelsFor(getI18n("en", false));
 
 export interface CopyButtonProps extends Omit<ButtonProps, "value" | "onClick" | "onCopy" | "asChild" | "children" | "size"> {
   /** The text to copy. */
@@ -63,7 +67,7 @@ export const CopyButton = forwardRef<HTMLButtonElement, CopyButtonProps>(
     },
     ref,
   ) => {
-    const l = { ...defaultCopyButtonLabels, ...labels };
+    const l = useLabels(copyButtonLabelsFor, labels);
     const idle = label ?? l.label;
     const done = copiedLabel ?? l.copied;
     const bad = failedLabel ?? l.failed;

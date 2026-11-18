@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { CheckIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { cn } from "../../lib/utils";
+import { useIntegratedI18n } from "../../i18n/locale";
 
 /** The minimal shape this component needs to render one chip in the stepper. */
 export interface StepperStep {
@@ -64,13 +65,16 @@ export function Stepper({
   onNavigate,
   onNew,
   steps,
-  navLabel = "Steps",
-  newLabel = "New",
+  navLabel: navLabelProp,
+  newLabel: newLabelProp,
   scrollTestId = "stepper-scroll",
   newTestId,
   minWidth,
   className,
 }: StepperProps) {
+  const { t } = useIntegratedI18n();
+  const navLabel = navLabelProp ?? t("stepper.nav");
+  const newLabel = newLabelProp ?? t("stepper.new");
   const stepRefs = useRef(new Map<number, HTMLButtonElement>());
 
   useEffect(() => {

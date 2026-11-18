@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../../primitives/dialog";
+import { useIntegratedI18n } from "../../i18n/locale";
 
 export interface FormModalProps {
   /** Whether the modal is open. Fully controlled — no internal open state. */
@@ -56,13 +57,16 @@ export const FormModal = ({
   description,
   children,
   onSubmit,
-  submitLabel = "Save",
-  cancelLabel = "Cancel",
+  submitLabel: submitLabelProp,
+  cancelLabel: cancelLabelProp,
   submitDisabled = false,
   className,
   submitTestId,
   cancelTestId,
 }: FormModalProps): ReactElement => {
+  const { t } = useIntegratedI18n();
+  const submitLabel = submitLabelProp ?? t("modal.save");
+  const cancelLabel = cancelLabelProp ?? t("modal.cancel");
   const [pending, setPending] = useState(false);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {

@@ -3,6 +3,8 @@ import type { DragEvent, KeyboardEvent, ReactNode } from "react";
 import { forwardRef, useId, useRef, useState } from "react";
 import { animate, EASE_IN, prefersReducedMotion } from "../../lib/motion";
 import { cn } from "../../lib/utils";
+import { getI18n, useLabels, useFormatLocale } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export interface FileInputLabels {
   /** Main line in the drop zone with `multiple`. */
@@ -13,6 +15,8 @@ export interface FileInputLabels {
   dropHere: string;
   /** Prefix of the remove button's accessible name: "Remove report.pdf". */
   remove: string;
+  /** Full accessible name of the remove button for one file; overrides `remove` + file name. */
+  removeFile?: (fileName: string) => string;
   /** Error for a file over `maxSize`. */
   tooLarge: (fileName: string, maxSize: string) => string;
   /** Error for a file not matching `accept`. */
@@ -21,15 +25,18 @@ export interface FileInputLabels {
   tooMany: (maxFiles: number) => string;
 }
 
-export const defaultFileInputLabels: FileInputLabels = {
-  prompt: "Drop files here or click to browse",
-  promptSingle: "Drop a file here or click to browse",
-  dropHere: "Drop to add",
-  remove: "Remove",
-  tooLarge: (name, max) => `${name} is larger than ${max}.`,
-  wrongType: (name) => `${name} is not an accepted file type.`,
-  tooMany: (max) => `At most ${max} ${max === 1 ? "file" : "files"}.`,
-};
+export const fileInputLabelsFor = ({ t }: IntegratedI18n): FileInputLabels => ({
+  prompt: t("fileInput.prompt"),
+  promptSingle: t("fileInput.promptSingle"),
+  dropHere: t("fileInput.dropHere"),
+  remove: t("fileInput.remove"),
+  removeFile: (name) => t("fileInput.removeFile", { name }),
+  tooLarge: (name, max) => t("fileInput.tooLarge", { name, max }),
+  wrongType: (name) => t("fileInput.wrongType", { name }),
+  tooMany: (max) => t("fileInput.tooMany", { count: max }),
+});
+
+export const defaultFileInputLabels: FileInputLabels = fileInputLabelsFor(getI18n("en", false));
 
 /** Why a file was not added. */
 export interface FileRejection {
@@ -133,7 +140,7 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
       onReject,
       hint,
       disabled = false,
-      locale = "de-CH",
+      locale: localeProp,
       hideFileList = false,
       size = "default",
       animated = true,
@@ -144,7 +151,9 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
     },
     ref,
   ) => {
-    const l = { ...defaultFileInputLabels, ...labels };
+    const locale = useFormatLocale(localeProp);
+    const l = useLabels(fileInputLabelsFor, labels);
+    const removeFile = labels?.removeFile ?? (labels?.remove === undefined ? l.removeFile : undefined);
     const inputRef = useRef<HTMLInputElement | null>(null);
     const [dragOver, setDragOver] = useState(false);
     const dragDepth = useRef(0);
@@ -357,7 +366,7 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
                   <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{formatFileSize(row.file.size, locale)}</span>
                   <button
                     type="button"
-                    aria-label={`${l.remove} ${row.file.name}`}
+                    aria-label={removeFile ? removeFile(row.file.name) : `${l.remove} ${row.file.name}`}
                     disabled={disabled}
                     onClick={() => remove(row.file)}
                     className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-[color,background-color,scale] duration-150 ease-out hover:bg-muted-foreground/10 hover:text-foreground active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 motion-reduce:scale-none!"

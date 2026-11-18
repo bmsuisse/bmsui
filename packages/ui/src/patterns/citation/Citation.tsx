@@ -1,6 +1,8 @@
 import type { ReactElement } from "react";
 import { cn } from "../../lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../primitives/tooltip";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export interface CitationSource {
   url: string;
@@ -16,10 +18,12 @@ export interface CitationLabels {
   sources: string;
 }
 
-export const defaultCitationLabels: CitationLabels = {
-  source: (index, title) => `Source ${index}: ${title}`,
-  sources: "Sources",
-};
+export const citationLabelsFor = ({ t }: IntegratedI18n): CitationLabels => ({
+  source: (index, title) => t("citation.source", { index, title }),
+  sources: t("citation.sources"),
+});
+
+export const defaultCitationLabels: CitationLabels = citationLabelsFor(getI18n("en", false));
 
 /** `example.com` for `https://www.example.com/a`; the raw string when it is not a URL. */
 export function getSourceDomain(source: Pick<CitationSource, "url" | "domain">): string {
@@ -60,7 +64,7 @@ const chip =
  * renderer; list the sources below the message with `SourceList`.
  */
 export const Citation = ({ index, source, labels, className }: CitationProps): ReactElement => {
-  const l = { ...defaultCitationLabels, ...labels };
+  const l = useLabels(citationLabelsFor, labels);
   if (!source) {
     return (
       <sup data-testid="citation-bare" className={cn("mx-0.5 text-[10px] text-muted-foreground", className)}>
@@ -101,7 +105,7 @@ export interface SourceListProps {
 
 /** The numbered list of sources under a message, matching the `Citation` numbers. */
 export const SourceList = ({ sources, start = 1, labels, className }: SourceListProps): ReactElement | null => {
-  const l = { ...defaultCitationLabels, ...labels };
+  const l = useLabels(citationLabelsFor, labels);
   if (sources.length === 0) return null;
   return (
     <section aria-label={l.sources} className={cn("min-w-0 text-xs", className)}>

@@ -2,6 +2,8 @@ import { CheckIcon, ClipboardDocumentIcon, ExclamationTriangleIcon } from "@hero
 import { type CSSProperties, type HTMLAttributes, type ReactElement, type ReactNode, useEffect } from "react";
 import { useClipboard } from "../../hooks/useClipboard";
 import { cn } from "../../lib/utils";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export interface MetadataItem {
   /** Stable key; defaults to the label when it is a string, else the index. */
@@ -28,12 +30,14 @@ export interface MetadataListLabels {
   copyFailed: string;
 }
 
-export const defaultMetadataListLabels: MetadataListLabels = {
+export const metadataListLabelsFor = ({ t }: IntegratedI18n): MetadataListLabels => ({
   empty: "—",
-  copy: "Copy",
-  copied: "Copied",
-  copyFailed: "Copy failed",
-};
+  copy: t("metadataList.copy"),
+  copied: t("metadataList.copied"),
+  copyFailed: t("metadataList.copyFailed"),
+});
+
+export const defaultMetadataListLabels: MetadataListLabels = metadataListLabelsFor(getI18n("en", false));
 
 export interface MetadataListProps extends Omit<HTMLAttributes<HTMLDListElement>, "children"> {
   items: MetadataItem[];
@@ -82,7 +86,7 @@ export const MetadataList = ({
   style,
   ...props
 }: MetadataListProps): ReactElement => {
-  const l = { ...defaultMetadataListLabels, ...labels };
+  const l = useLabels(metadataListLabelsFor, labels);
   const horizontal = layout === "horizontal";
   return (
     <dl

@@ -3,6 +3,8 @@ import type { ElementType, HTMLAttributes, ReactElement, ReactNode } from "react
 import { useRef } from "react";
 import { slidingIndicatorClass, useSlidingIndicator } from "../../lib/useSlidingIndicator";
 import { cn } from "../../lib/utils";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export type PageHeaderBadge = "alpha" | "beta" | "dev";
 
@@ -11,7 +13,11 @@ export interface PageHeaderLabels {
   back: string;
 }
 
-export const defaultPageHeaderLabels: PageHeaderLabels = { back: "Back" };
+export const pageHeaderLabelsFor = ({ t }: IntegratedI18n): PageHeaderLabels => ({
+  back: t("pageHeader.back"),
+});
+
+export const defaultPageHeaderLabels: PageHeaderLabels = pageHeaderLabelsFor(getI18n("en", false));
 
 export interface PageHeaderProps extends Omit<HTMLAttributes<HTMLElement>, "title"> {
   title: ReactNode;
@@ -76,7 +82,7 @@ export function PageHeader({
   className,
   ...props
 }: PageHeaderProps): ReactElement {
-  const l = { ...defaultPageHeaderLabels, ...labels };
+  const l = useLabels(pageHeaderLabelsFor, labels);
   const tabsRef = useRef<HTMLDivElement>(null);
   const pillRef = useRef<HTMLSpanElement>(null);
   useSlidingIndicator(tabsRef, pillRef, '[role="tab"][data-state="active"]', animated && !!tabs, [tabs]);

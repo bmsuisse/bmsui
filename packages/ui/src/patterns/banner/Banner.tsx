@@ -1,6 +1,8 @@
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { type ButtonHTMLAttributes, type HTMLAttributes, type ReactNode, forwardRef } from "react";
 import { cn } from "../../lib/utils";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export type BannerTone = "neutral" | "info" | "warning" | "brand" | "danger";
 
@@ -8,7 +10,11 @@ export interface BannerLabels {
   dismiss: string;
 }
 
-export const defaultBannerLabels: BannerLabels = { dismiss: "Dismiss" };
+export const bannerLabelsFor = ({ t }: IntegratedI18n): BannerLabels => ({
+  dismiss: t("banner.dismiss"),
+});
+
+export const defaultBannerLabels: BannerLabels = bannerLabelsFor(getI18n("en", false));
 
 const TONE: Record<BannerTone, string> = {
   neutral: "bg-muted text-foreground border-foreground/10 dark:border-border",
@@ -65,7 +71,7 @@ export const Banner = forwardRef<HTMLDivElement, BannerProps>(
     },
     ref,
   ) => {
-    const l = { ...defaultBannerLabels, ...labels };
+    const l = useLabels(bannerLabelsFor, labels);
     return (
       <div ref={ref} role={role} className="shrink-0" {...props}>
         {open ? (

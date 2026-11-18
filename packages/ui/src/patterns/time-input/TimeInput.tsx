@@ -4,6 +4,8 @@ import { cn } from "../../lib/utils";
 import type { InputProps } from "../../primitives/input";
 import { Input } from "../../primitives/input";
 import { DateInputMessage, invalidClass, useCoarsePointer } from "../date-input/shared";
+import { getI18n, useLabels, useFormatLocale } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 /** Why the entry was rejected: it is no time (`invalid`) or lies outside `min`/`max` (`range`). */
 export type TimeInputError = "invalid" | "range";
@@ -15,10 +17,12 @@ export interface TimeInputLabels {
   outOfRange: string;
 }
 
-export const defaultTimeInputLabels: TimeInputLabels = {
-  invalid: "Enter a valid time",
-  outOfRange: "Time is out of range",
-};
+export const timeInputLabelsFor = ({ t }: IntegratedI18n): TimeInputLabels => ({
+  invalid: t("timeInput.invalid"),
+  outOfRange: t("timeInput.outOfRange"),
+});
+
+export const defaultTimeInputLabels: TimeInputLabels = timeInputLabelsFor(getI18n("en", false));
 
 export interface TimeInputProps
   extends Omit<InputProps, "value" | "defaultValue" | "onChange" | "type" | "min" | "max" | "step"> {
@@ -89,7 +93,7 @@ const TypedTimeInput = forwardRef<HTMLInputElement, TimeInputProps>(
       value,
       onValueChange,
       onInvalidChange,
-      locale = "de-CH",
+      locale: localeProp,
       min,
       max,
       step = 1,
@@ -109,7 +113,8 @@ const TypedTimeInput = forwardRef<HTMLInputElement, TimeInputProps>(
     },
     ref,
   ) => {
-    const l = { ...defaultTimeInputLabels, ...labels };
+    const locale = useFormatLocale(localeProp);
+    const l = useLabels(timeInputLabelsFor, labels);
     const minTime = toTime(min);
     const maxTime = toTime(max);
     const [text, setText] = useState(() => formatTime(toTime(value), locale));
@@ -267,7 +272,7 @@ const NativeTimeInput = forwardRef<HTMLInputElement, TimeInputProps>(
     },
     ref,
   ) => {
-    const l = { ...defaultTimeInputLabels, ...labels };
+    const l = useLabels(timeInputLabelsFor, labels);
     const minTime = toTime(min);
     const maxTime = toTime(max);
     const [raw, setRaw] = useState(toTime(value));

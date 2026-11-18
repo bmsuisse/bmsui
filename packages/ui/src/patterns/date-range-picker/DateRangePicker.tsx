@@ -11,11 +11,13 @@ import {
   DateInputMessage,
   type DateInputError,
   type DateInputLabels,
-  defaultDateInputLabels,
+  dateInputLabelsFor,
   errorMessage,
   useCoarsePointer,
 } from "../date-input/shared";
 import { InputGroup, InputGroupButton } from "../input-group/InputGroup";
+import { getI18n, useLabels, useFormatLocale } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 type PassThroughCalendarProps = Pick<CalendarProps, "isDateDisabled" | "weekStartsOn" | "today" | "animated">;
 
@@ -31,18 +33,23 @@ export interface DateRangePickerLabels
   to: string;
 }
 
-export const defaultDateRangePickerLabels: DateRangePickerLabels = {
-  invalid: defaultDateInputLabels.invalid,
-  outOfRange: defaultDateInputLabels.outOfRange,
-  unavailable: defaultDateInputLabels.unavailable,
-  previousMonth: defaultDateInputLabels.previousMonth,
-  nextMonth: defaultDateInputLabels.nextMonth,
-  calendarLoadFailed: defaultDateInputLabels.calendarLoadFailed,
-  retry: defaultDateInputLabels.retry,
-  openCalendar: "Choose dates",
-  from: "From",
-  to: "To",
+export const dateRangePickerLabelsFor = (i18n: IntegratedI18n): DateRangePickerLabels => {
+  const { t } = i18n;
+  return {
+    invalid: dateInputLabelsFor(i18n).invalid,
+    outOfRange: dateInputLabelsFor(i18n).outOfRange,
+    unavailable: dateInputLabelsFor(i18n).unavailable,
+    previousMonth: dateInputLabelsFor(i18n).previousMonth,
+    nextMonth: dateInputLabelsFor(i18n).nextMonth,
+    calendarLoadFailed: dateInputLabelsFor(i18n).calendarLoadFailed,
+    retry: dateInputLabelsFor(i18n).retry,
+    openCalendar: t("dateRangePicker.openCalendar"),
+    from: t("dateRangePicker.from"),
+    to: t("dateRangePicker.to"),
+  };
 };
+
+export const defaultDateRangePickerLabels: DateRangePickerLabels = dateRangePickerLabelsFor(getI18n("en", false));
 
 export interface DateRangePickerProps extends PassThroughCalendarProps {
   /** `{ from, to }` as ISO days, `""` for an open end. */
@@ -90,7 +97,7 @@ export function DateRangePicker({
   value,
   onValueChange,
   onInvalidChange,
-  locale = "de-CH",
+  locale: localeProp,
   min,
   max,
   disabled,
@@ -108,7 +115,8 @@ export function DateRangePicker({
   animated = true,
   ...props
 }: DateRangePickerProps): ReactElement {
-  const l = { ...defaultDateRangePickerLabels, ...labels };
+  const locale = useFormatLocale(localeProp);
+  const l = useLabels(dateRangePickerLabelsFor, labels);
   const coarse = useCoarsePointer();
   const useNative = native === "always" || (native === "auto" && coarse);
   const [open, setOpen] = useState(false);

@@ -3,6 +3,8 @@ import type { HTMLAttributes, KeyboardEvent, ReactNode } from "react";
 import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "../../lib/utils";
 import { Checkbox } from "../../primitives/checkbox";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export interface TreeViewNode {
   id: string;
@@ -33,12 +35,14 @@ export interface TreeViewLabels {
   empty: string;
 }
 
-export const defaultTreeViewLabels: TreeViewLabels = {
-  loading: "Loading…",
-  loadFailed: "Could not load",
-  retry: "Retry",
-  empty: "No items",
-};
+export const treeViewLabelsFor = ({ t }: IntegratedI18n): TreeViewLabels => ({
+  loading: t("treeView.loading"),
+  loadFailed: t("treeView.loadFailed"),
+  retry: t("treeView.retry"),
+  empty: t("treeView.empty"),
+});
+
+export const defaultTreeViewLabels: TreeViewLabels = treeViewLabelsFor(getI18n("en", false));
 
 export interface TreeViewProps extends Omit<HTMLAttributes<HTMLDivElement>, "children" | "onSelect" | "defaultValue"> {
   nodes: TreeViewNode[];
@@ -122,7 +126,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
   },
   ref,
 ) {
-  const l = { ...defaultTreeViewLabels, ...labels };
+  const l = useLabels(treeViewLabelsFor, labels);
   const mode = checkable ? "multiple" : selectionMode;
   const [expanded, setExpanded] = useControllable(expandedIds, defaultExpandedIds ?? [], onExpandedChange);
   const [selected, setSelected] = useControllable(selectedIds, defaultSelectedIds ?? [], onSelectedChange);

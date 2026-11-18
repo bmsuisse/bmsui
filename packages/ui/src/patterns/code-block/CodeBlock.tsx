@@ -1,13 +1,23 @@
 import { type HTMLAttributes, type ReactNode, forwardRef, useMemo } from "react";
 import { SCROLL_FOCUS_WRAPPER, SCROLL_REGION, useScrollFade } from "../../lib/scrollFade";
 import { cn } from "../../lib/utils";
-import { CopyIconButton, type CopyIconButtonLabels, defaultCopyIconButtonLabels } from "./CopyIconButton";
+import { CopyIconButton, type CopyIconButtonLabels, copyIconButtonLabelsFor } from "./CopyIconButton";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export interface CodeBlockLabels extends CopyIconButtonLabels {
   /** Accessible name of the code region when there is no `title`/`language`. */
   code: string;
 }
-export const defaultCodeBlockLabels: CodeBlockLabels = { ...defaultCopyIconButtonLabels, code: "Code" };
+export const codeBlockLabelsFor = (i18n: IntegratedI18n): CodeBlockLabels => {
+  const { t } = i18n;
+  return {
+    ...copyIconButtonLabelsFor(i18n),
+    code: t("codeBlock.code"),
+  };
+};
+
+export const defaultCodeBlockLabels: CodeBlockLabels = codeBlockLabelsFor(getI18n("en", false));
 
 export interface CodeBlockProps extends Omit<HTMLAttributes<HTMLDivElement>, "children" | "title"> {
   /** The source text, shown and copied verbatim. */
@@ -42,7 +52,7 @@ export const CodeBlock = forwardRef<HTMLDivElement, CodeBlockProps>(
     { code, language, title, wrap = false, maxHeight, lineNumbers = false, copyable = true, highlight, labels, className, ...props },
     ref,
   ) => {
-    const l = { ...defaultCodeBlockLabels, ...labels };
+    const l = useLabels(codeBlockLabelsFor, labels);
     const lineCount = useMemo(() => code.split("\n").length, [code]);
     const gutter = lineNumbers && !wrap;
     const heading = title ?? language;

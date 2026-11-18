@@ -6,6 +6,8 @@ import { Avatar } from "../avatar/Avatar";
 import { StatusDot } from "../status-dot/StatusDot";
 import type { StatusTone } from "../status-badge/StatusBadge";
 import { Timestamp } from "../timestamp/Timestamp";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export type ConversationStatus = "active" | "pending" | "closed" | "spam";
 
@@ -27,16 +29,18 @@ export interface ConversationRowLabels {
   noSubject: string;
 }
 
-export const defaultConversationRowLabels: ConversationRowLabels = {
-  status: { active: "Active", pending: "Pending", closed: "Closed", spam: "Spam" },
-  unread: "Unread",
-  starred: "Starred",
-  attachments: "Has attachments",
-  threads: (count) => `${count} ${count === 1 ? "message" : "messages"}`,
-  select: (subject) => `Select ${subject}`,
-  assignedTo: (name) => `Assigned to ${name}`,
-  noSubject: "(no subject)",
-};
+export const conversationRowLabelsFor = ({ t }: IntegratedI18n): ConversationRowLabels => ({
+  unread: t("conversationRow.unread"),
+  starred: t("conversationRow.starred"),
+  attachments: t("conversationRow.attachments"),
+  threads: (n) => t("conversationRow.threads", { count: n }),
+  select: (subject) => t("conversationRow.select", { subject }),
+  assignedTo: (name) => t("conversationRow.assignedTo", { name }),
+  noSubject: t("conversationRow.noSubject"),
+  status: { active: t("conversationRow.statusActive"), pending: t("conversationRow.statusPending"), closed: t("conversationRow.statusClosed"), spam: t("conversationRow.statusSpam") },
+});
+
+export const defaultConversationRowLabels: ConversationRowLabels = conversationRowLabelsFor(getI18n("en", false));
 
 const STATUS_TONE: Record<ConversationStatus, StatusTone> = {
   active: "success",
@@ -101,7 +105,8 @@ export const ConversationRow = forwardRef<HTMLLIElement, ConversationRowProps>(
     },
     ref,
   ) => {
-    const l = { ...defaultConversationRowLabels, ...labels, status: { ...defaultConversationRowLabels.status, ...labels?.status } };
+    const base = useLabels(conversationRowLabelsFor, labels && { ...labels, status: undefined });
+    const l = { ...base, status: { ...base.status, ...labels?.status } };
     const title = subject || l.noSubject;
     const main = (
       <>

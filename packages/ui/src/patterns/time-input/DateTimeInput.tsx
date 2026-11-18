@@ -8,9 +8,11 @@ import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from "../../pr
 import type { CalendarProps } from "../calendar/Calendar";
 import { CalendarLoader, preloadCalendar } from "../calendar/CalendarLoader";
 import { DateInput } from "../date-input/DateInput";
-import { DateInputMessage, type DateInputError, defaultDateInputLabels, toDay } from "../date-input/shared";
+import { DateInputMessage, type DateInputError, dateInputLabelsFor, toDay } from "../date-input/shared";
 import { InputGroup, InputGroupButton } from "../input-group/InputGroup";
-import { defaultTimeInputLabels, TimeInput, type TimeInputError } from "./TimeInput";
+import { timeInputLabelsFor, TimeInput, type TimeInputError } from "./TimeInput";
+import { getI18n, useLabels, useFormatLocale } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 type PassThroughCalendarProps = Pick<CalendarProps, "isDateDisabled" | "weekStartsOn" | "today" | "animated">;
 
@@ -36,20 +38,25 @@ export interface DateTimeInputLabels {
   retry: string;
 }
 
-export const defaultDateTimeInputLabels: DateTimeInputLabels = {
-  invalidDate: defaultDateInputLabels.invalid,
-  dateOutOfRange: defaultDateInputLabels.outOfRange,
-  dateUnavailable: defaultDateInputLabels.unavailable,
-  invalidTime: defaultTimeInputLabels.invalid,
-  timeOutOfRange: defaultTimeInputLabels.outOfRange,
-  date: "Date",
-  time: "Time",
-  openCalendar: "Choose date",
-  previousMonth: defaultDateInputLabels.previousMonth,
-  nextMonth: defaultDateInputLabels.nextMonth,
-  calendarLoadFailed: defaultDateInputLabels.calendarLoadFailed,
-  retry: defaultDateInputLabels.retry,
+export const dateTimeInputLabelsFor = (i18n: IntegratedI18n): DateTimeInputLabels => {
+  const { t } = i18n;
+  return {
+    invalidDate: dateInputLabelsFor(i18n).invalid,
+    dateOutOfRange: dateInputLabelsFor(i18n).outOfRange,
+    dateUnavailable: dateInputLabelsFor(i18n).unavailable,
+    invalidTime: timeInputLabelsFor(i18n).invalid,
+    timeOutOfRange: timeInputLabelsFor(i18n).outOfRange,
+    openCalendar: dateInputLabelsFor(i18n).openCalendar,
+    previousMonth: dateInputLabelsFor(i18n).previousMonth,
+    nextMonth: dateInputLabelsFor(i18n).nextMonth,
+    calendarLoadFailed: dateInputLabelsFor(i18n).calendarLoadFailed,
+    retry: dateInputLabelsFor(i18n).retry,
+    date: t("dateTimeInput.date"),
+    time: t("dateTimeInput.time"),
+  };
 };
+
+export const defaultDateTimeInputLabels: DateTimeInputLabels = dateTimeInputLabelsFor(getI18n("en", false));
 
 export interface DateTimeInputProps extends PassThroughCalendarProps {
   /** Local ISO datetime `yyyy-mm-ddTHH:mm` (no zone, no seconds), or `""` for none. */
@@ -99,7 +106,7 @@ export function DateTimeInput({
   value,
   onValueChange,
   onInvalidChange,
-  locale = "de-CH",
+  locale: localeProp,
   min,
   max,
   step,
@@ -118,7 +125,8 @@ export function DateTimeInput({
   animated = true,
   ...props
 }: DateTimeInputProps): ReactElement {
-  const l = { ...defaultDateTimeInputLabels, ...labels };
+  const locale = useFormatLocale(localeProp);
+  const l = useLabels(dateTimeInputLabelsFor, labels);
   const [date, setDate] = useState(toDay(value));
   const [time, setTime] = useState(toTime(value));
   const [errors, setErrors] = useState<{ date: DateInputError | null; time: TimeInputError | null }>({ date: null, time: null });

@@ -12,7 +12,7 @@ export interface ErrorInfo {
 export type ErrorInput = ErrorInfo | Error | string | null | undefined | false;
 
 /** Normalizes any `ErrorInput` (or a raw thrown value) to an `ErrorInfo`; `undefined` when there is no error. */
-export function toErrorInfo(error: unknown): ErrorInfo | undefined {
+export function toErrorInfo(error: unknown, unknownMessage = "Unknown error"): ErrorInfo | undefined {
   if (error == null || error === false || error === "") return undefined;
   if (typeof error === "string") return { message: error };
   if (error instanceof Error) {
@@ -23,8 +23,8 @@ export function toErrorInfo(error: unknown): ErrorInfo | undefined {
     if (title !== undefined || message !== undefined || details !== undefined) return { title, message, details };
   }
   try {
-    return { message: typeof error === "object" ? "Unknown error" : String(error) };
+    return { message: typeof error === "object" ? unknownMessage : String(error) };
   } catch {
-    return { message: "Unknown error" };
+    return { message: unknownMessage };
   }
 }

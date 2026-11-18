@@ -6,6 +6,8 @@ import { SCROLL_FOCUS_WRAPPER, SCROLL_REGION, useScrollFade } from "../../lib/sc
 import { SHIMMER_CLASSES, useShimmer } from "../../lib/useShimmer";
 import { cn } from "../../lib/utils";
 import { Collapsible, CollapsibleTrigger } from "../../primitives/collapsible";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export interface ReasoningLabels {
   /** Header while `streaming`. */
@@ -16,11 +18,13 @@ export interface ReasoningLabels {
   thought: string;
 }
 
-export const defaultReasoningLabels: ReasoningLabels = {
-  thinking: "Thinking…",
-  thoughtFor: (seconds) => `Thought for ${seconds} s`,
-  thought: "Reasoning",
-};
+export const reasoningLabelsFor = ({ t }: IntegratedI18n): ReasoningLabels => ({
+  thinking: t("reasoning.thinking"),
+  thoughtFor: (seconds) => t("reasoning.thoughtFor", { seconds }),
+  thought: t("reasoning.thought"),
+});
+
+export const defaultReasoningLabels: ReasoningLabels = reasoningLabelsFor(getI18n("en", false));
 
 export interface ReasoningProps extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
   /** The model's reasoning text (or any node, e.g. rendered markdown). */
@@ -48,7 +52,7 @@ export const Reasoning = forwardRef<HTMLDivElement, ReasoningProps>(
     { children, streaming = false, duration, defaultOpen = false, open: openProp, onOpenChange, maxHeight = 256, labels, className, ...props },
     ref,
   ) => {
-    const l = { ...defaultReasoningLabels, ...labels };
+    const l = useLabels(reasoningLabelsFor, labels);
     const [userOpen, setUserOpen] = useState<boolean | null>(null);
     const open = openProp ?? userOpen ?? (streaming || defaultOpen);
     const label = streaming ? l.thinking : duration != null ? l.thoughtFor(duration) : l.thought;

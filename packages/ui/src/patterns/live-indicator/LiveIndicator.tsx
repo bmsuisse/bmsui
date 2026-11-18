@@ -1,6 +1,8 @@
 import type { HTMLAttributes, ReactElement } from "react";
 import { cn } from "../../lib/utils";
 import { StatusDot } from "../status-dot/StatusDot";
+import { getI18n, useLabels, useFormatLocale } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export interface LiveIndicatorLabels {
   paused: string;
@@ -11,12 +13,14 @@ export interface LiveIndicatorLabels {
   refreshEvery: (seconds: number) => string;
 }
 
-export const defaultLiveIndicatorLabels: LiveIndicatorLabels = {
-  paused: "Paused",
-  updating: "Updating…",
-  updated: (time) => `Updated ${time}`,
-  refreshEvery: (seconds) => `Refreshes every ${seconds} s`,
-};
+export const liveIndicatorLabelsFor = ({ t }: IntegratedI18n): LiveIndicatorLabels => ({
+  paused: t("liveIndicator.paused"),
+  updating: t("liveIndicator.updating"),
+  updated: (time) => t("liveIndicator.updated", { time }),
+  refreshEvery: (seconds) => t("liveIndicator.refreshEvery", { seconds }),
+});
+
+export const defaultLiveIndicatorLabels: LiveIndicatorLabels = liveIndicatorLabelsFor(getI18n("en", false));
 
 export interface LiveIndicatorProps extends Omit<HTMLAttributes<HTMLSpanElement>, "children"> {
   /** When the data was last fetched: epoch ms (TanStack Query's `dataUpdatedAt`), a `Date`, or ISO. `0`/`undefined` before the first load. */
@@ -43,14 +47,15 @@ export const LiveIndicator = ({
   fetching = false,
   paused = false,
   intervalMs,
-  locale = "de-CH",
+  locale: localeProp,
   labels,
   animated = true,
   className,
   title,
   ...props
 }: LiveIndicatorProps): ReactElement => {
-  const l = { ...defaultLiveIndicatorLabels, ...labels };
+  const locale = useFormatLocale(localeProp);
+  const l = useLabels(liveIndicatorLabelsFor, labels);
   const ms = updatedAt instanceof Date || typeof updatedAt === "string" ? new Date(updatedAt).getTime() : updatedAt;
   const time = ms && !Number.isNaN(ms) ? new Intl.DateTimeFormat(locale, { timeStyle: "medium" }).format(ms) : "";
   const text = paused ? l.paused : fetching ? l.updating : time ? l.updated(time) : "";

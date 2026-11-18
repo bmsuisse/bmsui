@@ -11,6 +11,7 @@ import type {
 } from "react";
 import { forwardRef, useEffect, useRef, useState } from "react";
 import { cn } from "../lib/utils";
+import { I18nText } from "../i18n/locale";
 
 export const Sheet = DialogPrimitive.Root;
 export const SheetTrigger = DialogPrimitive.Trigger;
@@ -171,7 +172,7 @@ export const SheetContent = forwardRef<ElementRef<typeof DialogPrimitive.Content
           {children}
           <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100">
             <XMarkIcon className="h-4 w-4" />
-            <span className="sr-only">Close</span>
+            <span className="sr-only"><I18nText k="common.close" /></span>
           </DialogPrimitive.Close>
         </DialogPrimitive.Content>
       </SheetPortal>

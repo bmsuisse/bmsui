@@ -3,6 +3,7 @@ import { forwardRef } from "react";
 import { Button, type ButtonProps } from "../../primitives/button";
 import { cn } from "../../lib/utils";
 import { type SpeechRecognitionEngineFactory, useSpeechRecognition } from "./useSpeechRecognition";
+import { useIntegratedI18n } from "../../i18n/locale";
 
 export interface VoiceInputButtonProps
   extends Omit<ButtonProps, "onError" | "variant" | "children"> {
@@ -50,8 +51,8 @@ export const VoiceInputButton = forwardRef<HTMLButtonElement, VoiceInputButtonPr
       lang,
       engine,
       label,
-      startLabel = "Start dictation",
-      stopLabel = "Stop dictation",
+      startLabel: startLabelProp,
+      stopLabel: stopLabelProp,
       showInterim = false,
       size,
       disabled,
@@ -60,13 +61,16 @@ export const VoiceInputButton = forwardRef<HTMLButtonElement, VoiceInputButtonPr
     },
     ref,
   ) => {
+    const { t } = useIntegratedI18n();
+    const startLabel = startLabelProp ?? t("ai.startDictation");
+    const stopLabel = stopLabelProp ?? t("ai.stopDictation");
     const { supported, listening, interim, toggle } = useSpeechRecognition({
       lang,
       onResult: onTranscript,
       onError,
       engine,
     });
-    const unsupportedTitle = "Speech recognition isn't available in this browser";
+    const unsupportedTitle = t("ai.speechUnsupported");
 
     return (
       // `title` lives on the wrapper, not the button: buttonVariants sets

@@ -14,6 +14,7 @@ import { renderGridOptions, type GridColumn } from "../../lib/optionGrid";
 import { Button } from "../../primitives/button";
 import { Input } from "../../primitives/input";
 import { Popover, PopoverContent, PopoverTrigger } from "../../primitives/popover";
+import { useIntegratedI18n } from "../../i18n/locale";
 
 export interface ComboboxOption {
   value: string;
@@ -163,13 +164,13 @@ type OptionRow = ImportedOptionRow<ComboboxOption>;
 export function Combobox(props: ComboboxProps): ReactElement {
   const {
     options,
-    placeholder = "Select…",
+    placeholder: placeholderProp,
     searchable = true,
-    searchPlaceholder = "Search…",
-    emptyMessage = "No matches.",
+    searchPlaceholder: searchPlaceholderProp,
+    emptyMessage: emptyMessageProp,
     disabled,
     loading = false,
-    loadingMessage = "Loading…",
+    loadingMessage: loadingMessageProp,
     error,
     onRetry,
     clearable = true,
@@ -181,6 +182,11 @@ export function Combobox(props: ComboboxProps): ReactElement {
     selectedLabel,
     columns,
   } = props;
+  const { t } = useIntegratedI18n();
+  const placeholder = placeholderProp ?? t("combobox.placeholder");
+  const searchPlaceholder = searchPlaceholderProp ?? t("combobox.searchPlaceholder");
+  const emptyMessage = emptyMessageProp ?? t("combobox.emptyMessage");
+  const loadingMessage = loadingMessageProp ?? t("combobox.loadingMessage");
   const testId = props["data-testid"];
   const hasError = toErrorInfo(error) !== undefined;
   const [open, setOpen] = useState(false);
@@ -282,7 +288,7 @@ export function Combobox(props: ComboboxProps): ReactElement {
       : selectedOptions.length === 1
         ? (selectedOptions[0]?.label ?? placeholder)
         : (props.multiple ? resolveGroupTriggerLabel(options, selectedValues, groupLabel) : null) ??
-          `${selectedOptions.length} selected`;
+          t("combobox.selectedCount", { count: selectedOptions.length });
 
   // Skipped entirely in grid mode (`columns` set) — its result is only ever
   // read from the flat/grouped rendering branch below, so building it there
@@ -352,7 +358,7 @@ export function Combobox(props: ComboboxProps): ReactElement {
             {clearable && !loading && selectedValues.length > 0 ? (
               <span
                 role="button"
-                aria-label="Clear selection"
+                aria-label={t("combobox.clearSelection")}
                 tabIndex={-1}
                 className="rounded-sm p-0.5 opacity-60 hover:bg-accent hover:opacity-100"
                 onClick={(event) => {
@@ -439,7 +445,7 @@ export function Combobox(props: ComboboxProps): ReactElement {
                           onChange={() => toggleGroup(chunk.group)}
                           onClick={(event) => event.stopPropagation()}
                           className="h-3.5 w-3.5 shrink-0 accent-primary"
-                          aria-label={`Select all of ${groupLabel(chunk.group)}`}
+                          aria-label={t("combobox.selectAllOfGroup", { group: groupLabel(chunk.group) })}
                         />
                       ) : null}
                       <span className="truncate">{groupLabel(chunk.group)}</span>

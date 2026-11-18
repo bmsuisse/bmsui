@@ -15,6 +15,8 @@ import { prefersReducedMotion } from "../../lib/motion";
 import { cn } from "../../lib/utils";
 import { Button } from "../../primitives/button";
 import { LoadingSpinner } from "../loading-spinner/LoadingSpinner";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export interface ChatConversationLabels {
   /** Accessible name of the message log. */
@@ -23,11 +25,13 @@ export interface ChatConversationLabels {
   loadingHistory: string;
 }
 
-export const defaultChatConversationLabels: ChatConversationLabels = {
-  conversation: "Conversation",
-  jumpToLatest: "Jump to latest",
-  loadingHistory: "Loading earlier messages…",
-};
+export const chatConversationLabelsFor = ({ t }: IntegratedI18n): ChatConversationLabels => ({
+  conversation: t("chatConversation.conversation"),
+  jumpToLatest: t("chatConversation.jumpToLatest"),
+  loadingHistory: t("chatConversation.loadingHistory"),
+});
+
+export const defaultChatConversationLabels: ChatConversationLabels = chatConversationLabelsFor(getI18n("en", false));
 
 export interface ChatConversationProps extends Omit<HTMLAttributes<HTMLDivElement>, "onScroll"> {
   /** The messages (`ChatMessage`s, tool cards…). */
@@ -78,7 +82,7 @@ export const ChatConversation = forwardRef<HTMLDivElement, ChatConversationProps
     },
     ref,
   ) => {
-    const l = { ...defaultChatConversationLabels, ...labels };
+    const l = useLabels(chatConversationLabelsFor, labels);
     const scroller = useRef<HTMLDivElement>(null);
     const content = useRef<HTMLDivElement>(null);
     const merged = useMergedRefs(scroller, ref);

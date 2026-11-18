@@ -1,5 +1,11 @@
 // Public entry point for @bmsuisse/ui.
 
+// --- built-in translations ----------------------------------------------------
+export type { IntegratedI18n } from "./i18n/locale";
+export { BmsLocaleProvider, useFormatLocale, useIntegratedI18n } from "./i18n/locale";
+export type { BmsLanguage, MessageKey, MessageParams, Translate } from "./i18n/messages";
+export { LANGUAGES, formatMessage, resolveLanguage } from "./i18n/messages";
+
 // --- primitives (shadcn/ui-based) -------------------------------------------
 export type { ButtonProps } from "./primitives/button";
 export { Button, buttonVariants } from "./primitives/button";

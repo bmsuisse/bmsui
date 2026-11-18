@@ -19,6 +19,8 @@ import { cn } from "../../lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../../primitives/collapsible";
 import type { StatusTone } from "../status-badge/StatusBadge";
 import { Timestamp, type TimestampFormat } from "../timestamp/Timestamp";
+import { getI18n, useLabels, useFormatLocale } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export type TimelineStatus = "done" | "active" | "pending" | "error";
 export type TimelineSize = "sm" | "md";
@@ -28,7 +30,11 @@ export interface TimelineLabels {
   pending: string;
 }
 
-export const defaultTimelineLabels: TimelineLabels = { pending: "Loading…" };
+export const timelineLabelsFor = ({ t }: IntegratedI18n): TimelineLabels => ({
+  pending: t("timeline.pending"),
+});
+
+export const defaultTimelineLabels: TimelineLabels = timelineLabelsFor(getI18n("en", false));
 
 interface TimelineContextValue {
   size: TimelineSize;
@@ -70,7 +76,7 @@ export interface TimelineProps extends OlHTMLAttributes<HTMLOListElement> {
 export const Timeline = ({
   size = "md",
   timeFormat = "relative",
-  locale = "de-CH",
+  locale: localeProp,
   pending,
   labels,
   animated = true,
@@ -78,7 +84,8 @@ export const Timeline = ({
   children,
   ...props
 }: TimelineProps): ReactElement => {
-  const text = { ...defaultTimelineLabels, ...labels };
+  const locale = useFormatLocale(localeProp);
+  const text = useLabels(timelineLabelsFor, labels);
   const pendingNode = pending === true ? text.pending : pending;
   return (
     <TimelineContext.Provider value={{ size, timeFormat, locale, animated }}>

@@ -3,16 +3,20 @@ import { forwardRef, useEffect, useRef, useState } from "react";
 import { addPrecise, clampNumber, formatLocaleNumber, parseLocaleNumber, roundTo } from "../../lib/numberField";
 import { cn } from "../../lib/utils";
 import { Input, type InputProps } from "../../primitives/input";
+import { getI18n, useLabels, useFormatLocale } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export interface NumberInputLabels {
   increment: string;
   decrement: string;
 }
 
-export const defaultNumberInputLabels: NumberInputLabels = {
-  increment: "Increase",
-  decrement: "Decrease",
-};
+export const numberInputLabelsFor = ({ t }: IntegratedI18n): NumberInputLabels => ({
+  increment: t("numberInput.increment"),
+  decrement: t("numberInput.decrement"),
+});
+
+export const defaultNumberInputLabels: NumberInputLabels = numberInputLabelsFor(getI18n("en", false));
 
 export interface NumberInputProps
   extends Omit<InputProps, "value" | "defaultValue" | "onChange" | "type" | "min" | "max" | "step" | "size"> {
@@ -63,7 +67,7 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
       step = 1,
       decimals,
       formatOptions,
-      locale = "de-CH",
+      locale: localeProp,
       stepper = false,
       size = "default",
       labels,
@@ -79,7 +83,8 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
     },
     ref,
   ) => {
-    const l = { ...defaultNumberInputLabels, ...labels };
+    const locale = useFormatLocale(localeProp);
+    const l = useLabels(numberInputLabelsFor, labels);
     const testId = (props as { "data-testid"?: string })["data-testid"];
     const format = (n: number | null) => formatLocaleNumber(n, locale, { decimals, formatOptions });
     const [text, setText] = useState(() => format(value));

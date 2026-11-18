@@ -4,6 +4,7 @@ import { type ErrorInput, toErrorInfo } from "../../lib/errorState";
 import { cn } from "../../lib/utils";
 import { InlineError } from "../error-state/ErrorState";
 import { LoadingSpinner } from "../loading-spinner/LoadingSpinner";
+import { useIntegratedI18n } from "../../i18n/locale";
 
 export interface SearchBarProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "value" | "onChange" | "size"> {
@@ -43,12 +44,14 @@ export function SearchBar({
   error,
   onRetry,
   onClear,
-  clearLabel = "Clear search",
+  clearLabel: clearLabelProp,
   actions,
   inputRef,
   className,
   ...props
 }: SearchBarProps): ReactElement {
+  const { t } = useIntegratedI18n();
+  const clearLabel = clearLabelProp ?? t("searchBar.clear");
   const busy = loading ?? isLoading;
   const hasError = toErrorInfo(error) !== undefined;
   const showClear = onClear !== false && value.length > 0;

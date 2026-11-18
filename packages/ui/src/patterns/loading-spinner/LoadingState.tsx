@@ -2,6 +2,7 @@ import { type HTMLAttributes, type ReactElement, useEffect, useState } from "rea
 import { cn } from "../../lib/utils";
 import { Skeleton } from "../../primitives/skeleton";
 import { LoadingOverlay } from "./LoadingSpinner";
+import { useIntegratedI18n } from "../../i18n/locale";
 
 /** Returns `true` only once `active` has been true for `delayMs` — avoids a spinner flash on fast responses. */
 export function useDelayedFlag(active: boolean, delayMs = 150): boolean {
@@ -35,11 +36,13 @@ export interface LoadingStateProps extends HTMLAttributes<HTMLDivElement> {
 export const LoadingState = ({
   variant = "skeleton",
   lines = 3,
-  label = "Loading…",
+  label: labelProp,
   delayMs = 150,
   className,
   ...props
 }: LoadingStateProps): ReactElement => {
+  const { t } = useIntegratedI18n();
+  const label = labelProp ?? t("loadingState.label");
   const visible = useDelayedFlag(true, delayMs);
   if (variant === "spinner") {
     return (
@@ -65,14 +68,16 @@ export const LoadingState = ({
 };
 
 /** Thin indeterminate bar for a refetch over already-visible data. Place inside a `relative` container. */
-export const RefreshBar = ({ active, className }: { active: boolean; className?: string }): ReactElement | null =>
-  active ? (
+export const RefreshBar = ({ active, className }: { active: boolean; className?: string }): ReactElement | null => {
+  const { t } = useIntegratedI18n();
+  return active ? (
     <div
       role="progressbar"
-      aria-label="Refreshing"
+      aria-label={t("loadingState.refreshing")}
       data-testid="refresh-bar"
       className={cn("absolute inset-x-0 top-0 z-30 h-0.5 overflow-hidden bg-muted", className)}
     >
       <div className="h-full w-1/3 animate-pulse bg-primary dark:bg-ring motion-reduce:animate-none" />
     </div>
   ) : null;
+};

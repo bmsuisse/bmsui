@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Button, type ButtonProps } from "../../primitives/button";
 import { DialogActions } from "./DialogActions";
 import { Modal } from "./Modal";
+import { useIntegratedI18n } from "../../i18n/locale";
 
 export interface QuestionDialogAction {
   /** Button label. */
@@ -57,9 +58,11 @@ export const QuestionDialog = ({
   title,
   description,
   actions,
-  cancelLabel = "Cancel",
+  cancelLabel: cancelLabelProp,
   cancelTestId,
 }: QuestionDialogProps): ReactElement => {
+  const { t } = useIntegratedI18n();
+  const cancelLabel = cancelLabelProp ?? t("modal.cancel");
   const [pendingIndex, setPendingIndex] = useState<number | null>(null);
   const pending = pendingIndex !== null;
 

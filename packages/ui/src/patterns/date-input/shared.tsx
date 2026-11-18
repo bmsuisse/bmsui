@@ -2,6 +2,8 @@ import type { ReactElement } from "react";
 import { useSyncExternalStore } from "react";
 import type { InputProps } from "../../primitives/input";
 import type { CalendarProps } from "../calendar/Calendar";
+import { getI18n } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 /** Why the entry was rejected: it is no date (`invalid`), a real date outside `min`/`max` (`range`), or one `isDateDisabled` blocks (`disabled`). */
 export type DateInputError = "invalid" | "range" | "disabled";
@@ -24,16 +26,18 @@ export interface DateInputLabels {
   retry: string;
 }
 
-export const defaultDateInputLabels: DateInputLabels = {
-  invalid: "Enter a valid date",
-  outOfRange: "Date is out of range",
-  unavailable: "Date is not available",
-  openCalendar: "Choose date",
-  previousMonth: "Previous month",
-  nextMonth: "Next month",
-  calendarLoadFailed: "Calendar could not be loaded",
-  retry: "Retry",
-};
+export const dateInputLabelsFor = ({ t }: IntegratedI18n): DateInputLabels => ({
+  invalid: t("dateInput.invalid"),
+  outOfRange: t("dateInput.outOfRange"),
+  unavailable: t("dateInput.unavailable"),
+  openCalendar: t("dateInput.openCalendar"),
+  previousMonth: t("dateInput.previousMonth"),
+  nextMonth: t("dateInput.nextMonth"),
+  calendarLoadFailed: t("dateInput.calendarLoadFailed"),
+  retry: t("dateInput.retry"),
+});
+
+export const defaultDateInputLabels: DateInputLabels = dateInputLabelsFor(getI18n("en", false));
 
 export interface DateInputProps
   extends Omit<InputProps, "value" | "defaultValue" | "onChange" | "type" | "min" | "max"> {

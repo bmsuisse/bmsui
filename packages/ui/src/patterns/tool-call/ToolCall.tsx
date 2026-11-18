@@ -14,6 +14,8 @@ import { SHIMMER_CLASSES, useShimmer } from "../../lib/useShimmer";
 import { cn } from "../../lib/utils";
 import { Collapsible, CollapsibleTrigger } from "../../primitives/collapsible";
 import { CodeBlock } from "../code-block/CodeBlock";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export type ToolCallStatus = "pending" | "running" | "done" | "error";
 
@@ -32,17 +34,19 @@ export interface ToolCallLabels {
   duration: (ms: number) => string;
 }
 
-export const defaultToolCallLabels: ToolCallLabels = {
-  pending: "Waiting",
-  running: "Running",
-  done: "Done",
-  error: "Failed",
-  input: "Input",
-  output: "Output",
-  errorDetails: "Error",
-  steps: (n) => `${n} ${n === 1 ? "step" : "steps"}`,
+export const toolCallLabelsFor = ({ t }: IntegratedI18n): ToolCallLabels => ({
+  pending: t("toolCall.pending"),
+  running: t("toolCall.running"),
+  done: t("toolCall.done"),
+  error: t("toolCall.error"),
+  input: t("toolCall.input"),
+  output: t("toolCall.output"),
+  errorDetails: t("toolCall.errorDetails"),
+  steps: (n) => t("toolCall.steps", { count: n }),
   duration: (ms) => formatToolDuration(ms),
-};
+});
+
+export const defaultToolCallLabels: ToolCallLabels = toolCallLabelsFor(getI18n("en", false));
 
 /** `340 ms`, `1.2 s`, `2 min 5 s`. */
 export function formatToolDuration(ms: number): string {
@@ -124,7 +128,7 @@ export const ToolCallCard = forwardRef<HTMLDivElement, ToolCallCardProps>(
     { name, status = "done", summary, duration, icon, input, output, error, children, defaultOpen, open: openProp, onOpenChange, labels, className, ...props },
     ref,
   ) => {
-    const l = { ...defaultToolCallLabels, ...labels };
+    const l = useLabels(toolCallLabelsFor, labels);
     const [userOpen, setUserOpen] = useState<boolean | null>(null);
     const hasBody = input !== undefined || output !== undefined || error != null || children != null;
     const open = hasBody && (openProp ?? userOpen ?? (status === "running" || status === "error" || (defaultOpen ?? false)));
@@ -216,7 +220,7 @@ export interface ToolCallGroupProps extends Omit<HTMLAttributes<HTMLDivElement>,
  */
 export const ToolCallGroup = forwardRef<HTMLDivElement, ToolCallGroupProps>(
   ({ children, count, active = false, defaultOpen = false, open: openProp, onOpenChange, labels, className, ...props }, ref) => {
-    const l = { ...defaultToolCallLabels, ...labels };
+    const l = useLabels(toolCallLabelsFor, labels);
     const [userOpen, setUserOpen] = useState<boolean | null>(null);
     const open = openProp ?? userOpen ?? (active || defaultOpen);
     const n = count ?? Children.toArray(children).length;

@@ -2,6 +2,8 @@ import { Fragment, type HTMLAttributes, type ReactElement } from "react";
 import { isMacPlatform } from "../../lib/platform";
 import { useIsMac } from "../../lib/useHydrated";
 import { cn } from "../../lib/utils";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 const MAC_KEYS: Record<string, string> = {
   Mod: "⌘",
@@ -84,7 +86,12 @@ export interface KeyComboLabels {
   or: string;
 }
 
-export const defaultKeyComboLabels: KeyComboLabels = { then: "then", or: "or" };
+export const keyComboLabelsFor = ({ t }: IntegratedI18n): KeyComboLabels => ({
+  then: t("keyCombo.then"),
+  or: t("keyCombo.or"),
+});
+
+export const defaultKeyComboLabels: KeyComboLabels = keyComboLabelsFor(getI18n("en", false));
 
 export interface KeyComboProps extends Omit<HTMLAttributes<HTMLSpanElement>, "children"> {
   /**
@@ -109,7 +116,7 @@ export const KeyCombo = ({ keys, mac, size, pressed, labels, className, ...props
   // Detected after hydration (server renders the PC spelling); an explicit `mac` wins.
   const detectedMac = useIsMac();
   const isMac = mac ?? detectedMac;
-  const l = { ...defaultKeyComboLabels, ...labels };
+  const l = useLabels(keyComboLabelsFor, labels);
   const alternatives = Array.isArray(keys) ? keys : [keys];
   return (
     <span

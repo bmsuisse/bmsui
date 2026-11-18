@@ -3,6 +3,8 @@ import type { ButtonHTMLAttributes, HTMLAttributes, ReactElement } from "react";
 import { type ErrorInput, toErrorInfo } from "../../lib/errorState";
 import { cn } from "../../lib/utils";
 import { Button } from "../../primitives/button";
+import { getI18n, useIntegratedI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export interface ErrorStateLabels {
   title: string;
@@ -10,11 +12,13 @@ export interface ErrorStateLabels {
   showDetails: string;
 }
 
-export const defaultErrorStateLabels: ErrorStateLabels = {
-  title: "Couldn't load data",
-  retry: "Retry",
-  showDetails: "Show details",
-};
+export const errorStateLabelsFor = ({ t }: IntegratedI18n): ErrorStateLabels => ({
+  title: t("errorState.title"),
+  retry: t("errorState.retry"),
+  showDetails: t("errorState.showDetails"),
+});
+
+export const defaultErrorStateLabels: ErrorStateLabels = errorStateLabelsFor(getI18n("en", false));
 
 /** Extra attributes for the Retry button (`data-testid`, `className` for a larger tap target, ...). `onClick` and `type` stay under `onRetry`'s control. */
 export type RetryButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "onClick" | "type" | "children"> & {
@@ -42,9 +46,10 @@ export const ErrorState = ({
   className,
   ...props
 }: ErrorStateProps): ReactElement | null => {
-  const info = toErrorInfo(error);
+  const i18n = useIntegratedI18n();
+  const l = useLabels(errorStateLabelsFor, labels);
+  const info = toErrorInfo(error, i18n.t("errorState.unknown"));
   if (!info) return null;
-  const l = { ...defaultErrorStateLabels, ...labels };
   const compact = variant === "compact";
   return (
     <div
@@ -112,9 +117,10 @@ export const InlineError = ({
   wrap = false,
   ...props
 }: InlineErrorProps): ReactElement | null => {
-  const info = toErrorInfo(error);
+  const i18n = useIntegratedI18n();
+  const l = useLabels(errorStateLabelsFor, labels);
+  const info = toErrorInfo(error, i18n.t("errorState.unknown"));
   if (!info) return null;
-  const l = { ...defaultErrorStateLabels, ...labels };
   const text = info.message ?? info.title ?? l.title;
   return (
     <span

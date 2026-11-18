@@ -8,6 +8,7 @@ import { AlertBox } from "../alert-box/AlertBox";
 import { AiButton } from "./AiButton";
 import { VoiceInputButton } from "./VoiceInputButton";
 import { describeSpeechError, type SpeechRecognitionEngineFactory } from "./useSpeechRecognition";
+import { useIntegratedI18n } from "../../i18n/locale";
 
 export interface VoiceTranscriptProps extends Omit<HTMLAttributes<HTMLDivElement>, "onChange"> {
   /** The transcript. Controlled, like `SearchBar` — the caller owns the text. */
@@ -48,8 +49,8 @@ export function VoiceTranscript({
   value,
   onChange,
   onTransform,
-  transformLabel = "Transform with AI",
-  placeholder = "Speak or type…",
+  transformLabel: transformLabelProp,
+  placeholder: placeholderProp,
   lang,
   engine,
   rows = 4,
@@ -57,6 +58,9 @@ export function VoiceTranscript({
   className,
   ...props
 }: VoiceTranscriptProps): ReactElement {
+  const { t } = useIntegratedI18n();
+  const transformLabel = transformLabelProp ?? t("ai.transform");
+  const placeholder = placeholderProp ?? t("ai.speakOrType");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [previous, setPrevious] = useState<string | null>(null);
@@ -100,10 +104,10 @@ export function VoiceTranscript({
       <div className="flex flex-wrap items-center gap-2">
         <VoiceInputButton
           onTranscript={append}
-          onError={(code) => setError(describeSpeechError(code))}
+          onError={(code) => setError(describeSpeechError(code, t))}
           lang={lang}
           engine={engine}
-          label="Dictate"
+          label={t("ai.dictate")}
           size="sm"
           showInterim
           disabled={disabled || loading}
@@ -123,7 +127,7 @@ export function VoiceTranscript({
         {previous !== null && !loading ? (
           <Button type="button" variant="ghost" size="sm" onClick={undo}>
             <ArrowUturnLeftIcon className="h-4 w-4" aria-hidden="true" />
-            Undo
+            {t("ai.undo")}
           </Button>
         ) : null}
       </div>

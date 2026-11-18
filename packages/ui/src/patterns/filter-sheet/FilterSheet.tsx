@@ -4,6 +4,8 @@ import { cn } from "../../lib/utils";
 import { badgeVariants } from "../../primitives/badge";
 import { Button, type ButtonProps } from "../../primitives/button";
 import { ResponsivePanel, type ResponsivePanelSize } from "../modal/ResponsivePanel";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export interface FilterSheetLabels {
   title: string;
@@ -15,13 +17,15 @@ export interface FilterSheetLabels {
   activeCount: (count: number) => string;
 }
 
-export const defaultFilterSheetLabels: FilterSheetLabels = {
-  title: "Filters",
-  apply: "Apply",
-  applyWithCount: (count) => `Show ${count} ${count === 1 ? "result" : "results"}`,
-  reset: "Reset",
-  activeCount: (count) => `${count} active`,
-};
+export const filterSheetLabelsFor = ({ t }: IntegratedI18n): FilterSheetLabels => ({
+  title: t("filterSheet.title"),
+  apply: t("filterSheet.apply"),
+  applyWithCount: (n) => t("filterSheet.applyWithCount", { count: n }),
+  reset: t("filterSheet.reset"),
+  activeCount: (count) => t("filterSheet.activeCount", { count }),
+});
+
+export const defaultFilterSheetLabels: FilterSheetLabels = filterSheetLabelsFor(getI18n("en", false));
 
 export interface FilterSheetProps {
   open: boolean;
@@ -70,7 +74,7 @@ export const FilterSheet = ({
   labels: labelOverrides,
   className,
 }: FilterSheetProps): ReactElement => {
-  const labels = { ...defaultFilterSheetLabels, ...labelOverrides };
+  const labels = useLabels(filterSheetLabelsFor, labelOverrides);
   return (
     <ResponsivePanel
       open={open}
@@ -125,7 +129,7 @@ export const FilterSheetTrigger = ({
   variant = "outline",
   ...props
 }: FilterSheetTriggerProps): ReactElement => {
-  const labels = { ...defaultFilterSheetLabels, ...labelOverrides };
+  const labels = useLabels(filterSheetLabelsFor, labelOverrides);
   return (
     <Button
       type="button"

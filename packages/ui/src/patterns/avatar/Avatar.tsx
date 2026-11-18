@@ -2,6 +2,8 @@ import { type CSSProperties, type HTMLAttributes, type ReactElement, useEffect, 
 import { cn } from "../../lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../primitives/tooltip";
 import type { StatusTone } from "../status-badge/StatusBadge";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export type AvatarSize = "xs" | "sm" | "md" | "lg" | "xl";
 
@@ -186,9 +188,11 @@ export interface AvatarGroupLabels {
   more: (count: number) => string;
 }
 
-export const defaultAvatarGroupLabels: AvatarGroupLabels = {
-  more: (count) => `${count} more`,
-};
+export const avatarGroupLabelsFor = ({ t }: IntegratedI18n): AvatarGroupLabels => ({
+  more: (count) => t("avatarGroup.more", { count }),
+});
+
+export const defaultAvatarGroupLabels: AvatarGroupLabels = avatarGroupLabelsFor(getI18n("en", false));
 
 export interface AvatarGroupProps extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
   items: AvatarGroupItem[];
@@ -223,7 +227,7 @@ export const AvatarGroup = ({
   className,
   ...props
 }: AvatarGroupProps): ReactElement => {
-  const l = { ...defaultAvatarGroupLabels, ...labels };
+  const l = useLabels(avatarGroupLabelsFor, labels);
   // Showing "+1" in place of the one remaining avatar saves no space; show it instead.
   const limit = items.length === max + 1 ? items.length : Math.max(0, max);
   const visible = items.slice(0, limit);

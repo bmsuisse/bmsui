@@ -1,6 +1,8 @@
 import type { ComponentType, HTMLAttributes, MouseEvent, ReactElement, ReactNode, SVGProps } from "react";
 import { forwardRef, useState } from "react";
 import { cn } from "../../lib/utils";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export interface BottomNavigationItem {
   id: string;
@@ -35,11 +37,13 @@ export interface BottomNavigationLabels {
   overflow: (max: number) => string;
 }
 
-export const defaultBottomNavigationLabels: BottomNavigationLabels = {
-  badge: (badge) => `${badge} new`,
-  dot: "New",
-  overflow: (max) => `${max}+`,
-};
+export const bottomNavigationLabelsFor = ({ t }: IntegratedI18n): BottomNavigationLabels => ({
+  badge: (badge) => t("bottomNavigation.badge", { badge }),
+  dot: t("bottomNavigation.dot"),
+  overflow: (max) => t("bottomNavigation.overflow", { max }),
+});
+
+export const defaultBottomNavigationLabels: BottomNavigationLabels = bottomNavigationLabelsFor(getI18n("en", false));
 
 const HIDE_FROM = {
   sm: "sm:hidden",
@@ -106,7 +110,7 @@ export const BottomNavigation = forwardRef<HTMLElement, BottomNavigationProps>(f
   },
   ref,
 ) {
-  const l = { ...defaultBottomNavigationLabels, ...labels };
+  const l = useLabels(bottomNavigationLabelsFor, labels);
   const [inner, setInner] = useState<string | null>(defaultValue);
   const current = value !== undefined ? value : inner;
   const half = Math.ceil(items.length / 2);

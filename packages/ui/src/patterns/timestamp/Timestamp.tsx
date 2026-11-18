@@ -1,4 +1,5 @@
 import { type HTMLAttributes, type ReactElement, useEffect, useMemo, useRef, useState } from "react";
+import { useFormatLocale } from "../../i18n/locale";
 import { useHydrated } from "../../lib/useHydrated";
 import { cn } from "../../lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../primitives/tooltip";
@@ -61,7 +62,7 @@ export interface TimestampProps extends Omit<HTMLAttributes<HTMLElement>, "child
 export const Timestamp = ({
   value,
   format = "relative",
-  locale = "de-CH",
+  locale: localeProp,
   relativeStyle = "short",
   live = true,
   tooltip,
@@ -70,6 +71,7 @@ export const Timestamp = ({
   className,
   ...props
 }: TimestampProps): ReactElement => {
+  const locale = useFormatLocale(localeProp);
   const date = useMemo(() => toDate(value), [value]);
   const valid = !Number.isNaN(date.getTime());
   const relative = format === "relative";

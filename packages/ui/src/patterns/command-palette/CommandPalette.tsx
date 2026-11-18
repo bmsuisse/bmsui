@@ -10,6 +10,8 @@ import { LoadingSpinner } from "../loading-spinner/LoadingSpinner";
 import { scoreCommand } from "./commandFilter";
 import { useRegisteredCommands } from "./registry";
 import type { CommandItem } from "./types";
+import { getI18n, useLabels, useIntegratedI18n } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export interface CommandPaletteLabels {
   /** Dialog title (screen readers only) and the list's accessible name. */
@@ -27,17 +29,19 @@ export interface CommandPaletteLabels {
   loading: string;
 }
 
-export const defaultCommandPaletteLabels: CommandPaletteLabels = {
-  title: "Command palette",
-  description: "Search for a command and press Enter to run it.",
-  placeholder: "Type a command or search…",
-  empty: "No matching commands",
-  recent: "Recent",
-  navigate: "navigate",
-  run: "run",
-  close: "close",
-  loading: "Loading…",
-};
+export const commandPaletteLabelsFor = ({ t }: IntegratedI18n): CommandPaletteLabels => ({
+  title: t("commandPalette.title"),
+  description: t("commandPalette.description"),
+  placeholder: t("commandPalette.placeholder"),
+  empty: t("commandPalette.empty"),
+  recent: t("commandPalette.recent"),
+  navigate: t("commandPalette.navigate"),
+  run: t("commandPalette.run"),
+  close: t("commandPalette.close"),
+  loading: t("commandPalette.loading"),
+});
+
+export const defaultCommandPaletteLabels: CommandPaletteLabels = commandPaletteLabelsFor(getI18n("en", false));
 
 export interface CommandPaletteProps {
   open: boolean;
@@ -93,7 +97,7 @@ export function CommandPalette({
   "data-testid": testId = "command-palette",
   ...rest
 }: CommandPaletteProps): ReactElement {
-  const l = { ...defaultCommandPaletteLabels, ...rest.labels };
+  const l = useLabels(commandPaletteLabelsFor, rest.labels);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -490,7 +494,9 @@ export interface CommandPaletteTriggerProps extends ButtonHTMLAttributes<HTMLBut
  * its shortcut. Collapses to an icon button below `sm`.
  */
 export const CommandPaletteTrigger = forwardRef<HTMLButtonElement, CommandPaletteTriggerProps>(
-  ({ label = "Search…", shortcut, className, ...props }, ref) => {
+  ({ label, shortcut, className, ...props }, ref) => {
+    const { t } = useIntegratedI18n();
+    const text = label ?? t("commandPalette.trigger");
     const [hint, setHint] = useState<string | null>(shortcut === undefined ? null : shortcut);
     // Resolved after mount so server and client render the same markup.
     useEffect(() => {
@@ -500,7 +506,7 @@ export const CommandPaletteTrigger = forwardRef<HTMLButtonElement, CommandPalett
       <button
         ref={ref}
         type="button"
-        aria-label={label}
+        aria-label={text}
         aria-haspopup="dialog"
         aria-keyshortcuts={hint ? (isApplePlatform() ? "Meta+K" : "Control+K") : undefined}
         data-testid="command-palette-trigger"
@@ -511,7 +517,7 @@ export const CommandPaletteTrigger = forwardRef<HTMLButtonElement, CommandPalett
         {...props}
       >
         <MagnifyingGlassIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
-        <span className="flex-1 text-left max-sm:sr-only">{label}</span>
+        <span className="flex-1 text-left max-sm:sr-only">{text}</span>
         {hint ? <Kbd className="max-sm:hidden">{hint}</Kbd> : null}
       </button>
     );

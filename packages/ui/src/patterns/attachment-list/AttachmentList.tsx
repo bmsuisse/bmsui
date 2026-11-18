@@ -11,6 +11,8 @@ import { XMarkIcon } from "@heroicons/react/16/solid";
 import { type ElementType, type HTMLAttributes, forwardRef } from "react";
 import { cn } from "../../lib/utils";
 import { formatFileSize } from "../file-input/FileInput";
+import { getI18n, useFormatLocale, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export interface AttachmentItem {
   id: string;
@@ -37,12 +39,15 @@ export interface AttachmentListLabels {
   remove: (name: string) => string;
 }
 
-export const defaultAttachmentListLabels: AttachmentListLabels = {
-  attachments: (n) => `${n} ${n === 1 ? "attachment" : "attachments"}`,
-  download: "Download",
+export const attachmentListLabelsFor = ({ t }: IntegratedI18n): AttachmentListLabels => ({
+  attachments: (n) => t("attachmentList.attachments", { count: n }),
+  download: t("attachmentList.download"),
+  downloadFile: (name) => t("attachmentList.downloadFile", { name }),
+  remove: (name) => t("attachmentList.remove", { name }),
   sizeUnits: ["B", "KB", "MB", "GB"],
-  remove: (name) => `Remove ${name}`,
-};
+});
+
+export const defaultAttachmentListLabels: AttachmentListLabels = attachmentListLabelsFor(getI18n("en", false));
 
 function iconFor(mime = "", name = ""): ElementType {
   const m = mime.toLowerCase();
@@ -71,8 +76,10 @@ export interface AttachmentListProps extends Omit<HTMLAttributes<HTMLElement>, "
  * name, size, download link and, in compose mode, a remove button. Long names wrap.
  */
 export const AttachmentList = forwardRef<HTMLElement, AttachmentListProps>(
-  ({ attachments, onRemove, layout = "list", locale = "de-CH", labels, className, ...props }, ref) => {
-    const l = { ...defaultAttachmentListLabels, ...labels };
+  ({ attachments, onRemove, layout = "list", locale: localeProp, labels, className, ...props }, ref) => {
+    const l = useLabels(attachmentListLabelsFor, labels);
+    const downloadFile = labels?.downloadFile ?? (labels?.download === undefined ? l.downloadFile : undefined);
+    const locale = useFormatLocale(localeProp);
     if (attachments.length === 0) return null;
     const chips = layout === "chips";
     const shape = chips ? "rounded-[var(--radius-pill,9999px)]" : "rounded-md";
@@ -110,7 +117,7 @@ export const AttachmentList = forwardRef<HTMLElement, AttachmentListProps>(
                   <a
                     href={a.href}
                     download
-                    aria-label={l.downloadFile ? l.downloadFile(a.name) : `${l.download}: ${a.name}`}
+                    aria-label={downloadFile ? downloadFile(a.name) : `${l.download}: ${a.name}`}
                     className={cn(
                       box,
                       "hover:bg-foreground/6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",

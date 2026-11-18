@@ -1,5 +1,7 @@
 import type { MouseEvent, ReactElement } from "react";
 import { cn } from "../../lib/utils";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export interface SkipLink {
   label: string;
@@ -13,7 +15,11 @@ export interface SkipLinksLabels {
   /** Accessible name of the `<nav>`. */
   nav: string;
 }
-export const defaultSkipLinksLabels: SkipLinksLabels = { nav: "Skip links" };
+export const skipLinksLabelsFor = ({ t }: IntegratedI18n): SkipLinksLabels => ({
+  nav: t("skipLinks.nav"),
+});
+
+export const defaultSkipLinksLabels: SkipLinksLabels = skipLinksLabelsFor(getI18n("en", false));
 
 export interface SkipLinksProps {
   links: SkipLink[];
@@ -33,25 +39,28 @@ const LINK =
  * them has keyboard focus, then a pill in the top-left corner. Mount it as the
  * first element of the app root.
  */
-export const SkipLinks = ({ links, label, labels, className, ...props }: SkipLinksProps): ReactElement => (
-  <nav
-    aria-label={label ?? { ...defaultSkipLinksLabels, ...labels }.nav}
-    className={cn(
-      "pointer-events-none fixed left-2 top-2 z-[60] flex max-w-[calc(100vw-1rem)] flex-wrap gap-2 has-[:focus-visible]:pointer-events-auto",
-      className,
-    )}
-    {...props}
-  >
-    {links.map((link) =>
-      link.href ? (
-        <a key={link.label} href={link.href} onClick={link.onSelect} className={LINK}>
-          {link.label}
-        </a>
-      ) : (
-        <button key={link.label} type="button" onClick={link.onSelect} className={LINK}>
-          {link.label}
-        </button>
-      ),
-    )}
-  </nav>
-);
+export const SkipLinks = ({ links, label, labels, className, ...props }: SkipLinksProps): ReactElement => {
+  const text = useLabels(skipLinksLabelsFor, labels);
+  return (
+    <nav
+      aria-label={label ?? text.nav}
+      className={cn(
+        "pointer-events-none fixed left-2 top-2 z-[60] flex max-w-[calc(100vw-1rem)] flex-wrap gap-2 has-[:focus-visible]:pointer-events-auto",
+        className,
+      )}
+      {...props}
+    >
+      {links.map((link) =>
+        link.href ? (
+          <a key={link.label} href={link.href} onClick={link.onSelect} className={LINK}>
+            {link.label}
+          </a>
+        ) : (
+          <button key={link.label} type="button" onClick={link.onSelect} className={LINK}>
+            {link.label}
+          </button>
+        ),
+      )}
+    </nav>
+  );
+};

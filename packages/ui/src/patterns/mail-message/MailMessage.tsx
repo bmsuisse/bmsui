@@ -4,6 +4,8 @@ import { type AttachmentItem, AttachmentList, type AttachmentListLabels } from "
 import { Avatar } from "../avatar/Avatar";
 import { QuotedText, type QuotedTextLabels } from "../quoted-text/QuotedText";
 import { Timestamp } from "../timestamp/Timestamp";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export type MailDirection = "inbound" | "outbound" | "note";
 export type MailMessageStatus = "sent" | "sending" | "failed" | "bounced" | "draft";
@@ -42,24 +44,26 @@ export interface MailMessageLabels {
   quoted: Partial<QuotedTextLabels>;
 }
 
-export const defaultMailMessageLabels: MailMessageLabels = {
-  to: "to",
-  cc: "cc",
-  bcc: "bcc",
-  showRecipients: "Show all recipients",
-  hideRecipients: "Hide recipients",
-  draft: "[Draft]",
-  sending: "Sending…",
-  failed: "Sending failed",
-  bounced: "Bounced",
-  retry: "Retry",
-  note: "Note",
+export const mailMessageLabelsFor = ({ t }: IntegratedI18n): MailMessageLabels => ({
+  to: t("mailMessage.to"),
+  cc: t("mailMessage.cc"),
+  bcc: t("mailMessage.bcc"),
+  showRecipients: t("mailMessage.showRecipients"),
+  hideRecipients: t("mailMessage.hideRecipients"),
+  draft: t("mailMessage.draft"),
+  sending: t("mailMessage.sending"),
+  failed: t("mailMessage.failed"),
+  bounced: t("mailMessage.bounced"),
+  retry: t("mailMessage.retry"),
+  note: t("mailMessage.note"),
   separator: " · ",
   recipientLine: (groupLabel, addresses) => `${groupLabel}: ${addresses.join(", ")}`,
   statusWithError: (status, error) => `${status}: ${error}`,
   attachments: {},
   quoted: {},
-};
+});
+
+export const defaultMailMessageLabels: MailMessageLabels = mailMessageLabelsFor(getI18n("en", false));
 
 export interface MailMessageProps extends Omit<HTMLAttributes<HTMLElement>, "title"> {
   direction: MailDirection;
@@ -109,7 +113,7 @@ export const MailMessage = forwardRef<HTMLElement, MailMessageProps>(
     },
     ref,
   ) => {
-    const l = { ...defaultMailMessageLabels, ...labels };
+    const l = useLabels(mailMessageLabelsFor, labels);
     const [allRecipients, setAllRecipients] = useState(false);
     const groups = (["to", "cc", "bcc"] as const)
       .map((k) => ({ key: k, label: l[k], list: recipients?.[k] ?? [] }))

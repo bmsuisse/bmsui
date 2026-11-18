@@ -11,6 +11,8 @@ import {
 } from "react";
 import { cn } from "../../lib/utils";
 import { Chip } from "../chip/Chip";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export interface EmailSuggestion {
   email: string;
@@ -29,13 +31,15 @@ export interface EmailAddressInputLabels {
   suggestions: string;
 }
 
-export const defaultEmailAddressInputLabels: EmailAddressInputLabels = {
-  remove: (email) => `Remove ${email}`,
-  placeholder: "Add address…",
-  invalidAddress: "Check the highlighted addresses.",
-  maxReached: (max) => `At most ${max} addresses.`,
-  suggestions: "Suggested addresses",
-};
+export const emailAddressInputLabelsFor = ({ t }: IntegratedI18n): EmailAddressInputLabels => ({
+  remove: (email) => t("emailAddressInput.remove", { email }),
+  placeholder: t("emailAddressInput.placeholder"),
+  invalidAddress: t("emailAddressInput.invalidAddress"),
+  maxReached: (max) => t("emailAddressInput.maxReached", { max }),
+  suggestions: t("emailAddressInput.suggestions"),
+});
+
+export const defaultEmailAddressInputLabels: EmailAddressInputLabels = emailAddressInputLabelsFor(getI18n("en", false));
 
 const EMAIL_RE = /^[^\s@<>,;]+@[^\s@<>,;.]+(?:\.[^\s@<>,;.]+)+$/;
 
@@ -134,7 +138,7 @@ export const EmailAddressInput = forwardRef<HTMLInputElement, EmailAddressInputP
     },
     ref,
   ) => {
-    const l = { ...defaultEmailAddressInputLabels, ...labels };
+    const l = useLabels(emailAddressInputLabelsFor, labels);
     const uid = useId();
     const inputRef = useRef<HTMLInputElement>(null);
     useImperativeHandle(ref, () => inputRef.current as HTMLInputElement);
