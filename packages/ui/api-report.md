@@ -7,7 +7,7 @@ Every public export with its kind and signature. Interfaces and object types
 list their own members one per line (inherited members come from the `extends`
 clause), so the diff of this file shows exactly what changed in the public API.
 
-## Components (227)
+## Components (235)
 
 ```text
 const Accordion: react.ForwardRefExoticComponent<AccordionProps & react.RefAttributes<HTMLDivElement>>
@@ -22,6 +22,7 @@ function AnimatedBrand(props: AnimatedBrandProps): ReactElement
 function Announcer(): react.JSX.Element
 const ApprovalCard: react.ForwardRefExoticComponent<ApprovalCardProps & react.RefAttributes<HTMLElement>>
 const AsyncBoundary: (props: AsyncBoundaryProps) => ReactElement
+const AttachmentList: react.ForwardRefExoticComponent<AttachmentListProps & react.RefAttributes<HTMLElement>>
 const Avatar: (props: AvatarProps) => ReactElement
 const AvatarGroup: (props: AvatarGroupProps) => ReactElement
 const Badge: (props: BadgeProps) => ReactElement
@@ -71,6 +72,8 @@ const ContextMenuSub: react.FC<ContextMenuPrimitive.ContextMenuSubProps>
 const ContextMenuSubContent: react.ForwardRefExoticComponent<Omit<ContextMenuPrimitive.ContextMenuSubContentProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
 const ContextMenuSubTrigger: react.ForwardRefExoticComponent<Omit<ContextMenuPrimitive.ContextMenuSubTriggerProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
 const ContextMenuTrigger: react.ForwardRefExoticComponent<ContextMenuPrimitive.ContextMenuTriggerProps & react.RefAttributes<HTMLSpanElement>>
+const ConversationList: react.ForwardRefExoticComponent<ConversationListProps & react.RefAttributes<HTMLUListElement>>
+const ConversationRow: react.ForwardRefExoticComponent<ConversationRowProps & react.RefAttributes<HTMLLIElement>>
 const CopyButton: react.ForwardRefExoticComponent<CopyButtonProps & react.RefAttributes<HTMLButtonElement>>
 const DateInput: react.ForwardRefExoticComponent<DateInputProps & react.RefAttributes<HTMLInputElement>>
 function DateRangePicker(props: DateRangePickerProps): ReactElement
@@ -100,6 +103,7 @@ const DropdownMenuSub: react.FC<DropdownMenuPrimitive.DropdownMenuSubProps>
 const DropdownMenuSubContent: react.ForwardRefExoticComponent<Omit<DropdownMenuPrimitive.DropdownMenuSubContentProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
 const DropdownMenuSubTrigger: react.ForwardRefExoticComponent<Omit<DropdownMenuPrimitive.DropdownMenuSubTriggerProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
 const DropdownMenuTrigger: react.ForwardRefExoticComponent<DropdownMenuPrimitive.DropdownMenuTriggerProps & react.RefAttributes<HTMLButtonElement>>
+const EmailAddressInput: react.ForwardRefExoticComponent<EmailAddressInputProps & react.RefAttributes<HTMLInputElement>>
 const EmptyState: (props: EmptyStateProps) => ReactElement
 const ErrorState: (props: ErrorStateProps) => ReactElement | null
 function FacetFilter(props: FacetFilterProps): ReactElement
@@ -130,6 +134,8 @@ const LiveIndicator: (props: LiveIndicatorProps) => ReactElement
 const LoadingOverlay: (props: LoadingOverlayProps) => ReactElement
 const LoadingSpinner: (props: LoadingSpinnerProps) => ReactElement
 const LoadingState: (props: LoadingStateProps) => ReactElement
+const MailEvent: react.ForwardRefExoticComponent<MailEventProps & react.RefAttributes<HTMLLIElement>>
+const MailMessage: react.ForwardRefExoticComponent<MailMessageProps & react.RefAttributes<HTMLElement>>
 const MetadataList: (props: MetadataListProps) => ReactElement
 const Modal: (props: ModalProps) => ReactElement
 function NavGroup(props: NavGroupProps): ReactElement
@@ -146,6 +152,7 @@ const ProgressBar: (props: ProgressBarProps) => ReactElement
 const PromptInput: react.ForwardRefExoticComponent<PromptInputProps & react.RefAttributes<HTMLFormElement>>
 const PromptSuggestions: (props: PromptSuggestionsProps) => ReactElement | null
 const QuestionDialog: (props: QuestionDialogProps) => ReactElement
+const QuotedText: react.ForwardRefExoticComponent<QuotedTextProps & react.RefAttributes<HTMLDivElement>>
 const RadioGroup: react.ForwardRefExoticComponent<Omit<RadioGroupPrimitive.RadioGroupProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
 const RadioGroupItem: react.ForwardRefExoticComponent<Omit<RadioGroupPrimitive.RadioGroupItemProps & react.RefAttributes<HTMLButtonElement>, "ref"> & react.RefAttributes<HTMLButtonElement>>
 function RadioList<T extends string = string>(props: RadioListProps<T>): ReactElement
@@ -189,6 +196,7 @@ const SkipLinks: (props: SkipLinksProps) => ReactElement
 const Slider: react.ForwardRefExoticComponent<SliderProps & react.RefAttributes<HTMLSpanElement>>
 const SourceList: (props: SourceListProps) => ReactElement | null
 function Sparkline(props: { data: number[]; color?: string }): ReactElement | null
+const SplitButton: react.ForwardRefExoticComponent<SplitButtonProps & react.RefAttributes<HTMLButtonElement>>
 function SplitPane(props: SplitPaneProps): ReactElement
 function SplitPanePanel(props: SplitPanePanelProps): ReactElement
 const StatStrip: react.ForwardRefExoticComponent<StatStripProps & react.RefAttributes<HTMLUListElement>>
@@ -261,7 +269,7 @@ function useSidebarCollapsed(): boolean
 function useSpeechRecognition(props?: UseSpeechRecognitionOptions): SpeechRecognitionState
 ```
 
-## Functions (46)
+## Functions (48)
 
 ```text
 function announce(message: string, options?: AnnounceOptions): void
@@ -289,11 +297,13 @@ function getInitials(name: string): string
 function getPageRange(page: number, pageCount: number, siblingCount?: number): PageRangeItem[]
 function getSourceDomain(source: Pick<CitationSource, "url" | "domain">): string
 function isMacPlatform(): boolean
+function isValidEmail(text: string): boolean
 function isWindowsPlatform(): boolean
 const linkVariants: (props?: ({ variant?: "default" | "inline" | "subtle" | null | undefined } & class_variance_authority_types.ClassProp) | undefined) => string
 const loadingSpinnerIconVariants: (props?: ({ size?: "default" | "sm" | "lg" | null | undefined } & class_variance_authority_types.ClassProp) | undefined) => string
 function matchesAccept(file: File, accept?: string): boolean
 function normalizePhone(value: string): string
+function parseEmailAddresses(text: string): { valid: string[]; invalid: string[] }
 function parseFacetRange(entry: string | undefined): [string, string]
 function parseIsoDay(text: string, locale: string): string | null
 function parseLocaleNumber(text: string, locale: string, formatOptions?: Intl.NumberFormatOptions): number | null
@@ -312,13 +322,14 @@ function toTime(value: string | undefined): string
 const toast: typeof show & { info: (message: string, options?: ToneOptions) => number; success: (message: string, options?: ToneOptions) => number; warning: (message: string, options?: ToneOptions) => number; error: (message: string, options?: ToneOptions) => number; dismiss: typeof dismissToast }
 ```
 
-## Constants (47)
+## Constants (52)
 
 ```text
 const BRAND_ANIMATIONS: readonly [{ readonly id: "bounce"; readonly label: "Bounce home" }, { readonly id: "orbit"; readonly label: "Orbit and settle" }, { readonly id: "impact"; readonly label: "Shot in, boom" }, { readonly id: "liquid"; readonly label: "Liquid split" }, { readonly id: "signature"; readonly label: "Solid to signature" }, { readonly id: "burst"; readonly label: "Big bang, small dot" }, { readonly id: "gravity"; readonly label: "Gravity press" }]
 const MAX_TOASTS: 3
 const defaultActiveFacetsLabels: ActiveFacetsLabels
 const defaultApprovalCardLabels: ApprovalCardLabels
+const defaultAttachmentListLabels: AttachmentListLabels
 const defaultAvatarGroupLabels: AvatarGroupLabels
 const defaultBannerLabels: BannerLabels
 const defaultBottomNavigationLabels: BottomNavigationLabels
@@ -331,10 +342,12 @@ const defaultCitationLabels: CitationLabels
 const defaultCodeBlockLabels: CodeBlockLabels
 const defaultCommandPaletteLabels: CommandPaletteLabels
 const defaultConfirmPopoverLabels: ConfirmPopoverLabels
+const defaultConversationRowLabels: ConversationRowLabels
 const defaultCopyButtonLabels: CopyButtonLabels
 const defaultDateInputLabels: DateInputLabels
 const defaultDateRangePickerLabels: DateRangePickerLabels
 const defaultDateTimeInputLabels: DateTimeInputLabels
+const defaultEmailAddressInputLabels: EmailAddressInputLabels
 const defaultErrorStateLabels: ErrorStateLabels
 const defaultFacetFilterLabels: FacetFilterLabels
 const defaultFileInputLabels: FileInputLabels
@@ -344,11 +357,13 @@ const defaultJsonViewLabels: JsonViewLabels
 const defaultKeyComboLabels: KeyComboLabels
 const defaultLinkLabels: LinkLabels
 const defaultLiveIndicatorLabels: LiveIndicatorLabels
+const defaultMailMessageLabels: MailMessageLabels
 const defaultMetadataListLabels: MetadataListLabels
 const defaultNumberInputLabels: NumberInputLabels
 const defaultPageHeaderLabels: PageHeaderLabels
 const defaultPaginationLabels: PaginationLabels
 const defaultPromptInputLabels: PromptInputLabels
+const defaultQuotedTextLabels: QuotedTextLabels
 const defaultRangeSliderLabels: RangeSliderLabels
 const defaultRatingLabels: RatingLabels
 const defaultReasoningLabels: ReasoningLabels
@@ -364,7 +379,7 @@ const defaultToolbarLabels: ToolbarLabels
 const defaultTreeViewLabels: TreeViewLabels
 ```
 
-## Interfaces (218)
+## Interfaces (236)
 
 ```text
 interface AccordionTriggerProps extends ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger>
@@ -450,6 +465,23 @@ interface AsyncBoundaryProps
   loadingContent?: ReactNode
   onRetry?: () => void
   retryProps?: RetryButtonProps
+interface AttachmentItem
+  href?: string
+  id: string
+  mimeType?: string
+  name: string
+  size?: number
+  thumbnailUrl?: string
+interface AttachmentListLabels
+  attachments: (count: number) => string
+  download: string
+  remove: (name: string) => string
+interface AttachmentListProps extends Omit<HTMLAttributes<HTMLElement>, "children">
+  attachments: AttachmentItem[]
+  labels?: Partial<AttachmentListLabels>
+  layout?: "list" | "chips"
+  locale?: string
+  onRemove?: (id: string) => void
 interface AvatarGroupItem
   id?: string
   name: string
@@ -824,6 +856,37 @@ interface ConfirmPopoverProps
   side?: "top" | "right" | "bottom" | "left"
   tone?: "destructive" | "default"
   trigger: ReactElement
+interface ConversationPerson
+  avatarSrc?: string
+  name: string
+interface ConversationRowLabels
+  assignedTo: (name: string) => string
+  attachments: string
+  noSubject: string
+  select: (subject: string) => string
+  starred: string
+  status: Record<ConversationStatus, string>
+  threads: (count: number) => string
+  unread: string
+interface ConversationRowProps extends Omit<HTMLAttributes<HTMLLIElement>, "children" | "onClick">
+  "data-testid"?: string
+  assignee?: ConversationPerson
+  customer: ConversationPerson
+  hasAttachments?: boolean
+  href?: string
+  labels?: Partial<Omit<ConversationRowLabels, "status">> & { status?: Partial<ConversationRowLabels["status"]> }
+  onClick?: () => void
+  onSelectedChange?: (selected: boolean) => void
+  preview?: string
+  selected?: boolean
+  starred?: boolean
+  status?: ConversationStatus
+  subject: string
+  tags?: ReactNode
+  threadCount?: number
+  time: Date | string | number
+  timeLocale?: string
+  unread?: boolean
 interface CopyButtonLabels
   copied: string
   failed: string
@@ -928,6 +991,33 @@ interface DonutSegment
   color?: string
   label: string
   value: number
+interface EmailAddressInputLabels
+  invalidAddress: string
+  maxReached: (max: number) => string
+  placeholder: string
+  remove: (email: string) => string
+  suggestions: string
+interface EmailAddressInputProps
+  "aria-describedby"?: string
+  "aria-label"?: string
+  "aria-labelledby"?: string
+  "data-testid"?: string
+  className?: string
+  defaultValue?: string[]
+  disabled?: boolean
+  error?: ReactNode
+  id?: string
+  invalid?: boolean
+  labels?: Partial<EmailAddressInputLabels>
+  maxItems?: number
+  name?: string
+  onValueChange?: (next: string[]) => void
+  placeholder?: string
+  suggestions?: EmailSuggestion[]
+  value?: string[]
+interface EmailSuggestion
+  email: string
+  name?: string
 interface EmptyStateProps extends Omit<HTMLAttributes<HTMLDivElement>, "title">
   action?: ReactNode
   animated?: boolean
@@ -1207,6 +1297,48 @@ interface LongPressHandlers
   onPointerLeave: (event: PointerEvent<Element>) => void
   onPointerMove: (event: PointerEvent<Element>) => void
   onPointerUp: (event: PointerEvent<Element>) => void
+interface MailEventProps extends Omit<HTMLAttributes<HTMLLIElement>, "children">
+  children: ReactNode
+  icon?: ElementType
+  time?: Date | string | number
+  tone?: MailEventTone
+interface MailMessageLabels
+  attachments: Partial<AttachmentListLabels>
+  bcc: string
+  bounced: string
+  cc: string
+  draft: string
+  failed: string
+  hideRecipients: string
+  note: string
+  quoted: Partial<QuotedTextLabels>
+  retry: string
+  sending: string
+  showRecipients: string
+  to: string
+interface MailMessageProps extends Omit<HTMLAttributes<HTMLElement>, "title">
+  actions?: ReactNode
+  attachments?: AttachmentItem[]
+  badges?: ReactNode
+  children?: ReactNode
+  direction: MailDirection
+  error?: string
+  labels?: Partial<MailMessageLabels>
+  onRetry?: () => void
+  quoted?: ReactNode
+  recipients?: MailRecipients
+  sender: MailSender
+  status?: MailMessageStatus
+  subject?: string
+  time: Date | string | number
+interface MailRecipients
+  bcc?: string[]
+  cc?: string[]
+  to?: string[]
+interface MailSender
+  avatarSrc?: string
+  email?: string
+  name: string
 interface MetadataItem
   copyValue?: string
   copyable?: boolean
@@ -1360,6 +1492,15 @@ interface QuestionDialogProps
   onOpenChange: (open: boolean) => void
   open: boolean
   title: string
+interface QuotedTextLabels
+  hide: string
+  show: string
+interface QuotedTextProps extends Omit<HTMLAttributes<HTMLDivElement>, "children">
+  children: ReactNode
+  defaultOpen?: boolean
+  labels?: Partial<QuotedTextLabels>
+  onOpenChange?: (open: boolean) => void
+  open?: boolean
 interface RadioListOption<T extends string = string>
   description?: ReactNode
   disabled?: boolean
@@ -1598,6 +1739,27 @@ interface SpeechRecognitionState
   stop: () => void
   supported: boolean
   toggle: () => void
+interface SplitButtonItem
+  danger?: boolean
+  disabled?: boolean
+  icon?: ElementType
+  id: string
+  label: ReactNode
+  onSelect: () => void
+interface SplitButtonProps
+  "data-testid"?: string
+  align?: "start" | "center" | "end"
+  children: ReactNode
+  className?: string
+  disabled?: boolean
+  items: SplitButtonItem[]
+  loading?: boolean
+  menuLabel?: string
+  onClick?: () => void
+  side?: "top" | "right" | "bottom" | "left"
+  size?: "xs" | "sm" | "default" | "lg"
+  type?: "button" | "submit"
+  variant?: "default" | "outline" | "secondary"
 interface SplitPaneLabels
   separator: (index: number) => string
 interface SplitPanePanelProps extends HTMLAttributes<HTMLDivElement>
@@ -1972,7 +2134,7 @@ interface VoiceTranscriptProps extends Omit<HTMLAttributes<HTMLDivElement>, "onC
   value: string
 ```
 
-## Types (44)
+## Types (49)
 
 ```text
 type AccordionContentProps = ComponentPropsWithoutRef<typeof AccordionPrimitive.Content>
@@ -1996,10 +2158,15 @@ type ChipTone = "neutral" | "primary"
 type CodeBlockLabels = CopyIconButtonLabels
 type ComboboxProps = ComboboxSingleProps | ComboboxMultiProps
 type ConfirmButtonPlacement = "leading" | "trailing"
+type ConversationListProps = HTMLAttributes<HTMLUListElement>
+type ConversationStatus = "active" | "pending" | "closed" | "spam"
 type DateInputError = "invalid" | "range" | "disabled"
 type ErrorInput = ErrorInfo | Error | string | null | undefined | false
 type FacetFilterValue = Record<string, string[]>
 type InputProps = InputHTMLAttributes<HTMLInputElement>
+type MailDirection = "inbound" | "outbound" | "note"
+type MailEventTone = "neutral" | "success" | "warning" | "danger"
+type MailMessageStatus = "sent" | "sending" | "failed" | "bounced" | "draft"
 type NavItemProps<T extends ElementType = "a"> = Omit<ComponentPropsWithoutRef<T>, "as" | "className"> & {…}
   active?: boolean
   as?: T
