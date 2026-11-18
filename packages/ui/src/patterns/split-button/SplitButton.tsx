@@ -14,6 +14,12 @@ export interface SplitButtonItem {
   danger?: boolean;
 }
 
+export interface SplitButtonLabels {
+  /** Accessible name of the chevron button. */
+  menu: string;
+}
+export const defaultSplitButtonLabels: SplitButtonLabels = { menu: "More actions" };
+
 export interface SplitButtonProps {
   /** Label of the primary action. */
   children: ReactNode;
@@ -24,8 +30,9 @@ export interface SplitButtonProps {
   /** Spinner on the primary action; both buttons are disabled meanwhile. */
   loading?: boolean;
   disabled?: boolean;
-  /** Accessible name of the chevron button. @default "More actions" */
+  /** Accessible name of the chevron button; overrides `labels.menu`. @default "More actions" */
   menuLabel?: string;
+  labels?: Partial<SplitButtonLabels>;
   side?: "top" | "right" | "bottom" | "left";
   align?: "start" | "center" | "end";
   type?: "button" | "submit";
@@ -50,7 +57,8 @@ export const SplitButton = forwardRef<HTMLButtonElement, SplitButtonProps>(
       size = "default",
       loading = false,
       disabled = false,
-      menuLabel = "More actions",
+      menuLabel,
+      labels,
       side = "bottom",
       align = "end",
       type = "button",
@@ -85,7 +93,7 @@ export const SplitButton = forwardRef<HTMLButtonElement, SplitButtonProps>(
               variant={variant}
               size={CHEVRON_SIZE[size]}
               disabled={off}
-              aria-label={menuLabel}
+              aria-label={menuLabel ?? { ...defaultSplitButtonLabels, ...labels }.menu}
               aria-disabled={loading || undefined}
               tabIndex={loading ? -1 : undefined}
               className={cn("relative -ml-px w-8 shrink-0 rounded-l-none hover:z-10 focus-visible:z-10", block)}

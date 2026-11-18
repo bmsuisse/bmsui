@@ -11,18 +11,30 @@ export interface JsonViewLabels extends CopyIconButtonLabels {
   keys: (n: number) => string;
   /** "2 items" / "1 item" for arrays. */
   items: (n: number) => string;
+  /** Default header text. The `label` prop overrides it. */
+  json: string;
+  /** Size of the serialised text, e.g. "1.2 kB". */
+  size: (bytes: number) => string;
+  /** Header summary from the key/item count text (or `null` for scalars) and the size text, e.g. "3 keys · 1.2 kB". */
+  summary: (count: string | null, size: string) => string;
+  /** Accessible name of the copy button, e.g. "Copy JSON". */
+  copyNamed: (label: string) => string;
 }
 
 export const defaultJsonViewLabels: JsonViewLabels = {
   ...defaultCopyIconButtonLabels,
   keys: (n) => `${n} ${n === 1 ? "key" : "keys"}`,
   items: (n) => `${n} ${n === 1 ? "item" : "items"}`,
+  json: "JSON",
+  size: formatBytes,
+  summary: (count, size) => (count ? `${count} · ${size}` : size),
+  copyNamed: (label) => `Copy ${label}`,
 };
 
 export interface JsonViewProps extends Omit<HTMLAttributes<HTMLDivElement>, "children" | "defaultValue"> {
   /** Any JSON-serialisable value; circular or unserialisable values fall back to `String(value)`. */
   value: unknown;
-  /** Header text. @default "JSON" */
+  /** Header text; overrides `labels.json`. @default "JSON" */
   label?: string;
   /** @default true */
   defaultOpen?: boolean;
@@ -54,7 +66,7 @@ function serialise(value: unknown): string {
  */
 export const JsonView = ({
   value,
-  label = "JSON",
+  label: labelProp,
   defaultOpen = true,
   open: openProp,
   onOpenChange,
@@ -64,13 +76,14 @@ export const JsonView = ({
   ...props
 }: JsonViewProps): ReactElement => {
   const l = { ...defaultJsonViewLabels, ...labels };
+  const label = labelProp ?? l.json;
   const [uncontrolled, setUncontrolled] = useState(defaultOpen);
   const open = openProp ?? uncontrolled;
   const fade = useScrollFade<HTMLDivElement>();
   const { text, size } = useMemo(() => {
     const serialised = serialise(value);
-    return { text: serialised, size: formatBytes(new TextEncoder().encode(serialised).length) };
-  }, [value]);
+    return { text: serialised, size: l.size(new TextEncoder().encode(serialised).length) };
+  }, [value, l.size]);
   const count = Array.isArray(value)
     ? l.items(value.length)
     : value && typeof value === "object"
@@ -98,11 +111,10 @@ export const JsonView = ({
           />
           <span className="min-w-0 [overflow-wrap:anywhere] text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</span>
           <span className="ml-auto shrink-0 pl-2 text-[11px] tabular-nums text-muted-foreground">
-            {count ? `${count} · ` : ""}
-            {size}
+            {l.summary(count, size)}
           </span>
         </CollapsibleTrigger>
-        <CopyIconButton value={text} labels={l} label={`${l.copy} ${label}`} testId="json-view-copy" />
+        <CopyIconButton value={text} labels={l} label={l.copyNamed(label)} testId="json-view-copy" />
       </div>
       <FoldPanel open={open}>
         <div className={SCROLL_FOCUS_WRAPPER}>

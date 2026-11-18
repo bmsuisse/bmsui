@@ -32,6 +32,12 @@ export interface MailMessageLabels {
   bounced: string;
   retry: string;
   note: string;
+  /** Joins the to/cc/bcc groups of the recipient line. */
+  separator: string;
+  /** One recipient group, e.g. "to: a@b.ch, c@d.ch" (an `à :` language needs its own punctuation). */
+  recipientLine: (groupLabel: string, addresses: string[]) => string;
+  /** Failure text plus the `error` detail, e.g. "Sending failed: Mailbox full". */
+  statusWithError: (status: string, error: string) => string;
   attachments: Partial<AttachmentListLabels>;
   quoted: Partial<QuotedTextLabels>;
 }
@@ -48,6 +54,9 @@ export const defaultMailMessageLabels: MailMessageLabels = {
   bounced: "Bounced",
   retry: "Retry",
   note: "Note",
+  separator: " · ",
+  recipientLine: (groupLabel, addresses) => `${groupLabel}: ${addresses.join(", ")}`,
+  statusWithError: (status, error) => `${status}: ${error}`,
   attachments: {},
   quoted: {},
 };
@@ -150,8 +159,8 @@ export const MailMessage = forwardRef<HTMLElement, MailMessageProps>(
                 <p className={cn("min-w-0 flex-1 [overflow-wrap:anywhere]", long && !allRecipients && "line-clamp-1")}>
                   {groups.map((g, i) => (
                     <span key={g.key}>
-                      {i > 0 ? " · " : ""}
-                      {g.label}: {g.list.join(", ")}
+                      {i > 0 ? l.separator : ""}
+                      {l.recipientLine(g.label, g.list)}
                     </span>
                   ))}
                 </p>
@@ -175,8 +184,7 @@ export const MailMessage = forwardRef<HTMLElement, MailMessageProps>(
           {failed ? (
             <div role="alert" className="flex flex-wrap items-center gap-2 text-sm text-red-700 dark:text-red-300">
               <span className="[overflow-wrap:anywhere]">
-                {status === "bounced" ? l.bounced : l.failed}
-                {error ? `: ${error}` : ""}
+                {error ? l.statusWithError(status === "bounced" ? l.bounced : l.failed, error) : status === "bounced" ? l.bounced : l.failed}
               </span>
               {onRetry ? (
                 <button

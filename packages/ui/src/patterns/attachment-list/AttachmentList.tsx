@@ -29,6 +29,10 @@ export interface AttachmentListLabels {
   attachments: (count: number) => string;
   /** Accessible name prefix of the download link, the file name is appended. */
   download: string;
+  /** Accessible name of the download link for one file; default `"{download}: {name}"`. */
+  downloadFile?: (name: string) => string;
+  /** File size units, 1024-based: bytes, kilo, mega, giga. */
+  sizeUnits: readonly [string, string, string, string];
   /** Accessible name of the remove button for one file. */
   remove: (name: string) => string;
 }
@@ -36,6 +40,7 @@ export interface AttachmentListLabels {
 export const defaultAttachmentListLabels: AttachmentListLabels = {
   attachments: (n) => `${n} ${n === 1 ? "attachment" : "attachments"}`,
   download: "Download",
+  sizeUnits: ["B", "KB", "MB", "GB"],
   remove: (name) => `Remove ${name}`,
 };
 
@@ -80,7 +85,7 @@ export const AttachmentList = forwardRef<HTMLElement, AttachmentListProps>(
         <ul className={cn("min-w-0", "flex flex-wrap", chips ? "gap-2" : "gap-1.5")}>
           {attachments.map((a) => {
             const Icon = iconFor(a.mimeType, a.name);
-            const size = a.size !== undefined ? formatFileSize(a.size, locale) : "";
+            const size = a.size !== undefined ? formatFileSize(a.size, locale, l.sizeUnits) : "";
             const body = (
               <>
                 {a.thumbnailUrl ? (
@@ -105,7 +110,7 @@ export const AttachmentList = forwardRef<HTMLElement, AttachmentListProps>(
                   <a
                     href={a.href}
                     download
-                    aria-label={`${l.download}: ${a.name}`}
+                    aria-label={l.downloadFile ? l.downloadFile(a.name) : `${l.download}: ${a.name}`}
                     className={cn(
                       box,
                       "hover:bg-foreground/6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",

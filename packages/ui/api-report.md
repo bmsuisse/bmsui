@@ -283,7 +283,7 @@ function datePlaceholder(locale: string): string
 function describeSpeechError(code: string): string | null
 function formatCommandPaletteShortcut(key?: string): string
 function formatFacetRange(low: string | number | undefined, high: string | number | undefined): string
-function formatFileSize(bytes: number, locale?: string): string
+function formatFileSize(bytes: number, locale?: string, units?: readonly string[]): string
 function formatHotkey(keys: string, platform?: "mac" | "other"): string
 function formatIsoDay(iso: string, locale: string): string
 function formatKey(key: string, mac?: boolean): string
@@ -379,7 +379,7 @@ const defaultToolbarLabels: ToolbarLabels
 const defaultTreeViewLabels: TreeViewLabels
 ```
 
-## Interfaces (236)
+## Interfaces (237)
 
 ```text
 interface AccordionTriggerProps extends ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger>
@@ -475,7 +475,9 @@ interface AttachmentItem
 interface AttachmentListLabels
   attachments: (count: number) => string
   download: string
+  downloadFile?: (name: string) => string
   remove: (name: string) => string
+  sizeUnits: readonly [string, string, string, string]
 interface AttachmentListProps extends Omit<HTMLAttributes<HTMLElement>, "children">
   attachments: AttachmentItem[]
   labels?: Partial<AttachmentListLabels>
@@ -537,6 +539,7 @@ interface BottomNavigationItem
 interface BottomNavigationLabels
   badge: (badge: number | string) => string
   dot: string
+  overflow: (max: number) => string
 interface BottomNavigationLinkRenderProps
   "aria-current"?: "page"
   "aria-disabled"?: true
@@ -675,6 +678,7 @@ interface ChipClassOptions
   tone?: ChipTone
 interface ChipLabels
   remove: string
+  removeItem?: (text: string) => string
 interface ChipProps extends Omit<HTMLAttributes<HTMLElement>, "onClick" | "children">
   "data-testid"?: string
   children: ReactNode
@@ -708,6 +712,11 @@ interface CitationSource
   domain?: string
   title: string
   url: string
+interface CodeBlockLabels extends CopyIconButtonLabels
+  code: string
+  copied: string  (from CopyIconButtonLabels)
+  copy: string  (from CopyIconButtonLabels)
+  copyFailed: string  (from CopyIconButtonLabels)
 interface CodeBlockProps extends Omit<HTMLAttributes<HTMLDivElement>, "children" | "title">
   code: string
   copyable?: boolean
@@ -1215,8 +1224,12 @@ interface InlineErrorProps extends Omit<HTMLAttributes<HTMLSpanElement>, "title"
 interface InputGroupProps extends HTMLAttributes<HTMLDivElement>
   size?: InputGroupSize
 interface JsonViewLabels extends CopyIconButtonLabels
+  copyNamed: (label: string) => string
   items: (n: number) => string
+  json: string
   keys: (n: number) => string
+  size: (bytes: number) => string
+  summary: (count: string | null, size: string) => string
   copied: string  (from CopyIconButtonLabels)
   copy: string  (from CopyIconButtonLabels)
   copyFailed: string  (from CopyIconButtonLabels)
@@ -1312,9 +1325,12 @@ interface MailMessageLabels
   hideRecipients: string
   note: string
   quoted: Partial<QuotedTextLabels>
+  recipientLine: (groupLabel: string, addresses: string[]) => string
   retry: string
   sending: string
+  separator: string
   showRecipients: string
+  statusWithError: (status: string, error: string) => string
   to: string
 interface MailMessageProps extends Omit<HTMLAttributes<HTMLElement>, "title">
   actions?: ReactNode
@@ -1476,6 +1492,7 @@ interface PromptSuggestion
 interface PromptSuggestionsProps extends Omit<HTMLAttributes<HTMLDivElement>, "onSelect">
   "aria-label"?: string
   disabled?: boolean
+  labels?: Partial<PromptSuggestionsLabels>
   onSelect?: (prompt: string, suggestion: PromptSuggestion) => void
   suggestions: ReadonlyArray<string | PromptSuggestion>
   wrap?: boolean
@@ -1543,6 +1560,7 @@ interface RankBadgeProps extends HTMLAttributes<HTMLSpanElement>
   rank: number
 interface RatingLabels
   rating: string
+  ratingValue?: (label: string | undefined, valueText: string) => string
   star: (value: number, max: number) => string
   unrated: string
   valueText: (value: number, max: number) => string
@@ -1711,6 +1729,7 @@ interface SkipLinksProps
   "data-testid"?: string
   className?: string
   label?: string
+  labels?: Partial<SkipLinksLabels>
   links: SkipLink[]
 interface SliderProps extends ComponentPropsWithoutRef<typeof SliderPrimitive.Root>
   animated?: boolean
@@ -1753,6 +1772,7 @@ interface SplitButtonProps
   className?: string
   disabled?: boolean
   items: SplitButtonItem[]
+  labels?: Partial<SplitButtonLabels>
   loading?: boolean
   menuLabel?: string
   onClick?: () => void
@@ -1781,6 +1801,7 @@ interface StatStripItemProps extends Omit<HTMLAttributes<HTMLLIElement>, "onClic
   animated?: boolean
   href?: string
   label: ReactNode
+  labels?: Partial<StatStripLabels>
   linkAs?: ElementType
   loading?: boolean
   loadingLabel?: string
@@ -1992,6 +2013,7 @@ interface ToolCallGroupProps extends Omit<HTMLAttributes<HTMLDivElement>, "child
   open?: boolean
 interface ToolCallLabels
   done: string
+  duration: (ms: number) => string
   error: string
   errorDetails: string
   input: string
@@ -2074,6 +2096,7 @@ interface TreeViewProps extends Omit<HTMLAttributes<HTMLDivElement>, "children" 
 interface TypingIndicatorProps extends Omit<HTMLAttributes<HTMLSpanElement>, "children">
   animated?: boolean
   label?: string
+  labels?: Partial<TypingIndicatorLabels>
   showLabel?: boolean
   size?: "sm" | "md"
 interface UseClipboardOptions
@@ -2134,7 +2157,7 @@ interface VoiceTranscriptProps extends Omit<HTMLAttributes<HTMLDivElement>, "onC
   value: string
 ```
 
-## Types (49)
+## Types (48)
 
 ```text
 type AccordionContentProps = ComponentPropsWithoutRef<typeof AccordionPrimitive.Content>
@@ -2155,7 +2178,6 @@ type ChatMessageStatus = "sending" | "streaming" | "error" | "done"
 type ChatRole = "user" | "assistant" | "system"
 type ChipSize = "sm" | "md"
 type ChipTone = "neutral" | "primary"
-type CodeBlockLabels = CopyIconButtonLabels
 type ComboboxProps = ComboboxSingleProps | ComboboxMultiProps
 type ConfirmButtonPlacement = "leading" | "trailing"
 type ConversationListProps = HTMLAttributes<HTMLUListElement>

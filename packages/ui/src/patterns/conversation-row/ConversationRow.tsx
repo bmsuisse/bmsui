@@ -32,7 +32,7 @@ export const defaultConversationRowLabels: ConversationRowLabels = {
   unread: "Unread",
   starred: "Starred",
   attachments: "Has attachments",
-  threads: (count) => `${count} messages`,
+  threads: (count) => `${count} ${count === 1 ? "message" : "messages"}`,
   select: (subject) => `Select ${subject}`,
   assignedTo: (name) => `Assigned to ${name}`,
   noSubject: "(no subject)",

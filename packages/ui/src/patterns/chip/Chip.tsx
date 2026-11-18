@@ -9,6 +9,8 @@ export type ChipTone = "neutral" | "primary";
 export interface ChipLabels {
   /** Accessible name of the remove (x) button; the chip's own text is appended. */
   remove: string;
+  /** Accessible name of the remove button for a chip with text; default `"{remove} {text}"`. Use it when the word order differs. */
+  removeItem?: (text: string) => string;
 }
 
 export const defaultChipLabels: ChipLabels = { remove: "Remove" };
@@ -146,7 +148,7 @@ export const Chip = forwardRef<HTMLElement, ChipProps>(
             type="button"
             tabIndex={-1}
             disabled={disabled}
-            aria-label={removeLabel ?? (text ? `${l.remove} ${text}` : l.remove)}
+            aria-label={removeLabel ?? (text ? (l.removeItem ? l.removeItem(text) : `${l.remove} ${text}`) : l.remove)}
             onClick={onRemove}
             className={cn(
               "inline-flex shrink-0 items-center justify-center rounded-[var(--radius-pill,9999px)] outline-none transition-[background-color,scale] hover:bg-foreground/10 focus-visible:ring-2 focus-visible:ring-ring active:scale-90 motion-reduce:transition-none motion-reduce:active:scale-100",
