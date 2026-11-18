@@ -24,13 +24,13 @@
   --bmsui-surface: #262b33;
   --bmsui-border: #343b45;
   --bmsui-hairline: #343b45;
-  --bmsui-accent: #ff8a99;
+  --bmsui-accent: #86a9d0;
   --bmsui-accent-fg: #1d2127;
-  --bmsui-ring: #ff8a99;
+  --bmsui-ring: #86a9d0;
   --bmsui-info-bg: #15293f; --bmsui-info-fg: #a9cdf5; --bmsui-info-bd: #2a4a6e;
   --bmsui-success-bg: #14301f; --bmsui-success-fg: #a6dbb8; --bmsui-success-bd: #285a3a;
   --bmsui-warning-bg: #3a2c0f; --bmsui-warning-fg: #f3d594; --bmsui-warning-bd: #6a5320;
-  --bmsui-danger-bg: #3d171b; --bmsui-danger-fg: #ffb3ba; --bmsui-danger-bd: #7a2a31;
+  --bmsui-danger-bg: #3d171b; --bmsui-danger-fg: #f2a1a8; --bmsui-danger-bd: #7a2a31;
 }
 [class^="bmsui-"], [class*=" bmsui-"] { box-sizing: border-box; }
 .bmsui-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -91,6 +91,7 @@ a.bmsui-chip:hover { background: var(--bmsui-border); color: var(--bmsui-fg); te
 .bmsui-btn svg { width: 16px; height: 16px; flex: none; }
 .bmsui-btn--icon { padding: 3px 6px; }
 .bmsui-btn--danger { background: var(--bmsui-danger-fg); border-color: var(--bmsui-danger-fg); color: var(--bmsui-bg); }
+.dm .bmsui-btn--danger, .dm .bmsui-btn--danger:hover { background: #b4343f; border-color: #b4343f; color: #fff; }
 .bmsui-btn--danger:hover { background: var(--bmsui-danger-fg); color: var(--bmsui-bg); filter: brightness(1.1); }
 .bmsui-copy.is-copied { color: var(--bmsui-success-fg); border-color: var(--bmsui-success-bd); }
 .bmsui-copy.is-failed { color: var(--bmsui-danger-fg); border-color: var(--bmsui-danger-bd); }
