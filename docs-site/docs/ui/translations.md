@@ -20,6 +20,21 @@ import { BmsLocaleProvider } from "@bmsuisse/ui";
 language without built-in texts falls back to English). Without a provider
 everything stays English, as before.
 
+Using `@bmsuisse/datagrid` as well? It has its own `BmsLocaleProvider` (and a
+`locale` prop on its grids), so the two packages stay independent. Wrap the app
+in both, or pass `locale` to each grid:
+
+```tsx
+import { BmsLocaleProvider as UiLocale } from "@bmsuisse/ui";
+import { BmsLocaleProvider as GridLocale } from "@bmsuisse/datagrid";
+
+<UiLocale locale="de-CH">
+  <GridLocale locale="de-CH">
+    <App />
+  </GridLocale>
+</UiLocale>
+```
+
 ## Number and date formats follow too
 
 Components with a `locale` prop (`Pagination`, `NumberInput`, `DateInput`,

@@ -820,7 +820,8 @@ placeholder `en.json` doesn't have, drops `{count}`, or spells out a plural
 category the language doesn't have. The catalogs are imported statically.
 `@bmsuisse/datagrid` has its own copy of the small helper (`messages.ts`,
 `locale.tsx`) on purpose: the packages stay independent, a little duplicated
-code is accepted.
+code is accepted. The two contexts are separate: an app using both wraps in
+both `BmsLocaleProvider`s (or gives each grid a `locale`).
 
 - `<BmsLocaleProvider locale="de-CH">` once at the app root. No provider =
   English texts, exactly as before. Only the *language* of the tag picks the

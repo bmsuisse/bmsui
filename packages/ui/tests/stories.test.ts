@@ -30,7 +30,6 @@ const NOT_STORIED: Record<string, string> = {
 // source of its index (a regex over `export { ... }`, no import: the grid pulls in a lot).
 const NOT_STORIED_DATAGRID: Record<string, string> = {
   useFilterLabels: "reads FilterLabelsProvider; shown through the filter stories",
-  useIntegratedI18n: "reads BmsLocaleProvider; shown through the Translations story",
   useEditingState: "state machine behind DataGrid/TreeDataGrid `editing`; shown through the editing stories",
   useCellEditingState: "state behind DataGrid `cellEditing`; shown through the CellEditing stories",
   useCellSelection: "selection state behind DataGrid `cellEditing`; shown through the CellEditing stories",
