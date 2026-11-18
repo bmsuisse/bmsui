@@ -22,6 +22,7 @@ variables (`--bmsui-*`); a `.dm` class on `<body>` switches to night mode (FreeS
 | Quoted text | `<x-bmsui::quoted-text :open="false">On 14.11.2026, X wrote: ...</x-bmsui::quoted-text>` |
 | Mail message | `<x-bmsui::mail-message direction="inbound" :sender="['name' => 'Anna', 'email' => 'a@b.ch']" :recipients="['to' => [...], 'cc' => [...]]" time="14.11.2026 09:12" subject="..." status="failed" error="SMTP" retry-href="/r" :attachments="$files">{!! $sanitizedBody !!}<x-slot:quoted>...</x-slot:quoted><x-slot:actions>...</x-slot:actions><x-slot:badges>...</x-slot:badges></x-bmsui::mail-message>` (`direction`: `inbound`, `outbound`, `note`; `status`: `sent`, `sending`, `failed`, `bounced`, `draft`; the body slot is not sanitized, pass trusted HTML only) |
 | Mail event | `<x-bmsui::mail-event tone="success" time="14.11.2026 17:20">Status changed to Closed</x-bmsui::mail-event>` |
+| Dropdown menu | `<x-bmsui::dropdown-menu label="Actions" align="end" :items="[['id' => 'fwd', 'label' => 'Forward', 'shortcut' => 'F'], ['separator' => true], ['heading' => 'Move'], ['label' => 'Move to', 'items' => [['id' => 'inbox', 'label' => 'Inbox']]], ['id' => 'del', 'label' => 'Delete', 'danger' => true]]"/>`; buttons fire `bmsui:select` (`detail.id`), links navigate; arrow keys, Home/End, type-ahead, submenus (ArrowRight/Left), Escape; `trigger` slot for own trigger content, `variant` for the trigger look |
 
 All texts are props (defaults go through `__()`, and de/fr/it/nl/es translations ship in `resources/lang/*.json`, loaded automatically with the app locale; FreeScout modules register `BMSUi::langPath()`), all content is escaped. Behaviour is delegated
 (`resources/js/bmsui.js`), so HTML added later (ajax) just works.
@@ -29,6 +30,23 @@ All texts are props (defaults go through `__()`, and de/fr/it/nl/es translations
 ![Desktop, light](docs/desktop-light.png)
 ![Desktop, night mode](docs/desktop-dark.png)
 ![Phone](docs/phone-light.png)
+
+## OneDesk / FreeScout extension points
+
+The list and the thread view can replace FreeScout's markup without breaking its hooks and jQuery selectors:
+
+| FreeScout | bmsui-blade |
+|---|---|
+| `tr.conv-row[data-conversation_id]`, `row_class` | attributes on `<x-bmsui::conversation-row>` go on the row (`class="conv-row" data-conversation_id="5"`) |
+| `.conv-checkbox`, `.conv-star` | `:checkbox-attributes="['class' => 'conv-checkbox', 'data-conversation_id' => 5]"`, `:star-attributes`, `:link-attributes` (merged with ours) |
+| `before_subject`, `after_subject`, `preview_prepend`, `td_before_conv_number`, `after_row` | slots `before-subject`, `after-subject`, `before-preview` (inside the link: text/icons only), `before-number` (+ `:number="1234"`), `after-row` |
+| `.table-conversations`, `<td>` hooks | `<x-bmsui::conversation-list as="table">`: same look as `<table>/<tr>/<td>`; in table mode `before-number` and `after-row` are raw markup inside/after the `<tr>` |
+| `.toggle-all`, sorting | `:select-all="false" :select-all-attributes="['class' => 'toggle-all']"` (toggles the row checkboxes, sets indeterminate, fires `bmsui:select-all`); `:sorts="[['key' => 'date', 'label' => 'Date', 'dir' => 'desc', 'href' => '?sort=date']]"` (without `href`: `bmsui:sort` with `detail.key`/`detail.dir`); `header` slot for bulk actions |
+| `.table-pager .pager-nav`, count | `:count="128"` ("128 conversations"), `pager` and `footer` slots |
+| star toggle | `:starrable="true"`: a button with `aria-pressed`; a click flips it and fires `bmsui:star` (`detail.starred`, cancelable: `preventDefault()` reverts) |
+| `thread.meta`, `thread.action_text`, "…" menu, thread id | `<x-bmsui::mail-message :thread-id="$t->id" :menu-items="[...]">` with slots `meta`, `action-text`, `menu` (own markup instead of `menu-items`), `badges`, `actions` |
+| draft / note / line item | `status="draft"`, `direction="note"`, line items are `<x-bmsui::mail-event :thread-id="...">` |
+| `conversation.after_subject_block`, `conversation.action_buttons` | slots of the page header (see Page header) |
 
 ## Install (Laravel)
 

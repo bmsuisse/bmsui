@@ -16,13 +16,20 @@
     'retryHref' => null,
     'attachments' => [],
     'locale' => 'de-CH',
+    // FreeScout thread id, rendered as data-thread-id (for per-message JS such as the "…" menu).
+    'threadId' => null,
+    // Per-message "…" menu: [['id' => 'forward', 'label' => 'Forward', 'href' => null, 'danger' => false, 'disabled' => false]].
+    // Rendered with the dropdown-menu component (items without href fire `bmsui:select`); or pass your own markup in the `menu` slot.
+    'menuItems' => [],
     'labels' => [],
 ])
+{{-- Named slots: badges, meta (under the recipients, e.g. thread.meta), actionText (a line like
+     "Anna forwarded this", thread.action_text), menu (own "…" menu markup), quoted, actions. --}}
 @php
     $l = array_merge([
         'to' => __('to'), 'cc' => __('cc'), 'bcc' => __('bcc'), 'note' => __('Note'), 'draft' => __('Draft'),
         'sending' => __('Sending'), 'failed' => __('Delivery failed'), 'bounced' => __('Bounced'),
-        'retry' => __('Retry'), 'more' => __('Show all recipients'),
+        'retry' => __('Retry'), 'more' => __('Show all recipients'), 'menu' => __('Message actions'),
     ], $labels);
     $s = (array) $sender;
     $r = array_filter(['to' => $recipients['to'] ?? [], 'cc' => $recipients['cc'] ?? [], 'bcc' => $recipients['bcc'] ?? []]);
@@ -31,7 +38,7 @@
     $shown = $firstKind ? array_slice($r[$firstKind], 0, 2) : [];
     $failed = in_array($status, ['failed', 'bounced'], true);
 @endphp
-<article {{ $attributes->class(['bmsui-msg', 'bmsui-msg--'.$direction, 'is-failed' => $failed, 'is-draft' => $status === 'draft']) }}>
+<article {{ $attributes->class(['bmsui-msg', 'bmsui-msg--'.$direction, 'is-failed' => $failed, 'is-draft' => $status === 'draft'])->merge($threadId !== null ? ['data-thread-id' => $threadId] : []) }}>
     <x-bmsui::avatar :name="$s['name'] ?? ''" :src="$s['avatarSrc'] ?? null" :size="36" class="bmsui-msg__avatar" />
     <div class="bmsui-msg__main">
         <header class="bmsui-msg__head">
@@ -44,7 +51,14 @@
             @if($status === 'sending')<span class="bmsui-msg__status">{{ $l['sending'] }}&hellip;</span>@endif
             @isset($badges){{ $badges }}@endisset
             @if($time)<time class="bmsui-msg__time" @if($datetime) datetime="{{ $datetime }}" @endif>{{ $time }}</time>@endif
+            @isset($menu)
+                <span class="bmsui-msg__menu">{{ $menu }}</span>
+            @endisset
+            @if(!isset($menu) && $menuItems)
+                <x-bmsui::dropdown-menu class="bmsui-msg__menu" :items="$menuItems" :label="$l['menu']" align="end" />
+            @endif
         </header>
+        @isset($actionText)<p class="bmsui-msg__action">{{ $actionText }}</p>@endisset
         @if($total > 3)
             <details class="bmsui-msg__rcpt">
                 <summary title="{{ $l['more'] }}">{{ $l[$firstKind] }}: {{ implode(', ', $shown) }} <span class="bmsui-msg__more">+{{ $total - count($shown) }}</span></summary>
@@ -55,6 +69,7 @@
                 @foreach($r as $kind => $addrs)<span class="bmsui-msg__rline"><b>{{ $l[$kind] }}:</b> {{ implode(', ', $addrs) }}</span> @endforeach
             </p>
         @endif
+        @isset($meta)<div class="bmsui-msg__meta">{{ $meta }}</div>@endisset
         @if($subject)<p class="bmsui-msg__subject">{{ $subject }}</p>@endif
         @if($failed)
             <p class="bmsui-msg__fail" role="alert">

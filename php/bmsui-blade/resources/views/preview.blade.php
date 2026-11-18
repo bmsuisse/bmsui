@@ -89,8 +89,8 @@
     </div>
 
     <h2>Conversation list</h2>
-    <x-bmsui::conversation-list>
-        <x-bmsui::conversation-row subject="Offerte 2026-0412" preview="Guten Tag, anbei die Offerte fuer die Heizungsanlage" href="#" :customer="['name' => 'Keller Haustechnik AG']" :assignee="['name' => 'Anna Meier']" status="active" :unread="true" :starred="true" :thread-count="4" :has-attachments="true" time="09:12" :selected="false">
+    <x-bmsui::conversation-list :select-all="false" :sorts="[['key' => 'date', 'label' => 'Datum', 'dir' => 'desc'], ['key' => 'customer', 'label' => 'Kunde']]" :count="4">
+        <x-bmsui::conversation-row subject="Offerte 2026-0412" preview="Guten Tag, anbei die Offerte fuer die Heizungsanlage" href="#" :customer="['name' => 'Keller Haustechnik AG']" :assignee="['name' => 'Anna Meier']" status="active" :unread="true" :starred="true" :starrable="true" :number="10412" :thread-count="4" :has-attachments="true" time="09:12" :selected="false">
             <x-bmsui::chip tone="info">Offerte</x-bmsui::chip>
         </x-bmsui::conversation-row>
         <x-bmsui::conversation-row subject="Lieferverzug Bestellung 88213, bitte um dringende Rueckmeldung zum Liefertermin" preview="Wir warten seit zwei Wochen auf die Ware" href="#" :customer="['name' => 'Muster AG']" status="pending" time="Gestern" :selected="true" />
@@ -98,8 +98,17 @@
         <x-bmsui::conversation-row subject="Gewinnspiel jetzt teilnehmen" :customer="['name' => 'noreply@promo.example']" status="spam" time="12.11.2026" />
     </x-bmsui::conversation-list>
 
+    <h2>Conversation list as table (FreeScout markup)</h2>
+    <x-bmsui::conversation-list as="table" class="table-conversations" :select-all="false" :select-all-attributes="['class' => 'toggle-all']" :count="2">
+        <x-bmsui::conversation-row class="conv-row" data-conversation_id="1" subject="Offerte 2026-0412" preview="Anbei die Offerte" href="#" :customer="['name' => 'Keller Haustechnik AG']" status="active" :unread="true" :starrable="true" :star-attributes="['class' => 'conv-star']" :number="10412" time="09:12" :selected="false" :checkbox-attributes="['class' => 'conv-checkbox']">
+            <x-slot:before-subject><x-bmsui::chip tone="danger">Hoch</x-bmsui::chip></x-slot:before-subject>
+        </x-bmsui::conversation-row>
+        <x-bmsui::conversation-row class="conv-row" data-conversation_id="2" subject="Reklamation Rechnung" href="#" :customer="['name' => 'Beat Huber']" status="closed" :starrable="true" :starred="true" :number="10388" time="Gestern" :selected="true" />
+        <x-slot:pager><span class="table-pager">1&ndash;2 von 2</span></x-slot:pager>
+    </x-bmsui::conversation-list>
+
     <h2>Mail message, quoted text, attachments, events</h2>
-    <x-bmsui::mail-message direction="inbound" :sender="['name' => 'Anna Meier', 'email' => 'anna.meier@keller-haustechnik.ch']" :recipients="['to' => ['verkauf@muster-ag.ch'], 'cc' => ['buchhaltung@keller-haustechnik.ch']]" time="14.11.2026 09:12" subject="Offerte 2026-0412" :attachments="[['id' => 1, 'name' => 'Offerte_2026-0412_Heizungsanlage_final_v3.pdf', 'size' => 1258291, 'mimeType' => 'application/pdf', 'href' => '#'], ['id' => 2, 'name' => 'Preise.xlsx', 'size' => 48211], ['id' => 3, 'name' => 'Fotos.zip', 'size' => 9876543]]">
+    <x-bmsui::mail-message direction="inbound" :thread-id="501" :menu-items="[['id' => 'forward', 'label' => 'Weiterleiten'], ['id' => 'original', 'label' => 'Original anzeigen', 'href' => '#'], ['id' => 'print', 'label' => 'Drucken'], ['separator' => true], ['id' => 'outgoing', 'label' => 'Ausgehende E-Mails']]" :sender="['name' => 'Anna Meier', 'email' => 'anna.meier@keller-haustechnik.ch']" :recipients="['to' => ['verkauf@muster-ag.ch'], 'cc' => ['buchhaltung@keller-haustechnik.ch']]" time="14.11.2026 09:12" subject="Offerte 2026-0412" :attachments="[['id' => 1, 'name' => 'Offerte_2026-0412_Heizungsanlage_final_v3.pdf', 'size' => 1258291, 'mimeType' => 'application/pdf', 'href' => '#'], ['id' => 2, 'name' => 'Preise.xlsx', 'size' => 48211], ['id' => 3, 'name' => 'Fotos.zip', 'size' => 9876543]]">
         <p style="margin:0">Guten Tag, vielen Dank fuer die Offerte. Wir haben noch zwei Fragen zu den Lieferzeiten: https://muster-ag.example/produkte/heizung/sehr/lange/url/die/nicht/umbricht</p>
         <x-slot:quoted>Am 13.11.2026 schrieb Muster AG: Guten Tag Frau Meier, anbei die gewuenschte Offerte.</x-slot:quoted>
         <x-slot:actions><button type="button" class="bmsui-btn">Antworten</button><button type="button" class="bmsui-btn">Weiterleiten</button></x-slot:actions>
