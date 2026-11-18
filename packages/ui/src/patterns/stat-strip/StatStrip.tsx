@@ -60,17 +60,24 @@ export interface StatStripItemProps extends Omit<HTMLAttributes<HTMLLIElement>, 
   onClick?: () => void;
   /** Skeleton instead of the value. */
   loading?: boolean;
-  /** Accessible name of the loading skeleton. @default "Loading" */
+  /** Accessible name of the loading skeleton; overrides `labels.loading`. @default "Loading" */
   loadingLabel?: string;
+  labels?: Partial<StatStripLabels>;
   /** Flash the value when it changes. @default true */
   animated?: boolean;
   /** Link component for `href`, e.g. a router `Link` (receives `href`). @default "a" */
   linkAs?: ElementType;
 }
 
+export interface StatStripLabels {
+  /** Accessible name of a loading cell. */
+  loading: string;
+}
+export const defaultStatStripLabels: StatStripLabels = { loading: "Loading" };
+
 export const StatStripItem = forwardRef<HTMLLIElement, StatStripItemProps>(
   (
-    { label, value, sub, tone = "default", href, onClick, loading = false, loadingLabel = "Loading", animated = true, linkAs, className, ...props },
+    { label, value, sub, tone = "default", href, onClick, loading = false, loadingLabel, labels, animated = true, linkAs, className, ...props },
     ref,
   ) => {
     const flashing = useFlashing(typeof value === "object" ? null : value, animated);
@@ -78,7 +85,7 @@ export const StatStripItem = forwardRef<HTMLLIElement, StatStripItemProps>(
       <>
         <span className="block line-clamp-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</span>
         {loading ? (
-          <Skeleton role="status" aria-label={loadingLabel} className="mt-1 h-6 w-16" />
+          <Skeleton role="status" aria-label={loadingLabel ?? { ...defaultStatStripLabels, ...labels }.loading} className="mt-1 h-6 w-16" />
         ) : (
           <span
             className={cn(

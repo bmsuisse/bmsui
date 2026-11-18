@@ -28,6 +28,8 @@ export interface ToolCallLabels {
   errorDetails: string;
   /** "3 steps" / "1 step" in `ToolCallGroup`'s header. */
   steps: (n: number) => string;
+  /** Text of a numeric `duration` (ms), e.g. "340 ms", "1.2 s", "2 min 5 s". */
+  duration: (ms: number) => string;
 }
 
 export const defaultToolCallLabels: ToolCallLabels = {
@@ -39,6 +41,7 @@ export const defaultToolCallLabels: ToolCallLabels = {
   output: "Output",
   errorDetails: "Error",
   steps: (n) => `${n} ${n === 1 ? "step" : "steps"}`,
+  duration: (ms) => formatToolDuration(ms),
 };
 
 /** `340 ms`, `1.2 s`, `2 min 5 s`. */
@@ -127,7 +130,7 @@ export const ToolCallCard = forwardRef<HTMLDivElement, ToolCallCardProps>(
     const open = hasBody && (openProp ?? userOpen ?? (status === "running" || status === "error" || (defaultOpen ?? false)));
     const statusLabel = l[status];
     const shimmer = useShimmer<HTMLSpanElement>(status === "running");
-    const time = duration == null ? null : typeof duration === "number" ? formatToolDuration(duration) : duration;
+    const time = duration == null ? null : typeof duration === "number" ? l.duration(duration) : duration;
 
     const head = (
       <>

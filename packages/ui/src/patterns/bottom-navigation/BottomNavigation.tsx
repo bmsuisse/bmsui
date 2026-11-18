@@ -31,11 +31,14 @@ export interface BottomNavigationLabels {
   badge: (badge: number | string) => string;
   /** Screen-reader text for a bare dot badge (`badge: true`). */
   dot: string;
+  /** Visible text of a numeric badge above the cap, e.g. "99+". */
+  overflow: (max: number) => string;
 }
 
 export const defaultBottomNavigationLabels: BottomNavigationLabels = {
   badge: (badge) => `${badge} new`,
   dot: "New",
+  overflow: (max) => `${max}+`,
 };
 
 const HIDE_FROM = {
@@ -73,10 +76,10 @@ export interface BottomNavigationProps extends Omit<HTMLAttributes<HTMLElement>,
   "aria-label": string;
 }
 
-function badgeText(badge: number | string | boolean | undefined, max: number): string | null {
+function badgeText(badge: number | string | boolean | undefined, max: number, overflow: (max: number) => string): string | null {
   if (badge === undefined || badge === false || badge === 0 || badge === "") return null;
   if (badge === true) return "";
-  if (typeof badge === "number") return badge > max ? `${max}+` : String(badge);
+  if (typeof badge === "number") return badge > max ? overflow(max) : String(badge);
   return badge;
 }
 
@@ -111,7 +114,7 @@ export const BottomNavigation = forwardRef<HTMLElement, BottomNavigationProps>(f
 
   const renderItem = (item: BottomNavigationItem): ReactElement => {
     const active = item.id === current;
-    const text = badgeText(item.badge, maxBadge);
+    const text = badgeText(item.badge, maxBadge, l.overflow);
     const Icon = item.icon;
     const cls = cn(
       "group flex h-full min-w-0 flex-1 touch-manipulation flex-col items-center justify-center gap-1 rounded-md px-0.5 outline-none",

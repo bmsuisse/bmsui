@@ -9,10 +9,17 @@ export interface SkipLink {
   onSelect?: (event: MouseEvent<HTMLElement>) => void;
 }
 
+export interface SkipLinksLabels {
+  /** Accessible name of the `<nav>`. */
+  nav: string;
+}
+export const defaultSkipLinksLabels: SkipLinksLabels = { nav: "Skip links" };
+
 export interface SkipLinksProps {
   links: SkipLink[];
-  /** Accessible name of the `<nav>`. @default "Skip links" */
+  /** Accessible name of the `<nav>`; overrides `labels.nav`. @default "Skip links" */
   label?: string;
+  labels?: Partial<SkipLinksLabels>;
   className?: string;
   "data-testid"?: string;
 }
@@ -26,9 +33,9 @@ const LINK =
  * them has keyboard focus, then a pill in the top-left corner. Mount it as the
  * first element of the app root.
  */
-export const SkipLinks = ({ links, label = "Skip links", className, ...props }: SkipLinksProps): ReactElement => (
+export const SkipLinks = ({ links, label, labels, className, ...props }: SkipLinksProps): ReactElement => (
   <nav
-    aria-label={label}
+    aria-label={label ?? { ...defaultSkipLinksLabels, ...labels }.nav}
     className={cn(
       "pointer-events-none fixed left-2 top-2 z-[60] flex max-w-[calc(100vw-1rem)] flex-wrap gap-2 has-[:focus-visible]:pointer-events-auto",
       className,
