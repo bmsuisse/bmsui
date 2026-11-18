@@ -525,17 +525,6 @@
 
   window.BMSUi = window.BMSUi || {};
   var inits = [initForms];
-  window.BMSUi.init = function (root) { inits.forEach(function (fn) { fn(root || document); }); };
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () { window.BMSUi.init(document); });
-  } else { window.BMSUi.init(document); }
-  if (window.MutationObserver) {
-    new MutationObserver(function (list) {
-      list.forEach(function (m) {
-        m.addedNodes.forEach(function (n) { if (n.nodeType === 1) { window.BMSUi.init(n); } });
-      });
-    }).observe(document.documentElement, { childList: true, subtree: true });
-  }
   /* ---- Combobox / tag combobox ---- */
   function comboRoot(el) { return el.closest && el.closest('[data-bmsui-combo]'); }
   function comboInput(root) { return root.querySelector('.bmsui-combo__input'); }
@@ -796,4 +785,300 @@
     var fld = t.closest && t.closest('.bmsui-combo__field');
     if (fld && !t.closest('button, input')) { comboInput(comboRoot(fld)).focus(); }
   });
+  /* ---- Dialog / modal / confirm dialog ---- */
+  function dialogEl(ref) { return typeof ref === 'string' ? document.getElementById(ref.replace(/^#/, '')) : ref; }
+
+  function dialogLoad(dlg, url) {
+    var body = dlg.querySelector('[data-bmsui-dialog-body]');
+    body.setAttribute('aria-busy', 'true');
+    body.innerHTML = '<div class="bmsui-dialog__loading"><span class="bmsui-spinner" aria-hidden="true"></span></div>';
+    return fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
+      .then(function (r) { if (!r.ok) { throw new Error(r.status); } return r.text(); })
+      .then(function (html) {
+        body.innerHTML = html;
+        body.removeAttribute('aria-busy');
+        window.BMSUi.init(body);
+        var auto = body.querySelector('[autofocus], input:not([type=hidden]), select, textarea');
+        if (auto) { auto.focus(); }
+        dlg.dispatchEvent(new CustomEvent('bmsui:loaded', { bubbles: true, detail: { url: url } }));
+      }, function () {
+        body.removeAttribute('aria-busy');
+        body.innerHTML = '';
+        var p = document.createElement('p');
+        p.className = 'bmsui-dialog__error';
+        p.setAttribute('role', 'alert');
+        p.textContent = dlg.getAttribute('data-l-failed') || 'Could not load the content.';
+        body.appendChild(p);
+      });
+  }
+
+  function dialogOpen(ref, opts) {
+    var dlg = dialogEl(ref);
+    if (!dlg || dlg.open) { return dlg; }
+    opts = opts || {};
+    dlg._bmsuiOpener = opts.opener || document.activeElement;
+    if (opts.title !== undefined) {
+      var t = dlg.querySelector('.bmsui-dialog__title');
+      if (t) { t.textContent = opts.title; }
+    }
+    dlg.returnValue = '';
+    if (typeof dlg.showModal === 'function') { dlg.showModal(); } else { dlg.setAttribute('open', ''); }
+    document.documentElement.classList.add('bmsui-dialog-open');
+    var url = opts.url || dlg.getAttribute('data-url');
+    if (url) { dialogLoad(dlg, url); }
+    dlg.dispatchEvent(new CustomEvent('bmsui:open', { bubbles: true }));
+    return dlg;
+  }
+
+  function dialogClose(ref, value) {
+    var dlg = dialogEl(ref);
+    if (!dlg || !dlg.open) { return; }
+    if (typeof dlg.close === 'function') { dlg.close(value || ''); } else { dlg.removeAttribute('open'); dlg.dispatchEvent(new Event('close')); }
+  }
+
+  // The native close event covers Escape, form[method=dialog] and close().
+  document.addEventListener('close', function (e) {
+    var dlg = e.target;
+    if (!dlg.hasAttribute || !dlg.hasAttribute('data-bmsui-dialog')) { return; }
+    if (!document.querySelector('dialog[data-bmsui-dialog][open]')) { document.documentElement.classList.remove('bmsui-dialog-open'); }
+    var opener = dlg._bmsuiOpener;
+    if (opener && opener.focus && document.contains(opener)) { opener.focus(); }
+    dlg.dispatchEvent(new CustomEvent('bmsui:close', { bubbles: true, detail: { returnValue: dlg.returnValue } }));
+    if (dlg._bmsuiResolve) { var r = dlg._bmsuiResolve; dlg._bmsuiResolve = null; r(dlg.returnValue === 'confirm'); }
+  }, true);
+
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    var opener = t.closest && t.closest('[data-bmsui-dialog-open], [data-bmsui-dialog-url]');
+    if (opener) {
+      e.preventDefault();
+      var url = opener.getAttribute('data-bmsui-dialog-url');
+      var target = opener.getAttribute('data-bmsui-dialog-open') || '#bmsui-remote';
+      var dlg = dialogEl(target) || (url ? remoteDialog() : null);
+      if (dlg) { dialogOpen(dlg, { url: url || undefined, title: opener.getAttribute('data-bmsui-dialog-title') || undefined, opener: opener }); }
+      return;
+    }
+    var closer = t.closest && t.closest('[data-bmsui-dialog-close]');
+    if (closer) { dialogClose(closer.closest('dialog'), closer.value || closer.getAttribute('data-value') || 'cancel'); return; }
+    var yes = t.closest && t.closest('[data-bmsui-dialog-confirm]');
+    if (yes) {
+      var d = yes.closest('dialog');
+      d.dispatchEvent(new CustomEvent('bmsui:confirm', { bubbles: true }));
+      dialogClose(d, 'confirm');
+      return;
+    }
+    // Backdrop click: the box fills the <dialog>, so only clicks outside it target the dialog itself.
+    if (t.tagName === 'DIALOG' && t.hasAttribute('data-bmsui-dialog') && !t.hasAttribute('data-static')) {
+      dialogClose(t, 'cancel');
+    }
+  });
+
+  function buildDialog(id, size, labels) {
+    var dlg = document.createElement('dialog');
+    dlg.className = 'bmsui-dialog bmsui-dialog--' + size;
+    dlg.id = id;
+    dlg.setAttribute('data-bmsui-dialog', '');
+    dlg.setAttribute('aria-labelledby', id + '-title');
+    dlg.innerHTML = '<div class="bmsui-dialog__box"><header class="bmsui-dialog__head"><h2 class="bmsui-dialog__title"></h2></header>' +
+      '<button type="button" class="bmsui-dialog__x" data-bmsui-dialog-close>&times;</button><div class="bmsui-dialog__body" data-bmsui-dialog-body></div></div>';
+    dlg.querySelector('.bmsui-dialog__title').id = id + '-title';
+    dlg.querySelector('.bmsui-dialog__x').setAttribute('aria-label', labels.close || 'Close');
+    document.body.appendChild(dlg);
+    return dlg;
+  }
+
+  function remoteDialog() { return document.getElementById('bmsui-remote') || buildDialog('bmsui-remote', 'md', {}); }
+
+  // Promise-based confirm for ajax flows. Uses <x-bmsui::confirm-dialog id="bmsui-confirm"/> when the layout
+  // renders one (translated labels); otherwise builds a minimal one with the labels passed in options.
+  function confirmDialog(message, opts) {
+    opts = opts || {};
+    var dlg = document.getElementById('bmsui-confirm');
+    if (!dlg) {
+      dlg = buildDialog('bmsui-confirm', 'sm', opts);
+      dlg.classList.add('bmsui-dialog--confirm');
+      var foot = document.createElement('footer');
+      foot.className = 'bmsui-dialog__foot';
+      foot.innerHTML = '<button type="button" class="bmsui-btn bmsui-btn--md" data-bmsui-dialog-close value="cancel"></button><button type="button" class="bmsui-btn bmsui-btn--md bmsui-btn--danger" data-bmsui-dialog-confirm></button>';
+      foot.children[0].textContent = opts.cancelLabel || 'Cancel';
+      foot.children[1].textContent = opts.confirmLabel || 'OK';
+      dlg.querySelector('.bmsui-dialog__box').appendChild(foot);
+    }
+    var msg = dlg.querySelector('.bmsui-dialog__msg');
+    if (!msg) {
+      msg = document.createElement('p');
+      msg.className = 'bmsui-dialog__msg';
+      dlg.querySelector('[data-bmsui-dialog-body]').prepend(msg);
+    }
+    msg.textContent = message || '';
+    if (opts.title) { dlg.querySelector('.bmsui-dialog__title').textContent = opts.title; }
+    if (opts.confirmLabel) { dlg.querySelector('[data-bmsui-dialog-confirm]').textContent = opts.confirmLabel; }
+    if (opts.cancelLabel) { dlg.querySelector('[data-bmsui-dialog-close][value="cancel"]').textContent = opts.cancelLabel; }
+    return new Promise(function (resolve) {
+      dlg._bmsuiResolve = resolve;
+      dialogOpen(dlg);
+      var c = dlg.querySelector('[data-bmsui-dialog-close][value="cancel"]');
+      if (c) { c.focus(); }
+    });
+  }
+
+  window.BMSUi = window.BMSUi || {};
+  window.BMSUi.dialog = { open: dialogOpen, close: dialogClose, load: function (ref, url) { return dialogLoad(dialogEl(ref), url); } };
+  window.BMSUi.confirm = confirmDialog;
+
+  /* ---- Tabs ---- */
+  function selectTab(btn, focus) {
+    var root = btn.closest('[data-bmsui-tabs]');
+    var id = btn.getAttribute('data-tab');
+    root.querySelectorAll(':scope > .bmsui-tabs__list > [role="tab"]').forEach(function (b) {
+      var on = b === btn;
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+      b.tabIndex = on ? 0 : -1;
+      b.classList.toggle('is-active', on);
+    });
+    root.querySelectorAll(':scope > [data-tab-panel]').forEach(function (p) { p.hidden = p.getAttribute('data-tab-panel') !== id; });
+    if (focus) { btn.focus(); }
+    root.dispatchEvent(new CustomEvent('bmsui:tab', { bubbles: true, detail: { id: id } }));
+  }
+
+  document.addEventListener('click', function (e) {
+    var tab = e.target.closest && e.target.closest('[data-bmsui-tabs] [role="tab"]');
+    if (tab && !tab.disabled) { selectTab(tab, false); }
+  });
+
+  document.addEventListener('keydown', function (e) {
+    var tab = e.target.closest && e.target.closest('[data-bmsui-tabs] [role="tab"]');
+    if (!tab) { return; }
+    var tabs = Array.prototype.filter.call(tab.parentNode.querySelectorAll('[role="tab"]'), function (b) { return !b.disabled; });
+    var i = tabs.indexOf(tab);
+    var next = null;
+    if (e.key === 'ArrowRight') { next = tabs[(i + 1) % tabs.length]; }
+    else if (e.key === 'ArrowLeft') { next = tabs[(i - 1 + tabs.length) % tabs.length]; }
+    else if (e.key === 'Home') { next = tabs[0]; }
+    else if (e.key === 'End') { next = tabs[tabs.length - 1]; }
+    if (next) { e.preventDefault(); selectTab(next, true); }
+  });
+
+  function initTabs(root) {
+    // Wire panels to their tabs (ids are generated server-side per tab list).
+    within(root, '[data-bmsui-tabs]').forEach(function (tabs) {
+      var base = tabs.getAttribute('data-base');
+      tabs.querySelectorAll(':scope > [data-tab-panel]').forEach(function (p) {
+        var id = p.getAttribute('data-tab-panel');
+        if (!p.id) { p.id = base + '-' + id; }
+        p.setAttribute('aria-labelledby', base + '-' + id + '-tab');
+      });
+    });
+  }
+  inits.push(initTabs);
+
+  /* ---- Tooltip ---- */
+  var tip = null;
+  var tipFor = null;
+  function showTip(el) {
+    var text = el.getAttribute('data-bmsui-tooltip');
+    if (!text) { return; }
+    if (!tip) {
+      tip = document.createElement('div');
+      tip.className = 'bmsui-tooltip';
+      tip.id = 'bmsui-tooltip';
+      tip.setAttribute('role', 'tooltip');
+      document.body.appendChild(tip);
+    }
+    tip.textContent = text;
+    tip.hidden = false;
+    tipFor = el;
+    var target = el.matches('.bmsui-tip-anchor') && el.firstElementChild ? el.firstElementChild : el;
+    target.setAttribute('aria-describedby', 'bmsui-tooltip');
+    var r = el.getBoundingClientRect();
+    var tr = tip.getBoundingClientRect();
+    var side = el.getAttribute('data-side') || 'top';
+    var gap = 6;
+    var pos = function (s) {
+      if (s === 'bottom') { return { x: r.left + r.width / 2 - tr.width / 2, y: r.bottom + gap }; }
+      if (s === 'left') { return { x: r.left - tr.width - gap, y: r.top + r.height / 2 - tr.height / 2 }; }
+      if (s === 'right') { return { x: r.right + gap, y: r.top + r.height / 2 - tr.height / 2 }; }
+      return { x: r.left + r.width / 2 - tr.width / 2, y: r.top - tr.height - gap };
+    };
+    var p = pos(side);
+    var flip = { top: 'bottom', bottom: 'top', left: 'right', right: 'left' }[side];
+    if (p.y < 4 || p.y + tr.height > window.innerHeight - 4 || p.x < 4 || p.x + tr.width > window.innerWidth - 4) { var q = pos(flip); if (q.y >= 4 && q.x >= 4) { p = q; } }
+    p.x = Math.max(8, Math.min(p.x, window.innerWidth - tr.width - 8));
+    tip.style.left = (p.x + window.scrollX) + 'px';
+    tip.style.top = (p.y + window.scrollY) + 'px';
+  }
+  function hideTip() {
+    if (!tip || tip.hidden) { return; }
+    tip.hidden = true;
+    if (tipFor) {
+      var target = tipFor.matches('.bmsui-tip-anchor') && tipFor.firstElementChild ? tipFor.firstElementChild : tipFor;
+      if (target.getAttribute('aria-describedby') === 'bmsui-tooltip') { target.removeAttribute('aria-describedby'); }
+    }
+    tipFor = null;
+  }
+  document.addEventListener('mouseover', function (e) {
+    var el = e.target.closest && e.target.closest('[data-bmsui-tooltip]');
+    if (el && el !== tipFor) { showTip(el); } else if (!el) { hideTip(); }
+  });
+  document.addEventListener('focusin', function (e) {
+    var el = e.target.closest && e.target.closest('[data-bmsui-tooltip]');
+    if (el) { showTip(el); } else { hideTip(); }
+  });
+  document.addEventListener('focusout', function () { hideTip(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { hideTip(); } });
+  window.addEventListener('scroll', hideTip, true);
+
+  /* ---- Popover ---- */
+  function closePopovers(except) {
+    document.querySelectorAll('[data-bmsui-popover] > .bmsui-popover__panel:not([hidden])').forEach(function (p) {
+      if (p === except) { return; }
+      p.hidden = true;
+      var tg = p.parentNode.querySelector(':scope > [data-bmsui-popover-toggle]');
+      if (tg) { tg.setAttribute('aria-expanded', 'false'); }
+      p.parentNode.dispatchEvent(new CustomEvent('bmsui:close', { bubbles: true }));
+    });
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    var tog = t.closest && t.closest('[data-bmsui-popover-toggle]');
+    if (tog) {
+      var panel = tog.parentNode.querySelector(':scope > .bmsui-popover__panel');
+      var open = panel.hidden;
+      closePopovers(open ? panel : null);
+      panel.hidden = !open;
+      tog.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (open) {
+        placeMenu(panel, tog);
+        panel.parentNode.dispatchEvent(new CustomEvent('bmsui:open', { bubbles: true }));
+      } else { panel.parentNode.dispatchEvent(new CustomEvent('bmsui:close', { bubbles: true })); }
+      return;
+    }
+    if (!(t.closest && t.closest('[data-bmsui-popover]'))) { closePopovers(null); }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') { return; }
+    var open = e.target.closest && e.target.closest('[data-bmsui-popover]');
+    if (open && !open.querySelector(':scope > .bmsui-popover__panel').hidden) {
+      closePopovers(null);
+      open.querySelector(':scope > [data-bmsui-popover-toggle]').focus();
+    }
+  });
+
+  function initDialogs(root) {
+    within(root, 'dialog[data-bmsui-dialog][data-open]').forEach(function (d) { d.removeAttribute('data-open'); dialogOpen(d); });
+  }
+  inits.push(initDialogs);
+
+  /* ---- Boot: init on load and for nodes added later ---- */
+  window.BMSUi.init = function (root) { inits.forEach(function (fn) { fn(root || document); }); };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () { window.BMSUi.init(document); });
+  } else { window.BMSUi.init(document); }
+  if (window.MutationObserver) {
+    new MutationObserver(function (list) {
+      list.forEach(function (m) {
+        m.addedNodes.forEach(function (n) { if (n.nodeType === 1) { window.BMSUi.init(n); } });
+      });
+    }).observe(document.documentElement, { childList: true, subtree: true });
+  }
 })();

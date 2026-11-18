@@ -139,6 +139,28 @@
         </div>
     </div>
 
+    <h2>Dialog, confirm dialog, tabs, tooltip, popover</h2>
+    <div class="card pad">
+        <div class="row-flex">
+            <x-bmsui::button variant="outline" data-bmsui-dialog-open="#pv-dialog">Dialog oeffnen</x-bmsui::button>
+            <x-bmsui::button variant="outline" data-bmsui-dialog-open="#pv-confirm">Loeschen bestaetigen</x-bmsui::button>
+            <x-bmsui::tooltip text="Konversation an eine andere Person zuweisen"><x-bmsui::button variant="ghost">Zuweisen</x-bmsui::button></x-bmsui::tooltip>
+            <x-bmsui::popover title="Keller Haustechnik AG" :width="260">
+                <x-slot:trigger>Kundeninfo</x-slot:trigger>
+                Kunde seit 2019, 42 Konversationen, letzte am 14.11.2026.</x-bmsui::popover>
+        </div>
+        <x-bmsui::tabs label="Einstellungen" active="general" :tabs="[['id' => 'general', 'label' => 'Allgemein'], ['id' => 'mailbox', 'label' => 'Postfaecher', 'count' => 4], ['id' => 'notify', 'label' => 'Benachrichtigungen'], ['id' => 'off', 'label' => 'Gesperrt', 'disabled' => true]]" style="margin-top:16px">
+            <x-bmsui::tab-panel id="general">Allgemeine Einstellungen fuer dieses Postfach.</x-bmsui::tab-panel>
+            <x-bmsui::tab-panel id="mailbox">Vier verbundene Postfaecher.</x-bmsui::tab-panel>
+            <x-bmsui::tab-panel id="notify">E-Mail und Push.</x-bmsui::tab-panel>
+        </x-bmsui::tabs>
+    </div>
+    <x-bmsui::dialog id="pv-dialog" title="Konversation verschieben" description="Waehlen Sie das Zielpostfach.">
+        <x-bmsui::form-field label="Postfach" for="pv-move"><x-bmsui::select name="move" :options="['verkauf' => 'Verkauf', 'support' => 'Support']" /></x-bmsui::form-field>
+        <x-slot:footer><x-bmsui::button variant="outline" data-bmsui-dialog-close value="cancel">Abbrechen</x-bmsui::button><x-bmsui::button data-bmsui-dialog-close value="move">Verschieben</x-bmsui::button></x-slot:footer>
+    </x-bmsui::dialog>
+    <x-bmsui::confirm-dialog id="pv-confirm" title="Konversation loeschen?" message="Die Konversation und alle Nachrichten werden endgueltig geloescht." confirm-label="Loeschen" cancel-label="Abbrechen" />
+
     <h2>Conversation list</h2>
     <x-bmsui::conversation-list :select-all="false" :sorts="[['key' => 'date', 'label' => 'Datum', 'dir' => 'desc'], ['key' => 'customer', 'label' => 'Kunde']]" :count="4">
         <x-bmsui::conversation-row subject="Offerte 2026-0412" preview="Guten Tag, anbei die Offerte fuer die Heizungsanlage" href="#" :customer="['name' => 'Keller Haustechnik AG']" :assignee="['name' => 'Anna Meier']" status="active" :unread="true" :starred="true" :starrable="true" :number="10412" :thread-count="4" :has-attachments="true" time="09:12" :selected="false">
