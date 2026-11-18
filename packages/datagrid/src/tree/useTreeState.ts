@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { useBmsI18n } from "../i18n/locale";
+import { useIntegratedI18n } from "../i18n/locale";
 import type { TreeAccessors } from "./types";
 
 export interface TreeStateController<TRow> {
@@ -51,7 +51,7 @@ export function useTreeState<TRow>({
   onChildrenMapChange,
   locale,
 }: UseTreeStateOptions<TRow>): TreeStateController<TRow> {
-  const { t } = useBmsI18n(locale);
+  const { t } = useIntegratedI18n(locale);
   const [internalExpanded, setInternalExpanded] = useState<Record<string, boolean>>({});
   const expanded = controlledExpanded ?? internalExpanded;
 

@@ -3,7 +3,7 @@ import type { BooleanColumn } from "../column/types";
 import { Checkbox } from "../components/ui/checkbox";
 import { EditFieldError } from "./EditFieldError";
 import { editErrorId, type EditWidgetProps } from "./widget-types";
-import { useBmsI18n } from "../i18n/locale";
+import { useIntegratedI18n } from "../i18n/locale";
 
 /**
  * Same explicit-comparison convention as `defaultFormat`'s boolean case
@@ -26,7 +26,7 @@ export function BooleanEditor<TRow>({
   error,
   autoFocus,
 }: EditWidgetProps<BooleanColumn<TRow>>): ReactElement {
-  const { t } = useBmsI18n();
+  const { t } = useIntegratedI18n();
   const errorId = editErrorId(rowId, column.id);
   return (
     // No `gap-*` here (unlike a plain flex stack) — `EditFieldError`'s own

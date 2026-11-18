@@ -5,7 +5,7 @@ import { toDate } from "../column/format";
 import { Input } from "../components/ui/input";
 import { EditFieldError } from "./EditFieldError";
 import { editErrorId, type EditWidgetProps } from "./widget-types";
-import { useBmsI18n } from "../i18n/locale";
+import { useIntegratedI18n } from "../i18n/locale";
 
 /**
  * Formats a raw cell value into the string a native date/datetime-local
@@ -44,7 +44,7 @@ export function DateEditor<TRow>({
   error,
   autoFocus,
 }: EditWidgetProps<DateColumn<TRow>>): ReactElement {
-  const { t } = useBmsI18n();
+  const { t } = useIntegratedI18n();
   const errorId = editErrorId(rowId, column.id);
   return (
     <div>

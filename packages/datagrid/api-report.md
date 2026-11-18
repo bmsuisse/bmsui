@@ -38,7 +38,6 @@ function TreeDataGrid<TRow>(props: TreeDataGridProps<TRow>): ReactElement
 ## Hooks (12)
 
 ```text
-function useBmsI18n(locale?: string): BmsI18n
 function useCellEditingState<TRow>(cellEditing: CellEditingOptions<TRow> | undefined, getRowId: (row: TRow) => string): CellEditingState<TRow>
 function useCellSelection(props: CellSelectionOptions): CellSelectionController
 function useDebouncedCallback<TArgs extends unknown[]>(callback: (...args: TArgs) => void, delayMs: number): DebouncedCallback<TArgs>
@@ -46,6 +45,7 @@ function useEditingState<TRow>(editing: EditingOptions<TRow> | undefined, getRow
 function useFilterLabels(overrides?: Partial<FilterLabels>): FilterLabels
 function useGridState<TRow>(dataSource: DataSource<TRow>, initialState?: Partial<GridState>, externalState?: GridState, showPagination?: boolean, onGridStateChange?: (state: GridState) => void): GridStateController
 function useGroupExpansion(defaultGroupsExpanded: boolean, controlledExpandedGroups: Record<string, boolean> | undefined, onExpandedGroupsChange: ((expanded: Record<string, boolean>) => void) | undefined): GroupExpansionController
+function useIntegratedI18n(locale?: string): IntegratedI18n
 function usePersistedColumnSizing(persistKey: string, columns: readonly SizedColumn[]): PersistedColumnSizing
 function useStickyGroupHeaderTop(enabled: boolean): StickyGroupHeaderTop
 function useTreeState<TRow>(props: UseTreeStateOptions<TRow>): TreeStateController<TRow>
@@ -60,7 +60,7 @@ function applyColumnOrder<TRow>(columns: readonly ColumnDef<TRow>[], order: read
 function buildIndexMap(ids: string[]): Map<string, number>
 function canHideColumn<TRow>(columns: readonly ColumnDef<TRow>[], visibility: ColumnVisibility, columnId: string): boolean
 function canHideGroup<TRow>(columns: readonly ColumnDef<TRow>[], visibility: ColumnVisibility, groupColumnIds: readonly string[]): boolean
-function cellEditingLabelsFor(props: BmsI18n): CellEditingLabels
+function cellEditingLabelsFor(props: IntegratedI18n): CellEditingLabels
 function cellsInRange(range: CellRange, rowIds: string[], columnIds: string[], rowIndex: Map<string, number>, columnIndex: Map<string, number>): CellAddress[]
 function clearPersistedVisibility(persistKey: string): void
 function coerceValueForColumn<TRow>(column: ColumnDef<TRow>, raw: string): { value: unknown } | undefined
@@ -79,7 +79,7 @@ function extendRangeForFill(base: NormalizedRange, target: { row: number; col: n
 function facetedNumberValues<TRow>(data: readonly TRow[], column: ColumnDef<TRow>, filter: FilterNode | null | undefined): (number | null)[]
 function facetedSetOptions<TRow>(data: readonly TRow[], column: ColumnDef<TRow>, filter: FilterNode | null | undefined): FacetOption[]
 function fieldKey(field: string | string[]): string
-function filterLabelsFor(props: BmsI18n): FilterLabels
+function filterLabelsFor(props: IntegratedI18n): FilterLabels
 function filterSortTree<TRow>(roots: readonly TRow[], state: Pick<GridState, "filter" | "sort">, props: FilterSortTreeOptions<TRow>): FilteredSortedTree<TRow>
 function flattenTree<TRow>(roots: TRow[], accessors: TreeAccessors<TRow>, expanded: Record<string, boolean>, childrenOverride: ReadonlyMap<string, TRow[]>): FlatTreeRow<TRow>[]
 function formatMessage(message: Message, tag: string, params?: MessageParams): string
@@ -112,7 +112,7 @@ function resolveLanguage(tag: string | undefined): BmsLanguage
 function resolveMenuItems<TRow>(items: readonly MenuItem<TRow>[], ctx: MenuItemContext<TRow>): ResolvedMenuItem<TRow>[]
 function sameVisibility<TRow>(columns: readonly ColumnDef<TRow>[], a: ColumnVisibility, b: ColumnVisibility): boolean
 function sizingStorageKeyFor(persistKey: string): string
-function statusLabelsFor(props: BmsI18n): GridStatusLabels
+function statusLabelsFor(props: IntegratedI18n): GridStatusLabels
 function storageKeyFor(persistKey: string): string
 function toDate(value: unknown): Date | null
 function toErrorInfo(error: unknown, unknownMessage?: string): ErrorInfo | undefined
@@ -164,11 +164,6 @@ interface BaseColumn<TRow>
   summary?: (rows: TRow[]) => ReactNode
   validateEdit?: (value: unknown, row: TRow) => string | undefined
   width?: number
-interface BmsI18n
-  dateLocale: Locale | undefined
-  language: BmsLanguage
-  locale: string
-  t: Translate
 interface CellAddress
   columnId: string
   rowId: string
@@ -466,6 +461,11 @@ interface GroupExpansionController
   expandedGroups: Record<string, boolean>
   isGroupExpanded: (key: string) => boolean
   toggleGroupExpanded: (key: string) => void
+interface IntegratedI18n
+  dateLocale: Locale | undefined
+  language: BmsLanguage
+  locale: string
+  t: Translate
 interface MenuItem<TRow>
   danger?: boolean
   disabled?: (ctx: MenuItemContext<TRow>) => boolean

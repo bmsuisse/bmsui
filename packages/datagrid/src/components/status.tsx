@@ -1,7 +1,7 @@
 import { ArrowPathIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import type { ReactElement } from "react";
 import { getI18n } from "../i18n/locale";
-import type { BmsI18n } from "../i18n/locale";
+import type { IntegratedI18n } from "../i18n/locale";
 import { cn } from "../lib/utils";
 import { Button } from "./ui/button";
 
@@ -47,7 +47,7 @@ export interface GridStatusLabels {
 }
 
 /** The built-in `GridStatusLabels` of one locale. */
-export function statusLabelsFor({ t }: BmsI18n): GridStatusLabels {
+export function statusLabelsFor({ t }: IntegratedI18n): GridStatusLabels {
   return {
     loading: t("status.loading"),
     noResults: t("status.noResults"),
@@ -62,7 +62,7 @@ export function statusLabelsFor({ t }: BmsI18n): GridStatusLabels {
 
 export const defaultGridStatusLabels: GridStatusLabels = statusLabelsFor(getI18n("en"));
 
-export function resolveStatusLabels(overrides: Partial<GridStatusLabels> | undefined, i18n: BmsI18n): GridStatusLabels {
+export function resolveStatusLabels(overrides: Partial<GridStatusLabels> | undefined, i18n: IntegratedI18n): GridStatusLabels {
   const base = statusLabelsFor(i18n);
   return overrides ? { ...base, ...overrides } : base;
 }

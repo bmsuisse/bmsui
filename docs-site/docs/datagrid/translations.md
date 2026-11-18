@@ -41,7 +41,7 @@ Everything you pass explicitly wins over the built-in text, key by key:
 Function-valued labels (`searchPlaceholder: (header) => string`) keep working.
 The built-in sets are exported as plain strings/functions to build on:
 `filterLabelsFor(i18n)`, `statusLabelsFor(i18n)`, `cellEditingLabelsFor(i18n)`
-(`useBmsI18n()` gives the `i18n`).
+(`useIntegratedI18n()` gives the `i18n`).
 
 ## Not translated yet
 

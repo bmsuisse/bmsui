@@ -1,7 +1,7 @@
 import type { KeyboardEvent, PointerEvent, ReactElement } from "react";
 import { useRef } from "react";
 import { KEYBOARD_RESIZE_STEP, MIN_COLUMN_SIZE } from "../hooks/useColumnSizing";
-import { useBmsI18n } from "../i18n/locale";
+import { useIntegratedI18n } from "../i18n/locale";
 
 interface ColumnResizeHandleProps {
   columnId: string;
@@ -18,7 +18,7 @@ interface ColumnResizeHandleProps {
  * explicit width has none in state yet.
  */
 export function ColumnResizeHandle({ columnId, label, width, onResize }: ColumnResizeHandleProps): ReactElement {
-  const { t } = useBmsI18n();
+  const { t } = useIntegratedI18n();
   const drag = useRef<{ startX: number; startWidth: number } | null>(null);
 
   const cellWidth = (handle: HTMLElement): number => handle.parentElement?.getBoundingClientRect().width ?? 0;

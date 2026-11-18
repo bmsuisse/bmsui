@@ -1,6 +1,6 @@
 import type { MouseEvent as ReactMouseEvent, ReactElement, ReactNode } from "react";
 import { useLayoutEffect, useRef, useState } from "react";
-import { useBmsI18n } from "../i18n/locale";
+import { useIntegratedI18n } from "../i18n/locale";
 import type { CellRange } from "./types";
 
 interface OverlayRect {
@@ -127,7 +127,7 @@ export function SelectionOverlay({
   /** Content (the "Auto Fill Options" button) anchored below the bottom-right corner of `range` after a fill finished. */
   fillOptions?: { range: CellRange; content: ReactNode } | undefined;
 }): ReactElement | null {
-  const { t } = useBmsI18n();
+  const { t } = useIntegratedI18n();
   const [geometry, setGeometry] = useState<OverlayGeometry>(EMPTY_GEOMETRY);
 
   // Read fresh inside the effects below via a ref, not as a dependency of the

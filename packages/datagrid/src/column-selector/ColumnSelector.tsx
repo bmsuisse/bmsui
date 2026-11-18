@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../components/ui/dialog";
-import { useBmsI18n } from "../i18n/locale";
+import { useIntegratedI18n } from "../i18n/locale";
 import { cn } from "../lib/utils";
 import { applyColumnOrder, moveColumnBefore, moveColumnWithinGroup } from "./ordering";
 import {
@@ -115,7 +115,7 @@ export function ColumnSelector<TRow>({
   resetLabel,
   locale,
 }: ColumnSelectorProps<TRow>): ReactElement {
-  const { t } = useBmsI18n(locale);
+  const { t } = useIntegratedI18n(locale);
   // Restore from localStorage once on mount. Intentionally does not depend
   // on `visibility`/`onVisibilityChange` identity — this must run exactly
   // once regardless of how many times the parent re-renders.

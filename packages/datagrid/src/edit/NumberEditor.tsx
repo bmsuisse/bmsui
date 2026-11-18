@@ -4,7 +4,7 @@ import type { NumberColumn } from "../column/types";
 import { Input } from "../components/ui/input";
 import { EditFieldError } from "./EditFieldError";
 import { editErrorId, type EditWidgetProps } from "./widget-types";
-import { useBmsI18n } from "../i18n/locale";
+import { useIntegratedI18n } from "../i18n/locale";
 
 function textFromValue(value: unknown): string {
   return value === null || value === undefined ? "" : String(value);
@@ -37,7 +37,7 @@ export function NumberEditor<TRow>({
   error,
   autoFocus,
 }: EditWidgetProps<NumberColumn<TRow>>): ReactElement {
-  const { t } = useBmsI18n();
+  const { t } = useIntegratedI18n();
   const errorId = editErrorId(rowId, column.id);
   const [text, setText] = useState(() => textFromValue(value));
   const lastEmittedRef = useRef(value);

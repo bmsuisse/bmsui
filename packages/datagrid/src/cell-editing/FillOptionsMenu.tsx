@@ -2,7 +2,7 @@ import { CheckIcon, ClipboardDocumentListIcon } from "@heroicons/react/24/outlin
 import type { ReactElement } from "react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../components/ui/dropdown-menu";
 import { getI18n } from "../i18n/locale";
-import type { BmsI18n } from "../i18n/locale";
+import type { IntegratedI18n } from "../i18n/locale";
 import type { FillMode } from "./fillHandle";
 
 export interface CellEditingLabels {
@@ -13,7 +13,7 @@ export interface CellEditingLabels {
 }
 
 /** The built-in `CellEditingLabels` of one locale. */
-export function cellEditingLabelsFor({ t }: BmsI18n): CellEditingLabels {
+export function cellEditingLabelsFor({ t }: IntegratedI18n): CellEditingLabels {
   return {
     fillOptions: t("cellEditing.fillOptions"),
     copyCells: t("cellEditing.copyCells"),

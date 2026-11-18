@@ -1146,7 +1146,7 @@ category its language doesn't have. All six catalogs are imported statically
   datagrid or vice versa — a little duplicated code (`interpolate`/plural
   helper, provider) on purpose so each package stays standalone.
 - To add a text: add the key to `en.json`, then to all five other files (the
-  test tells you what is missing), then read it via `useBmsI18n().t(key, params)`.
+  test tells you what is missing), then read it via `useIntegratedI18n().t(key, params)`.
 
 ### `filterLabels` — translating the filter UI (#72)
 

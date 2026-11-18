@@ -39,7 +39,7 @@ import type { EditingCellContext } from "../edit/editingState";
 import { useEditingState } from "../edit/editingState";
 import { renderEditableCell } from "../edit/renderEditableCell";
 import { FilterLabelsProvider } from "../filter/labels";
-import { BmsLocaleProvider, useBmsI18n } from "../i18n/locale";
+import { BmsLocaleProvider, useIntegratedI18n } from "../i18n/locale";
 import { renderDefaultFilterWidget } from "../filter/registry";
 import type { FilterDescriptor } from "../filter/types";
 import { useGroupExpansion } from "../hooks/useGroupExpansion";
@@ -490,7 +490,7 @@ export function DataGrid<TRow extends RowData>({
   }
 
   const pageCount = Math.max(1, Math.ceil(rowCount / state.pageSize));
-  const i18n = useBmsI18n(locale);
+  const i18n = useIntegratedI18n(locale);
   const { t } = i18n;
   const labels = resolveStatusLabels(statusLabels, i18n);
   const hasError = toErrorInfo(error, labels.unknownError) !== undefined;

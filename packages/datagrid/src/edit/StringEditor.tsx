@@ -3,7 +3,7 @@ import type { StringColumn } from "../column/types";
 import { Input } from "../components/ui/input";
 import { EditFieldError } from "./EditFieldError";
 import { editErrorId, type EditWidgetProps } from "./widget-types";
-import { useBmsI18n } from "../i18n/locale";
+import { useIntegratedI18n } from "../i18n/locale";
 
 /** Default inline editor for `type: "string"` columns: a plain text input. */
 export function StringEditor<TRow>({
@@ -14,7 +14,7 @@ export function StringEditor<TRow>({
   error,
   autoFocus,
 }: EditWidgetProps<StringColumn<TRow>>): ReactElement {
-  const { t } = useBmsI18n();
+  const { t } = useIntegratedI18n();
   const errorId = editErrorId(rowId, column.id);
   return (
     <div>

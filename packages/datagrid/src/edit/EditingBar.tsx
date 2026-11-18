@@ -1,6 +1,6 @@
 import type { ReactElement, ReactNode } from "react";
 import { Button } from "../components/ui/button";
-import { useBmsI18n } from "../i18n/locale";
+import { useIntegratedI18n } from "../i18n/locale";
 import type { Translate } from "../i18n/messages";
 import type { EditingOptions } from "./types";
 
@@ -50,7 +50,7 @@ export function EditingBar<TRow>({
   onDiscard,
   testIdPrefix = "datagrid",
 }: EditingBarProps<TRow>): ReactElement {
-  const { t } = useBmsI18n();
+  const { t } = useIntegratedI18n();
   const hasEditErrors = editErrors.size > 0;
   return (
     <div

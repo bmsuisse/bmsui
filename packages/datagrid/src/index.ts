@@ -1,8 +1,8 @@
 // Public entry point for @bmsuisse/datagrid.
 
 // --- locale -----------------------------------------------------------------
-export type { BmsI18n } from "./i18n/locale";
-export { BmsLocaleProvider, useBmsI18n } from "./i18n/locale";
+export type { IntegratedI18n } from "./i18n/locale";
+export { BmsLocaleProvider, useIntegratedI18n } from "./i18n/locale";
 export type { BmsLanguage, Message, MessageKey, MessageParams, Messages, PluralMessage, Translate } from "./i18n/messages";
 export { LANGUAGES, dateLocaleFor, formatMessage, resolveLanguage } from "./i18n/messages";
 

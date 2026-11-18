@@ -4,7 +4,7 @@ import type { StringColumn } from "../column/types";
 import { Textarea } from "../components/ui/textarea";
 import { EditFieldError } from "./EditFieldError";
 import { editErrorId, type EditWidgetProps } from "./widget-types";
-import { useBmsI18n } from "../i18n/locale";
+import { useIntegratedI18n } from "../i18n/locale";
 
 /**
  * Default inline editor for a `type: "string"` column with `multiline: true`:
@@ -22,7 +22,7 @@ export function MultilineStringEditor<TRow>({
   error,
   autoFocus,
 }: EditWidgetProps<StringColumn<TRow>>): ReactElement {
-  const { t } = useBmsI18n();
+  const { t } = useIntegratedI18n();
   const errorId = editErrorId(rowId, column.id);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   // Captures the cursor position right after each native edit (in the

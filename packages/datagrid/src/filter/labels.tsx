@@ -2,8 +2,8 @@ import type { Locale } from "date-fns";
 import type { ReactElement, ReactNode } from "react";
 import type { FilterOperator } from "./types";
 import { createContext, useContext, useMemo } from "react";
-import { getI18n, useBmsI18n } from "../i18n/locale";
-import type { BmsI18n } from "../i18n/locale";
+import { getI18n, useIntegratedI18n } from "../i18n/locale";
+import type { IntegratedI18n } from "../i18n/locale";
 
 /**
  * Every user-facing string the built-in filter widgets (and `<DataGrid>`'s
@@ -108,7 +108,7 @@ export interface FilterLabels {
 }
 
 /** The built-in `FilterLabels` of one locale. */
-export function filterLabelsFor({ t, dateLocale }: BmsI18n): FilterLabels {
+export function filterLabelsFor({ t, dateLocale }: IntegratedI18n): FilterLabels {
   return {
     filterAriaLabel: (header) => t("filter.filterAriaLabel", { header }),
     filterDone: t("filter.filterDone"),
@@ -173,9 +173,9 @@ export function filterLabelsFor({ t, dateLocale }: BmsI18n): FilterLabels {
 /** English defaults — byte-for-byte the strings every widget rendered before `FilterLabels` existed. */
 export const defaultFilterLabels: FilterLabels = filterLabelsFor(getI18n("en"));
 
-const builtInCache = new WeakMap<BmsI18n, FilterLabels>();
+const builtInCache = new WeakMap<IntegratedI18n, FilterLabels>();
 
-function builtInFilterLabels(i18n: BmsI18n): FilterLabels {
+function builtInFilterLabels(i18n: IntegratedI18n): FilterLabels {
   let labels = builtInCache.get(i18n);
   if (!labels) {
     labels = filterLabelsFor(i18n);
@@ -221,7 +221,7 @@ export function FilterLabelsProvider({
 
 /** The effective labels here: locale texts, then the providers' overrides, then an optional per-widget `overrides` on top. */
 export function useFilterLabels(overrides?: Partial<FilterLabels>): FilterLabels {
-  const i18n = useBmsI18n();
+  const i18n = useIntegratedI18n();
   const fromContext = useContext(FilterLabelsContext);
   return useMemo(
     () => mergeFilterLabels(mergeFilterLabels(builtInFilterLabels(i18n), fromContext), overrides),
