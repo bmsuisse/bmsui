@@ -5,6 +5,7 @@ import { toDate } from "../column/format";
 import { Input } from "../components/ui/input";
 import { EditFieldError } from "./EditFieldError";
 import { editErrorId, type EditWidgetProps } from "./widget-types";
+import { useBmsI18n } from "../i18n/locale";
 
 /**
  * Formats a raw cell value into the string a native date/datetime-local
@@ -43,6 +44,7 @@ export function DateEditor<TRow>({
   error,
   autoFocus,
 }: EditWidgetProps<DateColumn<TRow>>): ReactElement {
+  const { t } = useBmsI18n();
   const errorId = editErrorId(rowId, column.id);
   return (
     <div>
@@ -50,7 +52,7 @@ export function DateEditor<TRow>({
         type={column.type === "datetime" ? "datetime-local" : "date"}
         step={column.type === "datetime" ? 1 : undefined}
         className="h-8 min-w-24 [[data-fixed-layout]_&]:min-w-0"
-        aria-label={`Edit ${column.header}`}
+        aria-label={t("grid.editCell", { header: column.header })}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
         data-testid={`edit-${rowId}-${column.id}`}

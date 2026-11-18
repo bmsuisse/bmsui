@@ -4,6 +4,7 @@ import type { StringColumn } from "../column/types";
 import { Textarea } from "../components/ui/textarea";
 import { EditFieldError } from "./EditFieldError";
 import { editErrorId, type EditWidgetProps } from "./widget-types";
+import { useBmsI18n } from "../i18n/locale";
 
 /**
  * Default inline editor for a `type: "string"` column with `multiline: true`:
@@ -21,6 +22,7 @@ export function MultilineStringEditor<TRow>({
   error,
   autoFocus,
 }: EditWidgetProps<StringColumn<TRow>>): ReactElement {
+  const { t } = useBmsI18n();
   const errorId = editErrorId(rowId, column.id);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   // Captures the cursor position right after each native edit (in the
@@ -58,7 +60,7 @@ export function MultilineStringEditor<TRow>({
       <Textarea
         ref={textareaRef}
         className="min-w-24 [[data-fixed-layout]_&]:min-w-0 resize-none overflow-hidden"
-        aria-label={`Edit ${column.header}`}
+        aria-label={t("grid.editCell", { header: column.header })}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
         data-testid={`edit-${rowId}-${column.id}`}

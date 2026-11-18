@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
+import { useBmsI18n } from "../i18n/locale";
 import type { TreeAccessors } from "./types";
 
 export interface TreeStateController<TRow> {
@@ -21,6 +22,8 @@ export interface UseTreeStateOptions<TRow> extends TreeAccessors<TRow> {
   onExpandedChange?: (expanded: Record<string, boolean>) => void;
   childrenMap?: ReadonlyMap<string, TRow[]>;
   onChildrenMapChange?: (childrenMap: ReadonlyMap<string, TRow[]>) => void;
+  /** Language of the fallback error message; defaults to the enclosing `<BmsLocaleProvider>`'s, else English. */
+  locale?: string;
 }
 
 /**
@@ -46,7 +49,9 @@ export function useTreeState<TRow>({
   onExpandedChange,
   childrenMap: controlledChildrenMap,
   onChildrenMapChange,
+  locale,
 }: UseTreeStateOptions<TRow>): TreeStateController<TRow> {
+  const { t } = useBmsI18n(locale);
   const [internalExpanded, setInternalExpanded] = useState<Record<string, boolean>>({});
   const expanded = controlledExpanded ?? internalExpanded;
 
@@ -105,7 +110,7 @@ export function useTreeState<TRow>({
         setChildrenMap((prev) => new Map(prev).set(id, result));
         return result;
       } catch (error) {
-        const message = error instanceof Error ? error.message : "Failed to load children.";
+        const message = error instanceof Error ? error.message : t("status.loadChildrenFailed");
         setErrorIds((prev) => new Map(prev).set(id, message));
         throw error;
       } finally {
@@ -116,7 +121,7 @@ export function useTreeState<TRow>({
         });
       }
     },
-    [childrenMap, getChildren, getRowId, onLoadChildren, setChildrenMap],
+    [childrenMap, getChildren, getRowId, onLoadChildren, setChildrenMap, t],
   );
 
   const toggleExpand = useCallback(

@@ -3,6 +3,7 @@ import type { EnumColumn } from "../column/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { EditFieldError } from "./EditFieldError";
 import { editErrorId, type EditWidgetProps } from "./widget-types";
+import { useBmsI18n } from "../i18n/locale";
 
 /** Default inline editor for `type: "enum"` columns: a single-value select over `column.options`. */
 export function EnumEditor<TRow>({
@@ -19,6 +20,7 @@ export function EnumEditor<TRow>({
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }): ReactElement {
+  const { t } = useBmsI18n();
   const errorId = editErrorId(rowId, column.id);
   return (
     <div>
@@ -30,7 +32,7 @@ export function EnumEditor<TRow>({
       >
         <SelectTrigger
           className="h-8 min-w-24 [[data-fixed-layout]_&]:min-w-0"
-          aria-label={`Edit ${column.header}`}
+          aria-label={t("grid.editCell", { header: column.header })}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? errorId : undefined}
           data-testid={`edit-${rowId}-${column.id}`}

@@ -1,5 +1,11 @@
 // Public entry point for @bmsuisse/datagrid.
 
+// --- locale -----------------------------------------------------------------
+export type { BmsI18n } from "./i18n/locale";
+export { BmsLocaleProvider, useBmsI18n } from "./i18n/locale";
+export type { BmsLanguage, Message, MessageKey, MessageParams, Messages, PluralMessage, Translate } from "./i18n/messages";
+export { LANGUAGES, dateLocaleFor, formatMessage, resolveLanguage } from "./i18n/messages";
+
 // --- filter/sort contract -------------------------------------------------
 export type {
   CompositeFilterDescriptor,
@@ -25,7 +31,7 @@ export { evaluateFilter } from "./filter/evaluate";
 // --- filter widgets ---------------------------------------------------------
 export type { FilterWidgetProps } from "./filter/widget-types";
 export type { FilterLabels } from "./filter/labels";
-export { FilterLabelsProvider, defaultFilterLabels, mergeFilterLabels, useFilterLabels } from "./filter/labels";
+export { FilterLabelsProvider, defaultFilterLabels, filterLabelsFor, mergeFilterLabels, useFilterLabels } from "./filter/labels";
 export { BooleanFilter } from "./filter/BooleanFilter";
 export { DateRangeFilter } from "./filter/DateRangeFilter";
 export type { EnumFilterOption } from "./filter/EnumFilter";
@@ -90,7 +96,7 @@ export type { FillMode, FillOptions, FillResult } from "./cell-editing/fillHandl
 export type { SkipReason, SkippedCell } from "./cell-editing/adaptValue";
 export { computeFill, computeFillChanges } from "./cell-editing/fillHandle";
 export type { CellEditingLabels } from "./cell-editing/FillOptionsMenu";
-export { defaultCellEditingLabels } from "./cell-editing/FillOptionsMenu";
+export { cellEditingLabelsFor, defaultCellEditingLabels } from "./cell-editing/FillOptionsMenu";
 
 // --- column selector -----------------------------------------------------
 export type { ColumnVisibility } from "./column-selector/types";
@@ -152,4 +158,4 @@ export { filterSortTree } from "./tree/filterSortTree";
 export type { TreeStateController, UseTreeStateOptions } from "./tree/useTreeState";
 export { useTreeState } from "./tree/useTreeState";
 export type { ErrorInfo, ErrorInput, GridStatusLabels } from "./components/status";
-export { defaultGridStatusLabels, toErrorInfo } from "./components/status";
+export { defaultGridStatusLabels, statusLabelsFor, toErrorInfo } from "./components/status";

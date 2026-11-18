@@ -1,5 +1,7 @@
 import { ArrowPathIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import type { ReactElement } from "react";
+import { getI18n } from "../i18n/locale";
+import type { BmsI18n } from "../i18n/locale";
 import { cn } from "../lib/utils";
 import { Button } from "./ui/button";
 
@@ -14,7 +16,7 @@ export interface ErrorInfo {
 /** What the grids accept for `error` — pass a TanStack Query / SWR / `catch` error straight through. */
 export type ErrorInput = ErrorInfo | Error | string | null | undefined | false;
 
-export function toErrorInfo(error: unknown): ErrorInfo | undefined {
+export function toErrorInfo(error: unknown, unknownMessage = "Unknown error"): ErrorInfo | undefined {
   if (error == null || error === false || error === "") return undefined;
   if (typeof error === "string") return { message: error };
   if (error instanceof Error) return { message: error.message || undefined, details: error.stack };
@@ -23,13 +25,13 @@ export function toErrorInfo(error: unknown): ErrorInfo | undefined {
     if (title !== undefined || message !== undefined || details !== undefined) return { title, message, details };
   }
   try {
-    return { message: typeof error === "object" ? "Unknown error" : String(error) };
+    return { message: typeof error === "object" ? unknownMessage : String(error) };
   } catch {
-    return { message: "Unknown error" };
+    return { message: unknownMessage };
   }
 }
 
-/** User-facing strings of the grid's loading/error/empty states. Anything omitted keeps its English default. */
+/** User-facing strings of the grid's loading/error/empty states. Anything omitted keeps the built-in text of the active locale. */
 export interface GridStatusLabels {
   loading: string;
   noResults: string;
@@ -38,19 +40,31 @@ export interface GridStatusLabels {
   showDetails: string;
   /** TreeDataGrid: shown on a node whose lazy children failed to load. */
   nodeLoadFailed: string;
+  /** Message for a rejected `error` that carries none (a thrown non-Error). */
+  unknownError: string;
+  /** Accessible name of the thin bar shown while refetching over visible rows. */
+  refreshing: string;
 }
 
-export const defaultGridStatusLabels: GridStatusLabels = {
-  loading: "Loading...",
-  noResults: "No results.",
-  errorTitle: "Couldn't load data",
-  retry: "Retry",
-  showDetails: "Show details",
-  nodeLoadFailed: "Failed to load.",
-};
+/** The built-in `GridStatusLabels` of one locale. */
+export function statusLabelsFor({ t }: BmsI18n): GridStatusLabels {
+  return {
+    loading: t("status.loading"),
+    noResults: t("status.noResults"),
+    errorTitle: t("status.errorTitle"),
+    retry: t("status.retry"),
+    showDetails: t("status.showDetails"),
+    nodeLoadFailed: t("status.nodeLoadFailed"),
+    unknownError: t("status.unknownError"),
+    refreshing: t("status.refreshing"),
+  };
+}
 
-export function resolveStatusLabels(overrides: Partial<GridStatusLabels> | undefined): GridStatusLabels {
-  return overrides ? { ...defaultGridStatusLabels, ...overrides } : defaultGridStatusLabels;
+export const defaultGridStatusLabels: GridStatusLabels = statusLabelsFor(getI18n("en"));
+
+export function resolveStatusLabels(overrides: Partial<GridStatusLabels> | undefined, i18n: BmsI18n): GridStatusLabels {
+  const base = statusLabelsFor(i18n);
+  return overrides ? { ...base, ...overrides } : base;
 }
 
 /** Placeholder rows for a first load with no data yet. The label is screen-reader text. */
@@ -66,11 +80,11 @@ export function LoadingRows({ label, rows = 4 }: { label: string; rows?: number 
 }
 
 /** Thin indeterminate bar for a refetch over already-visible rows. Place in a `relative` container. */
-export function RefreshBar(props: { "data-testid"?: string }): ReactElement {
+export function RefreshBar({ label, ...props }: { label: string; "data-testid"?: string }): ReactElement {
   return (
     <div
       role="progressbar"
-      aria-label="Refreshing"
+      aria-label={label}
       className="pointer-events-none absolute inset-x-0 top-0 z-30 h-0.5 overflow-hidden bg-muted"
       {...props}
     >
@@ -89,7 +103,7 @@ export function GridErrorState({
   onRetry?: () => void;
   labels: GridStatusLabels;
 }): ReactElement | null {
-  const info = toErrorInfo(error);
+  const info = toErrorInfo(error, labels.unknownError);
   if (!info) return null;
   return (
     <div
@@ -133,7 +147,7 @@ export function GridInlineError({
   /** Let a long message wrap instead of truncating (stale-rows banners). */
   wrap?: boolean;
 }): ReactElement | null {
-  const info = toErrorInfo(error);
+  const info = toErrorInfo(error, labels.unknownError);
   if (!info) return null;
   return (
     <span

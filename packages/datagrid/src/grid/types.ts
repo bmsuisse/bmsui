@@ -358,9 +358,17 @@ export interface DataGridProps<TRow> {
    * Overrides the user-facing strings of every column-filter UI this grid
    * renders — the header filter trigger's accessible name and every
    * built-in filter widget (including ones a column's own `renderFilter`
-   * renders, via context). Anything omitted keeps its English default from
-   * `defaultFilterLabels`, so leaving this unset changes nothing. See
-   * `FilterLabels` for every key (#72).
+   * renders, via context). Anything omitted keeps the built-in text of the
+   * active `locale` (English by default), so leaving this unset changes
+   * nothing. See `FilterLabels` for every key (#72).
    */
   filterLabels?: Partial<FilterLabels>;
+  /**
+   * Language of the grid's built-in texts and calendar: a BCP 47 tag whose
+   * language is one of `de`, `fr`, `it`, `en`, `nl`, `es` (`"de-CH"` works;
+   * anything else falls back to English). Defaults to the enclosing
+   * `<BmsLocaleProvider>`'s locale, else English. `filterLabels`,
+   * `statusLabels`, `cellEditing.labels` and `editing` labels still win.
+   */
+  locale?: string;
 }

@@ -11,6 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../components/ui/dialog";
+import { useBmsI18n } from "../i18n/locale";
 import { cn } from "../lib/utils";
 import { applyColumnOrder, moveColumnBefore, moveColumnWithinGroup } from "./ordering";
 import {
@@ -68,8 +69,10 @@ export interface ColumnSelectorProps<TRow> {
   onReset?: () => void;
   /** Something else `onReset` restores (e.g. column widths) differs from its default, so Reset stays enabled. */
   isCustomized?: boolean;
-  /** Defaults to "Reset columns". */
+  /** Defaults to the built-in "Reset columns" of the active locale. */
   resetLabel?: ReactNode;
+  /** Language of the built-in texts; defaults to the enclosing `<BmsLocaleProvider>`'s, else English. */
+  locale?: string;
 }
 
 /**
@@ -109,8 +112,10 @@ export function ColumnSelector<TRow>({
   defaultVisibility,
   onReset,
   isCustomized = false,
-  resetLabel = "Reset columns",
+  resetLabel,
+  locale,
 }: ColumnSelectorProps<TRow>): ReactElement {
+  const { t } = useBmsI18n(locale);
   // Restore from localStorage once on mount. Intentionally does not depend
   // on `visibility`/`onVisibilityChange` identity — this must run exactly
   // once regardless of how many times the parent re-renders.
@@ -202,14 +207,14 @@ export function ColumnSelector<TRow>({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         {trigger ?? (
-          <Button variant="outline" size="icon" aria-label="Choose columns">
+          <Button variant="outline" size="icon" aria-label={t("columns.choose")}>
             <ViewColumnsIcon className="h-4 w-4" aria-hidden />
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="w-fit max-w-[calc(100vw-2rem)] sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Columns</DialogTitle>
+          <DialogTitle>{t("columns.title")}</DialogTitle>
         </DialogHeader>
         {/* Groups lay out left-to-right, wrapping onto a new row instead of
             forcing the dialog wider than sm:max-w-2xl above — gap spacing
@@ -300,7 +305,7 @@ export function ColumnSelector<TRow>({
               onClick={reset}
             >
               <ArrowUturnLeftIcon className="h-3.5 w-3.5" aria-hidden />
-              {resetLabel}
+              {resetLabel ?? t("columns.reset")}
             </Button>
           </div>
         )}

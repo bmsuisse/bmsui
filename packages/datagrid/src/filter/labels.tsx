@@ -2,14 +2,15 @@ import type { Locale } from "date-fns";
 import type { ReactElement, ReactNode } from "react";
 import type { FilterOperator } from "./types";
 import { createContext, useContext, useMemo } from "react";
+import { getI18n, useBmsI18n } from "../i18n/locale";
+import type { BmsI18n } from "../i18n/locale";
 
 /**
  * Every user-facing string the built-in filter widgets (and `<DataGrid>`'s
- * own header filter trigger) render. This package has no translation/i18n
- * layer — same convention as `EditingOptions.saveLabel`/`discardLabel`:
- * you supply already-translated strings (or, for templated ones, a
- * function) and the English defaults in `defaultFilterLabels` apply to
- * anything you leave out. See #72.
+ * own header filter trigger) render. The built-in texts of the active locale
+ * (`<DataGrid locale>` / `<BmsLocaleProvider>`, English by default) apply to
+ * anything you leave out; supply already-translated strings (or, for
+ * templated ones, a function) to override them. See #72.
  *
  * Supply them via `<DataGrid filterLabels>`, a `<FilterLabelsProvider>`
  * around any widgets you render yourself (custom `renderFilter`,
@@ -106,103 +107,105 @@ export interface FilterLabels {
   dateLocale?: Locale;
 }
 
-const DEFAULT_OPERATOR_LABELS: Record<FilterOperator, string> = {
-  in: "is any of",
-  notIn: "is none of",
-  eq: "is",
-  neq: "is not",
-  contains: "contains",
-  doesNotContain: "does not contain",
-  startsWith: "starts with",
-  endsWith: "ends with",
-  gt: ">",
-  gte: "≥",
-  lt: "<",
-  lte: "≤",
-  between: "between",
-  isEmpty: "is empty",
-  isNotEmpty: "is not empty",
-  isNull: "is empty",
-  isNotNull: "is not empty",
-};
+/** The built-in `FilterLabels` of one locale. */
+export function filterLabelsFor({ t, dateLocale }: BmsI18n): FilterLabels {
+  return {
+    filterAriaLabel: (header) => t("filter.filterAriaLabel", { header }),
+    filterDone: t("filter.filterDone"),
+
+    searchPlaceholder: (header) => t("filter.searchPlaceholder", { header }),
+    selectAll: t("filter.selectAll"),
+    selectAllOfGroup: (group) => t("filter.selectAllOfGroup", { group }),
+    noMatches: t("filter.noMatches"),
+    selectedCount: (count) => t("filter.selectedCount", { count }),
+    enumIsAnyOf: t("filter.enumIsAnyOf"),
+    enumIsNoneOf: t("filter.enumIsNoneOf"),
+    moreOptions: (hiddenCount) => t("filter.moreOptions", { count: hiddenCount }),
+
+    operatorLabel: (operator) => t(`filter.operator.${operator}`),
+    activeFilters: (count) => t("filter.activeFilters", { count }),
+    noActiveFilters: t("filter.noActiveFilters"),
+    noActiveFiltersHint: t("filter.noActiveFiltersHint"),
+    clearAllFilters: t("filter.clearAllFilters"),
+    moreFilters: (hiddenCount) => t("filter.moreFilters", { count: hiddenCount }),
+    removeFilter: (text) => t("filter.removeFilter", { text }),
+
+    stringPlaceholder: (header) => t("filter.stringPlaceholder", { header }),
+    stringContains: t("filter.stringContains"),
+    stringIs: t("filter.stringIs"),
+    stringStartsWith: t("filter.stringStartsWith"),
+    stringEndsWith: t("filter.stringEndsWith"),
+    operatorAriaLabel: (header) => t("filter.operatorAriaLabel", { header }),
+
+    booleanAll: t("filter.booleanAll"),
+    booleanYes: t("filter.booleanYes"),
+    booleanNo: t("filter.booleanNo"),
+    booleanAriaLabel: (header) => t("filter.booleanAriaLabel", { header }),
+
+    minPlaceholder: t("filter.minPlaceholder"),
+    maxPlaceholder: t("filter.maxPlaceholder"),
+    valuePlaceholder: t("filter.valuePlaceholder"),
+    rangeSeparator: t("filter.rangeSeparator"),
+    minimumAriaLabel: (header) => t("filter.minimumAriaLabel", { header }),
+    maximumAriaLabel: (header) => t("filter.maximumAriaLabel", { header }),
+    minimumSliderAriaLabel: (header) => t("filter.minimumSliderAriaLabel", { header }),
+    maximumSliderAriaLabel: (header) => t("filter.maximumSliderAriaLabel", { header }),
+    numberGreaterThan: t("filter.numberGreaterThan"),
+    numberGreaterThanOrEqual: t("filter.numberGreaterThanOrEqual"),
+    numberLessThan: t("filter.numberLessThan"),
+    numberLessThanOrEqual: t("filter.numberLessThanOrEqual"),
+    numberEquals: t("filter.numberEquals"),
+    numberNotEquals: t("filter.numberNotEquals"),
+    numberBetween: t("filter.numberBetween"),
+    clear: t("filter.clear"),
+    loading: t("filter.loading"),
+    loadFailed: t("filter.loadFailed"),
+    retry: t("filter.retry"),
+
+    dateToday: t("filter.dateToday"),
+    dateLast7Days: t("filter.dateLast7Days"),
+    dateThisMonth: t("filter.dateThisMonth"),
+    dateCustom: t("filter.dateCustom"),
+    dateLocale,
+  };
+}
 
 /** English defaults — byte-for-byte the strings every widget rendered before `FilterLabels` existed. */
-export const defaultFilterLabels: FilterLabels = {
-  filterAriaLabel: (header) => `Filter ${header}`,
-  filterDone: "Done",
+export const defaultFilterLabels: FilterLabels = filterLabelsFor(getI18n("en"));
 
-  searchPlaceholder: (header) => `Search ${header.toLowerCase()}...`,
-  selectAll: "Select all",
-  selectAllOfGroup: (group) => `Select all of ${group}`,
-  noMatches: "No matches.",
-  selectedCount: (count) => `${count} selected`,
-  enumIsAnyOf: "is any of",
-  enumIsNoneOf: "is none of",
-  moreOptions: (hiddenCount) => `${hiddenCount} more, type to narrow`,
+const builtInCache = new WeakMap<BmsI18n, FilterLabels>();
 
-  operatorLabel: (operator) => DEFAULT_OPERATOR_LABELS[operator],
-  activeFilters: (count) => `Filters (${count}):`,
-  noActiveFilters: "No filters",
-  noActiveFiltersHint: "Use the filter icon in a column header.",
-  clearAllFilters: "Clear all filters",
-  moreFilters: (hiddenCount) => `+${hiddenCount} more`,
-  removeFilter: (text) => `Remove filter ${text}`,
-
-  stringPlaceholder: (header) => `Filter ${header.toLowerCase()}...`,
-  stringContains: "Contains",
-  stringIs: "Is",
-  stringStartsWith: "Starts with",
-  stringEndsWith: "Ends with",
-  operatorAriaLabel: (header) => `${header} filter operator`,
-
-  booleanAll: "All",
-  booleanYes: "Yes",
-  booleanNo: "No",
-  booleanAriaLabel: (header) => `${header} filter`,
-
-  minPlaceholder: "Min",
-  maxPlaceholder: "Max",
-  valuePlaceholder: "Value",
-  rangeSeparator: "to",
-  minimumAriaLabel: (header) => `${header} minimum`,
-  maximumAriaLabel: (header) => `${header} maximum`,
-  minimumSliderAriaLabel: (header) => `${header} minimum (slider)`,
-  maximumSliderAriaLabel: (header) => `${header} maximum (slider)`,
-  numberGreaterThan: "Greater than",
-  numberGreaterThanOrEqual: "Greater than or equal to",
-  numberLessThan: "Less than",
-  numberLessThanOrEqual: "Less than or equal to",
-  numberEquals: "Equals",
-  numberNotEquals: "Does not equal",
-  numberBetween: "Between",
-  clear: "Clear",
-  loading: "Loading…",
-  loadFailed: "Couldn't load values.",
-  retry: "Retry",
-
-  dateToday: "Today",
-  dateLast7Days: "Last 7 days",
-  dateThisMonth: "This month",
-  dateCustom: "Custom",
-};
+function builtInFilterLabels(i18n: BmsI18n): FilterLabels {
+  let labels = builtInCache.get(i18n);
+  if (!labels) {
+    labels = filterLabelsFor(i18n);
+    builtInCache.set(i18n, labels);
+  }
+  return labels;
+}
 
 /** Merges `overrides` over `base`, ignoring keys explicitly set to `undefined` (so `{ selectAll: maybeT }` never blanks a default). */
 export function mergeFilterLabels(base: FilterLabels, overrides: Partial<FilterLabels> | undefined): FilterLabels {
+  return mergeDefined(base, overrides);
+}
+
+function mergeDefined<T extends object>(base: T, overrides: Partial<T> | undefined): T {
   if (!overrides) return base;
-  const merged: Record<string, unknown> = { ...base };
+  const merged: Record<string, unknown> = { ...base } as Record<string, unknown>;
   for (const [key, value] of Object.entries(overrides)) {
     if (value !== undefined) merged[key] = value;
   }
-  return merged as unknown as FilterLabels;
+  return merged as T;
 }
 
-const FilterLabelsContext = createContext<FilterLabels>(defaultFilterLabels);
+// The overrides of the enclosing providers, merged; the built-in texts of the active locale sit underneath at read time.
+const FilterLabelsContext = createContext<Partial<FilterLabels> | undefined>(undefined);
 
 /**
  * Supplies `labels` to every filter widget below it, merged over any
- * enclosing provider's (or the English defaults). `<DataGrid filterLabels>`
- * renders one of these itself; use it directly around widgets you render
- * outside a `<DataGrid>`.
+ * enclosing provider's (or the built-in texts of the active locale, English
+ * unless a `locale` is set). `<DataGrid filterLabels>` renders one of these
+ * itself; use it directly around widgets you render outside a `<DataGrid>`.
  */
 export function FilterLabelsProvider({
   labels,
@@ -212,12 +215,16 @@ export function FilterLabelsProvider({
   children: ReactNode;
 }): ReactElement {
   const parent = useContext(FilterLabelsContext);
-  const value = useMemo(() => mergeFilterLabels(parent, labels), [parent, labels]);
+  const value = useMemo(() => mergeDefined<Partial<FilterLabels>>(parent ?? {}, labels), [parent, labels]);
   return <FilterLabelsContext.Provider value={value}>{children}</FilterLabelsContext.Provider>;
 }
 
-/** The effective labels here: context (or defaults), with an optional per-widget `overrides` merged on top. */
+/** The effective labels here: locale texts, then the providers' overrides, then an optional per-widget `overrides` on top. */
 export function useFilterLabels(overrides?: Partial<FilterLabels>): FilterLabels {
+  const i18n = useBmsI18n();
   const fromContext = useContext(FilterLabelsContext);
-  return useMemo(() => mergeFilterLabels(fromContext, overrides), [fromContext, overrides]);
+  return useMemo(
+    () => mergeFilterLabels(mergeFilterLabels(builtInFilterLabels(i18n), fromContext), overrides),
+    [i18n, fromContext, overrides],
+  );
 }

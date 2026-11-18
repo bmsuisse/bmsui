@@ -7,11 +7,12 @@ Every public export with its kind and signature. Interfaces and object types
 list their own members one per line (inherited members come from the `extends`
 clause), so the diff of this file shows exactly what changed in the public API.
 
-## Components (22)
+## Components (23)
 
 ```text
 function ActionsMenu<TRow>(props: ActionsMenuProps<TRow>): ReactElement | null
 function ActiveFilterBar<TRow>(props: ActiveFilterBarProps<TRow>): ReactElement
+function BmsLocaleProvider(props: { locale: string; children: ReactNode }): ReactElement
 function BooleanEditor<TRow>(props: EditWidgetProps<BooleanColumn<TRow>>): ReactElement
 function BooleanFilter<TRow>(props: FilterWidgetProps<BooleanColumn<TRow>> & { bare?: boolean }): ReactElement
 function ColumnSelector<TRow>(props: ColumnSelectorProps<TRow>): ReactElement
@@ -34,9 +35,10 @@ function StringFilter<TRow>(props: FilterWidgetProps<StringColumn<TRow>> & { bar
 function TreeDataGrid<TRow>(props: TreeDataGridProps<TRow>): ReactElement
 ```
 
-## Hooks (11)
+## Hooks (12)
 
 ```text
+function useBmsI18n(locale?: string): BmsI18n
 function useCellEditingState<TRow>(cellEditing: CellEditingOptions<TRow> | undefined, getRowId: (row: TRow) => string): CellEditingState<TRow>
 function useCellSelection(props: CellSelectionOptions): CellSelectionController
 function useDebouncedCallback<TArgs extends unknown[]>(callback: (...args: TArgs) => void, delayMs: number): DebouncedCallback<TArgs>
@@ -50,7 +52,7 @@ function useTreeState<TRow>(props: UseTreeStateOptions<TRow>): TreeStateControll
 function useVisibleColumns<TRow>(columns: ColumnDef<TRow>[], columnVisibility: ColumnVisibility | undefined, columnOrder?: readonly string[]): ColumnDef<TRow>[]
 ```
 
-## Functions (57)
+## Functions (63)
 
 ```text
 function alignClassName<TRow>(column: ColumnDef<TRow>): string
@@ -58,12 +60,14 @@ function applyColumnOrder<TRow>(columns: readonly ColumnDef<TRow>[], order: read
 function buildIndexMap(ids: string[]): Map<string, number>
 function canHideColumn<TRow>(columns: readonly ColumnDef<TRow>[], visibility: ColumnVisibility, columnId: string): boolean
 function canHideGroup<TRow>(columns: readonly ColumnDef<TRow>[], visibility: ColumnVisibility, groupColumnIds: readonly string[]): boolean
+function cellEditingLabelsFor(props: BmsI18n): CellEditingLabels
 function cellsInRange(range: CellRange, rowIds: string[], columnIds: string[], rowIndex: Map<string, number>, columnIndex: Map<string, number>): CellAddress[]
 function clearPersistedVisibility(persistKey: string): void
 function coerceValueForColumn<TRow>(column: ColumnDef<TRow>, raw: string): { value: unknown } | undefined
 function computeFill<TRow>(sourceRange: CellRange, finalRange: CellRange, rowIds: string[], columnIds: string[], columns: ColumnDef<TRow>[], getRow: (rowId: string) => TRow | undefined, props?: FillOptions): FillResult<TRow>
 function computeFillChanges<TRow>(sourceRange: CellRange, finalRange: CellRange, rowIds: string[], columnIds: string[], columns: ColumnDef<TRow>[], getRow: (rowId: string) => TRow | undefined, mode?: FillMode): CellChange<TRow>[]
 function countVisible<TRow>(columns: readonly ColumnDef<TRow>[], visibility: ColumnVisibility): number
+function dateLocaleFor(tag: string): Locale | undefined
 function decodeGridStateSearch(search: Record<string, unknown>, prefix?: string): Pick<GridState, "filter" | "sort">
 function defaultAlign<TRow>(column: ColumnDef<TRow>): ColumnAlign
 function defaultFormat<TRow>(column: ColumnDef<TRow>, value: unknown): string
@@ -75,8 +79,10 @@ function extendRangeForFill(base: NormalizedRange, target: { row: number; col: n
 function facetedNumberValues<TRow>(data: readonly TRow[], column: ColumnDef<TRow>, filter: FilterNode | null | undefined): (number | null)[]
 function facetedSetOptions<TRow>(data: readonly TRow[], column: ColumnDef<TRow>, filter: FilterNode | null | undefined): FacetOption[]
 function fieldKey(field: string | string[]): string
+function filterLabelsFor(props: BmsI18n): FilterLabels
 function filterSortTree<TRow>(roots: readonly TRow[], state: Pick<GridState, "filter" | "sort">, props: FilterSortTreeOptions<TRow>): FilteredSortedTree<TRow>
 function flattenTree<TRow>(roots: TRow[], accessors: TreeAccessors<TRow>, expanded: Record<string, boolean>, childrenOverride: ReadonlyMap<string, TRow[]>): FlatTreeRow<TRow>[]
+function formatMessage(message: Message, tag: string, params?: MessageParams): string
 function getColumnValue<TRow>(column: ColumnDef<TRow>, row: TRow): unknown
 function groupColumns<TRow>(columns: readonly ColumnDef<TRow>[]): ColumnGroup<TRow>[]
 function isCellInRange(cell: CellAddress, range: CellRange, rowIndex: Map<string, number>, columnIndex: Map<string, number>): boolean
@@ -102,27 +108,30 @@ function renderCellModeCell<TRow>(column: ColumnDef<TRow>, row: TRow, rawValue: 
 function renderDefaultEditWidget<TRow>(column: ColumnDef<TRow>, rowId: string, value: unknown, onChange: (next: unknown) => void, error?: string, autoFocus?: boolean): ReactElement
 function renderDefaultFilterWidget<TRow>(column: ColumnDef<TRow>, value: FilterDescriptor | undefined, onChange: (next: FilterDescriptor | undefined) => void): ReactElement
 function renderEditableCell<TRow>(column: ColumnDef<TRow>, row: TRow, rawValue: unknown, ctx: EditingCellContext<TRow> | undefined): ReactNode
+function resolveLanguage(tag: string | undefined): BmsLanguage
 function resolveMenuItems<TRow>(items: readonly MenuItem<TRow>[], ctx: MenuItemContext<TRow>): ResolvedMenuItem<TRow>[]
 function sameVisibility<TRow>(columns: readonly ColumnDef<TRow>[], a: ColumnVisibility, b: ColumnVisibility): boolean
 function sizingStorageKeyFor(persistKey: string): string
+function statusLabelsFor(props: BmsI18n): GridStatusLabels
 function storageKeyFor(persistKey: string): string
 function toDate(value: unknown): Date | null
-function toErrorInfo(error: unknown): ErrorInfo | undefined
+function toErrorInfo(error: unknown, unknownMessage?: string): ErrorInfo | undefined
 function validateGridStateSearch<P extends string = "">(search: Record<string, unknown>, prefix?: P): GridStateSearch<P>
 function writePersistedColumnSizing(persistKey: string, sizing: Record<string, number>): void
 ```
 
-## Constants (5)
+## Constants (6)
 
 ```text
 const FILTER_OPERATORS: readonly FilterOperator[]
+const LANGUAGES: readonly ["de", "fr", "it", "en", "nl", "es"]
 const UNARY_OPERATORS: ReadonlySet<FilterOperator>
 const defaultCellEditingLabels: CellEditingLabels
 const defaultFilterLabels: FilterLabels
 const defaultGridStatusLabels: GridStatusLabels
 ```
 
-## Interfaces (52)
+## Interfaces (53)
 
 ```text
 interface ActiveFilterBarProps<TRow>
@@ -155,6 +164,11 @@ interface BaseColumn<TRow>
   summary?: (rows: TRow[]) => ReactNode
   validateEdit?: (value: unknown, row: TRow) => string | undefined
   width?: number
+interface BmsI18n
+  dateLocale: Locale | undefined
+  language: BmsLanguage
+  locale: string
+  t: Translate
 interface CellAddress
   columnId: string
   rowId: string
@@ -230,6 +244,7 @@ interface ColumnSelectorProps<TRow>
   columns: ColumnDef<TRow>[]
   defaultVisibility?: ColumnVisibility
   isCustomized?: boolean
+  locale?: string
   onColumnOrderChange?: (order: string[]) => void
   onOpenChange?: (open: boolean) => void
   onReset?: () => void
@@ -266,6 +281,7 @@ interface DataGridProps<TRow>
   headerActions?: MenuItem<TRow>[]
   initialState?: Partial<GridState>
   loading?: boolean
+  locale?: string
   maxHeight?: number | string
   onActiveRowChange?: (id: string | null) => void
   onColumnSizingChange?: (sizing: ColumnSizingState) => void
@@ -442,8 +458,10 @@ interface GridStatusLabels
   loading: string
   noResults: string
   nodeLoadFailed: string
+  refreshing: string
   retry: string
   showDetails: string
+  unknownError: string
 interface GroupExpansionController
   expandedGroups: Record<string, boolean>
   isGroupExpanded: (key: string) => boolean
@@ -517,6 +535,7 @@ interface TreeDataGridProps<TRow> extends TreeAccessors<TRow>
   initialExpandedLevel?: number
   isRowSelectionDisabled?: (row: TRow) => boolean
   loading?: boolean
+  locale?: string
   maxBodyHeight?: number | string
   onActiveRowChange?: (id: string | null) => void
   onChildrenMapChange?: (childrenMap: ReadonlyMap<string, TRow[]>) => void
@@ -548,14 +567,16 @@ interface UseTreeStateOptions<TRow> extends TreeAccessors<TRow>
   childrenMap?: ReadonlyMap<string, TRow[]>
   data: TRow[]
   expanded?: Record<string, boolean>
+  locale?: string
   onChildrenMapChange?: (childrenMap: ReadonlyMap<string, TRow[]>) => void
   onExpandedChange?: (expanded: Record<string, boolean>) => void
   onLoadChildren?: (row: TRow) => Promise<TRow[]>
 ```
 
-## Types (19)
+## Types (26)
 
 ```text
+type BmsLanguage = (typeof LANGUAGES)[number]
 type BooleanColumn<TRow> = BaseColumn<TRow> & {…}
   type: "boolean"
 type ColumnAlign = "left" | "center" | "right"
@@ -574,6 +595,10 @@ type FillMode = "copy" | "series"
 type FilterOperator = "eq" | "neq" | "lt" | "lte" | "gt" | "gte" | "in" | "notIn" | "contains" | "doesNotContain" | "startsWith" | "endsWith" | "isEmpty" | "isNotEmpty" | "isNull" | "isNotNull" | "between"
 type FilterTuple = [field: string, operator: FilterOperator, value?: unknown, ignoreCase?: 1]
 type GridStateSearch<P extends string = ""> = { [K in `${P}f`]?: FilterTuple[] } & { [K in `${P}s`]?: SortTuple[] }
+type Message = string | PluralMessage
+type MessageKey = keyof typeof en
+type MessageParams = Record<string, string | number>
+type Messages = Record<MessageKey, Message>
 type NavigationDirection = "up" | "down" | "left" | "right"
 type NumberColumn<TRow> = BaseColumn<TRow> & {…}
   currency?: string
@@ -582,11 +607,14 @@ type NumberHistogramFilterProps<TRow> = FilterWidgetProps<NumberColumn<TRow>> & 
   bare?: boolean
   buckets?: number
   format?: (value: number) => string
+type PluralMessage = Partial<Record<Exclude<Intl.LDMLPluralRule, "other">, string>> & {…}
+  other: string
 type SkipReason = "not-editable" | "incompatible-type" | "validation"
 type SortTuple = [field: string, dir: "asc" | "desc"]
 type StringColumn<TRow> = BaseColumn<TRow> & {…}
   multiline?: boolean
   type: "string"
+type Translate = (key: MessageKey, params?: MessageParams) => string
 ```
 
 ## Re-exported from dependencies (1)
