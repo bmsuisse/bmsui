@@ -536,4 +536,264 @@
       });
     }).observe(document.documentElement, { childList: true, subtree: true });
   }
+  /* ---- Combobox / tag combobox ---- */
+  function comboRoot(el) { return el.closest && el.closest('[data-bmsui-combo]'); }
+  function comboInput(root) { return root.querySelector('.bmsui-combo__input'); }
+  function comboList(root) { return root.querySelector('.bmsui-combo__list'); }
+  function comboOpts(root) { return Array.prototype.slice.call(comboList(root).querySelectorAll('[role="option"]:not([hidden])')); }
+  function comboValues(root) {
+    if (root.hasAttribute('data-multiple')) {
+      return Array.prototype.map.call(root.querySelectorAll('.bmsui-chip[data-value]'), function (c) { return c.getAttribute('data-value'); });
+    }
+    var h = root.querySelector('[data-bmsui-combo-value]');
+    return h && h.value !== '' ? [h.value] : [];
+  }
+  function comboStatus(root, text) { var st = root.querySelector('[data-bmsui-combo-status]'); if (st) { st.textContent = text || ''; } }
+  function comboNotice(root, kind) {
+    var list = comboList(root);
+    var old = list.querySelector('.bmsui-combo__note');
+    if (old) { old.parentNode.removeChild(old); }
+    if (!kind) { return; }
+    var li = document.createElement('li');
+    li.className = 'bmsui-combo__note' + (kind === 'failed' ? ' is-error' : '');
+    li.setAttribute('role', 'presentation');
+    li.textContent = root.getAttribute('data-l-' + kind) || '';
+    list.appendChild(li);
+    comboStatus(root, li.textContent);
+  }
+
+  function comboOpen(root, open) {
+    var list = comboList(root);
+    var input = comboInput(root);
+    list.hidden = !open;
+    input.setAttribute('aria-expanded', open ? 'true' : 'false');
+    root.classList.toggle('is-open', open);
+    if (!open) { input.removeAttribute('aria-activedescendant'); comboOpts(root).forEach(function (o) { o.classList.remove('is-active'); }); }
+  }
+
+  function comboActivate(root, opt) {
+    comboOpts(root).forEach(function (o) { o.classList.toggle('is-active', o === opt); });
+    var input = comboInput(root);
+    if (opt) { input.setAttribute('aria-activedescendant', opt.id); opt.scrollIntoView({ block: 'nearest' }); }
+    else { input.removeAttribute('aria-activedescendant'); }
+  }
+
+  function comboMark(root) {
+    var vals = comboValues(root);
+    comboList(root).querySelectorAll('[role="option"]').forEach(function (o) {
+      o.setAttribute('aria-selected', vals.indexOf(o.getAttribute('data-value')) >= 0 ? 'true' : 'false');
+    });
+  }
+
+  function comboChange(root) {
+    comboMark(root);
+    root.dispatchEvent(new CustomEvent('bmsui:change', { bubbles: true, detail: { value: root.hasAttribute('data-multiple') ? comboValues(root) : (comboValues(root)[0] || null) } }));
+  }
+
+  function comboPick(root, value, label) {
+    var input = comboInput(root);
+    if (root.hasAttribute('data-multiple')) {
+      var vals = comboValues(root);
+      var max = parseInt(root.getAttribute('data-max'), 10) || 0;
+      if (vals.indexOf(value) >= 0) { comboRemove(root, value); input.value = ''; return; }
+      if (max && vals.length >= max) { return; }
+      var chip = document.createElement('span');
+      chip.className = 'bmsui-chip';
+      chip.setAttribute('data-value', value);
+      var t = document.createElement('span');
+      t.className = 'bmsui-chip__text';
+      t.textContent = label;
+      var h = document.createElement('input');
+      h.type = 'hidden';
+      h.name = root.getAttribute('data-name') + '[]';
+      h.value = value;
+      var x = document.createElement('button');
+      x.type = 'button';
+      x.className = 'bmsui-chip__x';
+      x.setAttribute('data-bmsui-combo-remove', '');
+      x.setAttribute('aria-label', (root.getAttribute('data-l-remove') || 'Remove') + ': ' + label);
+      x.innerHTML = '&times;';
+      chip.appendChild(t); chip.appendChild(h); chip.appendChild(x);
+      input.parentNode.insertBefore(chip, input);
+      input.value = '';
+      comboFilter(root, '');
+      input.focus();
+    } else {
+      root.querySelector('[data-bmsui-combo-value]').value = value;
+      input.value = label;
+      input.setAttribute('data-label', label);
+      var clr = root.querySelector('[data-bmsui-combo-clear]');
+      if (clr) { clr.hidden = false; }
+      comboOpen(root, false);
+    }
+    comboChange(root);
+  }
+
+  function comboRemove(root, value) {
+    root.querySelectorAll('.bmsui-chip[data-value]').forEach(function (c) { if (c.getAttribute('data-value') === value) { c.parentNode.removeChild(c); } });
+    comboChange(root);
+  }
+
+  function comboRender(root, items) {
+    var list = comboList(root);
+    var base = comboInput(root).id;
+    list.querySelectorAll('[role="option"], .bmsui-combo__note').forEach(function (n) { n.parentNode.removeChild(n); });
+    items.forEach(function (it, i) {
+      var li = document.createElement('li');
+      li.className = 'bmsui-combo__opt';
+      li.setAttribute('role', 'option');
+      li.id = base + '-r' + i;
+      li.setAttribute('data-value', it.value);
+      li.setAttribute('data-label', it.label);
+      var lab = document.createElement('span');
+      lab.className = 'bmsui-combo__label';
+      lab.textContent = it.label;
+      li.appendChild(lab);
+      if (it.description) {
+        var d = document.createElement('span');
+        d.className = 'bmsui-combo__desc';
+        d.textContent = it.description;
+        li.appendChild(d);
+      }
+      list.appendChild(li);
+    });
+    comboMark(root);
+    if (!items.length) { comboNotice(root, 'empty'); } else { comboStatus(root, ''); }
+    comboActivate(root, comboOpts(root)[0] || null);
+  }
+
+  function comboFilter(root, term) {
+    var url = root.getAttribute('data-url');
+    var min = parseInt(root.getAttribute('data-min'), 10) || 0;
+    if (url) {
+      clearTimeout(root._bmsuiTimer);
+      if (term.length < min) { comboRender(root, []); comboNotice(root, 'type'); return; }
+      root._bmsuiTimer = setTimeout(function () { comboFetch(root, url, term); }, 250);
+      return;
+    }
+    var q = term.trim().toLowerCase();
+    var shown = 0;
+    comboList(root).querySelectorAll('[role="option"]').forEach(function (o) {
+      var hit = !q || (o.getAttribute('data-label') || '').toLowerCase().indexOf(q) >= 0;
+      o.hidden = !hit;
+      if (hit) { shown++; }
+    });
+    comboNotice(root, shown ? null : 'empty');
+  }
+
+  function comboFetch(root, url, term) {
+    if (root._bmsuiAbort) { root._bmsuiAbort.abort(); }
+    var ctrl = window.AbortController ? new AbortController() : null;
+    root._bmsuiAbort = ctrl;
+    var full = url.indexOf('{q}') >= 0 ? url.replace('{q}', encodeURIComponent(term)) : url + (url.indexOf('?') >= 0 ? '&' : '?') + 'q=' + encodeURIComponent(term);
+    comboNotice(root, 'loading');
+    root.setAttribute('aria-busy', 'true');
+    fetch(full, { headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin', signal: ctrl ? ctrl.signal : undefined })
+      .then(function (r) { if (!r.ok) { throw new Error(r.status); } return r.json(); })
+      .then(function (data) {
+        var rows = Array.isArray(data) ? data : (data.results || data.data || []);
+        comboRender(root, rows.map(function (r) {
+          return { value: String(r.value !== undefined ? r.value : r.id), label: String(r.label !== undefined ? r.label : (r.text !== undefined ? r.text : r.value)), description: r.description || '' };
+        }));
+      })
+      .catch(function (err) { if (err.name !== 'AbortError') { comboRender(root, []); comboNotice(root, 'failed'); } })
+      .then(function () { root.removeAttribute('aria-busy'); });
+  }
+
+  document.addEventListener('input', function (e) {
+    var t = e.target;
+    if (!t.classList || !t.classList.contains('bmsui-combo__input')) { return; }
+    var root = comboRoot(t);
+    comboOpen(root, true);
+    comboFilter(root, t.value);
+    comboActivate(root, comboOpts(root)[0] || null);
+  });
+
+  document.addEventListener('focusin', function (e) {
+    var t = e.target;
+    if (!t.classList || !t.classList.contains('bmsui-combo__input')) { return; }
+    var root = comboRoot(t);
+    if (!root.hasAttribute('data-url') || comboOpts(root).length) {
+      if (!root.hasAttribute('data-multiple')) { comboFilter(root, ''); }
+      comboOpen(root, true);
+    }
+  });
+
+  document.addEventListener('focusout', function (e) {
+    var t = e.target;
+    var root = comboRoot(t);
+    if (!root) { return; }
+    setTimeout(function () {
+      if (root.contains(document.activeElement)) { return; }
+      comboOpen(root, false);
+      var input = comboInput(root);
+      if (root.hasAttribute('data-multiple')) { input.value = ''; }
+      else { input.value = input.getAttribute('data-label') || ''; }
+    }, 0);
+  });
+
+  document.addEventListener('keydown', function (e) {
+    var t = e.target;
+    if (!t.classList || !t.classList.contains('bmsui-combo__input')) { return; }
+    var root = comboRoot(t);
+    var opts = comboOpts(root).filter(function (o) { return o.getAttribute('aria-disabled') !== 'true'; });
+    var cur = comboList(root).querySelector('.is-active');
+    var i = opts.indexOf(cur);
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (comboList(root).hidden) { comboOpen(root, true); comboFilter(root, root.hasAttribute('data-multiple') ? t.value : ''); opts = comboOpts(root); }
+      if (!opts.length) { return; }
+      i = e.key === 'ArrowDown' ? (i + 1) % opts.length : (i <= 0 ? opts.length - 1 : i - 1);
+      comboActivate(root, opts[i]);
+    } else if (e.key === 'Enter') {
+      if (cur && !comboList(root).hidden) {
+        e.preventDefault();
+        comboPick(root, cur.getAttribute('data-value'), cur.getAttribute('data-label'));
+      } else if (root.hasAttribute('data-creatable') && t.value.trim()) {
+        e.preventDefault();
+        comboPick(root, t.value.trim(), t.value.trim());
+      }
+    } else if (e.key === 'Escape') {
+      if (!comboList(root).hidden) { e.preventDefault(); comboOpen(root, false); }
+    } else if (e.key === 'Backspace' && t.value === '' && root.hasAttribute('data-multiple')) {
+      var vals = comboValues(root);
+      if (vals.length) { comboRemove(root, vals[vals.length - 1]); }
+    }
+  });
+
+  document.addEventListener('mousedown', function (e) {
+    // Keep focus in the input while picking with the mouse.
+    var opt = e.target.closest && e.target.closest('.bmsui-combo__opt');
+    if (opt) { e.preventDefault(); }
+  });
+
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    var opt = t.closest && t.closest('.bmsui-combo__opt');
+    if (opt && opt.getAttribute('aria-disabled') !== 'true') {
+      comboPick(comboRoot(opt), opt.getAttribute('data-value'), opt.getAttribute('data-label'));
+      return;
+    }
+    var rm = t.closest && t.closest('[data-bmsui-combo-remove]');
+    if (rm) {
+      var root = comboRoot(rm);
+      comboRemove(root, rm.parentNode.getAttribute('data-value'));
+      comboInput(root).focus();
+      return;
+    }
+    var clr = t.closest && t.closest('[data-bmsui-combo-clear]');
+    if (clr) {
+      var r2 = comboRoot(clr);
+      r2.querySelector('[data-bmsui-combo-value]').value = '';
+      var inp = comboInput(r2);
+      inp.value = '';
+      inp.setAttribute('data-label', '');
+      clr.hidden = true;
+      comboChange(r2);
+      inp.focus();
+      return;
+    }
+    var fld = t.closest && t.closest('.bmsui-combo__field');
+    if (fld && !t.closest('button, input')) { comboInput(comboRoot(fld)).focus(); }
+  });
 })();

@@ -131,6 +131,14 @@
         </div>
     </div>
 
+    <h2>Combobox, tag combobox</h2>
+    <div class="card" style="min-height:300px">
+        <div class="row-flex" style="align-items:flex-start">
+            <div style="flex:1 1 260px"><x-bmsui::form-field label="Kunde" for="pv-customer"><x-bmsui::combobox name="customer" value="2" placeholder="Kunde suchen" :options="[['value' => '1', 'label' => 'Keller Haustechnik AG', 'description' => 'Zuerich'], ['value' => '2', 'label' => 'Muster AG', 'description' => 'Bern'], ['value' => '3', 'label' => 'Beat Huber'], ['value' => '4', 'label' => 'Gesperrter Kunde', 'disabled' => true]]" /></x-bmsui::form-field></div>
+            <div style="flex:1 1 260px"><x-bmsui::form-field label="Tags" for="pv-tags"><x-bmsui::tag-combobox name="tags" :value="['offerte', 'vip']" :selected="[['value' => 'offerte', 'label' => 'Offerte'], ['value' => 'vip', 'label' => 'VIP']]" search-url="/bmsui-demo/tags" placeholder="Tag hinzufuegen" /></x-bmsui::form-field></div>
+        </div>
+    </div>
+
     <h2>Conversation list</h2>
     <x-bmsui::conversation-list :select-all="false" :sorts="[['key' => 'date', 'label' => 'Datum', 'dir' => 'desc'], ['key' => 'customer', 'label' => 'Kunde']]" :count="4">
         <x-bmsui::conversation-row subject="Offerte 2026-0412" preview="Guten Tag, anbei die Offerte fuer die Heizungsanlage" href="#" :customer="['name' => 'Keller Haustechnik AG']" :assignee="['name' => 'Anna Meier']" status="active" :unread="true" :starred="true" :starrable="true" :number="10412" :thread-count="4" :has-attachments="true" time="09:12" :selected="false">
