@@ -2,9 +2,16 @@ import { type HTMLAttributes, type ReactElement, useEffect, useRef } from "react
 import { EASE_OUT, animate, prefersReducedMotion } from "../../lib/motion";
 import { cn } from "../../lib/utils";
 
+export interface TypingIndicatorLabels {
+  /** Spoken (and, with `showLabel`, shown) text. */
+  typing: string;
+}
+export const defaultTypingIndicatorLabels: TypingIndicatorLabels = { typing: "Assistant is typing" };
+
 export interface TypingIndicatorProps extends Omit<HTMLAttributes<HTMLSpanElement>, "children"> {
-  /** Spoken (and, with `showLabel`, shown) text. @default "Assistant is typing" */
+  /** Spoken (and, with `showLabel`, shown) text; overrides `labels.typing`. @default "Assistant is typing" */
   label?: string;
+  labels?: Partial<TypingIndicatorLabels>;
   /** Show the label next to the dots. @default false */
   showLabel?: boolean;
   /** @default "md" */
@@ -18,7 +25,8 @@ export interface TypingIndicatorProps extends Omit<HTMLAttributes<HTMLSpanElemen
  * Staggered Web Animations (rise + fade, ~1.2 s loop); static under reduced motion.
  */
 export const TypingIndicator = ({
-  label = "Assistant is typing",
+  label,
+  labels,
   showLabel = false,
   size = "md",
   animated = true,
@@ -57,7 +65,7 @@ export const TypingIndicator = ({
           <span key={i} data-dot className={cn("rounded-full bg-muted-foreground opacity-70", dot)} />
         ))}
       </span>
-      <span className={cn(!showLabel && "sr-only")}>{label}</span>
+      <span className={cn(!showLabel && "sr-only")}>{label ?? { ...defaultTypingIndicatorLabels, ...labels }.typing}</span>
     </span>
   );
 };

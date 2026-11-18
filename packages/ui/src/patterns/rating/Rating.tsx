@@ -13,6 +13,8 @@ export interface RatingLabels {
   valueText: (value: number, max: number) => string;
   /** Text read for a `readOnly` rating with no value. */
   unrated: string;
+  /** Accessible name of the read-only rating from the name (or `undefined`) and the value text; default `"{name}: {valueText}"`. */
+  ratingValue?: (label: string | undefined, valueText: string) => string;
 }
 
 export const defaultRatingLabels: RatingLabels = {
@@ -165,7 +167,10 @@ export function Rating({
       <div
         {...props}
         role="img"
-        aria-label={`${label ? `${label}: ` : ""}${current > 0 ? l.valueText(current, max) : l.unrated}`}
+        aria-label={(() => {
+          const text = current > 0 ? l.valueText(current, max) : l.unrated;
+          return l.ratingValue ? l.ratingValue(label, text) : `${label ? `${label}: ` : ""}${text}`;
+        })()}
         aria-disabled={disabled || undefined}
         className={cn("inline-flex items-center", disabled && "opacity-50", className)}
       >

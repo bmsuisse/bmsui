@@ -71,8 +71,7 @@ export interface FileInputProps {
 }
 
 /** `12.3 KB`, `4.5 MB` (1024-based, the way file managers show it). */
-export function formatFileSize(bytes: number, locale = "de-CH"): string {
-  const units = ["B", "KB", "MB", "GB"];
+export function formatFileSize(bytes: number, locale = "de-CH", units: readonly string[] = ["B", "KB", "MB", "GB"]): string {
   let n = bytes;
   let unit = 0;
   while (n >= 1024 && unit < units.length - 1) {

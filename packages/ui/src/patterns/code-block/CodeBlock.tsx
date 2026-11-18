@@ -3,8 +3,11 @@ import { SCROLL_FOCUS_WRAPPER, SCROLL_REGION, useScrollFade } from "../../lib/sc
 import { cn } from "../../lib/utils";
 import { CopyIconButton, type CopyIconButtonLabels, defaultCopyIconButtonLabels } from "./CopyIconButton";
 
-export type CodeBlockLabels = CopyIconButtonLabels;
-export const defaultCodeBlockLabels: CodeBlockLabels = defaultCopyIconButtonLabels;
+export interface CodeBlockLabels extends CopyIconButtonLabels {
+  /** Accessible name of the code region when there is no `title`/`language`. */
+  code: string;
+}
+export const defaultCodeBlockLabels: CodeBlockLabels = { ...defaultCopyIconButtonLabels, code: "Code" };
 
 export interface CodeBlockProps extends Omit<HTMLAttributes<HTMLDivElement>, "children" | "title"> {
   /** The source text, shown and copied verbatim. */
@@ -65,7 +68,7 @@ export const CodeBlock = forwardRef<HTMLDivElement, CodeBlockProps>(
           ref={fade.ref}
           tabIndex={0}
           role="region"
-          aria-label={typeof heading === "string" ? heading : "Code"}
+          aria-label={typeof heading === "string" ? heading : l.code}
           style={{ ...(maxHeight != null ? { maxHeight } : null), ...fade.style }}
           className={cn("overflow-auto", SCROLL_REGION)}
         >
