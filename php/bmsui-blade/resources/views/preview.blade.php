@@ -88,6 +88,49 @@
         </div>
     </div>
 
+    <h2>Button</h2>
+    <div class="card">
+        <div class="row-flex">
+            <x-bmsui::button>Speichern</x-bmsui::button>
+            <x-bmsui::button variant="secondary">Entwurf</x-bmsui::button>
+            <x-bmsui::button variant="outline">Abbrechen</x-bmsui::button>
+            <x-bmsui::button variant="ghost">Mehr</x-bmsui::button>
+            <x-bmsui::button variant="link" href="#">Details</x-bmsui::button>
+            <x-bmsui::button variant="danger">Loeschen</x-bmsui::button>
+            <x-bmsui::button :loading="true">Wird gespeichert</x-bmsui::button>
+            <x-bmsui::button variant="outline" :disabled="true">Gesperrt</x-bmsui::button>
+        </div>
+        <div class="row-flex" style="margin-top:10px">
+            <x-bmsui::button size="xs" variant="outline">XS</x-bmsui::button>
+            <x-bmsui::button size="sm" variant="outline">SM</x-bmsui::button>
+            <x-bmsui::button size="md" variant="outline">MD</x-bmsui::button>
+            <x-bmsui::button size="lg" variant="outline">LG</x-bmsui::button>
+            <x-bmsui::button variant="outline" :icon="true" aria-label="Bearbeiten"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16.86 4.49l1.69-1.69a1.88 1.88 0 112.65 2.65L10.58 16.07a4.5 4.5 0 01-1.9 1.13L6 18l.8-2.68a4.5 4.5 0 011.13-1.9l8.93-8.93z"/></svg></x-bmsui::button>
+            <x-bmsui::dropdown-menu label="Aktionen" :items="[['id' => 'fwd', 'label' => 'Weiterleiten', 'shortcut' => 'F'], ['id' => 'print', 'label' => 'Drucken'], ['separator' => true], ['label' => 'Verschieben nach', 'items' => [['id' => 'in', 'label' => 'Posteingang'], ['id' => 'arch', 'label' => 'Archiv']]], ['id' => 'del', 'label' => 'Loeschen', 'danger' => true]]" />
+        </div>
+    </div>
+
+    <h2>Form fields</h2>
+    <div class="card">
+        <x-bmsui::form-field label="Betreff" for="pv-subject" help="Erscheint in der Konversationsliste." :required="true"><x-bmsui::input name="subject" value="Offerte 2026-0412" /></x-bmsui::form-field>
+        <x-bmsui::form-field label="E-Mail" for="pv-mail" error="Bitte eine gueltige Adresse eingeben."><x-bmsui::input type="email" name="mail" value="anna@" /></x-bmsui::form-field>
+        <x-bmsui::form-field label="Postfach" for="pv-mailbox"><x-bmsui::select name="mailbox" value="verkauf" :options="['verkauf' => 'Verkauf', 'support' => 'Support', 'Archiv' => ['alt' => 'Altes Postfach']]" /></x-bmsui::form-field>
+        <x-bmsui::form-field label="Notiz" for="pv-note" layout="horizontal"><x-bmsui::textarea name="note" :auto-resize="true" :max-rows="6" placeholder="Interne Notiz"></x-bmsui::textarea></x-bmsui::form-field>
+        <div class="row-flex" style="gap:24px;align-items:flex-start">
+            <div style="display:flex;flex-direction:column;gap:8px">
+                <x-bmsui::checkbox name="n1" label="Benachrichtigen" :checked="true" />
+                <x-bmsui::checkbox name="n2" label="Alle auswaehlen" :indeterminate="true" />
+                <x-bmsui::checkbox name="n3" label="Signatur anhaengen" description="Unter jeder Antwort" />
+                <x-bmsui::checkbox name="n4" label="Gesperrt" disabled />
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+                <x-bmsui::switch name="s1" label="Automatische Antwort" :checked="true" />
+                <x-bmsui::switch name="s2" label="Abwesenheit" description="Ab 20.11.2026" />
+            </div>
+            <x-bmsui::radio-group name="prio" label="Prioritaet" value="normal" :options="['low' => 'Tief', 'normal' => 'Normal', ['value' => 'high', 'label' => 'Hoch', 'description' => 'Erscheint oben']]" />
+        </div>
+    </div>
+
     <h2>Conversation list</h2>
     <x-bmsui::conversation-list :select-all="false" :sorts="[['key' => 'date', 'label' => 'Datum', 'dir' => 'desc'], ['key' => 'customer', 'label' => 'Kunde']]" :count="4">
         <x-bmsui::conversation-row subject="Offerte 2026-0412" preview="Guten Tag, anbei die Offerte fuer die Heizungsanlage" href="#" :customer="['name' => 'Keller Haustechnik AG']" :assignee="['name' => 'Anna Meier']" status="active" :unread="true" :starred="true" :starrable="true" :number="10412" :thread-count="4" :has-attachments="true" time="09:12" :selected="false">

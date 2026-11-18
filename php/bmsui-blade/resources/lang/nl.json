@@ -36,6 +36,7 @@
   "Unread": "Ongelezen",
   "bcc": "Bcc",
   "cc": "Cc",
+  "required": "verplicht",
   "to": "Aan",
   "{0} No conversations|{1} :count conversation|[2,*] :count conversations": "{0} Geen gesprekken|{1} :count gesprek|[2,*] :count gesprekken",
   "{1} :count attachment|[2,*] :count attachments": "{1} :count bijlage|[2,*] :count bijlagen"
