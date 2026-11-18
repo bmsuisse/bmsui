@@ -489,4 +489,51 @@
       }
     }
   });
+  /* ---- Form controls: indeterminate checkboxes, auto-resizing textareas ---- */
+  // Runs on load and for HTML added later (ajax): call window.BMSUi.init(container) after inserting markup,
+  // or rely on the MutationObserver below.
+  // querySelectorAll plus the root itself.
+  function within(root, sel) {
+    var list = Array.prototype.slice.call(root.querySelectorAll(sel));
+    if (root.matches && root.matches(sel)) { list.unshift(root); }
+    return list;
+  }
+
+  function initForms(root) {
+    within(root, '[data-bmsui-indeterminate]').forEach(function (c) {
+      c.indeterminate = true;
+      c.removeAttribute('data-bmsui-indeterminate');
+    });
+    within(root, 'textarea[data-bmsui-autoresize]').forEach(autoResize);
+  }
+
+  function autoResize(ta) {
+    var max = parseInt(ta.getAttribute('data-bmsui-autoresize'), 10);
+    ta.style.height = 'auto';
+    var cs = window.getComputedStyle(ta);
+    var line = parseFloat(cs.lineHeight) || 20;
+    var extra = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom) + parseFloat(cs.borderTopWidth) + parseFloat(cs.borderBottomWidth);
+    var h = ta.scrollHeight + parseFloat(cs.borderTopWidth) + parseFloat(cs.borderBottomWidth);
+    if (max > 0) { h = Math.min(h, max * line + extra); }
+    ta.style.height = h + 'px';
+    ta.style.overflowY = max > 0 && ta.scrollHeight + extra > max * line + extra ? 'auto' : 'hidden';
+  }
+
+  document.addEventListener('input', function (e) {
+    if (e.target.matches && e.target.matches('textarea[data-bmsui-autoresize]')) { autoResize(e.target); }
+  });
+
+  window.BMSUi = window.BMSUi || {};
+  var inits = [initForms];
+  window.BMSUi.init = function (root) { inits.forEach(function (fn) { fn(root || document); }); };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () { window.BMSUi.init(document); });
+  } else { window.BMSUi.init(document); }
+  if (window.MutationObserver) {
+    new MutationObserver(function (list) {
+      list.forEach(function (m) {
+        m.addedNodes.forEach(function (n) { if (n.nodeType === 1) { window.BMSUi.init(n); } });
+      });
+    }).observe(document.documentElement, { childList: true, subtree: true });
+  }
 })();

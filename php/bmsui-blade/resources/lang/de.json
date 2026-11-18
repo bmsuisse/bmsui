@@ -36,6 +36,7 @@
   "Unread": "Ungelesen",
   "bcc": "Bcc",
   "cc": "Cc",
+  "required": "Pflichtfeld",
   "to": "An",
   "{0} No conversations|{1} :count conversation|[2,*] :count conversations": "{0} Keine Konversationen|{1} :count Konversation|[2,*] :count Konversationen",
   "{1} :count attachment|[2,*] :count attachments": "{1} :count Anhang|[2,*] :count Anhänge"

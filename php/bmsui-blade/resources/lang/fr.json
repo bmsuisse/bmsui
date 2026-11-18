@@ -36,6 +36,7 @@
   "Unread": "Non lu",
   "bcc": "Cci",
   "cc": "Cc",
+  "required": "obligatoire",
   "to": "À",
   "{0} No conversations|{1} :count conversation|[2,*] :count conversations": "{0} Aucune conversation|{1} :count conversation|[2,*] :count conversations",
   "{1} :count attachment|[2,*] :count attachments": "{1} :count pièce jointe|[2,*] :count pièces jointes"
