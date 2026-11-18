@@ -141,6 +141,10 @@ repo's `AGENTS.md`.
 | `SkipLinks` | Hidden "skip to main content / search" links, visible on first Tab; mount first in the app root. |
 | `CopyButton`, `defaultCopyButtonLabels` | Icon (or text) button that copies a value, flips to a check and announces the result. |
 | `Toolbar`, `ToolbarButton`, `ToolbarSeparator`, `defaultToolbarLabels` | Row of related controls as one Tab stop (roving tabindex, arrow keys); toggle buttons; `overflow` folds `ToolbarButton`s that don't fit into a "…" menu (other children stay visible). |
+| `AttachmentList`, `defaultAttachmentListLabels` | Files attached to a message: paperclip count, type icon or thumbnail, name, size, download link, `onRemove` in compose mode; `list` or `chips`. |
+| `QuotedText`, `defaultQuotedTextLabels` | Folded quoted reply history behind a "…" pill (`aria-expanded`), hairline left border once open. |
+| `MailMessage`, `defaultMailMessageLabels` | One mail thread entry: avatar, sender, to/cc line, time, status (draft/sending/failed/bounced + retry), body, attachments, folded quote, actions; `note` direction is amber. Caller sanitizes the body. |
+| `MailEvent` | Centred muted thread line item between hairlines ("Anna assigned this to Bob"), with icon, time and tone. |
 | `AnimatedBrand`, `BRAND_ANIMATIONS` | One* product wordmark with optional intro animation. |
 
 ## AI

@@ -515,3 +515,25 @@ export {
   BottomNavigationAction,
   defaultBottomNavigationLabels,
 } from "./patterns/bottom-navigation/BottomNavigation";
+export type {
+  AttachmentItem,
+  AttachmentListLabels,
+  AttachmentListProps,
+} from "./patterns/attachment-list/AttachmentList";
+export {
+  AttachmentList,
+  defaultAttachmentListLabels,
+} from "./patterns/attachment-list/AttachmentList";
+export type { QuotedTextLabels, QuotedTextProps } from "./patterns/quoted-text/QuotedText";
+export { defaultQuotedTextLabels, QuotedText } from "./patterns/quoted-text/QuotedText";
+export type {
+  MailDirection,
+  MailMessageLabels,
+  MailMessageProps,
+  MailMessageStatus,
+  MailRecipients,
+  MailSender,
+} from "./patterns/mail-message/MailMessage";
+export { defaultMailMessageLabels, MailMessage } from "./patterns/mail-message/MailMessage";
+export type { MailEventProps, MailEventTone } from "./patterns/mail-event/MailEvent";
+export { MailEvent } from "./patterns/mail-event/MailEvent";
