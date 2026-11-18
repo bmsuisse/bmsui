@@ -3,6 +3,7 @@ import type { BooleanColumn } from "../column/types";
 import { Checkbox } from "../components/ui/checkbox";
 import { EditFieldError } from "./EditFieldError";
 import { editErrorId, type EditWidgetProps } from "./widget-types";
+import { useIntegratedI18n } from "../i18n/locale";
 
 /**
  * Same explicit-comparison convention as `defaultFormat`'s boolean case
@@ -25,6 +26,7 @@ export function BooleanEditor<TRow>({
   error,
   autoFocus,
 }: EditWidgetProps<BooleanColumn<TRow>>): ReactElement {
+  const { t } = useIntegratedI18n();
   const errorId = editErrorId(rowId, column.id);
   return (
     // No `gap-*` here (unlike a plain flex stack) — `EditFieldError`'s own
@@ -32,7 +34,7 @@ export function BooleanEditor<TRow>({
     // adding both would double it for this one editor only.
     <div className="flex flex-col items-center">
       <Checkbox
-        aria-label={`Edit ${column.header}`}
+        aria-label={t("grid.editCell", { header: column.header })}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
         data-testid={`edit-${rowId}-${column.id}`}

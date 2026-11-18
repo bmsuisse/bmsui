@@ -25,10 +25,11 @@ export interface EditedRow<TRow> {
  * Discard, to drop everything back to unedited. There is no partial/per-cell
  * autosave; see `onSave` below for the all-or-nothing commit point.
  *
- * This package has no translation/i18n layer anywhere — `saveLabel`/
- * `discardLabel` are plain strings (or a count-aware function) you supply
- * directly, the same convention every other caller-facing string in this
- * package already follows (`header`, menu item labels, etc.).
+ * `saveLabel`/`discardLabel` default to the built-in texts of the grid's
+ * `locale` (see the "Translations" docs page); pass a plain string (or a
+ * count-aware function) to override them, the same convention every other
+ * caller-facing string in this package follows (`header`, menu item labels,
+ * etc.).
  */
 export interface EditingOptions<TRow> {
   /**

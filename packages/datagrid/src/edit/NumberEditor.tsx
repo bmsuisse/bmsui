@@ -4,6 +4,7 @@ import type { NumberColumn } from "../column/types";
 import { Input } from "../components/ui/input";
 import { EditFieldError } from "./EditFieldError";
 import { editErrorId, type EditWidgetProps } from "./widget-types";
+import { useIntegratedI18n } from "../i18n/locale";
 
 function textFromValue(value: unknown): string {
   return value === null || value === undefined ? "" : String(value);
@@ -36,6 +37,7 @@ export function NumberEditor<TRow>({
   error,
   autoFocus,
 }: EditWidgetProps<NumberColumn<TRow>>): ReactElement {
+  const { t } = useIntegratedI18n();
   const errorId = editErrorId(rowId, column.id);
   const [text, setText] = useState(() => textFromValue(value));
   const lastEmittedRef = useRef(value);
@@ -51,7 +53,7 @@ export function NumberEditor<TRow>({
       <Input
         type="number"
         className="h-8 min-w-16 [[data-fixed-layout]_&]:min-w-0"
-        aria-label={`Edit ${column.header}`}
+        aria-label={t("grid.editCell", { header: column.header })}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
         data-testid={`edit-${rowId}-${column.id}`}

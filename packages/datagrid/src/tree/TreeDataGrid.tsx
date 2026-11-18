@@ -16,6 +16,7 @@ import type { EditingCellContext } from "../edit/editingState";
 import { useEditingState } from "../edit/editingState";
 import { renderEditableCell } from "../edit/renderEditableCell";
 import { FilterLabelsProvider } from "../filter/labels";
+import { BmsLocaleProvider, useIntegratedI18n } from "../i18n/locale";
 import { renderDefaultFilterWidget } from "../filter/registry";
 import type { FilterDescriptor } from "../filter/types";
 import { fieldKey, leafFilters } from "../filter/types";
@@ -81,6 +82,7 @@ function TreeCell<TRow>({
   onRetry,
   editingCtx,
 }: TreeCellProps<TRow>): ReactElement {
+  const { t } = useIntegratedI18n();
   return (
     <div className="flex items-center gap-1" style={{ paddingLeft: flatRow.depth * indentSize }}>
       {flatRow.hasChildren ? (
@@ -91,7 +93,7 @@ function TreeCell<TRow>({
             onToggle();
           }}
           disabled={isLoading}
-          aria-label={flatRow.isExpanded ? "Collapse" : "Expand"}
+          aria-label={t(flatRow.isExpanded ? "grid.collapse" : "grid.expand")}
           aria-expanded={flatRow.isExpanded}
           className="flex h-4 w-4 shrink-0 items-center justify-center rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring text-muted-foreground hover:text-foreground disabled:opacity-50"
         >
@@ -189,9 +191,12 @@ export function TreeDataGrid<TRow>({
   activeRowId,
   onActiveRowChange,
   filterLabels,
+  locale,
 }: TreeDataGridProps<TRow>): ReactElement {
-  const labels = resolveStatusLabels(statusLabels);
-  const hasError = toErrorInfo(error) !== undefined;
+  const i18n = useIntegratedI18n(locale);
+  const { t } = i18n;
+  const labels = resolveStatusLabels(statusLabels, i18n);
+  const hasError = toErrorInfo(error, t("status.unknownError")) !== undefined;
   const accessors: TreeAccessors<TRow> = useMemo(
     () => ({ getRowId, getChildren, hasChildren }),
     [getRowId, getChildren, hasChildren],
@@ -214,6 +219,7 @@ export function TreeDataGrid<TRow>({
     onExpandedChange,
     childrenMap: controlledChildrenMap,
     onChildrenMapChange,
+    locale,
   });
 
   // Runs exactly once, against the tree as it existed on first render — not
@@ -526,7 +532,7 @@ export function TreeDataGrid<TRow>({
               const state = resolveSelectionState(flatRow.row, flatRow.id);
               return (
                 <Checkbox
-                  aria-label={`Select row ${flatRow.id}`}
+                  aria-label={t("grid.selectRow", { id: flatRow.id })}
                   checked={state.indeterminate ? "indeterminate" : state.checked}
                   disabled={isRowSelectionDisabled?.(flatRow.row) ?? false}
                   onCheckedChange={() => toggleRowSelected(flatRow.id)}
@@ -560,7 +566,7 @@ export function TreeDataGrid<TRow>({
             <ActionsMenu
               items={rowActions}
               ctx={{ row: flatRow.row }}
-              triggerLabel={`Row actions for ${flatRow.id}`}
+              triggerLabel={t("grid.rowActionsFor", { id: flatRow.id })}
             />
           </td>
         )}
@@ -574,6 +580,7 @@ export function TreeDataGrid<TRow>({
     virtualItems.length > 0 ? virtualizer.getTotalSize() - virtualItems[virtualItems.length - 1]!.end : 0;
 
   return (
+    <BmsLocaleProvider locale={i18n.locale}>
     <FilterLabelsProvider labels={filterLabels}>
     {/* `h-full`/`min-h-0` only matter inside a bounded parent — that's what
         lets `maxBodyHeight="100%"` fill it, same as `<DataGrid>`'s wrappers. */}
@@ -626,7 +633,7 @@ export function TreeDataGrid<TRow>({
                   style={{ width: SELECTION_COLUMN_WIDTH }}
                 >
                   <Checkbox
-                    aria-label="Select all visible rows"
+                    aria-label={t("grid.selectAllVisibleRows")}
                     checked={allVisibleSelected}
                     onCheckedChange={toggleAllVisibleSelected}
                   />
@@ -678,7 +685,7 @@ export function TreeDataGrid<TRow>({
                 );
               })}
               {showRowActionsColumn && (
-                <th className="sticky top-0 z-20 border-b border-border bg-muted p-2" aria-label="Row actions" />
+                <th className="sticky top-0 z-20 border-b border-border bg-muted p-2" aria-label={t("grid.rowActions")} />
               )}
             </tr>
           </thead>
@@ -825,5 +832,6 @@ export function TreeDataGrid<TRow>({
       </div>
     </div>
     </FilterLabelsProvider>
+    </BmsLocaleProvider>
   );
 }

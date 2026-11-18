@@ -27,11 +27,30 @@ const columns: ColumnDef<Row>[] = [
 <DataGrid columns={columns} dataSource={{ mode: "client", data: rows }} />;
 ```
 
-### Translating the filter UI
+### Built-in translations
 
-Filter widgets ship with English strings. Pass `filterLabels` (a
-`Partial<FilterLabels>`; anything omitted keeps its default from
-`defaultFilterLabels`) to translate them:
+The grid's texts (filter UI, loading/error states, row/selection labels, the
+editing bar, the column selector) ship in **de, fr, it, en, nl, es**. Set the
+language once:
+
+```tsx
+<DataGrid columns={columns} dataSource={{ mode: "client", data: rows }} locale="de-CH" />;
+
+// or for a whole app (also reaches a standalone <ColumnSelector>, filter widgets, …)
+<BmsLocaleProvider locale="fr-CH">…</BmsLocaleProvider>;
+```
+
+`locale` is a BCP 47 tag: its language picks the texts (`de-CH` → German; an
+unsupported language falls back to English) and DateRangeFilter's calendar
+follows it (`fr-CH`/`it-CH` use date-fns' Swiss variants). Without a locale
+everything stays English. Cell *values* (numbers, dates, Yes/No) are not
+localized yet.
+
+### Overriding single texts
+
+Anything you pass explicitly wins over the built-in text of the language.
+Pass `filterLabels` (a `Partial<FilterLabels>`; anything omitted keeps the
+built-in text, English unless a `locale` is set) to translate or reword them:
 
 ```tsx
 import { de } from "date-fns/locale";

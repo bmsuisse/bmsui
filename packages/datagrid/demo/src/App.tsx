@@ -3,7 +3,6 @@ import type {
   ColumnVisibility,
   DataSource,
   EditedRow,
-  FilterLabels,
   GridState,
   NumberColumn,
 } from "@bmsuisse/datagrid";
@@ -21,7 +20,6 @@ import {
   TreeDataGrid,
   usePersistedColumnSizing,
 } from "@bmsuisse/datagrid";
-import { de } from "date-fns/locale";
 import type { ReactElement } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PinnedAutoLayoutDemo } from "./PinnedAutoLayoutDemo";
@@ -100,60 +98,8 @@ const columns: ColumnDef<Order>[] = [
 
 type Engine = "sql" | "meili";
 
-type Language = "en" | "de";
-
-// What a consumer app would build from its own i18n `t()` — <DataGrid
-// filterLabels> takes already-translated strings; anything omitted keeps
-// its English default (see FilterLabels / #72).
-const GERMAN_FILTER_LABELS: Partial<FilterLabels> = {
-  filterAriaLabel: (header) => `${header} filtern`,
-  searchPlaceholder: (header) => `${header} suchen…`,
-  selectAll: "Alle auswählen",
-  selectAllOfGroup: (group) => `Alle in ${group} auswählen`,
-  noMatches: "Keine Treffer.",
-  selectedCount: (count) => `${count} ausgewählt`,
-  stringPlaceholder: (header) => `${header} filtern…`,
-  stringContains: "Enthält",
-  stringIs: "Ist",
-  stringStartsWith: "Beginnt mit",
-  stringEndsWith: "Endet mit",
-  operatorAriaLabel: (header) => `${header}: Filteroperator`,
-  booleanAll: "Alle",
-  booleanYes: "Ja",
-  booleanNo: "Nein",
-  booleanAriaLabel: (header) => `${header}: Filter`,
-  minPlaceholder: "Min.",
-  maxPlaceholder: "Max.",
-  valuePlaceholder: "Wert",
-  rangeSeparator: "bis",
-  minimumAriaLabel: (header) => `${header} Minimum`,
-  maximumAriaLabel: (header) => `${header} Maximum`,
-  minimumSliderAriaLabel: (header) => `${header} Minimum (Regler)`,
-  maximumSliderAriaLabel: (header) => `${header} Maximum (Regler)`,
-  numberGreaterThan: "Grösser als",
-  numberGreaterThanOrEqual: "Grösser als oder gleich",
-  numberLessThan: "Kleiner als",
-  numberLessThanOrEqual: "Kleiner als oder gleich",
-  numberEquals: "Gleich",
-  numberNotEquals: "Ungleich",
-  numberBetween: "Zwischen",
-  clear: "Zurücksetzen",
-  loading: "Wird geladen…",
-  dateToday: "Heute",
-  dateLast7Days: "Letzte 7 Tage",
-  dateThisMonth: "Dieser Monat",
-  dateCustom: "Benutzerdefiniert",
-  dateLocale: de,
-  enumIsAnyOf: "ist eines von",
-  enumIsNoneOf: "ist keines von",
-  moreOptions: (hiddenCount) => `${hiddenCount} weitere, tippen zum Eingrenzen`,
-  activeFilters: (count) => `Filter (${count}):`,
-  noActiveFilters: "Keine Filter",
-  noActiveFiltersHint: "Filter über das Symbol im Spaltenkopf setzen.",
-  clearAllFilters: "Alle Filter entfernen",
-  moreFilters: (hiddenCount) => `+${hiddenCount} weitere`,
-  removeFilter: (text) => `Filter entfernen: ${text}`,
-};
+const LANGUAGES = ["en", "de", "fr", "it", "nl", "es"] as const;
+type Language = (typeof LANGUAGES)[number];
 
 const DEFAULT_GRID_STATE: GridState = { filter: null, sort: [], page: 0, pageSize: 20 };
 
@@ -1469,9 +1415,9 @@ export function App(): ReactElement {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-xl font-semibold">@bmsuisse/datagrid demo — orders</h1>
         <div className="flex shrink-0 items-center gap-2">
-          {/* Filter-UI language only (filterLabels) — the rest of the demo stays English. */}
-          <div className="flex overflow-hidden rounded-md border text-sm" role="group" aria-label="Filter language">
-            {(["en", "de"] as const).map((lang) => (
+          {/* Built-in translations of the grid (<DataGrid locale>) — the rest of the demo stays English. */}
+          <div className="flex overflow-hidden rounded-md border text-sm" role="group" aria-label="Grid language">
+            {LANGUAGES.map((lang) => (
               <button
                 key={lang}
                 type="button"
@@ -1549,7 +1495,7 @@ export function App(): ReactElement {
         columnVisibility={visibility}
         onColumnVisibilityChange={setVisibility}
         enableMultiSort
-        filterLabels={language === "de" ? GERMAN_FILTER_LABELS : undefined}
+        locale={language}
         renderDetail={(row) => (
           <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm sm:grid-cols-4">
             <dt className="text-muted-foreground">Order ID</dt>
