@@ -2,7 +2,7 @@ import { XMarkIcon } from "@heroicons/react/16/solid";
 import { type HTMLAttributes, type KeyboardEvent, type ReactNode, forwardRef } from "react";
 import type { Ref } from "react";
 import { cn } from "../../lib/utils";
-import { getI18n, useLabels } from "../../i18n/locale";
+import { getI18n, useLabels, useIntegratedI18n } from "../../i18n/locale";
 import type { IntegratedI18n } from "../../i18n/locale";
 
 export type ChipSize = "sm" | "md";
@@ -17,7 +17,6 @@ export interface ChipLabels {
 
 export const chipLabelsFor = ({ t }: IntegratedI18n): ChipLabels => ({
   remove: t("chip.remove"),
-  removeItem: (text) => t("chip.removeItem", { text }),
 });
 
 export const defaultChipLabels: ChipLabels = chipLabelsFor(getI18n("en", false));
@@ -113,8 +112,9 @@ export const Chip = forwardRef<HTMLElement, ChipProps>(
     ref,
   ) => {
     const l = useLabels(chipLabelsFor, labels);
-    // A caller who only reworded `remove` keeps getting "<remove> <text>", not the locale's own full sentence.
-    const removeItem = labels?.removeItem ?? (labels?.remove === undefined ? l.removeItem : undefined);
+    const { t } = useIntegratedI18n();
+    // Not part of the built-in labels: a caller who spreads `defaultChipLabels` and rewords only `remove` keeps "<remove> <text>".
+    const removeItem = labels?.removeItem ?? (labels?.remove === undefined ? (text: string) => t("chip.removeItem", { text }) : undefined);
     const iconSize = size === "sm" ? "[&_svg]:size-3" : "[&_svg]:size-3.5";
     const content = (
       <>

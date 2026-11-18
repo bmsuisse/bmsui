@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { BmsLocaleProvider, getI18n, useFormatLocale, useLabels } from "../../src/i18n/locale";
+import { Chip, defaultChipLabels } from "../../src/patterns/chip/Chip";
 import { ConfirmDialog } from "../../src/patterns/modal/ConfirmDialog";
 import { Combobox } from "../../src/patterns/combobox/Combobox";
 import { ErrorState, defaultErrorStateLabels } from "../../src/patterns/error-state/ErrorState";
@@ -153,6 +154,23 @@ describe("number/date formatting locale", () => {
       </BmsLocaleProvider>,
     );
     expect(screen.getByTestId("p")).toHaveTextContent("it-CH");
+  });
+});
+
+describe("derived accessible names", () => {
+  it("translates \"remove <text>\" with the locale, and keeps the caller's prefix when they reword `remove`", () => {
+    const { rerender } = render(
+      <BmsLocaleProvider locale="de">
+        <Chip onRemove={noop}>A</Chip>
+      </BmsLocaleProvider>,
+    );
+    expect(screen.getByRole("button", { name: "A entfernen" })).toBeInTheDocument();
+    rerender(
+      <BmsLocaleProvider locale="de">
+        <Chip onRemove={noop} labels={{ ...defaultChipLabels, remove: "Weg" }}>A</Chip>
+      </BmsLocaleProvider>,
+    );
+    expect(screen.getByRole("button", { name: "Weg A" })).toBeInTheDocument();
   });
 });
 

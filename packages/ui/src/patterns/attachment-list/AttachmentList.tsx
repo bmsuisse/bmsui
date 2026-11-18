@@ -11,7 +11,7 @@ import { XMarkIcon } from "@heroicons/react/16/solid";
 import { type ElementType, type HTMLAttributes, forwardRef } from "react";
 import { cn } from "../../lib/utils";
 import { formatFileSize } from "../file-input/FileInput";
-import { getI18n, useFormatLocale, useLabels } from "../../i18n/locale";
+import { getI18n, useFormatLocale, useLabels, useIntegratedI18n } from "../../i18n/locale";
 import type { IntegratedI18n } from "../../i18n/locale";
 
 export interface AttachmentItem {
@@ -42,7 +42,6 @@ export interface AttachmentListLabels {
 export const attachmentListLabelsFor = ({ t }: IntegratedI18n): AttachmentListLabels => ({
   attachments: (n) => t("attachmentList.attachments", { count: n }),
   download: t("attachmentList.download"),
-  downloadFile: (name) => t("attachmentList.downloadFile", { name }),
   remove: (name) => t("attachmentList.remove", { name }),
   sizeUnits: ["B", "KB", "MB", "GB"],
 });
@@ -78,7 +77,9 @@ export interface AttachmentListProps extends Omit<HTMLAttributes<HTMLElement>, "
 export const AttachmentList = forwardRef<HTMLElement, AttachmentListProps>(
   ({ attachments, onRemove, layout = "list", locale: localeProp, labels, className, ...props }, ref) => {
     const l = useLabels(attachmentListLabelsFor, labels);
-    const downloadFile = labels?.downloadFile ?? (labels?.download === undefined ? l.downloadFile : undefined);
+    const { t } = useIntegratedI18n();
+    // Not part of the built-in labels, so a caller who spreads `defaultAttachmentListLabels` and rewords only `download` keeps "<download>: <file>".
+    const downloadFile = labels?.downloadFile ?? (labels?.download === undefined ? (name: string) => t("attachmentList.downloadFile", { name }) : undefined);
     const locale = useFormatLocale(localeProp);
     if (attachments.length === 0) return null;
     const chips = layout === "chips";

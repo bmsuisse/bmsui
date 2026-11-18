@@ -837,9 +837,10 @@ code is accepted.
   `DateInputLabels`, `DateRangePickerLabels`, …); a new required key breaks
   their typecheck. Texts that aren't in a label object come from `t()`
   directly, and new label keys must be optional (`removeItem?`, `removeFile?`,
-  `downloadFile?`, `ratingValue?`). When a caller overrides only the base key
-  (`remove`) the derived built-in (`removeItem`) is dropped, so
-  "<remove> <text>" keeps working.
+  `downloadFile?`, `ratingValue?`). The derived texts (`removeItem`, `removeFile`, `downloadFile`) are *not*
+  part of the built-in label objects: a caller who spreads `defaultChipLabels`
+  and rewords only `remove` keeps "<remove> <text>", everyone else gets the
+  locale's full sentence.
 - **Number/date formatting locale.** Components with a `locale` prop used to
   default to `"de-CH"`. They now resolve `locale` prop > provider's locale >
   `"de-CH"` (`useFormatLocale`), so `<BmsLocaleProvider locale="fr-CH">` also

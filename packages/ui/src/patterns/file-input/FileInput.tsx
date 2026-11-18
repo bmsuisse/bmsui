@@ -3,7 +3,7 @@ import type { DragEvent, KeyboardEvent, ReactNode } from "react";
 import { forwardRef, useId, useRef, useState } from "react";
 import { animate, EASE_IN, prefersReducedMotion } from "../../lib/motion";
 import { cn } from "../../lib/utils";
-import { getI18n, useLabels, useFormatLocale } from "../../i18n/locale";
+import { getI18n, useLabels, useFormatLocale, useIntegratedI18n } from "../../i18n/locale";
 import type { IntegratedI18n } from "../../i18n/locale";
 
 export interface FileInputLabels {
@@ -30,7 +30,6 @@ export const fileInputLabelsFor = ({ t }: IntegratedI18n): FileInputLabels => ({
   promptSingle: t("fileInput.promptSingle"),
   dropHere: t("fileInput.dropHere"),
   remove: t("fileInput.remove"),
-  removeFile: (name) => t("fileInput.removeFile", { name }),
   tooLarge: (name, max) => t("fileInput.tooLarge", { name, max }),
   wrongType: (name) => t("fileInput.wrongType", { name }),
   tooMany: (max) => t("fileInput.tooMany", { count: max }),
@@ -153,7 +152,9 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
   ) => {
     const locale = useFormatLocale(localeProp);
     const l = useLabels(fileInputLabelsFor, labels);
-    const removeFile = labels?.removeFile ?? (labels?.remove === undefined ? l.removeFile : undefined);
+    const { t } = useIntegratedI18n();
+    // Not part of the built-in labels, so a caller who spreads `defaultFileInputLabels` and rewords only `remove` keeps "<remove> <file>".
+    const removeFile = labels?.removeFile ?? (labels?.remove === undefined ? (name: string) => t("fileInput.removeFile", { name }) : undefined);
     const inputRef = useRef<HTMLInputElement | null>(null);
     const [dragOver, setDragOver] = useState(false);
     const dragDepth = useRef(0);
