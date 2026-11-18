@@ -58,7 +58,7 @@
 @endif
 @if($hasFoot)
     @if($isTable)<tfoot><tr class="bmsui-convs__foot"><td colspan="{{ $columns }}"><div class="bmsui-convs__bar">@else<div class="bmsui-convs__foot bmsui-convs__bar">@endif
-    @if($count !== null)<span class="bmsui-convs__count">{{ trans_choice('{0} No conversations|{1} :count conversation|[2,*] :count conversations', (int) $count, ['count' => $count]) }}</span>@endif
+    @if($count !== null)<span class="bmsui-convs__count">{{ trans_choice(__('{0} No conversations|{1} :count conversation|[2,*] :count conversations'), (int) $count, ['count' => $count]) }}</span>@endif
     @isset($footer)<span class="bmsui-convs__extra">{{ $footer }}</span>@endisset
     @isset($pager)<span class="bmsui-convs__pager">{{ $pager }}</span>@endisset
     @if($isTable)</div></td></tr></tfoot>@else</div>@endif

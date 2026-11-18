@@ -58,9 +58,10 @@
         <input type="checkbox" class="{{ trim('bmsui-conv__check '.$cb->get('class')) }}" aria-label="{{ $l['select'] }}" @checked($selected) @if($selectName) name="{{ $selectName }}" value="{{ $selectValue }}" @endif {{ $cb->except('class') }}>
         @if($table)</td>@endif
     @endif
+    @if($unread && !$table)<span class="bmsui-conv__dot" role="img" aria-label="{{ $l['unread'] }}"></span>@endif
     @if($table)<td class="bmsui-conv__cell bmsui-conv__cell--customer">@endif
     <span class="bmsui-conv__customer">
-        @if($unread)<span class="bmsui-conv__dot" role="img" aria-label="{{ $l['unread'] }}"></span>@endif
+        @if($unread && $table)<span class="bmsui-conv__dot" role="img" aria-label="{{ $l['unread'] }}"></span>@endif
         <x-bmsui::avatar :name="$c['name'] ?? ''" :src="$c['avatarSrc'] ?? null" :size="24" />
         <span class="bmsui-conv__cname">{{ $c['name'] ?? '' }}</span>
     </span>

@@ -33,8 +33,10 @@ variables (`--bmsui-*`); a `.dm` class on `<body>` switches to night mode (FreeS
 | Dropdown menu | `<x-bmsui::dropdown-menu label="Actions" align="end" :items="[['id' => 'fwd', 'label' => 'Forward', 'shortcut' => 'F'], ['separator' => true], ['heading' => 'Move'], ['label' => 'Move to', 'items' => [['id' => 'inbox', 'label' => 'Inbox']]], ['id' => 'del', 'label' => 'Delete', 'danger' => true]]"/>`; buttons fire `bmsui:select` (`detail.id`), links navigate; arrow keys, Home/End, type-ahead, submenus (ArrowRight/Left), Escape; `trigger` slot for own trigger content, `variant` for the trigger look |
 
 All texts are props (defaults go through `__()`, and de/fr/it/nl/es translations ship in `resources/lang/*.json`, loaded automatically with the app locale; FreeScout modules register `BMSUi::langPath()`), all content is escaped. Behaviour is delegated
-(`resources/js/bmsui.js`), so HTML added later (ajax) just works; the few things that need a setup step
-(indeterminate checkboxes, auto-resizing textareas) run for inserted nodes via a `MutationObserver`, and
+(`resources/js/bmsui.js`), so HTML added later (ajax) just works.
+
+The few behaviours that need a setup step (indeterminate checkboxes, auto-resizing textareas, tab panel ids,
+⌘ on Apple key caps, dialogs rendered open) run for inserted nodes via a `MutationObserver`;
 `window.BMSUi.init(container)` does the same by hand.
 
 ![Desktop, light](docs/desktop-light.png)

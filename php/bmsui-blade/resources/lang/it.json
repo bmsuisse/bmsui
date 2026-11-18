@@ -57,6 +57,5 @@
   "cc": "Cc",
   "required": "obbligatorio",
   "to": "A",
-  "{0} No conversations|{1} :count conversation|[2,*] :count conversations": "{0} Nessuna conversazione|{1} :count conversazione|[2,*] :count conversazioni",
-  "{1} :count attachment|[2,*] :count attachments": "{1} :count allegato|[2,*] :count allegati"
+  "{0} No conversations|{1} :count conversation|[2,*] :count conversations": "{0} Nessuna conversazione|{1} :count conversazione|[2,*] :count conversazioni"
 }

@@ -557,6 +557,12 @@ a.bmsui-att__name:hover { text-decoration: underline; color: var(--bmsui-fg); }
 ul.bmsui-events { list-style: none; margin: 0 0 12px; padding: 0; }
 
 @media (prefers-reduced-motion: reduce) {
-  .bmsui-brand--animate .bmsui-brand__dot, .bmsui-spin, .bmsui-spinner, .bmsui-skeleton, .bmsui-dot.is-pulse .bmsui-dot__mark::after, dialog.bmsui-dialog[open] { animation: none; }
-  .bmsui-btn, .bmsui-input, .bmsui-check__input, .bmsui-radio__input, .bmsui-switch__track, .bmsui-switch__thumb { transition: none; }
+  .bmsui-brand--animate .bmsui-brand__dot, .bmsui-spin { animation: none; }
+  .bmsui-btn { transition: none; }
+}
+
+/* Reduced motion for the OneDesk additions. */
+@media (prefers-reduced-motion: reduce) {
+  .bmsui-spinner, .bmsui-skeleton, .bmsui-dot.is-pulse .bmsui-dot__mark::after, dialog.bmsui-dialog[open] { animation: none; }
+  .bmsui-input, .bmsui-check__input, .bmsui-radio__input, .bmsui-switch__track, .bmsui-switch__thumb, .bmsui-combo__chev { transition: none; }
 }

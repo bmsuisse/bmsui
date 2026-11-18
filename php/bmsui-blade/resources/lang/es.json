@@ -57,6 +57,5 @@
   "cc": "Cc",
   "required": "obligatorio",
   "to": "Para",
-  "{0} No conversations|{1} :count conversation|[2,*] :count conversations": "{0} Sin conversaciones|{1} :count conversación|[2,*] :count conversaciones",
-  "{1} :count attachment|[2,*] :count attachments": "{1} :count adjunto|[2,*] :count adjuntos"
+  "{0} No conversations|{1} :count conversation|[2,*] :count conversations": "{0} Sin conversaciones|{1} :count conversación|[2,*] :count conversaciones"
 }
