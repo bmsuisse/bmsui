@@ -28,7 +28,7 @@ variables (`--bmsui-*`); a `.dm` class on `<body>` switches to night mode (FreeS
 | Mail message | `<x-bmsui::mail-message direction="inbound" :sender="['name' => 'Anna', 'email' => 'a@b.ch']" :recipients="['to' => [...], 'cc' => [...]]" time="14.11.2026 09:12" subject="..." status="failed" error="SMTP" retry-href="/r" :attachments="$files">{!! $sanitizedBody !!}<x-slot:quoted>...</x-slot:quoted><x-slot:actions>...</x-slot:actions><x-slot:badges>...</x-slot:badges></x-bmsui::mail-message>` (`direction`: `inbound`, `outbound`, `note`; `status`: `sent`, `sending`, `failed`, `bounced`, `draft`; the body slot is not sanitized, pass trusted HTML only) |
 | Mail event | `<x-bmsui::mail-event tone="success" time="14.11.2026 17:20">Status changed to Closed</x-bmsui::mail-event>` |
 
-All texts are props (defaults go through `__()`), all content is escaped. Behaviour is delegated
+All texts are props (defaults go through `__()`, and de/fr/it/nl/es translations ship in `resources/lang/*.json`, loaded automatically with the app locale; FreeScout modules register `BMSUi::langPath()`), all content is escaped. Behaviour is delegated
 (`resources/js/bmsui.js`), so HTML added later (ajax) just works.
 
 ![Desktop, light](/img/blade/desktop-light.png)

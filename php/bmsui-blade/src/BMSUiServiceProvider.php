@@ -19,6 +19,9 @@ class BMSUiServiceProvider extends ServiceProvider
         $this->loadViewsFrom($views, 'bmsui');
         Blade::anonymousComponentPath($views.'/components', 'bmsui');
 
+        // de/fr/it/nl/es for every default text (English keys are the source strings).
+        $this->loadJsonTranslationsFrom(BMSUi::langPath());
+
         $this->publishes([
             BMSUi::cssPath() => public_path('vendor/bmsui/bmsui.css'),
             BMSUi::jsPath() => public_path('vendor/bmsui/bmsui.js'),

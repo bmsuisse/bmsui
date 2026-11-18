@@ -218,4 +218,32 @@ class ComponentsTest extends TestCase
         $this->assertStringContainsString('<time', $html);
         $this->assertStringNotContainsString('<time', $this->html('<x-bmsui::mail-event>x</x-bmsui::mail-event>'));
     }
+
+    public function testEveryDefaultTextIsTranslated()
+    {
+        $used = [];
+        $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(dirname(__DIR__).'/resources/views'));
+        foreach ($files as $f) {
+            if ($f->isFile() && preg_match_all("/__\(\s*['\"]([^'\"]+)['\"]/", file_get_contents($f->getPathname()), $m)) {
+                $used = array_merge($used, $m[1]);
+            }
+        }
+        $used = array_values(array_unique($used));
+        $this->assertNotEmpty($used);
+
+        foreach (['de', 'fr', 'it', 'nl', 'es'] as $lang) {
+            $catalog = json_decode(file_get_contents(\BMSuisse\BMSUi\BMSUi::langPath()."/$lang.json"), true);
+            $this->assertIsArray($catalog, $lang);
+            $this->assertSame([], array_values(array_diff($used, array_keys($catalog))), "missing in $lang");
+            $this->assertSame([], array_values(array_diff(array_keys($catalog), $used)), "unused in $lang");
+        }
+    }
+
+    public function testTranslationsApplyWithTheAppLocale()
+    {
+        $this->app->setLocale('de');
+        $this->assertStringContainsString('Zitierten Text anzeigen', $this->html('<x-bmsui::quoted-text>x</x-bmsui::quoted-text>'));
+        $this->app->setLocale('fr');
+        $this->assertStringContainsString('Afficher le texte cité', $this->html('<x-bmsui::quoted-text>x</x-bmsui::quoted-text>'));
+    }
 }

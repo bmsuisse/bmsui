@@ -18,6 +18,12 @@ final class BMSUi
         return dirname(__DIR__).'/resources/js/bmsui.js';
     }
 
+    /** JSON translations (de, fr, it, nl, es); hosts with their own loader register this directory. */
+    public static function langPath(): string
+    {
+        return dirname(__DIR__).'/resources/lang';
+    }
+
     public static function viewsPath(): string
     {
         return dirname(__DIR__).'/resources/views';
