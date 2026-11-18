@@ -1168,7 +1168,7 @@ category its language doesn't have. All six catalogs are imported statically
   `statusLabelsFor`, `cellEditingLabelsFor` build the built-in sets, and
   `defaultFilterLabels` & co. are the English ones.
 - `GridStatusLabels`, `FilterLabels` and `CellEditingLabels` gained no keys: apps build complete objects of these types from their own i18n, so a new required key would break their typecheck. Texts that are not in them (`status.unknownError`, `status.refreshing`, aria-labels, pagination, editing bar) come from the locale only.
-- de/fr/it wording follows CCMT2's reviewed `translations.toml` (the one app that already ships all three); the fr/it search placeholders are header-less there on purpose (long headers get truncated in the popover), which is why a catalog may drop `{header}`.
+- de/fr/it wording follows the already-reviewed sets of consuming apps; the de/fr/it search placeholders are header-less on purpose (long headers get truncated in the popover), which is why a catalog may drop `{header}`.
 - Not translated yet: cell values (`defaultFormat`'s Yes/No, number/date
   formatting still use the runtime locale). `@bmsuisse/ui` keeps its own
   copy of this mechanism (a follow-up PR) rather than depending on the
