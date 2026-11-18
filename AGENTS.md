@@ -14,6 +14,7 @@ into aspiration.
 ```
 packages/datagrid/     @bmsuisse/datagrid   — React datagrid (TanStack Table v9)
 packages/ui/           @bmsuisse/ui         — shared shadcn/ui-based primitives + composed patterns
+php/bmsui-blade/       bmsuisse/bmsui-blade — the BMS design as Blade components for PHP/Laravel (OneDesk)
 plugins/bmsui/         Claude Code plugin   — skill telling agents in consuming apps to use the catalog
 python/datagrid/       bmsdna-datagrid   — filter contract -> SQL / Meilisearch
 e2e/server/            FastAPI harness backing packages/datagrid/e2e's Playwright specs
@@ -870,6 +871,33 @@ where an implementation existed. Each has a story, tests and a `CATALOG.md` line
   instead of `truncate`; fixed-height bars use `min-h-*` so large root font sizes grow them.
 - Known follow-ups: `ChatConversation` scroll anchoring on iOS Safari is untested; `text-[11px]/[13px]` do not
   scale with root font size.
+
+## `php/bmsui-blade` — Blade components for PHP/Laravel (OneDesk)
+
+Composer package `bmsuisse/bmsui-blade`: `<x-bmsui::chip|banner|stat-strip|stat|timeline|timeline-item|copy-button|confirm|ai-button|brand>`
+as anonymous Blade components, one CSS file (`resources/css/bmsui.css`, classes prefixed `bmsui-`, colours as
+`--bmsui-*` variables, night mode = `.dm` on `<body>` like FreeScout's BMS Design) and one delegated vanilla JS file
+(`resources/js/bmsui.js`). No build, no Tailwind, no jQuery; coexists with Bootstrap 3. It mirrors a *subset* of
+`@bmsuisse/ui` (the pieces that make sense in a help desk), so when one of those components changes its look in
+`packages/ui`, change the matching class here too. OneDesk/FreeScout hosts register `BMSUi::cssPath()`/`jsPath()`
+through Eventy `stylesheets`/`javascripts` (see the package README). Tests: `cd php/bmsui-blade && composer install &&
+vendor/bin/phpunit` (Orchestra Testbench; CI job "PHP"). Screenshots in `docs/` are rendered from
+`view('bmsui::preview')`. Docs page: `docs-site/docs/ui/blade.md` (keep in sync with the package README).
+
+OneDesk additions (on top of #113): extension points on `conversation-row`/`conversation-list`/`mail-message`
+(attribute passthrough, hook slots, `as="table"`, star toggle) and the components from OneDesk's proposal (button,
+form fields, combobox, dialog, dropdown menu, tabs, tooltip/popover, badges, empty state, table shell, page header,
+sidebar with cookie state, pagination, toast, command palette, …); the README table lists each one. Conventions and traps:
+- Extend existing components only with optional props/slots; their current output must stay the same.
+- JS: one IIFE; each feature is delegated listeners. Setup that must run per inserted node goes in a function pushed to
+  `inits` (run on load, by a `MutationObserver` and by `BMSUi.init(container)`); new code goes above the "Boot" block.
+- Every default text goes through `__()`; the parity test only sees `__()`, so plurals are `trans_choice(__('…'), $n)`.
+  Avoid keys that equal a Laravel lang group (`__('Pagination')` returns `lang/en/pagination.php` as an array).
+- Blade compiles directives and component tags inside PHP comments in `@props` (`@aware`, `<x-…>`): don't write them there.
+- A named slot that comes first must be followed by a line break before other content, or the output buffer stays open.
+- `null` passed to a prop falls back to its default (use `false` to switch something off); spreading `{{ $attributes }}`
+  into another component does not map kebab-case attributes to its camelCase props, so wrappers pass props explicitly.
+- Tests live in one file per group (`tests/*ComponentsTest.php`, base class `BladeTestCase`).
 
 ## Public API reports — `packages/*/api-report.md`
 
