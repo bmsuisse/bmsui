@@ -201,6 +201,21 @@
         <x-bmsui::kpi-card style="flex:1 1 200px" label="Zufriedenheit" value="94 %" delta="0" trend="flat" />
     </div>
 
+    <h2>Toast, command palette, date inputs</h2>
+    <div class="card">
+        <div class="row-flex">
+            <x-bmsui::button variant="outline" onclick="BMSUi.toast.success('Konversation zugewiesen', {description: 'An Anna Meier', action: {label: 'Rueckgaengig'}})">Toast</x-bmsui::button>
+            <x-bmsui::button variant="outline" onclick="BMSUi.toast.error('Senden fehlgeschlagen', {description: 'SMTP-Verbindung abgelehnt'})">Fehler-Toast</x-bmsui::button>
+            <x-bmsui::button variant="outline" data-bmsui-command-open>Befehle <x-bmsui::key-combo keys="mod+k" /></x-bmsui::button>
+        </div>
+        <div class="row-flex" style="margin-top:12px;align-items:flex-start">
+            <x-bmsui::form-field label="Schlummern bis" for="pv-snooze" style="flex:1 1 220px"><x-bmsui::date-time-input name="snooze" value="2026-11-20 08:00" /></x-bmsui::form-field>
+            <x-bmsui::form-field label="Faellig am" for="pv-due" style="flex:1 1 220px"><x-bmsui::date-input name="due" value="2026-11-30" /></x-bmsui::form-field>
+        </div>
+    </div>
+    <x-bmsui::toaster />
+    <x-bmsui::command-palette :commands="[['id' => 'new', 'label' => 'Neue Konversation', 'group' => 'Aktionen', 'shortcut' => 'mod+n', 'keywords' => 'erstellen mail'], ['id' => 'assign', 'label' => 'Mir zuweisen', 'group' => 'Aktionen'], ['id' => 'inbox', 'label' => 'Posteingang Verkauf', 'group' => 'Gehe zu', 'href' => '#inbox'], ['id' => 'dark', 'label' => 'Nachtmodus umschalten', 'group' => 'Einstellungen', 'description' => 'Fuer dieses Geraet']]" />
+
     <h2>Conversation list</h2>
     <x-bmsui::conversation-list>
         <x-bmsui::conversation-row subject="Offerte 2026-0412" preview="Guten Tag, anbei die Offerte fuer die Heizungsanlage" href="#" :customer="['name' => 'Keller Haustechnik AG']" :assignee="['name' => 'Anna Meier']" status="active" :unread="true" :starred="true" :thread-count="4" :has-attachments="true" time="09:12" :selected="false">
