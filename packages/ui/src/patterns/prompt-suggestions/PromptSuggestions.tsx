@@ -1,6 +1,8 @@
 import { type HTMLAttributes, type ReactElement, type ReactNode } from "react";
 import { useScrollOverflow } from "../../hooks/useScrollOverflow";
 import { cn } from "../../lib/utils";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export interface PromptSuggestion {
   id: string;
@@ -14,7 +16,11 @@ export interface PromptSuggestionsLabels {
   /** Accessible name of the group. */
   group: string;
 }
-export const defaultPromptSuggestionsLabels: PromptSuggestionsLabels = { group: "Suggestions" };
+export const promptSuggestionsLabelsFor = ({ t }: IntegratedI18n): PromptSuggestionsLabels => ({
+  group: t("promptSuggestions.group"),
+});
+
+export const defaultPromptSuggestionsLabels: PromptSuggestionsLabels = promptSuggestionsLabelsFor(getI18n("en", false));
 
 export interface PromptSuggestionsProps extends Omit<HTMLAttributes<HTMLDivElement>, "onSelect"> {
   /** Plain strings (id = text) or `{ id, label, prompt? }`. */
@@ -50,12 +56,13 @@ export const PromptSuggestions = ({
   ...props
 }: PromptSuggestionsProps): ReactElement | null => {
   const { ref, left, right } = useScrollOverflow<HTMLDivElement>();
+  const text = useLabels(promptSuggestionsLabelsFor, labels);
   if (suggestions.length === 0) return null;
   const mask = `linear-gradient(to right, ${left ? "transparent, black 2rem" : "black"}, ${right ? "black calc(100% - 2rem), transparent" : "black"})`;
   return (
     <div
       role="group"
-      aria-label={ariaLabel ?? { ...defaultPromptSuggestionsLabels, ...labels }.group}
+      aria-label={ariaLabel ?? text.group}
       className={cn("min-w-0 max-w-full", className)}
       {...props}
     >

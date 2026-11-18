@@ -4,6 +4,8 @@ import { cn } from "../../lib/utils";
 import { Button } from "../../primitives/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../primitives/dropdown-menu";
 import { LoadingSpinner } from "../loading-spinner/LoadingSpinner";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export interface SplitButtonItem {
   id: string;
@@ -18,7 +20,11 @@ export interface SplitButtonLabels {
   /** Accessible name of the chevron button. */
   menu: string;
 }
-export const defaultSplitButtonLabels: SplitButtonLabels = { menu: "More actions" };
+export const splitButtonLabelsFor = ({ t }: IntegratedI18n): SplitButtonLabels => ({
+  menu: t("splitButton.menu"),
+});
+
+export const defaultSplitButtonLabels: SplitButtonLabels = splitButtonLabelsFor(getI18n("en", false));
 
 export interface SplitButtonProps {
   /** Label of the primary action. */
@@ -67,6 +73,7 @@ export const SplitButton = forwardRef<HTMLButtonElement, SplitButtonProps>(
     },
     ref,
   ) => {
+    const text = useLabels(splitButtonLabelsFor, labels);
     // Loading blocks interaction without the dimmed `disabled` look, so the spinner stays readable.
     const off = disabled;
     const block = "aria-disabled:pointer-events-none";
@@ -93,7 +100,7 @@ export const SplitButton = forwardRef<HTMLButtonElement, SplitButtonProps>(
               variant={variant}
               size={CHEVRON_SIZE[size]}
               disabled={off}
-              aria-label={menuLabel ?? { ...defaultSplitButtonLabels, ...labels }.menu}
+              aria-label={menuLabel ?? text.menu}
               aria-disabled={loading || undefined}
               tabIndex={loading ? -1 : undefined}
               className={cn("relative -ml-px w-8 shrink-0 rounded-l-none hover:z-10 focus-visible:z-10", block)}

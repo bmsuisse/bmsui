@@ -2,13 +2,20 @@ import { type ReactElement, type ReactNode, useId, useRef, useState } from "reac
 import { cn } from "../../lib/utils";
 import { Button } from "../../primitives/button";
 import { Popover, PopoverContent, PopoverTrigger } from "../../primitives/popover";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export interface ConfirmPopoverLabels {
   confirm: string;
   keep: string;
 }
 
-export const defaultConfirmPopoverLabels: ConfirmPopoverLabels = { confirm: "Confirm", keep: "Keep" };
+export const confirmPopoverLabelsFor = ({ t }: IntegratedI18n): ConfirmPopoverLabels => ({
+  confirm: t("confirmPopover.confirm"),
+  keep: t("confirmPopover.keep"),
+});
+
+export const defaultConfirmPopoverLabels: ConfirmPopoverLabels = confirmPopoverLabelsFor(getI18n("en", false));
 
 export interface ConfirmPopoverProps {
   /** The button that opens it (one element; rendered with `asChild`). */
@@ -59,7 +66,7 @@ export const ConfirmPopover = ({
   className,
   container,
 }: ConfirmPopoverProps): ReactElement => {
-  const l = { ...defaultConfirmPopoverLabels, ...labels };
+  const l = useLabels(confirmPopoverLabelsFor, labels);
   const [inner, setInner] = useState(defaultOpen);
   const [busy, setBusy] = useState(false);
   const keepRef = useRef<HTMLButtonElement>(null);

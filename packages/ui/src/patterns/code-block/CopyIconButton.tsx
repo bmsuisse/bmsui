@@ -4,6 +4,8 @@ import { useEffect } from "react";
 import { announce } from "../../hooks/useAnnounce";
 import { useClipboard } from "../../hooks/useClipboard";
 import { cn } from "../../lib/utils";
+import { getI18n } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export interface CopyIconButtonLabels {
   copy: string;
@@ -11,11 +13,13 @@ export interface CopyIconButtonLabels {
   copyFailed: string;
 }
 
-export const defaultCopyIconButtonLabels: CopyIconButtonLabels = {
-  copy: "Copy",
-  copied: "Copied",
-  copyFailed: "Copy failed",
-};
+export const copyIconButtonLabelsFor = ({ t }: IntegratedI18n): CopyIconButtonLabels => ({
+  copy: t("copyIconButton.copy"),
+  copied: t("copyIconButton.copied"),
+  copyFailed: t("copyIconButton.copyFailed"),
+});
+
+export const defaultCopyIconButtonLabels: CopyIconButtonLabels = copyIconButtonLabelsFor(getI18n("en", false));
 
 const icon = "absolute h-4 w-4 transition-[scale,opacity] duration-150 ease-out motion-reduce:transition-none";
 

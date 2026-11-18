@@ -4,11 +4,12 @@ import {
   DateInputMessage,
   type DateInputError,
   type DateInputProps,
-  defaultDateInputLabels,
+  dateInputLabelsFor,
   errorMessage,
   invalidClass,
   toDay,
 } from "./shared";
+import { useLabels } from "../../i18n/locale";
 
 /**
  * The browser's own `<input type="date">`, used on touch devices where its wheel or
@@ -43,7 +44,7 @@ export const NativeDateInput = forwardRef<HTMLInputElement, DateInputProps>(
     },
     ref,
   ) => {
-    const l = { ...defaultDateInputLabels, ...labels };
+    const l = useLabels(dateInputLabelsFor, labels);
     const minDay = toDay(min);
     const maxDay = toDay(max);
     // The entry as the control holds it, even when rejected, so a half-typed or out-of-range date isn't wiped.

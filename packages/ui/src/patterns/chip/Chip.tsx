@@ -2,6 +2,8 @@ import { XMarkIcon } from "@heroicons/react/16/solid";
 import { type HTMLAttributes, type KeyboardEvent, type ReactNode, forwardRef } from "react";
 import type { Ref } from "react";
 import { cn } from "../../lib/utils";
+import { getI18n, useLabels, useIntegratedI18n } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export type ChipSize = "sm" | "md";
 export type ChipTone = "neutral" | "primary";
@@ -13,7 +15,11 @@ export interface ChipLabels {
   removeItem?: (text: string) => string;
 }
 
-export const defaultChipLabels: ChipLabels = { remove: "Remove" };
+export const chipLabelsFor = ({ t }: IntegratedI18n): ChipLabels => ({
+  remove: t("chip.remove"),
+});
+
+export const defaultChipLabels: ChipLabels = chipLabelsFor(getI18n("en", false));
 
 export interface ChipClassOptions {
   selected?: boolean;
@@ -105,7 +111,10 @@ export const Chip = forwardRef<HTMLElement, ChipProps>(
     },
     ref,
   ) => {
-    const l = { ...defaultChipLabels, ...labels };
+    const l = useLabels(chipLabelsFor, labels);
+    const { t } = useIntegratedI18n();
+    // Not part of the built-in labels: a caller who spreads `defaultChipLabels` and rewords only `remove` keeps "<remove> <text>".
+    const removeItem = labels?.removeItem ?? (labels?.remove === undefined ? (text: string) => t("chip.removeItem", { text }) : undefined);
     const iconSize = size === "sm" ? "[&_svg]:size-3" : "[&_svg]:size-3.5";
     const content = (
       <>
@@ -148,7 +157,7 @@ export const Chip = forwardRef<HTMLElement, ChipProps>(
             type="button"
             tabIndex={-1}
             disabled={disabled}
-            aria-label={removeLabel ?? (text ? (l.removeItem ? l.removeItem(text) : `${l.remove} ${text}`) : l.remove)}
+            aria-label={removeLabel ?? (text ? (removeItem ? removeItem(text) : `${l.remove} ${text}`) : l.remove)}
             onClick={onRemove}
             className={cn(
               "inline-flex shrink-0 items-center justify-center rounded-[var(--radius-pill,9999px)] outline-none transition-[background-color,scale] hover:bg-foreground/10 focus-visible:ring-2 focus-visible:ring-ring active:scale-90 motion-reduce:transition-none motion-reduce:active:scale-100",

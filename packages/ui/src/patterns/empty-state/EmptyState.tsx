@@ -2,6 +2,8 @@ import { FunnelIcon } from "@heroicons/react/24/outline";
 import type { ComponentType, HTMLAttributes, ReactElement, ReactNode, SVGProps } from "react";
 import { cn } from "../../lib/utils";
 import { Button } from "../../primitives/button";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export interface EmptyStateProps extends Omit<HTMLAttributes<HTMLDivElement>, "title"> {
   title: ReactNode;
@@ -80,11 +82,13 @@ export interface FilteredEmptyStateLabels {
   reset: string;
 }
 
-export const defaultFilteredEmptyStateLabels: FilteredEmptyStateLabels = {
-  title: "No results",
-  description: "Nothing matches the current search or filters.",
-  reset: "Reset filters",
-};
+export const filteredEmptyStateLabelsFor = ({ t }: IntegratedI18n): FilteredEmptyStateLabels => ({
+  title: t("filteredEmptyState.title"),
+  description: t("filteredEmptyState.description"),
+  reset: t("filteredEmptyState.reset"),
+});
+
+export const defaultFilteredEmptyStateLabels: FilteredEmptyStateLabels = filteredEmptyStateLabelsFor(getI18n("en", false));
 
 export interface FilteredEmptyStateProps extends Omit<EmptyStateProps, "title" | "description" | "action"> {
   /** Clears search and filters. */
@@ -100,7 +104,7 @@ export const FilteredEmptyState = ({
   size,
   ...props
 }: FilteredEmptyStateProps): ReactElement => {
-  const l = { ...defaultFilteredEmptyStateLabels, ...labels };
+  const l = useLabels(filteredEmptyStateLabelsFor, labels);
   // OneSales tests target `<testid>-reset`; derive it from the root's data-testid.
   const rootTestId = (props as Record<string, unknown>)["data-testid"];
   return (

@@ -4,7 +4,9 @@ import { FoldPanel } from "../../lib/FoldPanel";
 import { SCROLL_FOCUS_WRAPPER, SCROLL_REGION, useScrollFade } from "../../lib/scrollFade";
 import { cn } from "../../lib/utils";
 import { Collapsible, CollapsibleTrigger } from "../../primitives/collapsible";
-import { CopyIconButton, type CopyIconButtonLabels, defaultCopyIconButtonLabels } from "../code-block/CopyIconButton";
+import { CopyIconButton, type CopyIconButtonLabels, copyIconButtonLabelsFor } from "../code-block/CopyIconButton";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export interface JsonViewLabels extends CopyIconButtonLabels {
   /** "3 keys" / "1 key". */
@@ -21,15 +23,20 @@ export interface JsonViewLabels extends CopyIconButtonLabels {
   copyNamed: (label: string) => string;
 }
 
-export const defaultJsonViewLabels: JsonViewLabels = {
-  ...defaultCopyIconButtonLabels,
-  keys: (n) => `${n} ${n === 1 ? "key" : "keys"}`,
-  items: (n) => `${n} ${n === 1 ? "item" : "items"}`,
-  json: "JSON",
-  size: formatBytes,
-  summary: (count, size) => (count ? `${count} · ${size}` : size),
-  copyNamed: (label) => `Copy ${label}`,
+export const jsonViewLabelsFor = (i18n: IntegratedI18n): JsonViewLabels => {
+  const { t } = i18n;
+  return {
+    ...copyIconButtonLabelsFor(i18n),
+    keys: (n) => t("jsonView.keys", { count: n }),
+    items: (n) => t("jsonView.items", { count: n }),
+    json: t("jsonView.json"),
+    copyNamed: (label) => t("jsonView.copyNamed", { label }),
+    size: formatBytes,
+    summary: (count, size) => (count ? `${count} · ${size}` : size),
+  };
 };
+
+export const defaultJsonViewLabels: JsonViewLabels = jsonViewLabelsFor(getI18n("en", false));
 
 export interface JsonViewProps extends Omit<HTMLAttributes<HTMLDivElement>, "children" | "defaultValue"> {
   /** Any JSON-serialisable value; circular or unserialisable values fall back to `String(value)`. */
@@ -75,7 +82,7 @@ export const JsonView = ({
   className,
   ...props
 }: JsonViewProps): ReactElement => {
-  const l = { ...defaultJsonViewLabels, ...labels };
+  const l = useLabels(jsonViewLabelsFor, labels);
   const label = labelProp ?? l.json;
   const [uncontrolled, setUncontrolled] = useState(defaultOpen);
   const open = openProp ?? uncontrolled;

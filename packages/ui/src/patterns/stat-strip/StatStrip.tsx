@@ -1,6 +1,8 @@
 import { type ElementType, type HTMLAttributes, type ReactNode, forwardRef, useEffect, useRef, useState } from "react";
 import { cn } from "../../lib/utils";
 import { Skeleton } from "../../primitives/skeleton";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export type StatStripTone = "default" | "success" | "warning" | "danger";
 
@@ -73,7 +75,11 @@ export interface StatStripLabels {
   /** Accessible name of a loading cell. */
   loading: string;
 }
-export const defaultStatStripLabels: StatStripLabels = { loading: "Loading" };
+export const statStripLabelsFor = ({ t }: IntegratedI18n): StatStripLabels => ({
+  loading: t("statStrip.loading"),
+});
+
+export const defaultStatStripLabels: StatStripLabels = statStripLabelsFor(getI18n("en", false));
 
 export const StatStripItem = forwardRef<HTMLLIElement, StatStripItemProps>(
   (
@@ -81,11 +87,12 @@ export const StatStripItem = forwardRef<HTMLLIElement, StatStripItemProps>(
     ref,
   ) => {
     const flashing = useFlashing(typeof value === "object" ? null : value, animated);
+    const text = useLabels(statStripLabelsFor, labels);
     const inner = (
       <>
         <span className="block line-clamp-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</span>
         {loading ? (
-          <Skeleton role="status" aria-label={loadingLabel ?? { ...defaultStatStripLabels, ...labels }.loading} className="mt-1 h-6 w-16" />
+          <Skeleton role="status" aria-label={loadingLabel ?? text.loading} className="mt-1 h-6 w-16" />
         ) : (
           <span
             className={cn(

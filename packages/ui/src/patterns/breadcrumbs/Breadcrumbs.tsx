@@ -8,6 +8,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../../primitives/dropdown-menu";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export interface BreadcrumbItem {
   label: ReactNode;
@@ -33,10 +35,12 @@ export interface BreadcrumbsLabels {
   more: string;
 }
 
-export const defaultBreadcrumbsLabels: BreadcrumbsLabels = {
-  nav: "Breadcrumb",
-  more: "Show hidden breadcrumbs",
-};
+export const breadcrumbsLabelsFor = ({ t }: IntegratedI18n): BreadcrumbsLabels => ({
+  nav: t("breadcrumbs.nav"),
+  more: t("breadcrumbs.more"),
+});
+
+export const defaultBreadcrumbsLabels: BreadcrumbsLabels = breadcrumbsLabelsFor(getI18n("en", false));
 
 export interface BreadcrumbsProps extends Omit<HTMLAttributes<HTMLElement>, "children"> {
   /** Root first, current page last. The last item is the current page (`aria-current="page"`, not a link). */
@@ -74,7 +78,7 @@ export function Breadcrumbs({
   className,
   ...props
 }: BreadcrumbsProps): ReactElement {
-  const l = { ...defaultBreadcrumbsLabels, ...labels };
+  const l = useLabels(breadcrumbsLabelsFor, labels);
   const collapse =
     items.length > maxItems && itemsBeforeCollapse + itemsAfterCollapse < items.length && itemsAfterCollapse > 0;
   const before = collapse ? items.slice(0, itemsBeforeCollapse) : items;

@@ -4,6 +4,8 @@ import { cn } from "../../lib/utils";
 import { Button } from "../../primitives/button";
 import { LoadingSpinner } from "../loading-spinner/LoadingSpinner";
 import { StatusBadge, type StatusTone } from "../status-badge/StatusBadge";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export type ApprovalStatus = "pending" | "approved" | "rejected";
 
@@ -26,15 +28,17 @@ export interface ApprovalCardLabels {
   working: string;
 }
 
-export const defaultApprovalCardLabels: ApprovalCardLabels = {
-  approve: "Approve",
-  reject: "Decline",
-  pending: "Needs your approval",
-  approved: "Approved",
-  rejected: "Declined",
-  choices: "Options",
-  working: "Working…",
-};
+export const approvalCardLabelsFor = ({ t }: IntegratedI18n): ApprovalCardLabels => ({
+  approve: t("approvalCard.approve"),
+  reject: t("approvalCard.reject"),
+  pending: t("approvalCard.pending"),
+  approved: t("approvalCard.approved"),
+  rejected: t("approvalCard.rejected"),
+  choices: t("approvalCard.choices"),
+  working: t("approvalCard.working"),
+});
+
+export const defaultApprovalCardLabels: ApprovalCardLabels = approvalCardLabelsFor(getI18n("en", false));
 
 const STATUS_TONE: Record<ApprovalStatus, StatusTone> = { pending: "warning", approved: "success", rejected: "error" };
 
@@ -85,7 +89,7 @@ export const ApprovalCard = forwardRef<HTMLElement, ApprovalCardProps>(
     },
     ref,
   ) => {
-    const l = { ...defaultApprovalCardLabels, ...labels };
+    const l = useLabels(approvalCardLabelsFor, labels);
     const titleId = useId();
     const busy = pending !== false;
     const decided = status !== "pending";

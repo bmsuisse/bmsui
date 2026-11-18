@@ -1,12 +1,18 @@
 import { type HTMLAttributes, type ReactElement, useEffect, useRef } from "react";
 import { EASE_OUT, animate, prefersReducedMotion } from "../../lib/motion";
 import { cn } from "../../lib/utils";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export interface TypingIndicatorLabels {
   /** Spoken (and, with `showLabel`, shown) text. */
   typing: string;
 }
-export const defaultTypingIndicatorLabels: TypingIndicatorLabels = { typing: "Assistant is typing" };
+export const typingIndicatorLabelsFor = ({ t }: IntegratedI18n): TypingIndicatorLabels => ({
+  typing: t("typingIndicator.typing"),
+});
+
+export const defaultTypingIndicatorLabels: TypingIndicatorLabels = typingIndicatorLabelsFor(getI18n("en", false));
 
 export interface TypingIndicatorProps extends Omit<HTMLAttributes<HTMLSpanElement>, "children"> {
   /** Spoken (and, with `showLabel`, shown) text; overrides `labels.typing`. @default "Assistant is typing" */
@@ -34,6 +40,7 @@ export const TypingIndicator = ({
   ...props
 }: TypingIndicatorProps): ReactElement => {
   const root = useRef<HTMLSpanElement>(null);
+  const text = useLabels(typingIndicatorLabelsFor, labels);
   useEffect(() => {
     if (!animated || prefersReducedMotion()) return;
     const dots = Array.from(root.current?.querySelectorAll("[data-dot]") ?? []);
@@ -65,7 +72,7 @@ export const TypingIndicator = ({
           <span key={i} data-dot className={cn("rounded-full bg-muted-foreground opacity-70", dot)} />
         ))}
       </span>
-      <span className={cn(!showLabel && "sr-only")}>{label ?? { ...defaultTypingIndicatorLabels, ...labels }.typing}</span>
+      <span className={cn(!showLabel && "sr-only")}>{label ?? text.typing}</span>
     </span>
   );
 };

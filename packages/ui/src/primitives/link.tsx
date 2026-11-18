@@ -4,6 +4,8 @@ import { cva, type VariantProps } from "class-variance-authority";
 import type { AnchorHTMLAttributes } from "react";
 import { forwardRef } from "react";
 import { cn } from "../lib/utils";
+import { getI18n, useLabels } from "../i18n/locale";
+import type { IntegratedI18n } from "../i18n/locale";
 
 export const linkVariants = cva(
   "inline rounded-sm box-decoration-clone underline-offset-4 transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background aria-disabled:pointer-events-none aria-disabled:opacity-50",
@@ -27,7 +29,11 @@ export interface LinkLabels {
   newTab: string;
 }
 
-export const defaultLinkLabels: LinkLabels = { newTab: "(opens in new tab)" };
+export const linkLabelsFor = ({ t }: IntegratedI18n): LinkLabels => ({
+  newTab: t("link.newTab"),
+});
+
+export const defaultLinkLabels: LinkLabels = linkLabelsFor(getI18n("en", false));
 
 export interface LinkProps extends AnchorHTMLAttributes<HTMLAnchorElement>, VariantProps<typeof linkVariants> {
   /** Render the child element (a router `Link`, `NextLink`…) instead of an `<a>`, keeping our styling and `external` behaviour. */
@@ -45,7 +51,7 @@ export interface LinkProps extends AnchorHTMLAttributes<HTMLAnchorElement>, Vari
  */
 export const Link = forwardRef<HTMLAnchorElement, LinkProps>(
   ({ className, variant, asChild = false, external = false, labels, children, target, rel, ...props }, ref) => {
-    const l = { ...defaultLinkLabels, ...labels };
+    const l = useLabels(linkLabelsFor, labels);
     const Comp = asChild ? Slot : "a";
     const relTokens = new Set((rel ?? "").split(/\s+/).filter(Boolean));
     if (external) {

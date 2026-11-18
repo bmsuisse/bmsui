@@ -4,6 +4,8 @@ import { useRef } from "react";
 import { slidingIndicatorClass, useSlidingIndicator } from "../../lib/useSlidingIndicator";
 import { cn } from "../../lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../primitives/select";
+import { getI18n, useLabels, useFormatLocale } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export type PageRangeItem = number | "ellipsis";
 
@@ -53,16 +55,18 @@ export interface PaginationLabels {
   compact: (page: number, pageCount: number) => string;
 }
 
-export const defaultPaginationLabels: PaginationLabels = {
-  nav: "Pagination",
-  previous: "Previous",
-  next: "Next",
-  page: (page) => `Page ${page}`,
-  range: (from, to, total) => `${from}–${to} of ${total}`,
-  empty: "No results",
-  pageSize: "Rows per page",
-  compact: (page, pageCount) => `${page} / ${pageCount}`,
-};
+export const paginationLabelsFor = ({ t }: IntegratedI18n): PaginationLabels => ({
+  nav: t("pagination.nav"),
+  previous: t("pagination.previous"),
+  next: t("pagination.next"),
+  page: (page) => t("pagination.page", { page }),
+  range: (from, to, total) => t("pagination.range", { from, to, total }),
+  empty: t("pagination.empty"),
+  pageSize: t("pagination.pageSize"),
+  compact: (page, pageCount) => t("pagination.compact", { page, pageCount }),
+});
+
+export const defaultPaginationLabels: PaginationLabels = paginationLabelsFor(getI18n("en", false));
 
 export interface PaginationProps extends Omit<HTMLAttributes<HTMLElement>, "onChange"> {
   /** Current page, 1-based. */
@@ -119,7 +123,7 @@ export function Pagination({
   compact = false,
   hideRange = false,
   disabled = false,
-  locale = "de-CH",
+  locale: localeProp,
   labels,
   animated = true,
   className,
@@ -127,7 +131,8 @@ export function Pagination({
 }: PaginationProps): ReactElement {
   const pagesRef = useRef<HTMLDivElement>(null);
   const markerRef = useRef<HTMLSpanElement>(null);
-  const l = { ...defaultPaginationLabels, ...labels };
+  const locale = useFormatLocale(localeProp);
+  const l = useLabels(paginationLabelsFor, labels);
   const pageCount = Math.max(
     1,
     pageCountProp ?? (totalItems != null && pageSize ? Math.ceil(totalItems / pageSize) : 1),

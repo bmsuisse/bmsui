@@ -3,6 +3,7 @@ import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { type ErrorInput, toErrorInfo } from "../../lib/errorState";
 import { cn } from "../../lib/utils";
 import { Skeleton } from "../../primitives/skeleton";
+import { useIntegratedI18n } from "../../i18n/locale";
 
 export interface KpiCardProps {
   label: string;
@@ -188,7 +189,8 @@ export const KpiCard = memo(function KpiCard({
   background,
   testId,
 }: KpiCardProps): ReactElement {
-  const errorInfo = loading ? undefined : toErrorInfo(error);
+  const { t } = useIntegratedI18n();
+  const errorInfo = loading ? undefined : toErrorInfo(error, t("errorState.unknown"));
   if (errorInfo) {
     const hero = variant === "hero";
     return (
@@ -206,11 +208,11 @@ export const KpiCard = memo(function KpiCard({
           <ExclamationTriangleIcon className="h-4 w-4 text-destructive" aria-hidden="true" />
         </p>
         <p className="truncate text-xs text-red-700 dark:text-red-300">
-          {errorInfo.message ?? errorInfo.title ?? "Failed to load"}
+          {errorInfo.message ?? errorInfo.title ?? t("kpiCard.failed")}
         </p>
         {onRetry ? (
           <button type="button" onClick={onRetry} className="self-start text-xs text-red-700 underline underline-offset-2 dark:text-red-300">
-            Retry
+            {t("kpiCard.retry")}
           </button>
         ) : null}
       </div>

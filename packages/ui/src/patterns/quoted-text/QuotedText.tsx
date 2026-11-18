@@ -2,13 +2,20 @@ import { type HTMLAttributes, type ReactNode, forwardRef, useId, useState } from
 import { FoldPanel } from "../../lib/FoldPanel";
 import { cn } from "../../lib/utils";
 import { Collapsible } from "../../primitives/collapsible";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export interface QuotedTextLabels {
   show: string;
   hide: string;
 }
 
-export const defaultQuotedTextLabels: QuotedTextLabels = { show: "Show quoted text", hide: "Hide quoted text" };
+export const quotedTextLabelsFor = ({ t }: IntegratedI18n): QuotedTextLabels => ({
+  show: t("quotedText.show"),
+  hide: t("quotedText.hide"),
+});
+
+export const defaultQuotedTextLabels: QuotedTextLabels = quotedTextLabelsFor(getI18n("en", false));
 
 export interface QuotedTextProps extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
   /** The quoted reply history. */
@@ -22,7 +29,7 @@ export interface QuotedTextProps extends Omit<HTMLAttributes<HTMLDivElement>, "c
 /** Collapsed-by-default quoted reply history behind a small "…" pill; wide tables and code scroll inside. */
 export const QuotedText = forwardRef<HTMLDivElement, QuotedTextProps>(
   ({ children, defaultOpen = false, open, onOpenChange, labels, className, ...props }, ref) => {
-    const l = { ...defaultQuotedTextLabels, ...labels };
+    const l = useLabels(quotedTextLabelsFor, labels);
     const [inner, setInner] = useState(defaultOpen);
     const isOpen = open ?? inner;
     const id = useId();

@@ -12,6 +12,7 @@ import {
 } from "../../lib/optionGrouping";
 import { renderGridOptions, type GridColumn } from "../../lib/optionGrid";
 import { Popover, PopoverAnchor, PopoverContent } from "../../primitives/popover";
+import { useIntegratedI18n } from "../../i18n/locale";
 
 export interface TagComboboxOption {
   value: string;
@@ -91,11 +92,11 @@ export function TagCombobox({
   options,
   value,
   onChange,
-  placeholder = "Select…",
-  emptyMessage = "No matches.",
+  placeholder: placeholderProp,
+  emptyMessage: emptyMessageProp,
   disabled,
   loading = false,
-  loadingMessage = "Loading…",
+  loadingMessage: loadingMessageProp,
   error,
   onRetry,
   className,
@@ -106,6 +107,10 @@ export function TagCombobox({
   columns,
   ...rest
 }: TagComboboxProps): ReactElement {
+  const { t } = useIntegratedI18n();
+  const placeholder = placeholderProp ?? t("combobox.placeholder");
+  const emptyMessage = emptyMessageProp ?? t("combobox.emptyMessage");
+  const loadingMessage = loadingMessageProp ?? t("combobox.loadingMessage");
   const testId = rest["data-testid"];
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -276,7 +281,7 @@ export function TagCombobox({
               {!disabled && (
                 <button
                   type="button"
-                  aria-label={`Remove ${option.label}`}
+                  aria-label={t("tagCombobox.remove", { label: option.label })}
                   className="rounded-[var(--radius-pill,9999px)] p-0.5 hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   onClick={(event) => {
                     event.stopPropagation();
@@ -369,7 +374,7 @@ export function TagCombobox({
                       onChange={() => toggleGroup(chunk.group)}
                       onClick={(event) => event.stopPropagation()}
                       className="h-3.5 w-3.5 shrink-0 accent-primary"
-                      aria-label={`Select all of ${groupLabel(chunk.group)}`}
+                      aria-label={t("combobox.selectAllOfGroup", { group: groupLabel(chunk.group) })}
                     />
                     <span className="truncate">{groupLabel(chunk.group)}</span>
                   </div>

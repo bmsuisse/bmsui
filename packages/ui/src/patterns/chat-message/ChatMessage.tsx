@@ -4,6 +4,8 @@ import { cn } from "../../lib/utils";
 import { Avatar } from "../avatar/Avatar";
 import { InlineError } from "../error-state/ErrorState";
 import { Timestamp } from "../timestamp/Timestamp";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export type ChatRole = "user" | "assistant" | "system";
 export type ChatMessageStatus = "sending" | "streaming" | "error" | "done";
@@ -22,15 +24,17 @@ export interface ChatMessageLabels {
   roleSystem: string;
 }
 
-export const defaultChatMessageLabels: ChatMessageLabels = {
-  sending: "Sending…",
-  streaming: "Writing a reply",
-  failed: "This message could not be sent.",
-  retry: "Retry",
-  roleUser: "You",
-  roleAssistant: "Assistant",
-  roleSystem: "System",
-};
+export const chatMessageLabelsFor = ({ t }: IntegratedI18n): ChatMessageLabels => ({
+  sending: t("chatMessage.sending"),
+  streaming: t("chatMessage.streaming"),
+  failed: t("chatMessage.failed"),
+  retry: t("chatMessage.retry"),
+  roleUser: t("chatMessage.roleUser"),
+  roleAssistant: t("chatMessage.roleAssistant"),
+  roleSystem: t("chatMessage.roleSystem"),
+});
+
+export const defaultChatMessageLabels: ChatMessageLabels = chatMessageLabelsFor(getI18n("en", false));
 
 export interface ChatMessageProps extends Omit<HTMLAttributes<HTMLElement>, "title"> {
   role: ChatRole;
@@ -72,7 +76,7 @@ export const ChatMessage = forwardRef<HTMLElement, ChatMessageProps>(
     { role, name, avatar, time, status = "done", error, onRetry, actions, labels, className, children, ...props },
     ref,
   ) => {
-    const l = { ...defaultChatMessageLabels, ...labels };
+    const l = useLabels(chatMessageLabelsFor, labels);
     const roleLabel = role === "user" ? l.roleUser : role === "assistant" ? l.roleAssistant : l.roleSystem;
     const sender = name ?? roleLabel;
     const user = role === "user";

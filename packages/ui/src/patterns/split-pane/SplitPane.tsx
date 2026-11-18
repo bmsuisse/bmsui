@@ -8,6 +8,8 @@ import type {
 import { Children, Fragment, isValidElement, useCallback, useEffect, useId, useRef, useState } from "react";
 import { useIsomorphicLayoutEffect } from "../../lib/useIsomorphicLayoutEffect";
 import { cn } from "../../lib/utils";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 /** A pane size limit: a number is a percentage of the container, `"240px"` is pixels. */
 export type SplitPaneLimit = number | `${number}px`;
@@ -17,9 +19,11 @@ export interface SplitPaneLabels {
   separator: (index: number) => string;
 }
 
-export const defaultSplitPaneLabels: SplitPaneLabels = {
-  separator: () => "Resize panes",
-};
+export const splitPaneLabelsFor = ({ t }: IntegratedI18n): SplitPaneLabels => ({
+  separator: () => t("splitPane.separator", {  }),
+});
+
+export const defaultSplitPaneLabels: SplitPaneLabels = splitPaneLabelsFor(getI18n("en", false));
 
 export interface SplitPaneProps extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
   /** One child per pane (two or more). `SplitPanePanel` lets you set `minSize`/`maxSize` per pane. */
@@ -125,7 +129,7 @@ export function SplitPane({
   style,
   ...props
 }: SplitPaneProps): ReactElement {
-  const l = { ...defaultSplitPaneLabels, ...labels };
+  const l = useLabels(splitPaneLabelsFor, labels);
   const panes = Children.toArray(children);
   const count = panes.length;
   const horizontal = direction === "horizontal";

@@ -4,6 +4,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "../../primitives/popove
 import { CheckIcon, ChevronDownIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import type { KeyboardEvent, ReactElement } from "react";
 import { useId, useMemo, useRef, useState } from "react";
+import { useIntegratedI18n } from "../../i18n/locale";
 
 export interface TreeSelectNode {
   value: string;
@@ -176,18 +177,24 @@ export function TreeSelect({
   nodes,
   value,
   onChange,
-  placeholder = "Select…",
-  searchPlaceholder = "Search…",
-  emptyMessage = "No matches.",
+  placeholder: placeholderProp,
+  searchPlaceholder: searchPlaceholderProp,
+  emptyMessage: emptyMessageProp,
   valueLabel = null,
   disabled = false,
   loading = false,
-  loadingMessage = "Loading…",
+  loadingMessage: loadingMessageProp,
   errorMessage = null,
   onRetry,
-  retryLabel = "Retry",
+  retryLabel: retryLabelProp,
   "data-testid": testId,
 }: TreeSelectProps): ReactElement {
+  const { t } = useIntegratedI18n();
+  const placeholder = placeholderProp ?? t("combobox.placeholder");
+  const searchPlaceholder = searchPlaceholderProp ?? t("combobox.searchPlaceholder");
+  const emptyMessage = emptyMessageProp ?? t("combobox.emptyMessage");
+  const loadingMessage = loadingMessageProp ?? t("combobox.loadingMessage");
+  const retryLabel = retryLabelProp ?? t("treeSelect.retry");
   const treeId = useId();
   const treeRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);

@@ -9,6 +9,15 @@ runtime export of `src/index.ts` must appear here; `tests/catalog.test.ts`
 fails otherwise. Longer docs and examples: `docs-site/docs/ui/` and the
 repo's `AGENTS.md`.
 
+## Translations
+
+| Export | Use for |
+| --- | --- |
+| `BmsLocaleProvider` | Sets the language of every built-in text once (`de`, `fr`, `it`, `en`, `nl`, `es`; `"de-CH"` works). `labels` props and text props still win. Without it everything stays English. |
+| `useIntegratedI18n` | `{ locale, language, t }` of the active locale, e.g. to translate your own strings with the built-in catalog or to pick a date format. |
+| `useFormatLocale` | The BCP 47 tag for number/date formatting: a component's `locale` prop, else the provider's, else `de-CH`. |
+| `LANGUAGES`, `resolveLanguage`, `formatMessage` | The supported languages, a tag -> language lookup (fallback `en`), and the `{placeholder}`/plural formatter. |
+
 ## Primitives (shadcn/ui on Radix)
 
 | Export | Use for |

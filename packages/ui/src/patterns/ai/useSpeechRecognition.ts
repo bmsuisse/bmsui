@@ -22,6 +22,9 @@ interface SpeechRecognitionEventLike {
  * Whatever backs it, finalized chunks and interim words must arrive through
  * `onresult` the same way the Web Speech API delivers them.
  */
+import { getI18n } from "../../i18n/locale";
+import type { Translate } from "../../i18n/messages";
+
 export interface SpeechRecognitionEngine {
   lang: string;
   continuous: boolean;
@@ -58,21 +61,21 @@ function browserEngine(): SpeechRecognitionEngine | null {
  * programmatic stop/unmount and would otherwise flash an alert on each one).
  * `onError` still receives the raw code, for callers who want to branch.
  */
-export function describeSpeechError(code: string): string | null {
+export function describeSpeechError(code: string, t: Translate = getI18n("en", false).t): string | null {
   switch (code) {
     case "aborted":
       return null;
     case "not-allowed":
     case "service-not-allowed":
-      return "Microphone access is blocked. Allow it in the browser's site settings and try again.";
+      return t("ai.speechBlocked");
     case "audio-capture":
-      return "No microphone was found.";
+      return t("ai.speechNoMic");
     case "no-speech":
-      return "No speech was detected.";
+      return t("ai.speechNoSpeech");
     case "network":
-      return "Speech recognition needs a network connection.";
+      return t("ai.speechNetwork");
     default:
-      return `Speech recognition failed (${code}).`;
+      return t("ai.speechFailed", { code });
   }
 }
 

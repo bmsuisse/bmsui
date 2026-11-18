@@ -809,6 +809,54 @@ dependencies. Docs: `docs-site/docs/ui/hooks.md`; tests:
   (`useSyncExternalStore`: hydration-safe, same-key hooks and other tabs stay
   in sync, never throws).
 
+### Built-in translations — `BmsLocaleProvider` (ui 0.30.0, #103)
+
+Every English default text of `@bmsuisse/ui` now has a built-in **de, fr, it,
+en, nl, es** translation (`src/i18n/locales/<lang>.json`, flat keys such as
+`pagination.next`, plural messages as `{ "one": "…", "other": "…" }`).
+`en.json` is the source of truth: its keys are the typed `MessageKey`, and
+`tests/i18n/catalog.test.ts` fails when a language lacks a key, uses a
+placeholder `en.json` doesn't have, drops `{count}`, or spells out a plural
+category the language doesn't have. The catalogs are imported statically.
+`@bmsuisse/datagrid` has its own copy of the small helper (`messages.ts`,
+`locale.tsx`) on purpose: the packages stay independent, a little duplicated
+code is accepted. The two contexts are separate: an app using both wraps in
+both `BmsLocaleProvider`s (or gives each grid a `locale`).
+
+- `<BmsLocaleProvider locale="de-CH">` once at the app root. No provider =
+  English texts, exactly as before. Only the *language* of the tag picks the
+  texts. `useIntegratedI18n()` gives `{ locale, language, t }`.
+- Every `default<Name>Labels` is now `<name>LabelsFor(i18n)` (internal) +
+  `default<Name>Labels = <name>LabelsFor(en)` (exported, unchanged strings);
+  components call `useLabels(<name>LabelsFor, labels)`: locale text, then the
+  caller's `labels` on top (keys passed as `undefined` never blank a text).
+  Text props that used to default to English (`confirmLabel`, `placeholder`,
+  `emptyMessage`, `clearLabel`, …) default to the locale's text now and still
+  win when given.
+- **No new required key on a `*Labels` interface.** Apps build complete
+  objects of these types from their own i18n (`ErrorStateLabels`,
+  `DateInputLabels`, `DateRangePickerLabels`, …); a new required key breaks
+  their typecheck. Texts that aren't in a label object come from `t()`
+  directly, and new label keys must be optional (`removeItem?`, `removeFile?`,
+  `downloadFile?`, `ratingValue?`). The derived texts (`removeItem`, `removeFile`, `downloadFile`) are *not*
+  part of the built-in label objects: a caller who spreads `defaultChipLabels`
+  and rewords only `remove` keeps "<remove> <text>", everyone else gets the
+  locale's full sentence.
+- **Number/date formatting locale.** Components with a `locale` prop used to
+  default to `"de-CH"`. They now resolve `locale` prop > provider's locale >
+  `"de-CH"` (`useFormatLocale`), so `<BmsLocaleProvider locale="fr-CH">` also
+  switches number and date formats; without a provider nothing changes.
+- Hooks must run before a component's early `return` (`ErrorState`,
+  `InlineError` had `if (!info) return null` before `useLabels`); a hook inside
+  JSX (`label ?? useLabels(...).x`) is a conditional hook, hoist it.
+- Plain functions that return texts (`toErrorInfo`, `describeSpeechError`)
+  take the translated fallback / a `t` as an optional parameter.
+- Not translated yet: key caps (`Esc`, `Ctrl`), the `dd.mm.yyyy` date
+  placeholder letters, AM/PM, `PageHeader` badge words (`alpha`, `beta`),
+  `AnimatedBrand` demo labels, and `formatToolDuration`/`formatBytes` units.
+- To add a text: key in `en.json`, then in the other five files (the test says
+  what is missing), then `t("ns.key", params)` via the component's factory.
+
 ### Visual QA round 5 notes (ui 0.25.4 / datagrid 0.43.4)
 
 - Active row tint is `bg-primary/20 dark:bg-ring/25` (dark `--primary` is navy).

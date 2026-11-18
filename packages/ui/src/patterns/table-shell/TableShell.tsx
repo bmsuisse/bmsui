@@ -2,6 +2,8 @@ import type { HTMLAttributes, ReactElement, ReactNode } from "react";
 import { cn } from "../../lib/utils";
 import { SearchBar, type SearchBarProps } from "../search-bar/SearchBar";
 import { PageHeader, type PageHeaderProps } from "../page-header/PageHeader";
+import { getI18n, useLabels, useFormatLocale } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export interface TableShellProps extends Omit<HTMLAttributes<HTMLElement>, "children"> {
   /** Top band: usually a `TableToolbar` (search, filters, actions). */
@@ -169,11 +171,13 @@ export interface TableResultCountLabels {
   more: (count: string) => string;
 }
 
-export const defaultTableResultCountLabels: TableResultCountLabels = {
-  total: (count) => `${count} results`,
-  filtered: (shown, total) => `${shown} of ${total}`,
-  more: (count) => `${count}+ loaded`,
-};
+export const tableResultCountLabelsFor = ({ t }: IntegratedI18n): TableResultCountLabels => ({
+  total: (count) => t("tableResultCount.total", { count }),
+  filtered: (shown, total) => t("tableResultCount.filtered", { shown, total }),
+  more: (count) => t("tableResultCount.more", { count }),
+});
+
+export const defaultTableResultCountLabels: TableResultCountLabels = tableResultCountLabelsFor(getI18n("en", false));
 
 export interface TableResultCountProps extends HTMLAttributes<HTMLSpanElement> {
   /** Rows currently shown (after filters). */
@@ -196,14 +200,15 @@ export function TableResultCount({
   shown,
   total,
   hasMore = false,
-  locale = "de-CH",
+  locale: localeProp,
   labels,
   className,
   "data-testid": dataTestId,
   testId,
   ...props
 }: TableResultCountProps): ReactElement {
-  const l = { ...defaultTableResultCountLabels, ...labels };
+  const locale = useFormatLocale(localeProp);
+  const l = useLabels(tableResultCountLabelsFor, labels);
   const fmt = new Intl.NumberFormat(locale);
   const filtered = total != null && total !== shown;
   return (

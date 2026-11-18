@@ -14,6 +14,8 @@ import { useMergedRefs } from "../../hooks/useMergedRefs";
 import { cn } from "../../lib/utils";
 import { Button } from "../../primitives/button";
 import { Textarea } from "../../primitives/textarea";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export interface PromptInputLabels {
   /** Accessible name of the text field. */
@@ -23,12 +25,14 @@ export interface PromptInputLabels {
   stop: string;
 }
 
-export const defaultPromptInputLabels: PromptInputLabels = {
-  message: "Message",
-  placeholder: "Write a message…",
-  send: "Send",
-  stop: "Stop",
-};
+export const promptInputLabelsFor = ({ t }: IntegratedI18n): PromptInputLabels => ({
+  message: t("promptInput.message"),
+  placeholder: t("promptInput.placeholder"),
+  send: t("promptInput.send"),
+  stop: t("promptInput.stop"),
+});
+
+export const defaultPromptInputLabels: PromptInputLabels = promptInputLabelsFor(getI18n("en", false));
 
 export interface PromptInputProps extends Omit<FormHTMLAttributes<HTMLFormElement>, "onSubmit" | "onChange" | "children"> {
   value?: string;
@@ -91,7 +95,7 @@ export const PromptInput = forwardRef<HTMLFormElement, PromptInputProps>(
     },
     ref,
   ) => {
-    const l = { ...defaultPromptInputLabels, ...labels };
+    const l = useLabels(promptInputLabelsFor, labels);
     const controlled = valueProp !== undefined;
     const [inner, setInner] = useState(defaultValue);
     const value = controlled ? valueProp : inner;

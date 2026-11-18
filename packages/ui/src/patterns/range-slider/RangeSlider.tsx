@@ -3,16 +3,20 @@ import { formatLocaleNumber } from "../../lib/numberField";
 import { cn } from "../../lib/utils";
 import { Slider } from "../../primitives/slider";
 import { NumberInput } from "../number-input/NumberInput";
+import { getI18n, useLabels, useFormatLocale } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export interface RangeSliderLabels {
   min: string;
   max: string;
 }
 
-export const defaultRangeSliderLabels: RangeSliderLabels = {
-  min: "Minimum",
-  max: "Maximum",
-};
+export const rangeSliderLabelsFor = ({ t }: IntegratedI18n): RangeSliderLabels => ({
+  min: t("rangeSlider.min"),
+  max: t("rangeSlider.max"),
+});
+
+export const defaultRangeSliderLabels: RangeSliderLabels = rangeSliderLabelsFor(getI18n("en", false));
 
 export interface RangeSliderProps {
   /** `[low, high]`, both within `min`…`max`. */
@@ -58,7 +62,7 @@ export function RangeSlider({
   step = 1,
   minStepsBetween = 0,
   showInputs = true,
-  locale = "de-CH",
+  locale: localeProp,
   decimals,
   unit,
   disabled,
@@ -67,7 +71,8 @@ export function RangeSlider({
   className,
   ...props
 }: RangeSliderProps): ReactElement {
-  const l = { ...defaultRangeSliderLabels, ...labels };
+  const locale = useFormatLocale(localeProp);
+  const l = useLabels(rangeSliderLabelsFor, labels);
   const testId = props["data-testid"];
   const [low, high] = value;
   const gap = minStepsBetween * step;

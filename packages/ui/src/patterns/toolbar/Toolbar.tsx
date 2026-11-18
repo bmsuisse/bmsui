@@ -29,13 +29,19 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../../primitives/dropdown-menu";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export interface ToolbarLabels {
   /** Accessible name of the overflow ("…") button. */
   more: string;
 }
 
-export const defaultToolbarLabels: ToolbarLabels = { more: "More actions" };
+export const toolbarLabelsFor = ({ t }: IntegratedI18n): ToolbarLabels => ({
+  more: t("toolbar.more"),
+});
+
+export const defaultToolbarLabels: ToolbarLabels = toolbarLabelsFor(getI18n("en", false));
 
 export interface ToolbarProps extends HTMLAttributes<HTMLDivElement> {
   /** Name the toolbar for screen readers ("Text formatting"). */
@@ -81,7 +87,7 @@ export function Toolbar({
   onFocus,
   ...props
 }: ToolbarProps): ReactElement {
-  const l = { ...defaultToolbarLabels, ...labels };
+  const l = useLabels(toolbarLabelsFor, labels);
   const rootRef = useRef<HTMLDivElement>(null);
   const activeRef = useRef<HTMLElement | null>(null);
   const vertical = orientation === "vertical";

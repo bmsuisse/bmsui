@@ -3,6 +3,8 @@ import type { ReactElement } from "react";
 import { cn } from "../../lib/utils";
 import type { FacetDefinition, FacetFilterValue } from "./FacetFilter";
 import { parseFacetRange } from "./rangeFacets";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export interface ActiveFacetsLabels {
   /** Button that clears everything. */
@@ -13,11 +15,13 @@ export interface ActiveFacetsLabels {
   listLabel: string;
 }
 
-export const defaultActiveFacetsLabels: ActiveFacetsLabels = {
-  clearAll: "Clear all",
-  remove: (label) => `Remove ${label}`,
-  listLabel: "Active filters",
-};
+export const activeFacetsLabelsFor = ({ t }: IntegratedI18n): ActiveFacetsLabels => ({
+  clearAll: t("activeFacets.clearAll"),
+  remove: (label) => t("activeFacets.remove", { label }),
+  listLabel: t("activeFacets.listLabel"),
+});
+
+export const defaultActiveFacetsLabels: ActiveFacetsLabels = activeFacetsLabelsFor(getI18n("en", false));
 
 export interface ActiveFacetsProps {
   facets: FacetDefinition[];
@@ -51,7 +55,7 @@ export function ActiveFacets({
   labels: labelOverrides,
   className,
 }: ActiveFacetsProps): ReactElement | null {
-  const labels = { ...defaultActiveFacetsLabels, ...labelOverrides };
+  const labels = useLabels(activeFacetsLabelsFor, labelOverrides);
   const chips = facets.flatMap((facet) =>
     (value[facet.key] ?? []).map((selected) => ({ facet, selected, text: textOf(facet, selected) })),
   );

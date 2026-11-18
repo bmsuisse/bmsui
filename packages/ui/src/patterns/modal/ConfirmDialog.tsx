@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Button } from "../../primitives/button";
 import { DialogActions } from "./DialogActions";
 import { Modal } from "./Modal";
+import { useIntegratedI18n } from "../../i18n/locale";
 
 export interface ConfirmDialogProps {
   /** Whether the dialog is open. Fully controlled — no internal open state. */
@@ -40,13 +41,16 @@ export const ConfirmDialog = ({
   onOpenChange,
   title,
   description,
-  confirmLabel = "Confirm",
-  cancelLabel = "Cancel",
+  confirmLabel: confirmLabelProp,
+  cancelLabel: cancelLabelProp,
   onConfirm,
   variant = "default",
   confirmTestId,
   cancelTestId,
 }: ConfirmDialogProps): ReactElement => {
+  const { t } = useIntegratedI18n();
+  const confirmLabel = confirmLabelProp ?? t("modal.confirm");
+  const cancelLabel = cancelLabelProp ?? t("modal.cancel");
   const [pending, setPending] = useState(false);
 
   const handleCancel = (): void => {

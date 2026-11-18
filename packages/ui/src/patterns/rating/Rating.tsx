@@ -3,6 +3,8 @@ import { StarIcon as StarSolid } from "@heroicons/react/24/solid";
 import type { HTMLAttributes, KeyboardEvent, ReactElement } from "react";
 import { useRef, useState } from "react";
 import { cn } from "../../lib/utils";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export interface RatingLabels {
   /** Accessible name of the group when no `aria-label`/`aria-labelledby` is given. */
@@ -17,12 +19,15 @@ export interface RatingLabels {
   ratingValue?: (label: string | undefined, valueText: string) => string;
 }
 
-export const defaultRatingLabels: RatingLabels = {
-  rating: "Rating",
-  star: (value, max) => `${value} of ${max} ${max === 1 ? "star" : "stars"}`,
-  valueText: (value, max) => `${value} out of ${max}`,
-  unrated: "Not rated",
-};
+export const ratingLabelsFor = ({ t }: IntegratedI18n): RatingLabels => ({
+  rating: t("rating.rating"),
+  star: (value, max) => t("rating.star", { value, max }),
+  valueText: (value, max) => t("rating.valueText", { value, max }),
+  unrated: t("rating.unrated"),
+  ratingValue: (label, valueText) => (label ? t("rating.ratingValue", { label, text: valueText }) : valueText),
+});
+
+export const defaultRatingLabels: RatingLabels = ratingLabelsFor(getI18n("en", false));
 
 export interface RatingProps extends Omit<HTMLAttributes<HTMLDivElement>, "onChange" | "defaultValue"> {
   /** Current rating, `0` = none. Half steps (`3.5`) need `allowHalf`. Omit with `defaultValue` for an uncontrolled field. */
@@ -74,7 +79,7 @@ export function Rating({
   onMouseLeave,
   ...props
 }: RatingProps): ReactElement {
-  const l = { ...defaultRatingLabels, ...labels };
+  const l = useLabels(ratingLabelsFor, labels);
   const [inner, setInner] = useState(defaultValue);
   const current = Math.min(max, Math.max(0, round(value ?? inner)));
   const [hover, setHover] = useState<number | null>(null);

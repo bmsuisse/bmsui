@@ -9,7 +9,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../../primitives/dialog";
-import { KeyCombo, type KeyComboLabels } from "./Kbd";
+import { KeyCombo, type KeyComboLabels, keyComboLabelsFor } from "./Kbd";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export interface Shortcut {
   /** Stable key; defaults to the joined keys. */
@@ -33,12 +35,16 @@ export interface ShortcutSheetLabels extends KeyComboLabels {
   description: string;
 }
 
-export const defaultShortcutSheetLabels: ShortcutSheetLabels = {
-  title: "Keyboard shortcuts",
-  description: "Shortcuts don't fire while you type in a field.",
-  then: "then",
-  or: "or",
+export const shortcutSheetLabelsFor = (i18n: IntegratedI18n): ShortcutSheetLabels => {
+  const { t } = i18n;
+  return {
+    ...keyComboLabelsFor(i18n),
+    title: t("shortcutSheet.title"),
+    description: t("shortcutSheet.description"),
+  };
 };
+
+export const defaultShortcutSheetLabels: ShortcutSheetLabels = shortcutSheetLabelsFor(getI18n("en", false));
 
 export interface ShortcutSheetProps {
   open: boolean;
@@ -66,7 +72,7 @@ export const ShortcutSheet = ({
   labels,
   className,
 }: ShortcutSheetProps): ReactElement => {
-  const l = { ...defaultShortcutSheetLabels, ...labels };
+  const l = useLabels(shortcutSheetLabelsFor, labels);
   const baseId = useId();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

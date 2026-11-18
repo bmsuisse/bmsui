@@ -11,12 +11,13 @@ import {
   DateInputMessage,
   type DateInputError,
   type DateInputProps,
-  defaultDateInputLabels,
+  dateInputLabelsFor,
   errorMessage,
   invalidClass,
   toDay,
   useCoarsePointer,
 } from "./shared";
+import { useLabels, useFormatLocale } from "../../i18n/locale";
 
 export type { DateInputError, DateInputLabels, DateInputProps } from "./shared";
 export { defaultDateInputLabels } from "./shared";
@@ -63,7 +64,7 @@ const TypedDateInput = forwardRef<HTMLInputElement, DateInputProps>(
       value,
       onValueChange,
       onInvalidChange,
-      locale = "de-CH",
+      locale: localeProp,
       min,
       max,
       showError = true,
@@ -88,7 +89,8 @@ const TypedDateInput = forwardRef<HTMLInputElement, DateInputProps>(
     },
     ref,
   ) => {
-    const l = { ...defaultDateInputLabels, ...labels };
+    const locale = useFormatLocale(localeProp);
+    const l = useLabels(dateInputLabelsFor, labels);
     const minDay = toDay(min);
     const maxDay = toDay(max);
     const [text, setText] = useState(() => formatIsoDay(value, locale));

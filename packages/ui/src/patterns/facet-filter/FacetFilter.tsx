@@ -21,6 +21,8 @@ export {
   parseFacetRange,
 } from "./rangeFacets";
 import { Switch } from "../../primitives/switch";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export interface FacetOption {
   value: string;
@@ -114,22 +116,24 @@ export interface FacetFilterLabels {
   optionCount: (count: string) => string;
 }
 
-export const defaultFacetFilterLabels: FacetFilterLabels = {
-  showMore: (hidden) => `Show ${hidden} more`,
-  showLess: "Show less",
-  reset: "Reset filters",
-  loadMore: "Load more",
-  loadingMore: "Loading…",
-  dropdownPlaceholder: (facetLabel) => `Select ${facetLabel.toLowerCase()}`,
-  rangeMin: "Minimum",
-  rangeMax: "Maximum",
-  clear: "Clear",
-  clearFacet: (facetLabel) => `Clear ${facetLabel.toLowerCase()}`,
-  selectedCount: (count) => `${count} selected`,
-  searchPlaceholder: (facetLabel) => `Search ${facetLabel.toLowerCase()}`,
-  noMatches: "No matches",
-  optionCount: (count) => `${count} results`,
-};
+export const facetFilterLabelsFor = ({ t }: IntegratedI18n): FacetFilterLabels => ({
+  showMore: (hidden) => t("facetFilter.showMore", { hidden }),
+  showLess: t("facetFilter.showLess"),
+  reset: t("facetFilter.reset"),
+  loadMore: t("facetFilter.loadMore"),
+  loadingMore: t("facetFilter.loadingMore"),
+  dropdownPlaceholder: (facetLabel) => t("facetFilter.dropdownPlaceholder", { facetLabel }),
+  rangeMin: t("facetFilter.rangeMin"),
+  rangeMax: t("facetFilter.rangeMax"),
+  clear: t("facetFilter.clear"),
+  clearFacet: (facetLabel) => t("facetFilter.clearFacet", { facetLabel }),
+  selectedCount: (n) => t("facetFilter.selectedCount", { count: n }),
+  searchPlaceholder: (facetLabel) => t("facetFilter.searchPlaceholder", { facetLabel }),
+  noMatches: t("facetFilter.noMatches"),
+  optionCount: (count) => t("facetFilter.optionCount", { count }),
+});
+
+export const defaultFacetFilterLabels: FacetFilterLabels = facetFilterLabelsFor(getI18n("en", false));
 
 /** Whether a facet has anything to show: options, a custom body, or a range/date control. */
 const hasBody = (facet: FacetDefinition): boolean =>
@@ -177,7 +181,7 @@ export function FacetGroup({
   labels: labelOverrides,
   className,
 }: FacetGroupProps): ReactElement {
-  const labels = { ...defaultFacetFilterLabels, ...labelOverrides };
+  const labels = useLabels(facetFilterLabelsFor, labelOverrides);
   const headingId = useId();
   const listId = useId();
   const [expanded, setExpanded] = useState(false);
@@ -443,7 +447,7 @@ export function FacetFilter({
   labels: labelOverrides,
   ...shared
 }: FacetFilterProps): ReactElement {
-  const labels = { ...defaultFacetFilterLabels, ...labelOverrides };
+  const labels = useLabels(facetFilterLabelsFor, labelOverrides);
   const active = countActiveFacets(value);
 
   const setSelected = (key: string, next: string[]): void => {

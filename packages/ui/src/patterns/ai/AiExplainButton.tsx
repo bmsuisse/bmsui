@@ -5,6 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "../../primitives/popove
 import { ErrorState } from "../error-state/ErrorState";
 import { LoadingSpinner } from "../loading-spinner/LoadingSpinner";
 import { AiButton, type AiButtonProps } from "./AiButton";
+import { useIntegratedI18n } from "../../i18n/locale";
 
 export interface AiExplainButtonProps
   extends Omit<AiButtonProps, "children" | "onClick" | "loading" | "title" | "aria-busy"> {
@@ -33,13 +34,15 @@ export interface AiExplainButtonProps
  */
 export function AiExplainButton({
   onExplain,
-  label = "Explain",
+  label: labelProp,
   title,
   align = "start",
   contentClassName = "w-80",
   size = "sm",
   ...props
 }: AiExplainButtonProps): ReactElement {
+  const { t } = useIntegratedI18n();
+  const label = labelProp ?? t("ai.explain");
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [content, setContent] = useState<ReactNode | null>(null);
@@ -77,13 +80,13 @@ export function AiExplainButton({
           {title ?? label}
         </p>
         {loading ? (
-          <LoadingSpinner size="sm" label="Thinking…" className="text-sm text-muted-foreground" />
+          <LoadingSpinner size="sm" label={t("ai.thinking")} className="text-sm text-muted-foreground" />
         ) : error ? (
           <ErrorState
             variant="compact"
             error={error}
             onRetry={() => void load()}
-            labels={{ title: "Something went wrong", retry: "Try again" }}
+            labels={{ title: t("ai.errorTitle"), retry: t("ai.tryAgain") }}
           />
         ) : (
           <div className="max-h-80 overflow-y-auto text-sm leading-relaxed">{content}</div>

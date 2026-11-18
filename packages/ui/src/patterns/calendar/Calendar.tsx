@@ -15,6 +15,8 @@ import {
 import { toLocalIsoDay } from "../../lib/dateField";
 import { animate, EASE_OUT, prefersReducedMotion } from "../../lib/motion";
 import { cn } from "../../lib/utils";
+import { getI18n, useLabels, useFormatLocale } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 /** A day range as ISO days; `""` for an open end. */
 export interface DateRange {
@@ -27,10 +29,12 @@ export interface CalendarLabels {
   nextMonth: string;
 }
 
-export const defaultCalendarLabels: CalendarLabels = {
-  previousMonth: "Previous month",
-  nextMonth: "Next month",
-};
+export const calendarLabelsFor = ({ t }: IntegratedI18n): CalendarLabels => ({
+  previousMonth: t("calendar.previousMonth"),
+  nextMonth: t("calendar.nextMonth"),
+});
+
+export const defaultCalendarLabels: CalendarLabels = calendarLabelsFor(getI18n("en", false));
 
 interface CalendarBaseProps {
   /** Earliest selectable ISO day. */
@@ -95,7 +99,7 @@ const clampIso = (iso: string, min?: string, max?: string) =>
 export function Calendar(props: CalendarProps): ReactElement {
   const {
     isDateDisabled,
-    locale = "de-CH",
+    locale: localeProp,
     weekStartsOn,
     month: controlledMonth,
     onMonthChange,
@@ -105,7 +109,8 @@ export function Calendar(props: CalendarProps): ReactElement {
     animated = true,
     className,
   } = props;
-  const l = { ...defaultCalendarLabels, ...labels };
+  const locale = useFormatLocale(localeProp);
+  const l = useLabels(calendarLabelsFor, labels);
   // Compare ISO days only, so ISO datetimes (`2026-11-05T00:00:00`) work too.
   const min = props.min?.slice(0, 10);
   const max = props.max?.slice(0, 10);

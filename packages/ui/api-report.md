@@ -7,7 +7,7 @@ Every public export with its kind and signature. Interfaces and object types
 list their own members one per line (inherited members come from the `extends`
 clause), so the diff of this file shows exactly what changed in the public API.
 
-## Components (235)
+## Components (236)
 
 ```text
 const Accordion: react.ForwardRefExoticComponent<AccordionProps & react.RefAttributes<HTMLDivElement>>
@@ -28,6 +28,7 @@ const AvatarGroup: (props: AvatarGroupProps) => ReactElement
 const Badge: (props: BadgeProps) => ReactElement
 const Banner: react.ForwardRefExoticComponent<BannerProps & react.RefAttributes<HTMLDivElement>>
 const BannerAction: react.ForwardRefExoticComponent<ButtonHTMLAttributes<HTMLButtonElement> & react.RefAttributes<HTMLButtonElement>>
+function BmsLocaleProvider(props: { locale: string; children: ReactNode }): ReactElement
 const BottomNavigation: react.ForwardRefExoticComponent<BottomNavigationProps & react.RefAttributes<HTMLElement>>
 const BottomNavigationAction: react.ForwardRefExoticComponent<BottomNavigationActionProps & react.RefAttributes<HTMLButtonElement>>
 function Breadcrumbs(props: BreadcrumbsProps): ReactElement
@@ -247,7 +248,7 @@ const VoiceInputButton: react.ForwardRefExoticComponent<VoiceInputButtonProps & 
 function VoiceTranscript(props: VoiceTranscriptProps): ReactElement
 ```
 
-## Hooks (17)
+## Hooks (19)
 
 ```text
 function useAnnounce(): (message: string, options?: AnnounceOptions) => void
@@ -255,7 +256,9 @@ function useClipboard(options?: UseClipboardOptions): UseClipboardResult
 function useCommandPaletteHotkey(handler: () => void, options?: UseCommandPaletteHotkeyOptions): void
 function useDelayedFlag(active: boolean, delayMs?: number): boolean
 function useFocusTrap<T extends HTMLElement = HTMLElement>(options?: UseFocusTrapOptions): RefCallback<T>
+function useFormatLocale(locale?: string): string
 function useHotkeys(hotkeys: Hotkey[], options?: UseHotkeysOptions): void
+function useIntegratedI18n(locale?: string): IntegratedI18n
 function useLocalStorageState<T>(key: string, defaultValue: T, options?: UseLocalStorageStateOptions<T>): [T, SetLocalStorageState<T>, () => void]
 function useLongPress(callback: (event: PointerEvent<Element>) => void, options?: UseLongPressOptions): LongPressHandlers
 function useMediaQuery(query: string): boolean
@@ -269,18 +272,18 @@ function useSidebarCollapsed(): boolean
 function useSpeechRecognition(props?: UseSpeechRecognitionOptions): SpeechRecognitionState
 ```
 
-## Functions (48)
+## Functions (50)
 
 ```text
 function announce(message: string, options?: AnnounceOptions): void
 function avatarColorIndex(name: string): number
 const badgeVariants: (props?: ({ variant?: "default" | "outline" | "destructive" | "secondary" | "warning" | null | undefined } & class_variance_authority_types.ClassProp) | undefined) => string
-const buttonVariants: (props?: ({ variant?: "default" | "outline" | "ghost" | "destructive" | "secondary" | "link" | "swiss-primary" | "swiss-secondary" | "ai" | "ai-subtle" | "ai-ghost" | null | undefined; size?: "default" | "xs" | "sm" | "lg" | "icon" | "icon-xs" | "icon-sm" | "icon-lg" | null | undefined } & class_variance_authority_types.ClassProp) | undefined) => string
+const buttonVariants: (props?: ({ variant?: "link" | "default" | "outline" | "ghost" | "destructive" | "secondary" | "swiss-primary" | "swiss-secondary" | "ai" | "ai-subtle" | "ai-ghost" | null | undefined; size?: "default" | "xs" | "sm" | "lg" | "icon" | "icon-xs" | "icon-sm" | "icon-lg" | null | undefined } & class_variance_authority_types.ClassProp) | undefined) => string
 function chipClass(props?: ChipClassOptions): string
 function cn(...inputs: ClassValue[]): string
 function countActiveFacets(value: FacetFilterValue): number
 function datePlaceholder(locale: string): string
-function describeSpeechError(code: string): string | null
+function describeSpeechError(code: string, t?: Translate): string | null
 function formatCommandPaletteShortcut(key?: string): string
 function formatFacetRange(low: string | number | undefined, high: string | number | undefined): string
 function formatFileSize(bytes: number, locale?: string, units?: readonly string[]): string
@@ -288,6 +291,7 @@ function formatHotkey(keys: string, platform?: "mac" | "other"): string
 function formatIsoDay(iso: string, locale: string): string
 function formatKey(key: string, mac?: boolean): string
 function formatLocaleNumber(value: number | null, locale: string, options?: FormatNumberOptions): string
+function formatMessage(message: Message, tag: string, params?: MessageParams): string
 function formatRelativeTime(date: Date, now: Date, locale: string, style?: RelativeTimeStyle): string
 function formatSwissPhone(value: string): string
 function formatTime(value: string, locale: string): string
@@ -299,7 +303,7 @@ function getSourceDomain(source: Pick<CitationSource, "url" | "domain">): string
 function isMacPlatform(): boolean
 function isValidEmail(text: string): boolean
 function isWindowsPlatform(): boolean
-const linkVariants: (props?: ({ variant?: "default" | "inline" | "subtle" | null | undefined } & class_variance_authority_types.ClassProp) | undefined) => string
+const linkVariants: (props?: ({ variant?: "inline" | "default" | "subtle" | null | undefined } & class_variance_authority_types.ClassProp) | undefined) => string
 const loadingSpinnerIconVariants: (props?: ({ size?: "default" | "sm" | "lg" | null | undefined } & class_variance_authority_types.ClassProp) | undefined) => string
 function matchesAccept(file: File, accept?: string): boolean
 function normalizePhone(value: string): string
@@ -309,23 +313,25 @@ function parseIsoDay(text: string, locale: string): string | null
 function parseLocaleNumber(text: string, locale: string, formatOptions?: Intl.NumberFormatOptions): number | null
 function parseTime(text: string): string | null
 function resetToasts(): void
+function resolveLanguage(tag: string | undefined): BmsLanguage
 function resolveScoreTone(percent: number, thresholds?: ScoreThreshold[]): StatusTone
 function scoreCommand(query: string, label: string, keywords?: readonly string[]): number
 const sheetVariants: (props?: ({ side?: "top" | "right" | "bottom" | "left" | null | undefined } & class_variance_authority_types.ClassProp) | undefined) => string
 function shiftIsoDay(iso: string, by: { days?: number; months?: number }): string
 function shiftTime(value: string, by: number, min?: string, max?: string): string
 function timePlaceholder(locale: string): string
-function toErrorInfo(error: unknown): ErrorInfo | undefined
+function toErrorInfo(error: unknown, unknownMessage?: string): ErrorInfo | undefined
 function toLocalIsoDateTime(d: Date): string
 function toLocalIsoDay(d: Date): string
 function toTime(value: string | undefined): string
 const toast: typeof show & { info: (message: string, options?: ToneOptions) => number; success: (message: string, options?: ToneOptions) => number; warning: (message: string, options?: ToneOptions) => number; error: (message: string, options?: ToneOptions) => number; dismiss: typeof dismissToast }
 ```
 
-## Constants (52)
+## Constants (53)
 
 ```text
 const BRAND_ANIMATIONS: readonly [{ readonly id: "bounce"; readonly label: "Bounce home" }, { readonly id: "orbit"; readonly label: "Orbit and settle" }, { readonly id: "impact"; readonly label: "Shot in, boom" }, { readonly id: "liquid"; readonly label: "Liquid split" }, { readonly id: "signature"; readonly label: "Solid to signature" }, { readonly id: "burst"; readonly label: "Big bang, small dot" }, { readonly id: "gravity"; readonly label: "Gravity press" }]
+const LANGUAGES: readonly ["de", "fr", "it", "en", "nl", "es"]
 const MAX_TOASTS: 3
 const defaultActiveFacetsLabels: ActiveFacetsLabels
 const defaultApprovalCardLabels: ApprovalCardLabels
@@ -379,7 +385,7 @@ const defaultToolbarLabels: ToolbarLabels
 const defaultTreeViewLabels: TreeViewLabels
 ```
 
-## Interfaces (237)
+## Interfaces (238)
 
 ```text
 interface AccordionTriggerProps extends ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger>
@@ -1129,6 +1135,7 @@ interface FileInputLabels
   prompt: string
   promptSingle: string
   remove: string
+  removeFile?: (fileName: string) => string
   tooLarge: (fileName: string, maxSize: string) => string
   tooMany: (maxFiles: number) => string
   wrongType: (fileName: string) => string
@@ -1223,6 +1230,11 @@ interface InlineErrorProps extends Omit<HTMLAttributes<HTMLSpanElement>, "title"
   wrap?: boolean
 interface InputGroupProps extends HTMLAttributes<HTMLDivElement>
   size?: InputGroupSize
+interface IntegratedI18n
+  explicit: boolean
+  language: BmsLanguage
+  locale: string
+  t: Translate
 interface JsonViewLabels extends CopyIconButtonLabels
   copyNamed: (label: string) => string
   items: (n: number) => string
@@ -2157,7 +2169,7 @@ interface VoiceTranscriptProps extends Omit<HTMLAttributes<HTMLDivElement>, "onC
   value: string
 ```
 
-## Types (48)
+## Types (52)
 
 ```text
 type AccordionContentProps = ComponentPropsWithoutRef<typeof AccordionPrimitive.Content>
@@ -2171,6 +2183,7 @@ type AnnouncePoliteness = "polite" | "assertive"
 type ApprovalStatus = "pending" | "approved" | "rejected"
 type AvatarSize = "xs" | "sm" | "md" | "lg" | "xl"
 type BannerTone = "neutral" | "info" | "warning" | "brand" | "danger"
+type BmsLanguage = (typeof LANGUAGES)[number]
 type BrandAnimation = (typeof BRAND_ANIMATIONS)[number]["id"]
 type BrandMode = "full" | "mark" | "one"
 type CalendarProps = CalendarSingleProps | CalendarRangeProps
@@ -2189,6 +2202,8 @@ type InputProps = InputHTMLAttributes<HTMLInputElement>
 type MailDirection = "inbound" | "outbound" | "note"
 type MailEventTone = "neutral" | "success" | "warning" | "danger"
 type MailMessageStatus = "sent" | "sending" | "failed" | "bounced" | "draft"
+type MessageKey = keyof typeof en
+type MessageParams = Record<string, string | number>
 type NavItemProps<T extends ElementType = "a"> = Omit<ComponentPropsWithoutRef<T>, "as" | "className"> & {…}
   active?: boolean
   as?: T
@@ -2219,4 +2234,5 @@ type TimestampFormat = "relative" | "date" | "datetime" | "time"
 type ToastTone = "info" | "success" | "warning" | "error"
 type ToasterPosition = "bottom-center" | "bottom-left" | "bottom-right" | "top-center" | "top-left" | "top-right"
 type ToolCallStatus = "pending" | "running" | "done" | "error"
+type Translate = (key: MessageKey, params?: MessageParams) => string
 ```

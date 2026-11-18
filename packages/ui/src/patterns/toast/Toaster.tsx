@@ -8,6 +8,8 @@ import {
 import { type ComponentType, type ReactElement, type SVGProps, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { cn } from "../../lib/utils";
 import { DEFAULT_TOAST_DURATION, dismissToast, getServerToasts, getToasts, subscribeToasts, type ToastItem, type ToastTone } from "./toastStore";
+import { getI18n, useLabels } from "../../i18n/locale";
+import type { IntegratedI18n } from "../../i18n/locale";
 
 export type ToasterPosition =
   | "bottom-center"
@@ -23,10 +25,12 @@ export interface ToasterLabels {
   dismiss: string;
 }
 
-export const defaultToasterLabels: ToasterLabels = {
-  region: "Notifications",
-  dismiss: "Dismiss",
-};
+export const toasterLabelsFor = ({ t }: IntegratedI18n): ToasterLabels => ({
+  region: t("toaster.region"),
+  dismiss: t("toaster.dismiss"),
+});
+
+export const defaultToasterLabels: ToasterLabels = toasterLabelsFor(getI18n("en", false));
 
 export interface ToasterProps {
   /** Where the stack sits. Defaults to `bottom-center`. */
@@ -77,7 +81,7 @@ const toneIconClass: Record<ToastTone, string> = {
  */
 export const Toaster = ({ position = "bottom-center", duration, labels, className, animated = true }: ToasterProps): ReactElement => {
   const toasts = useSyncExternalStore(subscribeToasts, getToasts, getServerToasts);
-  const l = { ...defaultToasterLabels, ...labels };
+  const l = useLabels(toasterLabelsFor, labels);
   const top = position.startsWith("top");
   return (
     <section

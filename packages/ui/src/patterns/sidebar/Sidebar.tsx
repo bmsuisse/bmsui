@@ -12,6 +12,7 @@ import {
 import { cn } from "../../lib/utils";
 import { TooltipProvider } from "../../primitives/tooltip";
 import { SidebarContextProvider } from "./context";
+import { useIntegratedI18n } from "../../i18n/locale";
 
 function resolve<T>(value: T | ((collapsed: boolean) => T), collapsed: boolean): T {
   return typeof value === "function" ? (value as (collapsed: boolean) => T)(collapsed) : value;
@@ -67,6 +68,7 @@ export function Sidebar({
   children,
   className,
 }: SidebarProps): ReactElement {
+  const { t } = useIntegratedI18n();
   const [internalWidth, setInternalWidth] = useState(defaultWidth);
   const currentWidth = width ?? internalWidth;
   const [isDragging, setIsDragging] = useState(false);
@@ -121,7 +123,7 @@ export function Sidebar({
                 <button
                   type="button"
                   onClick={() => onCollapsedChange(!collapsed)}
-                  aria-label="Expand sidebar"
+                  aria-label={t("sidebar.expand")}
                   className="group relative flex h-9 w-9 shrink-0 items-center justify-center"
                 >
                   {header && (
@@ -141,7 +143,7 @@ export function Sidebar({
                     <button
                       type="button"
                       onClick={() => onCollapsedChange(!collapsed)}
-                      aria-label="Collapse sidebar"
+                      aria-label={t("sidebar.collapse")}
                       className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
                     >
                       <ChevronDoubleLeftIcon className="h-4 w-4" aria-hidden />
