@@ -224,7 +224,7 @@ class ComponentsTest extends TestCase
         $used = [];
         $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(dirname(__DIR__).'/resources/views'));
         foreach ($files as $f) {
-            if ($f->isFile() && preg_match_all("/__\(\s*['\"]([^'\"]+)['\"]/", file_get_contents($f->getPathname()), $m)) {
+            if ($f->isFile() && preg_match_all("/(?:__|trans_choice)\(\s*['\"]([^'\"]+)['\"]/", file_get_contents($f->getPathname()), $m)) {
                 $used = array_merge($used, $m[1]);
             }
         }
