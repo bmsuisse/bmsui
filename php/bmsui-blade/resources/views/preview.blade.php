@@ -161,6 +161,46 @@
     </x-bmsui::dialog>
     <x-bmsui::confirm-dialog id="pv-confirm" title="Konversation loeschen?" message="Die Konversation und alle Nachrichten werden endgueltig geloescht." confirm-label="Loeschen" cancel-label="Abbrechen" />
 
+    <h2>App shell: sidebar, page header, table shell, pagination, search</h2>
+    <div class="card" style="padding:0;display:flex;height:440px;overflow:hidden" data-pv-shell>
+        <x-bmsui::sidebar :collapsed="false">
+            <x-slot:header><x-bmsui::brand product="Desk" :size="22" /></x-slot:header>
+            <x-slot:mark><x-bmsui::brand mode="mark" :size="22" /></x-slot:mark>
+            <x-bmsui::nav-group id="mailboxes" label="Postfaecher" :collapsed="false">
+                <x-bmsui::nav-item label="Verkauf" href="#" :active="true" :count="12"><x-slot:icon><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.25 13.5h3.86a2.25 2.25 0 012.01 1.24l.27.54a2.25 2.25 0 002.01 1.24h3.2a2.25 2.25 0 002.01-1.24l.27-.54a2.25 2.25 0 012.01-1.24h3.86M2.25 13.5V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18v-4.5M2.25 13.5l2.6-7.8A2.25 2.25 0 017 4.5h10a2.25 2.25 0 012.14 1.2l2.6 7.8"/></svg></x-slot:icon></x-bmsui::nav-item>
+                <x-bmsui::nav-item label="Support" href="#" :count="3"><x-slot:icon><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.25 13.5h3.86a2.25 2.25 0 012.01 1.24l.27.54a2.25 2.25 0 002.01 1.24h3.2a2.25 2.25 0 002.01-1.24l.27-.54a2.25 2.25 0 012.01-1.24h3.86M2.25 13.5V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18v-4.5M2.25 13.5l2.6-7.8A2.25 2.25 0 017 4.5h10a2.25 2.25 0 012.14 1.2l2.6 7.8"/></svg></x-slot:icon></x-bmsui::nav-item>
+            </x-bmsui::nav-group>
+            <x-bmsui::nav-group id="admin" label="Verwaltung" :collapsed="false">
+                <x-bmsui::nav-item label="Benutzer" href="#"><x-slot:icon><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.12a7.5 7.5 0 0115 0A17.93 17.93 0 0112 21.75c-2.68 0-5.22-.58-7.5-1.63z"/></svg></x-slot:icon></x-bmsui::nav-item>
+                <x-bmsui::nav-item label="Berichte" href="#"><x-slot:icon><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13.13C3 12.5 3.5 12 4.13 12h2.25c.62 0 1.12.5 1.12 1.13v6.75c0 .62-.5 1.12-1.12 1.12H4.13C3.5 21 3 20.5 3 19.88v-6.75zM9.75 8.63c0-.63.5-1.13 1.13-1.13h2.25c.62 0 1.12.5 1.12 1.13v11.25c0 .62-.5 1.12-1.12 1.12h-2.25c-.63 0-1.13-.5-1.13-1.12V8.63zM16.5 4.13c0-.63.5-1.13 1.13-1.13h2.25C20.5 3 21 3.5 21 4.13v15.75c0 .62-.5 1.12-1.12 1.12h-2.25c-.63 0-1.13-.5-1.13-1.12V4.13z"/></svg></x-slot:icon></x-bmsui::nav-item>
+            </x-bmsui::nav-group>
+        </x-bmsui::sidebar>
+        <div style="flex:1;min-width:0;padding:16px;overflow:auto">
+            <x-bmsui::page-header title="Benutzer" description="Wer auf welche Postfaecher zugreifen darf." :breadcrumbs="[['label' => 'Verwaltung', 'href' => '#'], ['label' => 'Benutzer']]">
+                <x-slot:badge><x-bmsui::badge variant="secondary">24</x-bmsui::badge></x-slot:badge>
+                <x-slot:actions><x-bmsui::button size="sm">Benutzer einladen</x-bmsui::button></x-slot:actions>
+            </x-bmsui::page-header>
+            <x-bmsui::table-shell>
+                <x-slot:toolbar><x-bmsui::table-toolbar :count="24"><x-bmsui::search-bar placeholder="Benutzer suchen" value="an" /></x-bmsui::table-toolbar></x-slot:toolbar>
+                <x-bmsui::table caption="Benutzer">
+                    <thead><tr><th>Name</th><th>Rolle</th><th>Status</th><th class="is-num">Konversationen</th></tr></thead>
+                    <tbody>
+                        <tr><td>Anna Meier</td><td>Admin</td><td><x-bmsui::status-badge status="active" /></td><td class="is-num">1'204</td></tr>
+                        <tr><td>Peter Frei</td><td>Benutzer</td><td><x-bmsui::status-badge status="inactive" /></td><td class="is-num">87</td></tr>
+                    </tbody>
+                </x-bmsui::table>
+                <x-slot:footer><span>1&ndash;2 von 24</span><x-bmsui::pagination :page="1" :pages="12" url="?page={page}" /></x-slot:footer>
+            </x-bmsui::table-shell>
+        </div>
+    </div>
+
+    <h2>KPI card, sparkline</h2>
+    <div class="row-flex" style="align-items:stretch">
+        <x-bmsui::kpi-card style="flex:1 1 200px" label="Offene Konversationen" value="128" delta="+12" trend="up" :up-is-good="false" sub="seit gestern" :spark="[96, 104, 99, 110, 118, 116, 128]" spark-label="Letzte 7 Tage: 96 bis 128" />
+        <x-bmsui::kpi-card style="flex:1 1 200px" label="Erste Antwort" value="1 h 24 min" delta="-8 min" trend="down" :up-is-good="false" sub="Median" :spark="[110, 102, 95, 97, 90, 88, 84]" />
+        <x-bmsui::kpi-card style="flex:1 1 200px" label="Zufriedenheit" value="94 %" delta="0" trend="flat" />
+    </div>
+
     <h2>Conversation list</h2>
     <x-bmsui::conversation-list>
         <x-bmsui::conversation-row subject="Offerte 2026-0412" preview="Guten Tag, anbei die Offerte fuer die Heizungsanlage" href="#" :customer="['name' => 'Keller Haustechnik AG']" :assignee="['name' => 'Anna Meier']" status="active" :unread="true" :starred="true" :thread-count="4" :has-attachments="true" time="09:12" :selected="false">
