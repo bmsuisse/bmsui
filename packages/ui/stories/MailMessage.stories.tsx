@@ -82,6 +82,7 @@ export const German: Story = {
     labels: {
       to: "an",
       showRecipients: "Alle Empfänger anzeigen",
+      hideRecipients: "Empfänger einklappen",
       failed: "Senden fehlgeschlagen",
       retry: "Erneut versuchen",
       quoted: { show: "Zitierten Text anzeigen" },

@@ -17,6 +17,12 @@ const meta: Meta<typeof SplitButton> = {
 export default meta;
 type Story = StoryObj<typeof SplitButton>;
 
+/** Opens the menu so the story shows it without interaction (Radix opens on pointerdown). */
+const openMenu = async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+  const chevron = canvasElement.querySelector<HTMLElement>('button[aria-haspopup="menu"]');
+  chevron?.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, button: 0, pointerType: "mouse" }));
+};
+
 export const Default: Story = {};
 
 export const Variants: Story = {
@@ -44,10 +50,12 @@ export const Loading: Story = { args: { loading: true } };
 export const Disabled: Story = { args: { disabled: true } };
 
 export const WithDisabledItem: Story = {
+  play: openMenu,
   args: { items: [{ id: "later", label: "Später senden (nicht verfügbar)", onSelect: () => {}, disabled: true }, items[0]!] },
 };
 
 export const MenuAbove: Story = {
   args: { side: "top", align: "start", children: <><PaperAirplaneIcon aria-hidden="true" className="size-4" /> Senden</> },
   decorators: [(Story) => <div className="pt-40"><Story /></div>],
+  play: openMenu,
 };

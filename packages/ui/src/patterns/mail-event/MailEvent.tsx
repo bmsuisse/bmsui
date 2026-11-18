@@ -29,13 +29,13 @@ export const MailEvent = forwardRef<HTMLLIElement, MailEventProps>(
       className={cn("flex min-w-0 list-none items-center gap-3 py-1 text-xs", TONE[tone], className)}
       {...props}
     >
-      <span aria-hidden="true" className="h-px flex-1 bg-foreground/10 dark:bg-border" />
-      <span className="flex min-w-0 max-w-[85%] flex-wrap items-center justify-center gap-x-1.5 text-center [overflow-wrap:anywhere]">
+      <span aria-hidden="true" className="h-px min-w-3 flex-1 bg-foreground/10 dark:bg-border" />
+      <span className="flex min-w-0 max-w-[calc(100%-3.5rem)] flex-wrap items-center justify-center gap-x-1.5 text-center [overflow-wrap:anywhere]">
         {Icon ? <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /> : null}
         <span>{children}</span>
         {time !== undefined ? <Timestamp value={time} className="tabular-nums" /> : null}
       </span>
-      <span aria-hidden="true" className="h-px flex-1 bg-foreground/10 dark:bg-border" />
+      <span aria-hidden="true" className="h-px min-w-3 flex-1 bg-foreground/10 dark:bg-border" />
     </li>
   ),
 );

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { SplitButton } from "../../../src/patterns/split-button/SplitButton";
@@ -42,10 +42,13 @@ describe("SplitButton", () => {
     expect(chevron).toHaveFocus();
   });
 
-  it("disables both buttons while loading", () => {
-    render(<SplitButton loading items={[]}>Send</SplitButton>);
-    expect(screen.getByRole("button", { name: "Send" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "More actions" })).toBeDisabled();
+  it("blocks both buttons while loading without the dimmed disabled look", () => {
+    const onClick = vi.fn();
+    render(<SplitButton loading onClick={onClick} items={[]}>Send</SplitButton>);
+    expect(screen.getByRole("button", { name: "Send" })).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByRole("button", { name: "More actions" })).toHaveAttribute("aria-disabled", "true");
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    expect(onClick).not.toHaveBeenCalled();
     expect(screen.getByRole("button", { name: "Send" })).toHaveAttribute("aria-busy", "true");
   });
 });

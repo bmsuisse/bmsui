@@ -46,6 +46,15 @@ export const WithSuggestions: Story = {
       ]}
     />
   ),
+  // Types "ke" so the suggestion list is visible without interaction.
+  play: async ({ canvasElement }) => {
+    const input = canvasElement.querySelector<HTMLInputElement>("input");
+    if (!input) return;
+    input.focus();
+    const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+    set?.call(input, "ke");
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  },
 };
 
 export const MaxItems: Story = {

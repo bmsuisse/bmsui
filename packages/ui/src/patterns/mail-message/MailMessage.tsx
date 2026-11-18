@@ -142,7 +142,7 @@ export const MailMessage = forwardRef<HTMLElement, MailMessageProps>(
                 format="datetime"
                 tooltip={false}
                 live={false}
-                className="ml-auto text-xs tabular-nums text-muted-foreground"
+                className="ml-auto shrink-0 text-xs tabular-nums text-muted-foreground"
               />
             </div>
             {groups.length > 0 ? (

@@ -59,7 +59,9 @@ export const SplitButton = forwardRef<HTMLButtonElement, SplitButtonProps>(
     },
     ref,
   ) => {
-    const off = disabled || loading;
+    // Loading blocks interaction without the dimmed `disabled` look, so the spinner stays readable.
+    const off = disabled;
+    const block = "aria-disabled:pointer-events-none";
     return (
       <div className={cn("inline-flex max-w-full", className)} data-testid={testId}>
         <Button
@@ -69,10 +71,11 @@ export const SplitButton = forwardRef<HTMLButtonElement, SplitButtonProps>(
           size={size}
           disabled={off}
           aria-busy={loading || undefined}
-          onClick={onClick}
-          className="relative min-w-0 rounded-r-none hover:z-10 focus-visible:z-10"
+          aria-disabled={loading || undefined}
+          onClick={loading ? undefined : onClick}
+          className={cn("relative min-w-0 rounded-r-none hover:z-10 focus-visible:z-10", block)}
         >
-          {loading ? <LoadingSpinner /> : null}
+          {loading ? <LoadingSpinner className="[&_svg]:text-current" /> : null}
           {children}
         </Button>
         <DropdownMenu>
@@ -83,7 +86,9 @@ export const SplitButton = forwardRef<HTMLButtonElement, SplitButtonProps>(
               size={CHEVRON_SIZE[size]}
               disabled={off}
               aria-label={menuLabel}
-              className="relative -ml-px w-8 shrink-0 rounded-l-none hover:z-10 focus-visible:z-10"
+              aria-disabled={loading || undefined}
+              tabIndex={loading ? -1 : undefined}
+              className={cn("relative -ml-px w-8 shrink-0 rounded-l-none hover:z-10 focus-visible:z-10", block)}
             >
               <ChevronDownIcon aria-hidden="true" />
             </Button>

@@ -77,7 +77,7 @@ export const AttachmentList = forwardRef<HTMLElement, AttachmentListProps>(
           <PaperClipIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
           <span>{l.attachments(attachments.length)}</span>
         </div>
-        <ul className={cn("min-w-0", chips ? "flex flex-wrap gap-2" : "grid gap-1.5 sm:grid-cols-2")}>
+        <ul className={cn("min-w-0", "flex flex-wrap", chips ? "gap-2" : "gap-1.5")}>
           {attachments.map((a) => {
             const Icon = iconFor(a.mimeType, a.name);
             const size = a.size !== undefined ? formatFileSize(a.size, locale) : "";

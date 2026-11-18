@@ -74,7 +74,7 @@ export interface ConversationRowProps extends Omit<HTMLAttributes<HTMLLIElement>
  * One inbox row: customer, subject - preview, status/star/attachment icons, assignee and time.
  * The whole row is one link/button through a stretched overlay, the checkbox and `tags` sit above
  * it and stay clickable on their own (like `ResultCard`). Renders an `<li>`: put rows in a
- * `ConversationList`. Below `sm` it wraps to two lines (customer + meta, then subject).
+ * `ConversationList`. Below `sm` it wraps: customer + time on the first line, then subject/preview, then status/icons/assignee.
  */
 export const ConversationRow = forwardRef<HTMLLIElement, ConversationRowProps>(
   (
@@ -132,15 +132,16 @@ export const ConversationRow = forwardRef<HTMLLIElement, ConversationRowProps>(
             className="relative z-10 shrink-0 pointer-coarse:size-5"
           />
         ) : null}
-        <div className="flex min-w-0 flex-1 items-center gap-2 text-sm sm:w-44 sm:flex-none">
-          {unread ? (
-            <span className="size-2 shrink-0 rounded-full bg-primary dark:bg-ring">
-              <span className="sr-only">{l.unread}</span>
-            </span>
-          ) : null}
-          <span className={cn("min-w-0 [overflow-wrap:anywhere] line-clamp-1", unread && "font-semibold")}>{customer.name}</span>
+        <div className="order-1 flex min-w-0 flex-1 items-center gap-2 text-sm sm:order-none sm:w-44 sm:flex-none">
+          {/* The dot's width is reserved in every row so customer names line up. */}
+          <span aria-hidden={unread ? undefined : true} className={cn("size-2 shrink-0 rounded-full", unread ? "bg-primary dark:bg-ring" : "bg-transparent")}>
+            {unread ? <span className="sr-only">{l.unread}</span> : null}
+          </span>
+          <span title={customer.name} className={cn("min-w-0 [overflow-wrap:anywhere] sm:line-clamp-1", unread && "font-semibold")}>
+            {customer.name}
+          </span>
         </div>
-        <div className="order-last flex min-w-0 basis-full flex-wrap items-baseline gap-x-2 gap-y-0.5 sm:order-none sm:basis-0 sm:flex-1">
+        <div className="order-3 flex min-w-0 basis-full flex-wrap items-baseline gap-x-2 gap-y-0.5 sm:order-none sm:basis-0 sm:flex-1">
           {href ? (
             <a href={href} onClick={onClick} className={stretch}>
               {main}
@@ -154,7 +155,7 @@ export const ConversationRow = forwardRef<HTMLLIElement, ConversationRowProps>(
           )}
           {tags ? <span className="relative z-10 flex flex-wrap items-center gap-1">{tags}</span> : null}
         </div>
-        <div className="flex shrink-0 items-center gap-2 text-muted-foreground">
+        <div className="order-4 flex shrink-0 items-center gap-2 text-muted-foreground sm:order-none">
           {status ? (
             <StatusDot tone={STATUS_TONE[status]} label={l.status[status]} className="text-xs" />
           ) : null}
@@ -180,9 +181,9 @@ export const ConversationRow = forwardRef<HTMLLIElement, ConversationRowProps>(
           ) : null}
         </div>
         {assignee ? (
-          <Avatar name={assignee.name} src={assignee.avatarSrc} size="xs" title={l.assignedTo(assignee.name)} />
+          <Avatar className="order-4 sm:order-none" name={assignee.name} src={assignee.avatarSrc} size="xs" title={l.assignedTo(assignee.name)} />
         ) : null}
-        <Timestamp value={time} locale={timeLocale} className="shrink-0 whitespace-nowrap text-xs text-muted-foreground" />
+        <Timestamp value={time} locale={timeLocale} className="order-2 shrink-0 whitespace-nowrap text-xs text-muted-foreground sm:order-none" />
       </li>
     );
   },
