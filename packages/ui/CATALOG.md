@@ -77,6 +77,9 @@ repo's `AGENTS.md`.
 | `Combobox` | Searchable dropdown, single or `multiple`; `searchable={false}` drops the search box for a short list. |
 | `TagCombobox` | Multi-select with chips inline in the field. |
 | `ButtonGroup` | Connected single-select segment buttons. |
+| `EmailAddressInput`, `isValidEmail`, `parseEmailAddresses`, `defaultEmailAddressInputLabels` | To/Cc/Bcc field: addresses become chips (Enter/comma/semicolon/space/Tab/blur, paste splits lists and `Name <a@b.ch>`), invalid ones stay as red chips, optional `suggestions`. Not `TagCombobox` (fixed option list). |
+| `SplitButton` | Primary action + joined chevron menu ("Send" / "Send and close", "Send later"). Not `ButtonGroup` (that is single-select). |
+| `ConversationRow`, `ConversationList`, `defaultConversationRowLabels` | Inbox/help-desk list row: customer, subject - preview, status, star, attachment, assignee, time, optional checkbox; whole row is a link/button, wraps to two lines on phones. Put rows in `ConversationList`. |
 | `SearchBar` | Pill search input with clear button; caller renders results. |
 | `SearchPanel`, `SearchTrigger` | Bordered search card with mode pills; icon button that opens a search overlay. |
 | `Stepper` | Numbered wizard progress. |
