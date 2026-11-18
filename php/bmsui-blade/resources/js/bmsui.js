@@ -1069,6 +1069,39 @@
   }
   inits.push(initDialogs);
 
+  /* ---- Key combos (mod = ⌘ on Apple), relative timestamps ---- */
+  var isMac = /Mac|iPhone|iPad|iPod/.test((navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || '');
+  function initKeys(root) {
+    if (!isMac) { return; }
+    within(root, 'kbd[data-bmsui-mod]').forEach(function (k) { k.textContent = '⌘'; k.removeAttribute('data-bmsui-mod'); });
+    within(root, 'kbd[data-bmsui-alt]').forEach(function (k) { k.textContent = '⌥'; k.removeAttribute('data-bmsui-alt'); });
+  }
+  inits.push(initKeys);
+
+  function relativeText(date, lang) {
+    var diff = (date.getTime() - Date.now()) / 1000;
+    var abs = Math.abs(diff);
+    var units = [['year', 31536000], ['month', 2592000], ['week', 604800], ['day', 86400], ['hour', 3600], ['minute', 60], ['second', 1]];
+    for (var i = 0; i < units.length; i++) {
+      if (abs >= units[i][1] || units[i][0] === 'second') {
+        var n = Math.round(diff / units[i][1]);
+        try { return new Intl.RelativeTimeFormat(lang, { numeric: 'auto' }).format(n, units[i][0]); } catch (e) { return null; }
+      }
+    }
+    return null;
+  }
+  function refreshTimes() {
+    var lang = document.documentElement.lang || navigator.language;
+    document.querySelectorAll('time[data-bmsui-relative]').forEach(function (t) {
+      var d = new Date(t.getAttribute('datetime'));
+      if (isNaN(d.getTime())) { return; }
+      var text = relativeText(d, lang);
+      if (text && t.textContent !== text) { t.textContent = text; }
+    });
+  }
+  // The server renders the first text (Carbon, app locale); the browser keeps it current once a minute.
+  setInterval(refreshTimes, 60000);
+
   /* ---- Boot: init on load and for nodes added later ---- */
   window.BMSUi.init = function (root) { inits.forEach(function (fn) { fn(root || document); }); };
   if (document.readyState === 'loading') {
