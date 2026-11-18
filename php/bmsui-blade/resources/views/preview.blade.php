@@ -75,6 +75,47 @@
         <x-bmsui::ai-button :loading="true">Wird erstellt</x-bmsui::ai-button>
         <x-bmsui::confirm message="Konversation endgueltig loeschen?" confirm-label="Loeschen" cancel-label="Abbrechen">Loeschen</x-bmsui::confirm>
     </div>
+
+    <h2>Email address input, split button</h2>
+    <div class="card">
+        <x-bmsui::email-address-input name="to" :value="['anna.meier@muster-ag.ch', 'verkauf@muster-ag.ch', 'kein-gueltige-adresse']" placeholder="Adresse eingeben" :suggestions="[['email' => 'info@keller-haustechnik.ch', 'name' => 'Keller Haustechnik AG']]">
+            <x-slot:label>An</x-slot:label>
+        </x-bmsui::email-address-input>
+        <div class="row-flex" style="min-height:120px;align-items:flex-start">
+            <x-bmsui::split-button :items="[['id' => 'close', 'label' => 'Senden und schliessen'], ['id' => 'later', 'label' => 'Spaeter senden'], ['id' => 'draft', 'label' => 'Entwurf verwerfen', 'danger' => true]]" menu-label="Weitere Aktionen">Senden</x-bmsui::split-button>
+            <x-bmsui::split-button variant="outline" :items="[['id' => 'a', 'label' => 'Als Notiz speichern']]">Antworten</x-bmsui::split-button>
+            <x-bmsui::split-button variant="secondary" :loading="true" :items="[]">Wird gesendet</x-bmsui::split-button>
+        </div>
+    </div>
+
+    <h2>Conversation list</h2>
+    <x-bmsui::conversation-list>
+        <x-bmsui::conversation-row subject="Offerte 2026-0412" preview="Guten Tag, anbei die Offerte fuer die Heizungsanlage" href="#" :customer="['name' => 'Keller Haustechnik AG']" :assignee="['name' => 'Anna Meier']" status="active" :unread="true" :starred="true" :thread-count="4" :has-attachments="true" time="09:12" :selected="false">
+            <x-bmsui::chip tone="info">Offerte</x-bmsui::chip>
+        </x-bmsui::conversation-row>
+        <x-bmsui::conversation-row subject="Lieferverzug Bestellung 88213, bitte um dringende Rueckmeldung zum Liefertermin" preview="Wir warten seit zwei Wochen auf die Ware" href="#" :customer="['name' => 'Muster AG']" status="pending" time="Gestern" :selected="true" />
+        <x-bmsui::conversation-row subject="Reklamation Rechnung" href="#" :customer="['name' => 'Beat Huber']" :assignee="['name' => 'Peter Frei']" status="closed" time="14.11.2026" />
+        <x-bmsui::conversation-row subject="Gewinnspiel jetzt teilnehmen" :customer="['name' => 'noreply@promo.example']" status="spam" time="12.11.2026" />
+    </x-bmsui::conversation-list>
+
+    <h2>Mail message, quoted text, attachments, events</h2>
+    <x-bmsui::mail-message direction="inbound" :sender="['name' => 'Anna Meier', 'email' => 'anna.meier@keller-haustechnik.ch']" :recipients="['to' => ['verkauf@muster-ag.ch'], 'cc' => ['buchhaltung@keller-haustechnik.ch']]" time="14.11.2026 09:12" subject="Offerte 2026-0412" :attachments="[['id' => 1, 'name' => 'Offerte_2026-0412_Heizungsanlage_final_v3.pdf', 'size' => 1258291, 'mimeType' => 'application/pdf', 'href' => '#'], ['id' => 2, 'name' => 'Preise.xlsx', 'size' => 48211], ['id' => 3, 'name' => 'Fotos.zip', 'size' => 9876543]]">
+        <p style="margin:0">Guten Tag, vielen Dank fuer die Offerte. Wir haben noch zwei Fragen zu den Lieferzeiten: https://muster-ag.example/produkte/heizung/sehr/lange/url/die/nicht/umbricht</p>
+        <x-slot:quoted>Am 13.11.2026 schrieb Muster AG: Guten Tag Frau Meier, anbei die gewuenschte Offerte.</x-slot:quoted>
+        <x-slot:actions><button type="button" class="bmsui-btn">Antworten</button><button type="button" class="bmsui-btn">Weiterleiten</button></x-slot:actions>
+    </x-bmsui::mail-message>
+    <x-bmsui::mail-event time="13.11.2026 17:05">Anna Meier hat die Konversation Peter Frei zugewiesen</x-bmsui::mail-event>
+    <x-bmsui::mail-event tone="success" time="13.11.2026 17:20">Status geaendert: Geschlossen</x-bmsui::mail-event>
+    <x-bmsui::mail-message direction="outbound" :sender="['name' => 'Peter Frei']" :recipients="['to' => ['anna.meier@keller-haustechnik.ch', 'a@b.ch', 'c@d.ch'], 'cc' => ['e@f.ch', 'g@h.ch']]" time="14.11.2026 10:40" status="failed" error="SMTP-Verbindung abgelehnt">
+        <p style="margin:0">Gerne passen wir die Lieferzeit an.</p>
+    </x-bmsui::mail-message>
+    <x-bmsui::mail-message direction="note" :sender="['name' => 'Peter Frei']" time="14.11.2026 11:02">
+        <p style="margin:0">Kunde hat telefonisch bestaetigt.</p>
+    </x-bmsui::mail-message>
+    <x-bmsui::mail-message direction="outbound" :sender="['name' => 'Peter Frei']" time="gerade" status="draft"><p style="margin:0">Entwurf der Antwort</p></x-bmsui::mail-message>
+    <x-bmsui::mail-event tone="warning" time="14.11.2026 11:05">Erinnerung faellig</x-bmsui::mail-event>
+    <div class="card"><x-bmsui::attachment-list layout="chips" :removable="true" :attachments="[['id' => 1, 'name' => 'Skizze.png', 'size' => 20480, 'mimeType' => 'image/png'], ['id' => 2, 'name' => 'Vertrag.docx', 'size' => 33000]]" /></div>
+    <div class="card" style="margin-top:8px"><x-bmsui::quoted-text :open="true">Am 13.11.2026 schrieb Muster AG: ...</x-bmsui::quoted-text></div>
 </div>
 <script src="{{ $assets }}/bmsui.js"></script>
 </body>
