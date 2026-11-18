@@ -91,9 +91,13 @@
   "grid.rowActions": "Row actions",
   "grid.rowActionsFor": "Row actions for {id}",
   "grid.bulkActions": "Bulk actions",
+  "grid.selectedCount": { "one": "{count} selected", "other": "{count} selected" },
   "grid.resizeColumn": "Resize {header} column",
   "grid.columnWidth": "{width} pixels",
   "grid.editCell": "Edit {header}",
+  "grid.pageSummary": { "one": "Page {page} of {pageCount} ({count} row)", "other": "Page {page} of {pageCount} ({count} rows)" },
+  "grid.previousPage": "Previous",
+  "grid.nextPage": "Next",
 
   "columns.choose": "Choose columns",
   "columns.title": "Columns",

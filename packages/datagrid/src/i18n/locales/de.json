@@ -91,9 +91,13 @@
   "grid.rowActions": "Zeilenaktionen",
   "grid.rowActionsFor": "Aktionen für Zeile {id}",
   "grid.bulkActions": "Sammelaktionen",
+  "grid.selectedCount": { "one": "{count} ausgewählt", "other": "{count} ausgewählt" },
   "grid.resizeColumn": "Spalte {header} in der Grösse ändern",
   "grid.columnWidth": "{width} Pixel",
   "grid.editCell": "{header} bearbeiten",
+  "grid.pageSummary": { "one": "Seite {page} von {pageCount} ({count} Zeile)", "other": "Seite {page} von {pageCount} ({count} Zeilen)" },
+  "grid.previousPage": "Zurück",
+  "grid.nextPage": "Weiter",
 
   "columns.choose": "Spalten auswählen",
   "columns.title": "Spalten",

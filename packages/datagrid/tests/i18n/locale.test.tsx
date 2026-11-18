@@ -142,6 +142,24 @@ describe("<DataGrid locale>", () => {
     expect(screen.getByLabelText("Aktionen für Zeile 1")).toBeInTheDocument();
   });
 
+  it("translates the pagination and the bulk-selection summary", () => {
+    render(
+      <DataGrid
+        columns={columns}
+        dataSource={client(rows)}
+        getRowId={(r) => r.id}
+        locale="de"
+        headerActions={[{ id: "x", label: "X", onSelect: () => {} }]}
+        selectedIds={new Set(["1"])}
+        onSelectedIdsChange={() => {}}
+      />,
+    );
+    expect(screen.getByText("Seite 1 von 1 (1 Zeile)")).toBeInTheDocument();
+    expect(screen.getByText("Zurück")).toBeInTheDocument();
+    expect(screen.getByText("Weiter")).toBeInTheDocument();
+    expect(screen.getByText("1 ausgewählt")).toBeInTheDocument();
+  });
+
   it("translates the editing bar, with plurals", async () => {
     render(
       <DataGrid

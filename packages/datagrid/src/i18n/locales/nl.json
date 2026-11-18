@@ -91,9 +91,13 @@
   "grid.rowActions": "Rijacties",
   "grid.rowActionsFor": "Acties voor rij {id}",
   "grid.bulkActions": "Bulkacties",
+  "grid.selectedCount": { "one": "{count} geselecteerd", "other": "{count} geselecteerd" },
   "grid.resizeColumn": "Grootte van kolom {header} wijzigen",
   "grid.columnWidth": "{width} pixels",
   "grid.editCell": "{header} bewerken",
+  "grid.pageSummary": { "one": "Pagina {page} van {pageCount} ({count} rij)", "other": "Pagina {page} van {pageCount} ({count} rijen)" },
+  "grid.previousPage": "Vorige",
+  "grid.nextPage": "Volgende",
 
   "columns.choose": "Kolommen kiezen",
   "columns.title": "Kolommen",

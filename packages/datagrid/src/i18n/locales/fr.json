@@ -91,9 +91,13 @@
   "grid.rowActions": "Actions de ligne",
   "grid.rowActionsFor": "Actions de la ligne {id}",
   "grid.bulkActions": "Actions groupées",
+  "grid.selectedCount": { "one": "{count} sélectionné", "other": "{count} sélectionnés" },
   "grid.resizeColumn": "Redimensionner la colonne {header}",
   "grid.columnWidth": "{width} pixels",
   "grid.editCell": "Modifier {header}",
+  "grid.pageSummary": { "one": "Page {page} sur {pageCount} ({count} ligne)", "other": "Page {page} sur {pageCount} ({count} lignes)" },
+  "grid.previousPage": "Précédent",
+  "grid.nextPage": "Suivant",
 
   "columns.choose": "Choisir les colonnes",
   "columns.title": "Colonnes",

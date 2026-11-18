@@ -1713,7 +1713,7 @@ export function DataGrid<TRow extends RowData>({
       )}
       {showSelectionColumn && headerActions && (
         <div className="flex shrink-0 items-center justify-between gap-3 text-sm">
-          <span>{selectedRows.length} selected</span>
+          <span>{t("grid.selectedCount", { count: selectedRows.length })}</span>
           <ActionsMenu items={headerActions} ctx={{ selectedRows }} triggerLabel={t("grid.bulkActions")} />
         </div>
       )}
@@ -2055,7 +2055,7 @@ export function DataGrid<TRow extends RowData>({
       {showPagination && (
         <div className="flex shrink-0 items-center justify-between text-sm">
           <span>
-            Page {state.page + 1} of {pageCount} ({rowCount} row{rowCount === 1 ? "" : "s"})
+            {t("grid.pageSummary", { page: state.page + 1, pageCount, count: rowCount })}
           </span>
           <div className="flex gap-2">
             <Button
@@ -2064,7 +2064,7 @@ export function DataGrid<TRow extends RowData>({
               disabled={state.page <= 0}
               onClick={() => setPage(state.page - 1)}
             >
-              Previous
+              {t("grid.previousPage")}
             </Button>
             <Button
               variant="outline"
@@ -2072,7 +2072,7 @@ export function DataGrid<TRow extends RowData>({
               disabled={state.page >= pageCount - 1}
               onClick={() => setPage(state.page + 1)}
             >
-              Next
+              {t("grid.nextPage")}
             </Button>
           </div>
         </div>
