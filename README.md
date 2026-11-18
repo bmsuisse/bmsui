@@ -15,6 +15,7 @@ Meilisearch filter string.
 | --- | --- |
 | [`@bmsuisse/ui`](packages/ui) | shadcn/ui-based React primitives and composed patterns (Modal, FormField, AlertBox, StatusBadge, LoadingSpinner, Sheet, Tooltip, Combobox). |
 | [`@bmsuisse/datagrid`](packages/datagrid) | Headless-core React datagrid (TanStack Table v9) with a shared filter/sort contract, built on shadcn/ui primitives. |
+| [`bmsuisse/bmsui-blade`](php/bmsui-blade) | The BMS design as Blade components (chip, banner, stat strip, timeline, copy, confirm, AI button, logo) for PHP/Laravel apps such as OneDesk; plain CSS + vanilla JS, no build step. |
 | [`bmsdna-datagrid`](python/datagrid) | Turns that same filter/sort contract into a parameterized SQL statement (via `sqlglot`) or a Meilisearch filter string. |
 
 See [AGENTS.md](AGENTS.md) for the detailed design rationale behind each

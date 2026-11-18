@@ -691,7 +691,7 @@ overlay, use `SearchBar`.
 ### `AiButton` / `AiExplainButton`
 
 The "do something with AI" affordance: a sparkle icon plus a built-in
-in-flight state on top of `Button`'s three violet `ai` variants (`ai` solid
+in-flight state on top of `Button`'s three theme-glow `ai` variants (`ai` solid
 CTA, `ai-subtle` tinted chip — the default — and `ai-ghost` inline action).
 Every other `Button` prop (`size`, `asChild`, `data-testid`, …) still
 applies, and the ref is forwarded.
@@ -719,10 +719,9 @@ button.
 />
 ```
 
-The `ai` variants use a fixed Tailwind palette (violet), the same choice as
-`Badge`'s `warning` and `AlertBox`'s warning/info/success tones, since the
-base shadcn/ui theme has no AI-accent token — so unlike `swiss-primary`
-they need no setup in the consuming app. Use `<Button variant="ai">`
+The `ai` variants are built from the theme's own `--primary` / `--ring` plus a
+soft ring-coloured glow (no fixed hue, so they follow each brand; the sparkle
+icon carries the "AI" signal) — they need no setup in the consuming app. Use `<Button variant="ai">`
 directly when you want the accent without the sparkle/loading behaviour.
 
 ### `VoiceInputButton` / `VoiceTranscript` / `useSpeechRecognition`

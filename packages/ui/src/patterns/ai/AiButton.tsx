@@ -5,7 +5,7 @@ import { Button, type ButtonProps } from "../../primitives/button";
 import { LoadingSpinner } from "../loading-spinner/LoadingSpinner";
 import type { NavIconProps } from "../sidebar/NavItem";
 
-/** The three `buttonVariants` entries that carry the violet AI accent. */
+/** The three `buttonVariants` entries that carry the theme-glow AI accent. */
 export type AiButtonVariant = "ai" | "ai-subtle" | "ai-ghost";
 
 export interface AiButtonProps extends Omit<ButtonProps, "variant"> {

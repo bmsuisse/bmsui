@@ -36,6 +36,20 @@ jobs:
           uv run ty check .
           uv run pytest
 
+  php-check:
+    name: "PHP: phpunit (bmsui-blade)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          tools: composer
+      - working-directory: php/bmsui-blade
+        run: |
+          composer install --no-interaction --prefer-dist
+          vendor/bin/phpunit
+
   e2e:
     name: "Playwright e2e (SQLite + real Meilisearch binary)"
     runs-on: ubuntu-latest

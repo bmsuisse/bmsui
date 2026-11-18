@@ -10,6 +10,12 @@ export interface PromptSuggestion {
   prompt?: string;
 }
 
+export interface PromptSuggestionsLabels {
+  /** Accessible name of the group. */
+  group: string;
+}
+export const defaultPromptSuggestionsLabels: PromptSuggestionsLabels = { group: "Suggestions" };
+
 export interface PromptSuggestionsProps extends Omit<HTMLAttributes<HTMLDivElement>, "onSelect"> {
   /** Plain strings (id = text) or `{ id, label, prompt? }`. */
   suggestions: ReadonlyArray<string | PromptSuggestion>;
@@ -18,8 +24,9 @@ export interface PromptSuggestionsProps extends Omit<HTMLAttributes<HTMLDivEleme
   disabled?: boolean;
   /** Wrap onto several lines instead of one scrolling row. Default `false`. */
   wrap?: boolean;
-  /** Accessible name of the group, e.g. "Suggested replies". */
+  /** Accessible name of the group, e.g. "Suggested replies"; overrides `labels.group`. */
   "aria-label"?: string;
+  labels?: Partial<PromptSuggestionsLabels>;
 }
 
 function normalize(item: string | PromptSuggestion): PromptSuggestion {
@@ -38,7 +45,8 @@ export const PromptSuggestions = ({
   disabled = false,
   wrap = false,
   className,
-  "aria-label": ariaLabel = "Suggestions",
+  "aria-label": ariaLabel,
+  labels,
   ...props
 }: PromptSuggestionsProps): ReactElement | null => {
   const { ref, left, right } = useScrollOverflow<HTMLDivElement>();
@@ -47,7 +55,7 @@ export const PromptSuggestions = ({
   return (
     <div
       role="group"
-      aria-label={ariaLabel}
+      aria-label={ariaLabel ?? { ...defaultPromptSuggestionsLabels, ...labels }.group}
       className={cn("min-w-0 max-w-full", className)}
       {...props}
     >

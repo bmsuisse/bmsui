@@ -4,15 +4,22 @@ import type { ButtonHTMLAttributes } from "react";
 import { forwardRef } from "react";
 import { cn } from "../lib/utils";
 
+/** Soft ring-coloured glow shared by the solid and subtle `ai` variants (stronger on hover). */
+const AI_GLOW =
+  "shadow-[0_0_0_1px_color-mix(in_oklab,var(--ring)_35%,transparent),0_0_16px_-2px_color-mix(in_oklab,var(--ring)_55%,transparent)] transition-shadow hover:shadow-[0_0_0_1px_color-mix(in_oklab,var(--ring)_55%,transparent),0_0_22px_-1px_color-mix(in_oklab,var(--ring)_70%,transparent)]";
+
 export const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        default:
+          "bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        outline:
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
         ghost: "hover:bg-accent hover:text-accent-foreground",
-        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        destructive:
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         secondary: "bg-muted text-muted-foreground hover:bg-muted/80",
         link: "text-primary dark:text-ring underline-offset-4 hover:underline",
         // "Swiss design" red CTA, ported from akeneo_editor's old .btn-primary-swiss
@@ -24,16 +31,14 @@ export const buttonVariants = cva(
           "bg-swiss-primary text-swiss-primary-foreground font-semibold shadow-sm hover:bg-swiss-primary-hover hover:-translate-y-px active:translate-y-px",
         "swiss-secondary":
           "border border-input bg-background font-semibold text-foreground shadow-sm hover:bg-accent hover:-translate-y-px active:translate-y-px",
-        // Violet "AI action" accent, in the same three weights as default/outline/ghost.
-        // Fixed Tailwind palette rather than a token — same choice as Badge's `warning`
-        // and AlertBox/StatusBadge's warning/info/success tones: the shared theme has no
-        // `ai` color, and unlike `swiss-primary` these should work in a consuming app with
-        // zero setup. Tints go through `violet-500/N` (not per-mode `violet-50`/`-950`
-        // shades) so one class list reads correctly on both light and dark surfaces.
-        ai: "bg-violet-600 text-white shadow-sm hover:bg-violet-600/90",
-        "ai-subtle":
-          "border border-violet-500/30 bg-violet-500/10 text-violet-700 hover:bg-violet-500/20 dark:text-violet-300",
-        "ai-ghost": "text-violet-700 hover:bg-violet-500/10 dark:text-violet-300",
+        // "AI action" accent in the same three weights as default/outline/ghost: the theme's own
+        // `--primary` / `--ring` plus a soft ring-coloured glow (no fixed hue, so it follows each
+        // brand). The sparkle icon (AiButton) carries the "AI" signal. Dark `--primary` stays navy,
+        // so the solid fill and the text use `--ring` there (see the dark-mode foreground trap).
+        ai: `bg-primary text-primary-foreground dark:bg-ring dark:text-background ${AI_GLOW}`,
+        "ai-subtle": `border border-transparent bg-ring/10 text-primary dark:text-ring ${AI_GLOW}`,
+        "ai-ghost":
+          "text-primary transition-shadow hover:bg-ring/10 hover:shadow-[0_0_16px_-2px_color-mix(in_oklab,var(--ring)_50%,transparent)] dark:text-ring",
       },
       size: {
         default: "h-9 px-3",
@@ -54,7 +59,8 @@ export const buttonVariants = cva(
 );
 
 export interface ButtonProps
-  extends ButtonHTMLAttributes<HTMLButtonElement>,
+  extends
+    ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
 }
@@ -63,7 +69,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : "button";
     return (
-      <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
     );
   },
 );
