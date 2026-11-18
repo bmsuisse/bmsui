@@ -318,4 +318,6 @@ export interface TreeDataGridProps<TRow> extends TreeAccessors<TRow> {
   onActiveRowChange?: (id: string | null) => void;
   /** Translated filter UI strings, same as `<DataGrid filterLabels>`. */
   filterLabels?: Partial<FilterLabels>;
+  /** Language of the built-in texts, same as `<DataGrid locale>`. */
+  locale?: string;
 }

@@ -1,5 +1,6 @@
 import type { MouseEvent as ReactMouseEvent, ReactElement, ReactNode } from "react";
 import { useLayoutEffect, useRef, useState } from "react";
+import { useIntegratedI18n } from "../i18n/locale";
 import type { CellRange } from "./types";
 
 interface OverlayRect {
@@ -126,6 +127,7 @@ export function SelectionOverlay({
   /** Content (the "Auto Fill Options" button) anchored below the bottom-right corner of `range` after a fill finished. */
   fillOptions?: { range: CellRange; content: ReactNode } | undefined;
 }): ReactElement | null {
+  const { t } = useIntegratedI18n();
   const [geometry, setGeometry] = useState<OverlayGeometry>(EMPTY_GEOMETRY);
 
   // Read fresh inside the effects below via a ref, not as a dependency of the
@@ -272,7 +274,7 @@ export function SelectionOverlay({
         <div
           data-testid="cell-fill-handle"
           role="button"
-          aria-label="Fill handle: drag to fill adjacent cells"
+          aria-label={t("cellEditing.fillHandle")}
           className="absolute z-30 cursor-crosshair border border-background bg-primary dark:bg-ring"
           style={{
             top: rect.top + rect.height - HANDLE_SIZE / 2 - 1,

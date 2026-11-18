@@ -24,6 +24,7 @@ const sidebars: SidebarsConfig = {
         'datagrid/cell-editing',
         'datagrid/tree-data-grid',
         'datagrid/column-selector',
+        'datagrid/translations',
       ],
     },
     'screenshots',

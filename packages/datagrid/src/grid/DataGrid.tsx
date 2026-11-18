@@ -21,7 +21,7 @@ import { Fragment, useEffect, useId, useMemo, useRef, useState } from "react";
 import { parseTsv, rangeToTsv } from "../cell-editing/clipboard";
 import { adaptValueForColumn, type SkippedCell } from "../cell-editing/adaptValue";
 import { canFillSeries, computeFill, previewFillValue, type FillMode } from "../cell-editing/fillHandle";
-import { defaultCellEditingLabels, FillOptionsMenu } from "../cell-editing/FillOptionsMenu";
+import { cellEditingLabelsFor, FillOptionsMenu } from "../cell-editing/FillOptionsMenu";
 import { buildIndexMap, normalizeRange } from "../cell-editing/rangeUtils";
 import { AlwaysEditCell, type AtomicGestureContext } from "../cell-editing/renderAlwaysEditCell";
 import { renderCellModeCell } from "../cell-editing/renderCellModeCell";
@@ -39,6 +39,7 @@ import type { EditingCellContext } from "../edit/editingState";
 import { useEditingState } from "../edit/editingState";
 import { renderEditableCell } from "../edit/renderEditableCell";
 import { FilterLabelsProvider } from "../filter/labels";
+import { BmsLocaleProvider, useIntegratedI18n } from "../i18n/locale";
 import { renderDefaultFilterWidget } from "../filter/registry";
 import type { FilterDescriptor } from "../filter/types";
 import { useGroupExpansion } from "../hooks/useGroupExpansion";
@@ -306,6 +307,7 @@ export function DataGrid<TRow extends RowData>({
   editing,
   cellEditing,
   filterLabels,
+  locale,
 }: DataGridProps<TRow>): ReactElement {
   // Not supported together with `groupBy` yet — `cellEditingRowIds` below is
   // built from the flat `tableRows` list, but rendering only shows expanded-
@@ -488,8 +490,10 @@ export function DataGrid<TRow extends RowData>({
   }
 
   const pageCount = Math.max(1, Math.ceil(rowCount / state.pageSize));
-  const labels = resolveStatusLabels(statusLabels);
-  const hasError = toErrorInfo(error) !== undefined;
+  const i18n = useIntegratedI18n(locale);
+  const { t } = i18n;
+  const labels = resolveStatusLabels(statusLabels, i18n);
+  const hasError = toErrorInfo(error, t("status.unknownError")) !== undefined;
   const loading = loadingProp || (dataSource.mode === "server" ? Boolean(dataSource.loading) : false);
   // The checkbox column itself is decoupled from `headerActions`: a caller
   // using controlled `selectedIds` (its own toolbar elsewhere on the page,
@@ -1121,8 +1125,8 @@ export function DataGrid<TRow extends RowData>({
   }
 
   const fillLabels = useMemo(
-    () => ({ ...defaultCellEditingLabels, ...cellEditing?.labels }),
-    [cellEditing?.labels],
+    () => ({ ...cellEditingLabelsFor(i18n), ...cellEditing?.labels }),
+    [i18n, cellEditing?.labels],
   );
 
   // What Excel shows next to the cursor while fill-dragging: the value the cell under it would get.
@@ -1444,7 +1448,7 @@ export function DataGrid<TRow extends RowData>({
                 type="button"
                 variant="ghost"
                 size="icon"
-                aria-label={`${isExpanded ? "Collapse" : "Expand"} row ${row.id}`}
+                aria-label={t(isExpanded ? "grid.collapseRow" : "grid.expandRow", { id: row.id })}
                 aria-expanded={isExpanded}
                 onClick={(event) => {
                   stopRowClick(event);
@@ -1467,7 +1471,7 @@ export function DataGrid<TRow extends RowData>({
                 type={singleSelect ? "radio" : "checkbox"}
                 name={singleSelect ? selectionGroupName : undefined}
                 className="h-4 w-4 accent-primary dark:accent-ring"
-                aria-label={`Select row ${row.id}`}
+                aria-label={t("grid.selectRow", { id: row.id })}
                 checked={selectedIds.has(row.id)}
                 onClick={stopRowClick}
                 onChange={() => toggleRowSelected(row.id)}
@@ -1502,7 +1506,7 @@ export function DataGrid<TRow extends RowData>({
               className={isOddRow ? rowActionsCellProps.classNameOdd : rowActionsCellProps.className}
               style={rowActionsCellProps.style}
             >
-              <ActionsMenu items={rowActions} ctx={{ row: row.original }} triggerLabel={`Row actions for ${row.id}`} />
+              <ActionsMenu items={rowActions} ctx={{ row: row.original }} triggerLabel={t("grid.rowActionsFor", { id: row.id })} />
             </td>
           )}
         </tr>
@@ -1709,8 +1713,8 @@ export function DataGrid<TRow extends RowData>({
       )}
       {showSelectionColumn && headerActions && (
         <div className="flex shrink-0 items-center justify-between gap-3 text-sm">
-          <span>{selectedRows.length} selected</span>
-          <ActionsMenu items={headerActions} ctx={{ selectedRows }} triggerLabel="Bulk actions" />
+          <span>{t("grid.selectedCount", { count: selectedRows.length })}</span>
+          <ActionsMenu items={headerActions} ctx={{ selectedRows }} triggerLabel={t("grid.bulkActions")} />
         </div>
       )}
       {hasError && rows.length > 0 && (
@@ -1719,7 +1723,7 @@ export function DataGrid<TRow extends RowData>({
         </div>
       )}
       <div className="relative min-h-0 flex-1">
-        {loading && rows.length > 0 && <RefreshBar data-testid="datagrid-loading-overlay" />}
+        {loading && rows.length > 0 && <RefreshBar label={t("status.refreshing")} data-testid="datagrid-loading-overlay" />}
         <div
           ref={scrollRef}
           data-testid={testId}
@@ -1824,7 +1828,7 @@ export function DataGrid<TRow extends RowData>({
                       data-testid={`resize-handle-${column.id}`}
                       role="separator"
                       aria-orientation="vertical"
-                      aria-label={`Resize ${column.header} column`}
+                      aria-label={t("grid.resizeColumn", { header: column.header })}
                       tabIndex={0}
                       onMouseDown={header.getResizeHandler()}
                       onTouchStart={header.getResizeHandler()}
@@ -1864,7 +1868,7 @@ export function DataGrid<TRow extends RowData>({
                           <input
                             type="checkbox"
                             className="h-4 w-4 accent-primary dark:accent-ring"
-                            aria-label="Select all rows on this page"
+                            aria-label={t("grid.selectAllRowsOnPage")}
                             checked={allOnPageSelected}
                             ref={(el) => {
                               if (el) el.indeterminate = someOnPageSelected && !allOnPageSelected;
@@ -1892,7 +1896,7 @@ export function DataGrid<TRow extends RowData>({
                         rowSpan={2}
                         className={rowActionsHeaderCellProps.className}
                         style={rowActionsHeaderCellProps.style}
-                        aria-label="Row actions"
+                        aria-label={t("grid.rowActions")}
                       />
                     )}
                   </tr>
@@ -1914,7 +1918,7 @@ export function DataGrid<TRow extends RowData>({
                         <input
                           type="checkbox"
                           className="h-4 w-4 accent-primary dark:accent-ring"
-                          aria-label="Select all rows on this page"
+                          aria-label={t("grid.selectAllRowsOnPage")}
                           checked={allOnPageSelected}
                           ref={(el) => {
                             if (el) el.indeterminate = someOnPageSelected && !allOnPageSelected;
@@ -1937,7 +1941,7 @@ export function DataGrid<TRow extends RowData>({
                     <th
                       className={rowActionsHeaderCellProps.className}
                       style={rowActionsHeaderCellProps.style}
-                      aria-label="Row actions"
+                      aria-label={t("grid.rowActions")}
                     />
                   )}
                 </tr>
@@ -2051,7 +2055,7 @@ export function DataGrid<TRow extends RowData>({
       {showPagination && (
         <div className="flex shrink-0 items-center justify-between text-sm">
           <span>
-            Page {state.page + 1} of {pageCount} ({rowCount} row{rowCount === 1 ? "" : "s"})
+            {t("grid.pageSummary", { page: state.page + 1, pageCount, count: rowCount })}
           </span>
           <div className="flex gap-2">
             <Button
@@ -2060,7 +2064,7 @@ export function DataGrid<TRow extends RowData>({
               disabled={state.page <= 0}
               onClick={() => setPage(state.page - 1)}
             >
-              Previous
+              {t("grid.previousPage")}
             </Button>
             <Button
               variant="outline"
@@ -2068,7 +2072,7 @@ export function DataGrid<TRow extends RowData>({
               disabled={state.page >= pageCount - 1}
               onClick={() => setPage(state.page + 1)}
             >
-              Next
+              {t("grid.nextPage")}
             </Button>
           </div>
         </div>
@@ -2077,5 +2081,9 @@ export function DataGrid<TRow extends RowData>({
   );
 
   // Context (not props) so custom `renderFilter` widgets and portaled popovers pick these up too.
-  return <FilterLabelsProvider labels={filterLabels}>{grid}</FilterLabelsProvider>;
+  return (
+    <BmsLocaleProvider locale={i18n.locale}>
+      <FilterLabelsProvider labels={filterLabels}>{grid}</FilterLabelsProvider>
+    </BmsLocaleProvider>
+  );
 }

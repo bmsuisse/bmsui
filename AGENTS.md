@@ -1142,6 +1142,41 @@ Ported from MDMApp's Taxonomy Manager (`tableView.ts`, `FilterWidgets.tsx`,
 
 See `FilterBarDemo` in `packages/datagrid/demo/src/App.tsx`.
 
+### Built-in translations — `locale` / `<BmsLocaleProvider>` (#103)
+
+`@bmsuisse/datagrid` ships its texts in **de, fr, it, en, nl, es**
+(`src/i18n/locales/<lang>.json`, flat keys like `filter.selectAll`, plural
+messages as `{ "one": "…", "other": "…" }`). `en.json` is the source of truth:
+its keys are the typed `MessageKey`, and `tests/i18n/catalog.test.ts` fails when
+a language lacks a key, has different `{placeholders}`, or uses a plural
+category its language doesn't have. All six catalogs are imported statically
+(no flash of English).
+
+- `<DataGrid locale="de-CH">` / `<TreeDataGrid locale>` / `<ColumnSelector locale>`
+  / `useTreeState({ locale })`, or `<BmsLocaleProvider locale>` around anything.
+  Prop beats provider beats English. Only the language of the tag picks the
+  texts; the region (`CH`) selects date-fns' Swiss calendar locale
+  (`fr-CH`, `it-CH`) where it exists. No locale = English, exactly as before.
+- Templates: `{name}` placeholders, `{name:lower}` (whole value lower-cased, for English
+  "Search status..."), `{name:inline}` (first letter only, acronym-aware: "Filtrer par statut", "EK Preis" stays), plural by `Intl.PluralRules` on `count` (fr: 0 and 1
+  singular). No ICU library.
+- Precedence per text: per-widget `labels` prop > `filterLabels` /
+  `FilterLabelsProvider` > `statusLabels` / `cellEditing.labels` /
+  `EditingOptions.saveLabel` > built-in text of the locale > English. The
+  existing `FilterLabels` / `GridStatusLabels` / `CellEditingLabels` shapes are
+  unchanged (function-valued labels still work); `filterLabelsFor(i18n)`,
+  `statusLabelsFor`, `cellEditingLabelsFor` build the built-in sets, and
+  `defaultFilterLabels` & co. are the English ones.
+- `GridStatusLabels`, `FilterLabels` and `CellEditingLabels` gained no keys: apps build complete objects of these types from their own i18n, so a new required key would break their typecheck. Texts that are not in them (`status.unknownError`, `status.refreshing`, aria-labels, pagination, editing bar) come from the locale only.
+- de/fr/it wording follows the already-reviewed sets of consuming apps; the de/fr/it search placeholders are header-less on purpose (long headers get truncated in the popover), which is why a catalog may drop `{header}`.
+- Not translated yet: cell values (`defaultFormat`'s Yes/No, number/date
+  formatting still use the runtime locale). `@bmsuisse/ui` keeps its own
+  copy of this mechanism (a follow-up PR) rather than depending on the
+  datagrid or vice versa — a little duplicated code (`interpolate`/plural
+  helper, provider) on purpose so each package stays standalone.
+- To add a text: add the key to `en.json`, then to all five other files (the
+  test tells you what is missing), then read it via `useIntegratedI18n().t(key, params)`.
+
 ### `filterLabels` — translating the filter UI (#72)
 
 Every user-facing string of the column-filter UI (header funnel
@@ -1150,8 +1185,9 @@ NumberComparisonFilter operator labels, BooleanFilter All/Yes/No, Min/Max/
 Value placeholders, DateRangeFilter presets, …) is a key of the exported
 `FilterLabels` interface; templated ones are functions (`searchPlaceholder:
 (header) => string`). `defaultFilterLabels` holds today's exact English
-strings, so nothing changes unless you override. Same no-i18n-layer
-convention as `EditingOptions.saveLabel`: pass already-translated strings.
+strings (now generated from `en.json`), so nothing changes unless you set a
+`locale` or override. Overrides are plain already-translated strings, same
+convention as `EditingOptions.saveLabel`, and win over the built-in texts.
 
 - `<DataGrid filterLabels={{ selectAll: t("…"), … }}>` — a `Partial`,
   merged over the defaults.
@@ -1165,8 +1201,8 @@ convention as `EditingOptions.saveLabel`: pass already-translated strings.
   trigger summary.
 - `<TreeDataGrid filterLabels>` (0.42.0) does the same for its opt-in sort/filter header controls.
 
-The demo's EN/DE toggle (`GERMAN_FILTER_LABELS` in
-`packages/datagrid/demo/src/App.tsx`) shows a full German set.
+The demo's language toggle (en/de/fr/it/nl/es, `locale` in
+`packages/datagrid/demo/src/App.tsx`) switches the built-in translations.
 
 ### `sortable` / `filterable` default to **false** — opt-in, not opt-out
 
@@ -1958,11 +1994,10 @@ failed; show your own error UI, `<DataGrid>` surfaces nothing of its own for
 that case) rather than losing the user's in-progress work. Resolving (or
 just returning) clears every pending edit that was included in that call.
 
-**No i18n/templating layer** (this repo has none, anywhere) — `saveLabel`/
-`discardLabel` are a plain string (rendered as-is, no `{count}` placeholder
-substitution) or a `(changedRowCount) => ReactNode` function for a
-count-aware label. Defaults to `` `Save ${count} change${count === 1 ? "" :
-"s"}` `` and `"Discard"`.
+`saveLabel`/`discardLabel` are a plain string (rendered as-is, no `{count}`
+placeholder substitution) or a `(changedRowCount) => ReactNode` function for a
+count-aware label. They default to the built-in "Save N change(s)" / "Discard"
+of the grid's `locale`, and win over it.
 
 **Implementation footgun worth knowing before touching `<DataGrid>`'s
 editing wiring**: `toTanstackColumns`'s `cell` closures (in `grid/

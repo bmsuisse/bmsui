@@ -1,5 +1,7 @@
 import type { ReactElement, ReactNode } from "react";
 import { Button } from "../components/ui/button";
+import { useIntegratedI18n } from "../i18n/locale";
+import type { Translate } from "../i18n/messages";
 import type { EditingOptions } from "./types";
 
 /** Resolves a `saveLabel`/`discardLabel`-shaped prop to what actually renders — see `EditingOptions`'s own doc for why there's no placeholder substitution for the plain-string case. */
@@ -17,11 +19,11 @@ function resolveEditLabel(
 // wall of ids; there's no general "human label for a row" concept to fall
 // back on, so a row id (whatever the caller's own `getRowId` returns) is the
 // only identifying string available here.
-function describeErrorRows(editErrors: Map<string, Map<string, string>>): string {
+function describeErrorRows(editErrors: Map<string, Map<string, string>>, t: Translate): string {
   const rowIds = [...editErrors.keys()];
   const shown = rowIds.slice(0, 3);
-  const suffix = rowIds.length > shown.length ? `, and ${rowIds.length - shown.length} more` : "";
-  return `row${rowIds.length === 1 ? "" : "s"} ${shown.join(", ")}${suffix}`;
+  const suffix = rowIds.length > shown.length ? t("editing.andMore", { count: rowIds.length - shown.length }) : "";
+  return t("editing.errorRows", { count: rowIds.length, ids: shown.join(", ") + suffix });
 }
 
 export interface EditingBarProps<TRow> {
@@ -48,6 +50,7 @@ export function EditingBar<TRow>({
   onDiscard,
   testIdPrefix = "datagrid",
 }: EditingBarProps<TRow>): ReactElement {
+  const { t } = useIntegratedI18n();
   const hasEditErrors = editErrors.size > 0;
   return (
     <div
@@ -57,10 +60,10 @@ export function EditingBar<TRow>({
       {/* `aria-live="polite"` — a screen-reader user gets no other signal that this bar exists at all, let alone that
           its row count or error state just changed, since nothing here is itself focused when it appears. */}
       <span aria-live="polite">
-        {pendingRowCount} row{pendingRowCount === 1 ? "" : "s"} changed
+        {t("editing.rowsChanged", { count: pendingRowCount })}
         {hasEditErrors && (
           <span className="ml-2 text-red-700 dark:text-red-300">
-            Fix the highlighted errors before saving ({describeErrorRows(editErrors)}).
+            {t("editing.fixErrors", { rows: describeErrorRows(editErrors, t) })}
           </span>
         )}
       </span>
@@ -73,7 +76,7 @@ export function EditingBar<TRow>({
           disabled={editing.saving}
           onClick={onDiscard}
         >
-          {resolveEditLabel(editing.discardLabel, pendingRowCount, () => "Discard")}
+          {resolveEditLabel(editing.discardLabel, pendingRowCount, () => t("editing.discard"))}
         </Button>
         <Button
           type="button"
@@ -85,7 +88,7 @@ export function EditingBar<TRow>({
           {resolveEditLabel(
             editing.saveLabel,
             pendingRowCount,
-            (count) => `Save ${count} change${count === 1 ? "" : "s"}`,
+            (count) => t("editing.save", { count }),
           )}
         </Button>
       </div>

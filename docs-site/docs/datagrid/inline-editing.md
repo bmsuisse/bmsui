@@ -116,10 +116,10 @@ the value is fixed or reverted to its original:
 }
 ```
 
-## Save/Discard labels — there's no i18n layer here
+## Save/Discard labels
 
-This package has no translation/templating system anywhere — `saveLabel`/
-`discardLabel` are either a plain string (rendered as-is, no `{count}`
+The defaults come from the grid's [`locale`](/datagrid/translations). To
+override them, `saveLabel`/`discardLabel` are either a plain string (rendered as-is, no `{count}`
 placeholder substitution) or a function for a count-aware label:
 
 ```tsx
@@ -133,8 +133,7 @@ placeholder substitution) or a function for a count-aware label:
 />
 ```
 
-Defaults to `` `Save ${count} change${count === 1 ? "" : "s"}` `` and
-`"Discard"`.
+Defaults to "Save N change(s)" and "Discard" in the grid's language.
 
 ## `saving` — while your own request is in flight
 

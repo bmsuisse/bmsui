@@ -1,6 +1,8 @@
 import { CheckIcon, ClipboardDocumentListIcon } from "@heroicons/react/24/outline";
 import type { ReactElement } from "react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../components/ui/dropdown-menu";
+import { getI18n } from "../i18n/locale";
+import type { IntegratedI18n } from "../i18n/locale";
 import type { FillMode } from "./fillHandle";
 
 export interface CellEditingLabels {
@@ -10,11 +12,16 @@ export interface CellEditingLabels {
   fillSeries: string;
 }
 
-export const defaultCellEditingLabels: CellEditingLabels = {
-  fillOptions: "Auto fill options",
-  copyCells: "Copy cells",
-  fillSeries: "Fill series",
-};
+/** The built-in `CellEditingLabels` of one locale. */
+export function cellEditingLabelsFor({ t }: IntegratedI18n): CellEditingLabels {
+  return {
+    fillOptions: t("cellEditing.fillOptions"),
+    copyCells: t("cellEditing.copyCells"),
+    fillSeries: t("cellEditing.fillSeries"),
+  };
+}
+
+export const defaultCellEditingLabels: CellEditingLabels = cellEditingLabelsFor(getI18n("en"));
 
 /** Excel's "Auto Fill Options" button: shown under a just-finished fill, lets the user switch how it filled. */
 export function FillOptionsMenu({
