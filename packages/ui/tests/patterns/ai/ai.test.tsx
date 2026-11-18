@@ -73,9 +73,9 @@ describe("AiButton", () => {
       </AiButton>,
     );
     expect(ref.current).toBe(screen.getByTestId("ai"));
-    expect(ref.current).toHaveClass("bg-violet-500/10", "mt-1");
+    expect(ref.current).toHaveClass("bg-ring/10", "mt-1");
     rerender(<AiButton variant="ai">Summarize</AiButton>);
-    expect(screen.getByRole("button")).toHaveClass("bg-violet-600");
+    expect(screen.getByRole("button")).toHaveClass("bg-primary");
   });
 });
 
