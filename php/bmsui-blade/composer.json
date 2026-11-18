@@ -1,0 +1,32 @@
+{
+    "name": "bmsuisse/bmsui-blade",
+    "description": "BMS design Blade components (chip, banner, stat strip, timeline, copy, confirm, AI button, brand) ported from @bmsuisse/ui. Plain CSS + vanilla JS, no build step.",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": "^8.2",
+        "illuminate/support": "^11.0|^12.0",
+        "illuminate/view": "^11.0|^12.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^9.0|^10.0",
+        "phpunit/phpunit": "^11.0"
+    },
+    "autoload": {
+        "psr-4": {"BMSuisse\\BMSUi\\": "src/"}
+    },
+    "autoload-dev": {
+        "psr-4": {"BMSuisse\\BMSUi\\Tests\\": "tests/"}
+    },
+    "extra": {
+        "laravel": {
+            "providers": ["BMSuisse\\BMSUi\\BMSUiServiceProvider"]
+        }
+    },
+    "scripts": {
+        "test": "phpunit"
+    },
+    "config": {
+        "sort-packages": true
+    }
+}

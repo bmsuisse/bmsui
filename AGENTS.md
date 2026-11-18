@@ -14,6 +14,7 @@ into aspiration.
 ```
 packages/datagrid/     @bmsuisse/datagrid   — React datagrid (TanStack Table v9)
 packages/ui/           @bmsuisse/ui         — shared shadcn/ui-based primitives + composed patterns
+php/bmsui-blade/       bmsuisse/bmsui-blade — the BMS design as Blade components for PHP/Laravel (OneDesk)
 plugins/bmsui/         Claude Code plugin   — skill telling agents in consuming apps to use the catalog
 python/datagrid/       bmsdna-datagrid   — filter contract -> SQL / Meilisearch
 e2e/server/            FastAPI harness backing packages/datagrid/e2e's Playwright specs
@@ -870,6 +871,18 @@ where an implementation existed. Each has a story, tests and a `CATALOG.md` line
   instead of `truncate`; fixed-height bars use `min-h-*` so large root font sizes grow them.
 - Known follow-ups: `ChatConversation` scroll anchoring on iOS Safari is untested; `text-[11px]/[13px]` do not
   scale with root font size.
+
+## `php/bmsui-blade` — Blade components for PHP/Laravel (OneDesk)
+
+Composer package `bmsuisse/bmsui-blade`: `<x-bmsui::chip|banner|stat-strip|stat|timeline|timeline-item|copy-button|confirm|ai-button|brand>`
+as anonymous Blade components, one CSS file (`resources/css/bmsui.css`, classes prefixed `bmsui-`, colours as
+`--bmsui-*` variables, night mode = `.dm` on `<body>` like FreeScout's BMS Design) and one delegated vanilla JS file
+(`resources/js/bmsui.js`). No build, no Tailwind, no jQuery; coexists with Bootstrap 3. It mirrors a *subset* of
+`@bmsuisse/ui` (the pieces that make sense in a help desk), so when one of those components changes its look in
+`packages/ui`, change the matching class here too. OneDesk/FreeScout hosts register `BMSUi::cssPath()`/`jsPath()`
+through Eventy `stylesheets`/`javascripts` (see the package README). Tests: `cd php/bmsui-blade && composer install &&
+vendor/bin/phpunit` (Orchestra Testbench; CI job "PHP"). Screenshots in `docs/` are rendered from
+`view('bmsui::preview')`. Docs page: `docs-site/docs/ui/blade.md` (keep in sync with the package README).
 
 ## Public API reports — `packages/*/api-report.md`
 

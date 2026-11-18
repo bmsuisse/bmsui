@@ -1,0 +1,127 @@
+/* BMS UI: Blade components ported from @bmsuisse/ui. Colours are CSS variables;
+   BMS Design's night mode (body.dm) overrides them. Classes are prefixed bmsui-. */
+:root {
+  --bmsui-fg: #1f2933;
+  --bmsui-muted: #5b6673;
+  --bmsui-bg: #fff;
+  --bmsui-surface: #f5f6f8;
+  --bmsui-border: #e3e6ea;
+  --bmsui-hairline: rgba(31, 41, 51, .12);
+  --bmsui-accent: #d6001f;
+  --bmsui-accent-fg: #fff;
+  --bmsui-ring: #d6001f;
+  --bmsui-radius: 6px;
+  --bmsui-pill: 999px;
+  --bmsui-info-bg: #e8f1fb; --bmsui-info-fg: #0b4a8a; --bmsui-info-bd: #b6d3f1;
+  --bmsui-success-bg: #e6f4ea; --bmsui-success-fg: #1b5e2f; --bmsui-success-bd: #b4dcc0;
+  --bmsui-warning-bg: #fff4dd; --bmsui-warning-fg: #7a4a00; --bmsui-warning-bd: #f0d6a0;
+  --bmsui-danger-bg: #fdeaea; --bmsui-danger-fg: #a40d1c; --bmsui-danger-bd: #f1b5b9;
+}
+.dm {
+  --bmsui-fg: #e6e9ee;
+  --bmsui-muted: #a3adba;
+  --bmsui-bg: #1d2127;
+  --bmsui-surface: #262b33;
+  --bmsui-border: #343b45;
+  --bmsui-hairline: #343b45;
+  --bmsui-accent: #ff8a99;
+  --bmsui-accent-fg: #1d2127;
+  --bmsui-ring: #ff8a99;
+  --bmsui-info-bg: #15293f; --bmsui-info-fg: #a9cdf5; --bmsui-info-bd: #2a4a6e;
+  --bmsui-success-bg: #14301f; --bmsui-success-fg: #a6dbb8; --bmsui-success-bd: #285a3a;
+  --bmsui-warning-bg: #3a2c0f; --bmsui-warning-fg: #f3d594; --bmsui-warning-bd: #6a5320;
+  --bmsui-danger-bg: #3d171b; --bmsui-danger-fg: #ffb3ba; --bmsui-danger-bd: #7a2a31;
+}
+[class^="bmsui-"], [class*=" bmsui-"] { box-sizing: border-box; }
+.bmsui-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---- Chip ---- */
+.bmsui-chip { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; padding: 2px 10px; font-size: 12px; line-height: 20px; color: var(--bmsui-fg); background: var(--bmsui-surface); border: 1px solid var(--bmsui-hairline); border-radius: var(--bmsui-pill); text-decoration: none; }
+a.bmsui-chip:hover { background: var(--bmsui-border); color: var(--bmsui-fg); text-decoration: none; }
+.bmsui-chip__text { min-width: 0; overflow-wrap: anywhere; }
+.bmsui-chip--info { background: var(--bmsui-info-bg); color: var(--bmsui-info-fg); border-color: var(--bmsui-info-bd); }
+.bmsui-chip--success { background: var(--bmsui-success-bg); color: var(--bmsui-success-fg); border-color: var(--bmsui-success-bd); }
+.bmsui-chip--warning { background: var(--bmsui-warning-bg); color: var(--bmsui-warning-fg); border-color: var(--bmsui-warning-bd); }
+.bmsui-chip--danger { background: var(--bmsui-danger-bg); color: var(--bmsui-danger-fg); border-color: var(--bmsui-danger-bd); }
+.bmsui-chip__x { flex: none; width: 18px; height: 18px; margin: 0 -6px 0 0; padding: 0; border: 0; border-radius: 50%; background: transparent; color: inherit; font-size: 14px; line-height: 18px; cursor: pointer; opacity: .8; }
+.bmsui-chip__x:hover { background: rgba(0, 0, 0, .12); opacity: 1; }
+
+/* ---- Banner ---- */
+.bmsui-banner { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; margin: 0 0 12px; border: 1px solid; border-radius: var(--bmsui-radius); font-size: 13px; line-height: 1.45; }
+.bmsui-banner--info { background: var(--bmsui-info-bg); color: var(--bmsui-info-fg); border-color: var(--bmsui-info-bd); }
+.bmsui-banner--success { background: var(--bmsui-success-bg); color: var(--bmsui-success-fg); border-color: var(--bmsui-success-bd); }
+.bmsui-banner--warning { background: var(--bmsui-warning-bg); color: var(--bmsui-warning-fg); border-color: var(--bmsui-warning-bd); }
+.bmsui-banner--danger { background: var(--bmsui-danger-bg); color: var(--bmsui-danger-fg); border-color: var(--bmsui-danger-bd); }
+.bmsui-banner__icon { flex: none; width: 18px; height: 18px; margin-top: 1px; }
+.bmsui-banner__body { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.bmsui-banner__title { display: block; font-weight: 600; }
+.bmsui-banner__x { flex: none; border: 0; background: transparent; color: inherit; font-size: 18px; line-height: 1; padding: 0 2px; cursor: pointer; opacity: .75; }
+.bmsui-banner__x:hover { opacity: 1; }
+
+/* ---- Stat strip ---- */
+.bmsui-stats { display: flex; flex-wrap: wrap; margin: 0 0 12px; background: var(--bmsui-bg); border: 1px solid var(--bmsui-hairline); border-radius: var(--bmsui-radius); }
+.bmsui-stat { flex: 1 1 140px; min-width: 0; padding: 10px 14px; border-right: 1px solid var(--bmsui-hairline); }
+.bmsui-stat:last-child { border-right: 0; }
+.bmsui-stat__label { display: block; color: var(--bmsui-muted); font-size: 12px; }
+.bmsui-stat__value { display: block; font-size: 22px; font-weight: 600; line-height: 1.25; color: var(--bmsui-fg); overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.bmsui-stat__sub { display: block; color: var(--bmsui-muted); font-size: 12px; }
+.bmsui-stat__sub--up { color: var(--bmsui-success-fg); }
+.bmsui-stat__sub--down { color: var(--bmsui-danger-fg); }
+
+/* ---- Timeline ---- */
+.bmsui-timeline { position: relative; list-style: none; margin: 0 0 12px; padding: 0; }
+.bmsui-timeline__item { position: relative; padding: 0 0 16px 26px; }
+.bmsui-timeline__item:last-child { padding-bottom: 0; }
+.bmsui-timeline__item::before { content: ""; position: absolute; left: 6px; top: 16px; bottom: -2px; width: 1px; background: var(--bmsui-hairline); }
+.bmsui-timeline__item:last-child::before { display: none; }
+.bmsui-timeline__dot { position: absolute; left: 0; top: 4px; width: 13px; height: 13px; box-sizing: border-box; border: 2px solid var(--bmsui-muted); border-radius: 50%; background: var(--bmsui-bg); }
+.bmsui-timeline__dot--success { border-color: var(--bmsui-success-fg); }
+.bmsui-timeline__dot--warning { border-color: var(--bmsui-warning-fg); }
+.bmsui-timeline__dot--danger { border-color: var(--bmsui-danger-fg); }
+.bmsui-timeline__dot--accent { border-color: var(--bmsui-accent); background: var(--bmsui-accent); }
+.bmsui-timeline__title { display: block; font-weight: 600; color: var(--bmsui-fg); overflow-wrap: anywhere; }
+.bmsui-timeline__time { display: block; color: var(--bmsui-muted); font-size: 12px; }
+.bmsui-timeline__body { margin-top: 2px; color: var(--bmsui-fg); overflow-wrap: anywhere; }
+
+/* ---- Buttons (copy, confirm, AI) ---- */
+.bmsui-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 3px 10px; font: inherit; font-size: 13px; line-height: 20px; color: var(--bmsui-fg); background: var(--bmsui-bg); border: 1px solid var(--bmsui-hairline); border-radius: var(--bmsui-radius); cursor: pointer; text-decoration: none; transition: background-color .12s ease, box-shadow .15s ease; }
+.bmsui-btn:hover { background: var(--bmsui-surface); color: var(--bmsui-fg); text-decoration: none; }
+.bmsui-btn:focus-visible { outline: 2px solid var(--bmsui-ring); outline-offset: 2px; }
+.bmsui-btn[disabled], .bmsui-btn[aria-busy="true"] { opacity: .6; cursor: not-allowed; }
+.bmsui-btn svg { width: 16px; height: 16px; flex: none; }
+.bmsui-btn--icon { padding: 3px 6px; }
+.bmsui-btn--danger { background: var(--bmsui-danger-fg); border-color: var(--bmsui-danger-fg); color: var(--bmsui-bg); }
+.bmsui-btn--danger:hover { background: var(--bmsui-danger-fg); color: var(--bmsui-bg); filter: brightness(1.1); }
+.bmsui-copy.is-copied { color: var(--bmsui-success-fg); border-color: var(--bmsui-success-bd); }
+.bmsui-copy.is-failed { color: var(--bmsui-danger-fg); border-color: var(--bmsui-danger-bd); }
+
+/* AI button: theme accent + soft glow (same recipe as @bmsuisse/ui's `ai` variants). */
+.bmsui-ai { --bmsui-glow: 0 0 0 1px color-mix(in srgb, var(--bmsui-ring) 35%, transparent), 0 0 16px -2px color-mix(in srgb, var(--bmsui-ring) 55%, transparent); --bmsui-glow-hover: 0 0 0 1px color-mix(in srgb, var(--bmsui-ring) 55%, transparent), 0 0 22px -1px color-mix(in srgb, var(--bmsui-ring) 70%, transparent); border-color: transparent; background: var(--bmsui-accent); color: var(--bmsui-accent-fg); box-shadow: var(--bmsui-glow); }
+.bmsui-ai:hover { background: var(--bmsui-accent); color: var(--bmsui-accent-fg); box-shadow: var(--bmsui-glow-hover); }
+.bmsui-ai--subtle { background: color-mix(in srgb, var(--bmsui-ring) 10%, transparent); color: var(--bmsui-accent); }
+.bmsui-ai--subtle:hover { background: color-mix(in srgb, var(--bmsui-ring) 16%, transparent); color: var(--bmsui-accent); }
+.bmsui-ai--ghost { background: transparent; color: var(--bmsui-accent); box-shadow: none; }
+.bmsui-ai--ghost:hover { background: color-mix(in srgb, var(--bmsui-ring) 10%, transparent); color: var(--bmsui-accent); box-shadow: 0 0 16px -2px color-mix(in srgb, var(--bmsui-ring) 50%, transparent); }
+.bmsui-spin { animation: bmsui-spin .8s linear infinite; }
+@keyframes bmsui-spin { to { transform: rotate(360deg); } }
+
+/* ---- Confirm popover ---- */
+.bmsui-confirm { position: relative; display: inline-block; }
+.bmsui-confirm__pop { position: absolute; z-index: 1000; top: calc(100% + 6px); left: 0; width: 260px; max-width: calc(100vw - 16px); padding: 12px; background: var(--bmsui-bg); color: var(--bmsui-fg); border: 1px solid var(--bmsui-hairline); border-radius: var(--bmsui-radius); box-shadow: 0 8px 24px rgba(0, 0, 0, .18); font-size: 13px; }
+.bmsui-confirm__pop--end { left: auto; right: 0; }
+.bmsui-confirm__pop[hidden] { display: none; }
+.bmsui-confirm--top .bmsui-confirm__pop { top: auto; bottom: calc(100% + 6px); }
+.bmsui-confirm__msg { margin: 0 0 10px; overflow-wrap: anywhere; }
+.bmsui-confirm__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.bmsui-confirm form { display: inline; margin: 0; }
+
+/* ---- Brand wordmark ---- */
+.bmsui-brand { display: inline-flex; align-items: center; font-weight: 700; line-height: 1; letter-spacing: -.055em; white-space: nowrap; color: var(--bmsui-muted); }
+.bmsui-brand__mark { position: relative; flex: none; width: .8em; height: .8em; margin-right: .04em; border: .157em solid currentColor; border-radius: 50%; box-sizing: border-box; }
+.bmsui-brand__dot { position: absolute; left: 50%; top: 50%; width: .2em; height: .2em; margin: -.1em; border-radius: 50%; background: var(--bmsui-brand-dot, #e60028); }
+.bmsui-brand--animate .bmsui-brand__dot { animation: bmsui-brand-pulse 1.4s ease-out 1; }
+@keyframes bmsui-brand-pulse { 0% { transform: scale(0); } 55% { transform: scale(2.2); } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) {
+  .bmsui-brand--animate .bmsui-brand__dot, .bmsui-spin { animation: none; }
+  .bmsui-btn { transition: none; }
+}
