@@ -1,6 +1,6 @@
 import { ArrowPathIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import type { ReactElement } from "react";
-import { getI18n } from "../i18n/locale";
+import { getI18n, useIntegratedI18n } from "../i18n/locale";
 import type { IntegratedI18n } from "../i18n/locale";
 import { cn } from "../lib/utils";
 import { Button } from "./ui/button";
@@ -40,10 +40,6 @@ export interface GridStatusLabels {
   showDetails: string;
   /** TreeDataGrid: shown on a node whose lazy children failed to load. */
   nodeLoadFailed: string;
-  /** Message for a rejected `error` that carries none (a thrown non-Error). */
-  unknownError: string;
-  /** Accessible name of the thin bar shown while refetching over visible rows. */
-  refreshing: string;
 }
 
 /** The built-in `GridStatusLabels` of one locale. */
@@ -55,8 +51,6 @@ export function statusLabelsFor({ t }: IntegratedI18n): GridStatusLabels {
     retry: t("status.retry"),
     showDetails: t("status.showDetails"),
     nodeLoadFailed: t("status.nodeLoadFailed"),
-    unknownError: t("status.unknownError"),
-    refreshing: t("status.refreshing"),
   };
 }
 
@@ -103,7 +97,8 @@ export function GridErrorState({
   onRetry?: () => void;
   labels: GridStatusLabels;
 }): ReactElement | null {
-  const info = toErrorInfo(error, labels.unknownError);
+  const { t } = useIntegratedI18n();
+  const info = toErrorInfo(error, t("status.unknownError"));
   if (!info) return null;
   return (
     <div
@@ -147,7 +142,8 @@ export function GridInlineError({
   /** Let a long message wrap instead of truncating (stale-rows banners). */
   wrap?: boolean;
 }): ReactElement | null {
-  const info = toErrorInfo(error, labels.unknownError);
+  const { t } = useIntegratedI18n();
+  const info = toErrorInfo(error, t("status.unknownError"));
   if (!info) return null;
   return (
     <span

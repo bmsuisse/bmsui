@@ -29,8 +29,15 @@ describe("built-in catalogs", () => {
         for (const key of keys) for (const text of texts(CATALOGS[language][key])) expect(text, key).not.toBe("");
       });
 
-      it("uses the same placeholders as en.json", () => {
-        for (const key of keys) expect(placeholders(CATALOGS[language][key]), key).toEqual(placeholders(CATALOGS.en[key]));
+      // A language may leave a placeholder out (fr/it/de search placeholders drop `{header}` on purpose: the column
+      // name is right above the popover and a long one gets truncated), but never invent one the code doesn't pass.
+      it("uses no placeholder that en.json lacks, and keeps {count} wherever en.json has it", () => {
+        for (const key of keys) {
+          const own = placeholders(CATALOGS[language][key]);
+          const source = placeholders(CATALOGS.en[key]);
+          expect(source, key).toEqual(expect.arrayContaining(own));
+          if (source.includes("count")) expect(own, key).toContain("count");
+        }
       });
 
       it("spells out plural messages with categories the language has", () => {

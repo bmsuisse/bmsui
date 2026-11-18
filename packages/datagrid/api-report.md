@@ -453,10 +453,8 @@ interface GridStatusLabels
   loading: string
   noResults: string
   nodeLoadFailed: string
-  refreshing: string
   retry: string
   showDetails: string
-  unknownError: string
 interface GroupExpansionController
   expandedGroups: Record<string, boolean>
   isGroupExpanded: (key: string) => boolean

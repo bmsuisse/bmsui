@@ -4,6 +4,8 @@ import { describe, expect, it, vi } from "vitest";
 import type { ColumnDef, EnumColumn } from "../../src/column/types";
 import { EnumFilter } from "../../src/filter/EnumFilter";
 import { FilterLabelsProvider, defaultFilterLabels, filterLabelsFor } from "../../src/filter/labels";
+import { defaultGridStatusLabels } from "../../src/components/status";
+import type { GridStatusLabels } from "../../src/components/status";
 import { DataGrid } from "../../src/grid/DataGrid";
 import { TreeDataGrid } from "../../src/tree/TreeDataGrid";
 import { BmsLocaleProvider, getI18n } from "../../src/i18n/locale";
@@ -44,6 +46,28 @@ describe("filterLabelsFor", () => {
   });
 });
 
+describe("compatibility", () => {
+  it("keeps GridStatusLabels and CellEditingLabels to the keys apps already build in full", () => {
+    // Apps return a complete object of these types from their own i18n; a new required key would break their build.
+    const status: GridStatusLabels = {
+      loading: "",
+      noResults: "",
+      errorTitle: "",
+      retry: "",
+      showDetails: "",
+      nodeLoadFailed: "",
+    };
+    expect(Object.keys(status)).toHaveLength(Object.keys(defaultGridStatusLabels).length);
+  });
+
+  it("uses the acronym-aware header in fr", () => {
+    const fr = filterLabelsFor(getI18n("fr-CH"));
+    expect(fr.stringPlaceholder("Statut")).toBe("Filtrer par statut…");
+    expect(fr.stringPlaceholder("EK Preis")).toBe("Filtrer par EK Preis…");
+    expect(fr.searchPlaceholder("Statut")).toBe("Rechercher…");
+  });
+});
+
 describe("<BmsLocaleProvider>", () => {
   it("translates the built-in filter widgets", async () => {
     render(
@@ -52,7 +76,7 @@ describe("<BmsLocaleProvider>", () => {
       </BmsLocaleProvider>,
     );
     await userEvent.click(screen.getByRole("button", { name: "Status filtern" }));
-    expect(screen.getByPlaceholderText("Status suchen...")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Suchen…")).toBeInTheDocument();
     expect(screen.getByText("Alle auswählen")).toBeInTheDocument();
   });
 
@@ -66,7 +90,7 @@ describe("<BmsLocaleProvider>", () => {
     );
     await userEvent.click(screen.getByRole("button", { name: "Status filtern" }));
     expect(screen.getByText("Tous")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Status suchen...")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Suchen…")).toBeInTheDocument();
   });
 
   it("lets a widget's own labels win over a provider's", async () => {

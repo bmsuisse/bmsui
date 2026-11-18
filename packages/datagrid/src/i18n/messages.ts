@@ -41,15 +41,31 @@ export function resolveLanguage(tag: string | undefined): BmsLanguage {
   return LANGUAGES.find((candidate) => candidate === language) ?? "en";
 }
 
-const PLACEHOLDER = /\{(\w+)(?::(lower))?\}/g;
+const PLACEHOLDER = /\{(\w+)(?::(lower|inline))?\}/g;
 
-/** Fills `{name}` (and `{name:lower}`, lower-cased for mid-sentence use) placeholders; an unknown name is left as written. */
+/**
+ * Lower-cases the first letter of a column header for mid-sentence use
+ * ("Filtrer par statut"), unless it starts with an acronym or code ("EK",
+ * "L12M Sales" stay as they are).
+ */
+function inlineHeader(value: string): string {
+  const second = value[1];
+  if (value.length < 2 || second === undefined || second === second.toUpperCase()) return value;
+  return value[0]!.toLowerCase() + value.slice(1);
+}
+
+/**
+ * Fills `{name}` placeholders; an unknown name is left as written.
+ * `{name:lower}` lower-cases the whole value (English "Search status..."),
+ * `{name:inline}` only its first letter, acronym-aware (fr/it/es).
+ */
 export function interpolate(template: string, params: MessageParams | undefined): string {
   if (!params) return template;
   return template.replace(PLACEHOLDER, (whole, name: string, modifier: string | undefined) => {
     const value = params[name];
     if (value === undefined) return whole;
-    return modifier === "lower" ? String(value).toLowerCase() : String(value);
+    const text = String(value);
+    return modifier === "lower" ? text.toLowerCase() : modifier === "inline" ? inlineHeader(text) : text;
   });
 }
 

@@ -28,6 +28,13 @@ describe("interpolate", () => {
     expect(interpolate("Search {header:lower}...", { header: "Customer NAME" })).toBe("Search customer name...");
   });
 
+  it("lower-cases only the first letter with {name:inline}, unless the value starts with an acronym", () => {
+    expect(interpolate("Filtrer par {h:inline}", { h: "Statut client" })).toBe("Filtrer par statut client");
+    expect(interpolate("{h:inline}", { h: "L12M Sales" })).toBe("L12M Sales");
+    expect(interpolate("{h:inline}", { h: "EK" })).toBe("EK");
+    expect(interpolate("{h:inline}", { h: "X" })).toBe("X");
+  });
+
   it("does not re-expand placeholders inside values", () => {
     expect(interpolate("{a}", { a: "{b}", b: "x" })).toBe("{b}");
   });

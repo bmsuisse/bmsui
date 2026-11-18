@@ -493,7 +493,7 @@ export function DataGrid<TRow extends RowData>({
   const i18n = useIntegratedI18n(locale);
   const { t } = i18n;
   const labels = resolveStatusLabels(statusLabels, i18n);
-  const hasError = toErrorInfo(error, labels.unknownError) !== undefined;
+  const hasError = toErrorInfo(error, t("status.unknownError")) !== undefined;
   const loading = loadingProp || (dataSource.mode === "server" ? Boolean(dataSource.loading) : false);
   // The checkbox column itself is decoupled from `headerActions`: a caller
   // using controlled `selectedIds` (its own toolbar elsewhere on the page,
@@ -1723,7 +1723,7 @@ export function DataGrid<TRow extends RowData>({
         </div>
       )}
       <div className="relative min-h-0 flex-1">
-        {loading && rows.length > 0 && <RefreshBar label={labels.refreshing} data-testid="datagrid-loading-overlay" />}
+        {loading && rows.length > 0 && <RefreshBar label={t("status.refreshing")} data-testid="datagrid-loading-overlay" />}
         <div
           ref={scrollRef}
           data-testid={testId}

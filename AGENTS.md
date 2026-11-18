@@ -1157,8 +1157,8 @@ category its language doesn't have. All six catalogs are imported statically
   Prop beats provider beats English. Only the language of the tag picks the
   texts; the region (`CH`) selects date-fns' Swiss calendar locale
   (`fr-CH`, `it-CH`) where it exists. No locale = English, exactly as before.
-- Templates: `{name}` placeholders, `{name:lower}` (lower-cased, for English
-  "Search status..."), plural by `Intl.PluralRules` on `count` (fr: 0 and 1
+- Templates: `{name}` placeholders, `{name:lower}` (whole value lower-cased, for English
+  "Search status..."), `{name:inline}` (first letter only, acronym-aware: "Filtrer par statut", "EK Preis" stays), plural by `Intl.PluralRules` on `count` (fr: 0 and 1
   singular). No ICU library.
 - Precedence per text: per-widget `labels` prop > `filterLabels` /
   `FilterLabelsProvider` > `statusLabels` / `cellEditing.labels` /
@@ -1167,7 +1167,8 @@ category its language doesn't have. All six catalogs are imported statically
   unchanged (function-valued labels still work); `filterLabelsFor(i18n)`,
   `statusLabelsFor`, `cellEditingLabelsFor` build the built-in sets, and
   `defaultFilterLabels` & co. are the English ones.
-- `GridStatusLabels` gained `unknownError` and `refreshing`.
+- `GridStatusLabels`, `FilterLabels` and `CellEditingLabels` gained no keys: apps build complete objects of these types from their own i18n, so a new required key would break their typecheck. Texts that are not in them (`status.unknownError`, `status.refreshing`, aria-labels, pagination, editing bar) come from the locale only.
+- de/fr/it wording follows CCMT2's reviewed `translations.toml` (the one app that already ships all three); the fr/it search placeholders are header-less there on purpose (long headers get truncated in the popover), which is why a catalog may drop `{header}`.
 - Not translated yet: cell values (`defaultFormat`'s Yes/No, number/date
   formatting still use the runtime locale). `@bmsuisse/ui` keeps its own
   copy of this mechanism (a follow-up PR) rather than depending on the

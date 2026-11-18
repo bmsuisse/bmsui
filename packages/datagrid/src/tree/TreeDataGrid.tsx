@@ -196,7 +196,7 @@ export function TreeDataGrid<TRow>({
   const i18n = useIntegratedI18n(locale);
   const { t } = i18n;
   const labels = resolveStatusLabels(statusLabels, i18n);
-  const hasError = toErrorInfo(error, labels.unknownError) !== undefined;
+  const hasError = toErrorInfo(error, t("status.unknownError")) !== undefined;
   const accessors: TreeAccessors<TRow> = useMemo(
     () => ({ getRowId, getChildren, hasChildren }),
     [getRowId, getChildren, hasChildren],
