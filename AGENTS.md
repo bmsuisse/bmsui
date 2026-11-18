@@ -884,6 +884,21 @@ through Eventy `stylesheets`/`javascripts` (see the package README). Tests: `cd 
 vendor/bin/phpunit` (Orchestra Testbench; CI job "PHP"). Screenshots in `docs/` are rendered from
 `view('bmsui::preview')`. Docs page: `docs-site/docs/ui/blade.md` (keep in sync with the package README).
 
+OneDesk additions (on top of #113): extension points on `conversation-row`/`conversation-list`/`mail-message`
+(attribute passthrough, hook slots, `as="table"`, star toggle) and the components from OneDesk's proposal (button,
+form fields, combobox, dialog, dropdown menu, tabs, tooltip/popover, badges, empty state, table shell, page header,
+sidebar with cookie state, pagination, toast, command palette, …); the README table lists each one. Conventions and traps:
+- Extend existing components only with optional props/slots; their current output must stay the same.
+- JS: one IIFE; each feature is delegated listeners. Setup that must run per inserted node goes in a function pushed to
+  `inits` (run on load, by a `MutationObserver` and by `BMSUi.init(container)`); new code goes above the "Boot" block.
+- Every default text goes through `__()`; the parity test only sees `__()`, so plurals are `trans_choice(__('…'), $n)`.
+  Avoid keys that equal a Laravel lang group (`__('Pagination')` returns `lang/en/pagination.php` as an array).
+- Blade compiles directives and component tags inside PHP comments in `@props` (`@aware`, `<x-…>`): don't write them there.
+- A named slot that comes first must be followed by a line break before other content, or the output buffer stays open.
+- `null` passed to a prop falls back to its default (use `false` to switch something off); spreading `{{ $attributes }}`
+  into another component does not map kebab-case attributes to its camelCase props, so wrappers pass props explicitly.
+- Tests live in one file per group (`tests/*ComponentsTest.php`, base class `BladeTestCase`).
+
 ## Public API reports — `packages/*/api-report.md`
 
 `bun run api-report` (`scripts/api-report.ts`) reads the **built**

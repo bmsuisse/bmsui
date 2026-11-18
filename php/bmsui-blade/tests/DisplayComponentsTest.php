@@ -94,4 +94,15 @@ class DisplayComponentsTest extends BladeTestCase
         $this->assertStringContainsString('title=', $date);
         \Illuminate\Support\Carbon::setTestNow();
     }
+
+    public function testExtraTokensExistForLightAndNight()
+    {
+        $css = file_get_contents(\BMSuisse\BMSUi\BMSUi::cssPath());
+        foreach (['--bmsui-radius-lg', '--bmsui-shadow-sm', '--bmsui-shadow-md', '--bmsui-shadow-lg', '--bmsui-accent-soft'] as $t) {
+            $this->assertMatchesRegularExpression('/:root \{[^}]*'.preg_quote($t, '/').':/', $css, $t);
+        }
+        foreach (['--bmsui-shadow-md', '--bmsui-accent-soft'] as $t) {
+            $this->assertMatchesRegularExpression('/\.dm \{[^}]*'.preg_quote($t, '/').':/', $css, $t);
+        }
+    }
 }

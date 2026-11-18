@@ -80,6 +80,15 @@ The list and the thread view can replace FreeScout's markup without breaking its
 (`<x-slot:trigger>Info</x-slot:trigger>` then content on the next line). Text directly after `</x-slot:…>`
 in that position leaves an open output buffer in Laravel 12's compiler (true for every component).
 
+## Tokens
+
+Colours and shapes are CSS variables on `:root`, overridden under `.dm`. A host maps its own variables onto them:
+`--bmsui-fg`, `--bmsui-muted`, `--bmsui-bg`, `--bmsui-surface`, `--bmsui-border`, `--bmsui-hairline`, `--bmsui-accent`,
+`--bmsui-accent-fg`, `--bmsui-ring`, `--bmsui-radius`, `--bmsui-pill`, `--bmsui-{info,success,warning,danger}-{bg,fg,bd}`,
+plus `--bmsui-radius-lg` (dialogs, cards, toasts), `--bmsui-shadow-sm|md|lg` (raised / menus and popovers / dialogs) and
+`--bmsui-accent-soft` (hover/selected tint; it is derived from `--bmsui-accent`, so a host that changes the accent under
+another selector sets it there too).
+
 ## Install (Laravel)
 
 ```bash
