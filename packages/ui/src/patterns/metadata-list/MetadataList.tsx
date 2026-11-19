@@ -123,7 +123,7 @@ export const MetadataList = ({
               item.fullWidth && FULL_SPAN[columns],
             )}
           >
-            <dt className="min-w-0 text-xs font-medium text-muted-foreground">{item.label}</dt>
+            <dt className="min-w-0 [overflow-wrap:anywhere] text-xs font-medium text-muted-foreground">{item.label}</dt>
             <dd className="flex min-w-0 items-start gap-1.5 text-foreground">
               {empty ? (
                 <span className="text-muted-foreground" data-testid="metadata-empty">
