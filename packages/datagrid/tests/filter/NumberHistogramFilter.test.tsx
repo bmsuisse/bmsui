@@ -55,7 +55,7 @@ describe("NumberHistogramFilter: bare defaults to true (no own Popover/trigger)"
       />,
     );
     expect(loadValues).toHaveBeenCalledTimes(1);
-    expect(await screen.findByLabelText("Sales minimum")).toHaveValue("100");
+    await waitFor(() => expect(screen.getByLabelText("Sales minimum")).toHaveValue("100"));
   });
 });
 

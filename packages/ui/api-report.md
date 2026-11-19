@@ -7,7 +7,7 @@ Every public export with its kind and signature. Interfaces and object types
 list their own members one per line (inherited members come from the `extends`
 clause), so the diff of this file shows exactly what changed in the public API.
 
-## Components (236)
+## Components (237)
 
 ```text
 const Accordion: react.ForwardRefExoticComponent<AccordionProps & react.RefAttributes<HTMLDivElement>>
@@ -116,6 +116,7 @@ const FilterSheetTrigger: (props: FilterSheetTriggerProps) => ReactElement
 const FilteredEmptyState: (props: FilteredEmptyStateProps) => ReactElement
 function FormField(props: FormFieldProps): ReactElement
 const FormModal: (props: FormModalProps) => ReactElement
+function GuidedChoice(props: GuidedChoiceProps): react.JSX.Element
 const HoverCard: (props: ComponentPropsWithoutRef<typeof HoverCardPrimitive.Root> & { animated?: boolean }) => react.JSX.Element
 const HoverCardContent: react.ForwardRefExoticComponent<Omit<HoverCardPrimitive.HoverCardContentProps & react.RefAttributes<HTMLDivElement>, "ref"> & { container?: ComponentPropsWithoutRef<typeof HoverCardPrimitive.Portal>["container"] } & react.RefAttributes<HTMLDivElement>>
 const HoverCardTrigger: react.ForwardRefExoticComponent<HoverCardPrimitive.HoverCardTriggerProps & react.RefAttributes<HTMLAnchorElement>>
@@ -327,7 +328,7 @@ function toTime(value: string | undefined): string
 const toast: typeof show & { info: (message: string, options?: ToneOptions) => number; success: (message: string, options?: ToneOptions) => number; warning: (message: string, options?: ToneOptions) => number; error: (message: string, options?: ToneOptions) => number; dismiss: typeof dismissToast }
 ```
 
-## Constants (53)
+## Constants (54)
 
 ```text
 const BRAND_ANIMATIONS: readonly [{ readonly id: "bounce"; readonly label: "Bounce home" }, { readonly id: "orbit"; readonly label: "Orbit and settle" }, { readonly id: "impact"; readonly label: "Shot in, boom" }, { readonly id: "liquid"; readonly label: "Liquid split" }, { readonly id: "signature"; readonly label: "Solid to signature" }, { readonly id: "burst"; readonly label: "Big bang, small dot" }, { readonly id: "gravity"; readonly label: "Gravity press" }]
@@ -359,6 +360,7 @@ const defaultFacetFilterLabels: FacetFilterLabels
 const defaultFileInputLabels: FileInputLabels
 const defaultFilterSheetLabels: FilterSheetLabels
 const defaultFilteredEmptyStateLabels: FilteredEmptyStateLabels
+const defaultGuidedChoiceLabels: GuidedChoiceLabels
 const defaultJsonViewLabels: JsonViewLabels
 const defaultKeyComboLabels: KeyComboLabels
 const defaultLinkLabels: LinkLabels
@@ -385,7 +387,7 @@ const defaultToolbarLabels: ToolbarLabels
 const defaultTreeViewLabels: TreeViewLabels
 ```
 
-## Interfaces (238)
+## Interfaces (241)
 
 ```text
 interface AccordionTriggerProps extends ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger>
@@ -1216,6 +1218,27 @@ interface FormModalProps
 interface FormatNumberOptions
   decimals?: number
   formatOptions?: Intl.NumberFormatOptions
+interface GuidedChoiceLabels
+  confirm: string
+  options: string
+  suggested: string
+  working: string
+interface GuidedChoiceOption
+  content?: ReactNode
+  disabled?: boolean
+  label: string
+  suggested?: boolean
+  value: string
+interface GuidedChoiceProps extends Omit<FormHTMLAttributes<HTMLFormElement>, "title" | "onSubmit">
+  actions?: ReactNode
+  defaultValue?: string
+  labels?: Partial<GuidedChoiceLabels>
+  onConfirm: (value: string) => void
+  options: ReadonlyArray<GuidedChoiceOption>
+  pending?: boolean
+  question?: ReactNode
+  shortcuts?: boolean
+  title: ReactNode
 interface Hotkey
   allowInInputs?: boolean
   enabled?: boolean

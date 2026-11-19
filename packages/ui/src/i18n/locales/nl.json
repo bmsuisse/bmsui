@@ -264,5 +264,9 @@
   "chip.removeItem": "{text} verwijderen",
   "fileInput.removeFile": "{name} verwijderen",
   "attachmentList.downloadFile": "{name} downloaden",
-  "rating.ratingValue": "{label}: {text}"
+  "rating.ratingValue": "{label}: {text}",
+  "guidedChoice.confirm": "Bevestigen",
+  "guidedChoice.suggested": "Voorstel",
+  "guidedChoice.options": "Opties",
+  "guidedChoice.working": "Bezig…"
 }

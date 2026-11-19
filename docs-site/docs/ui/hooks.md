@@ -5,7 +5,7 @@ title: Hooks
 # Hooks
 
 Behaviour hooks exported from `@bmsuisse/ui`. They have no styling and no
-dependencies beyond React 18/19, and are safe to import in SSR code (they
+dependencies beyond React 19, and are safe to import in SSR code (they
 touch `window`/`document` only in effects or event handlers).
 
 ## `useHotkeys` and `formatHotkey`

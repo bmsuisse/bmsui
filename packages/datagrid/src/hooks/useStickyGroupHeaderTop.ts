@@ -3,7 +3,7 @@ import { useLayoutEffect, useRef, useState } from "react";
 
 export interface StickyGroupHeaderTop {
   /** Attach to the grid's own `<thead>`. */
-  theadRef: RefObject<HTMLTableSectionElement>;
+  theadRef: RefObject<HTMLTableSectionElement | null>;
   /** The measured `<thead>` height in pixels — `0` until first measured, or whenever `enabled` is false. */
   groupHeaderTop: number;
 }

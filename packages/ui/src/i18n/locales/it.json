@@ -264,5 +264,9 @@
   "chip.removeItem": "Rimuovi {text}",
   "fileInput.removeFile": "Rimuovi {name}",
   "attachmentList.downloadFile": "Scarica {name}",
-  "rating.ratingValue": "{label}: {text}"
+  "rating.ratingValue": "{label}: {text}",
+  "guidedChoice.confirm": "Conferma",
+  "guidedChoice.suggested": "Suggerimento",
+  "guidedChoice.options": "Opzioni",
+  "guidedChoice.working": "Elaborazione…"
 }

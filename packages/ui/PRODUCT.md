@@ -20,7 +20,7 @@ A Radix + shadcn/ui foundation composed into higher-level, ready-to-use patterns
 
 ## Operating Context
 
-Consumed as an npm dependency (peer deps: React 18/19) by React apps, most commonly data-dense internal tools and dashboards. `packages/ui/demo` is the runnable reference app exercising every component.
+Consumed as an npm dependency (peer deps: React 19, since 0.31.0) by React apps, most commonly data-dense internal tools and dashboards. `packages/ui/demo` is the runnable reference app exercising every component.
 
 ## Capabilities and Constraints
 

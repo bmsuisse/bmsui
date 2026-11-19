@@ -784,7 +784,7 @@ logic above, which already had its own extraction). Structure:
 
 ### `@bmsuisse/ui` hooks (`packages/ui/src/hooks/`)
 
-Behaviour-only hooks, no styling, React 18 + 19, SSR-safe, no extra
+Behaviour-only hooks, no styling, React 19, SSR-safe, no extra
 dependencies. Docs: `docs-site/docs/ui/hooks.md`; tests:
 `packages/ui/tests/hooks/`. Behaviour learned from Astryx's `core/src/hooks`
 (MIT) and OneDocs's `GlobalShortcuts`/`ChordShortcuts`/`LiveAnnouncer`.
@@ -919,6 +919,17 @@ where an implementation existed. Each has a story, tests and a `CATALOG.md` line
   instead of `truncate`; fixed-height bars use `min-h-*` so large root font sizes grow them.
 - Known follow-ups: `ChatConversation` scroll anchoring on iOS Safari is untested; `text-[11px]/[13px]` do not
   scale with root font size.
+
+### `GuidedChoice` on Base UI — a trial (ui 0.31.0)
+
+`GuidedChoice` is the first component on Base UI (`@base-ui/react`, the
+primitives shadcn offers next to Radix since 2026-01, pinned to an exact
+version): its radio group gives arrows, one tab stop and the disabled state;
+Enter submits the form (our `onKeyDown`, a radio is not a text field) and 1-9
+come from our own `useHotkeys`. Everything else stays on Radix; do not move
+other components until this trial was judged in a real app (OneDocs' guided
+product review). Base UI supports React 17-19; the package went to React 19
+(peer `^19`) in the same release by decision, not because Base UI needs it.
 
 ## `php/bmsui-blade` — Blade components for PHP/Laravel (OneDesk)
 

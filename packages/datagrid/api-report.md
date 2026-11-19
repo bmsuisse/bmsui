@@ -502,7 +502,7 @@ interface SortDescriptor
   field: string
 interface StickyGroupHeaderTop
   groupHeaderTop: number
-  theadRef: RefObject<HTMLTableSectionElement>
+  theadRef: RefObject<HTMLTableSectionElement | null>
 interface TreeAccessors<TRow>
   getChildren: (row: TRow) => TRow[] | undefined
   getRowId: (row: TRow) => string

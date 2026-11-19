@@ -264,5 +264,9 @@
   "chip.removeItem": "{text} entfernen",
   "fileInput.removeFile": "{name} entfernen",
   "attachmentList.downloadFile": "{name} herunterladen",
-  "rating.ratingValue": "{label}: {text}"
+  "rating.ratingValue": "{label}: {text}",
+  "guidedChoice.confirm": "Bestätigen",
+  "guidedChoice.suggested": "Vorschlag",
+  "guidedChoice.options": "Optionen",
+  "guidedChoice.working": "Wird bearbeitet…"
 }

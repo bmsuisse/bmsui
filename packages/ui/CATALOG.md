@@ -171,6 +171,7 @@ repo's `AGENTS.md`.
 | `PromptInput`, `defaultPromptInputLabels` | Chat composer: auto-growing field, Enter sends / Shift+Enter newline (IME-safe), Send becomes Stop while streaming, attachments/leading/actions slots. |
 | `PromptSuggestions` | One scrolling row of suggested-prompt / follow-up pills with edge fades; `onSelect(prompt)`. |
 | `ApprovalCard`, `defaultApprovalCardLabels` | Human-in-the-loop "allow this action?" card: details, Approve/Decline or pick-one choices, frozen outcome once decided. |
+| `GuidedChoice`, `defaultGuidedChoiceLabels` | One step of a guided review ("which product is it?"): question, option cards with a suggested one, arrows or 1-9 to pick, Enter to confirm. Built on Base UI. For a frozen pick-one answer use `ApprovalCard`. |
 
 ## Utilities
 
