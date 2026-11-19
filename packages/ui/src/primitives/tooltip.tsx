@@ -92,6 +92,7 @@ export const TooltipContent = forwardRef<
         <TooltipPrimitive.Popup
           ref={ref}
           id={id}
+          role="tooltip"
           data-state={open ? "delayed-open" : "closed"}
           className={cn(
             "overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-xs text-popover-foreground shadow-md",

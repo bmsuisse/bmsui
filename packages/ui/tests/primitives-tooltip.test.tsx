@@ -38,6 +38,7 @@ describe("Tooltip", () => {
     const describedBy = trigger.getAttribute("aria-describedby");
     expect(describedBy).toBeTruthy();
     expect(document.getElementById(describedBy ?? "")).toContainElement(content);
+    expect(screen.getByRole("tooltip")).toContainElement(content);
   });
 
   it("shows the tooltip content on focus", async () => {
