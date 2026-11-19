@@ -66,7 +66,7 @@ export function FormField({
     : children;
 
   return (
-    <div className={cn("flex flex-col gap-1.5", className)}>
+    <div className={cn("flex flex-col gap-1.5 [overflow-wrap:anywhere]", className)}>
       <Label htmlFor={effectiveId}>
         {label}
         {required ? (

@@ -107,7 +107,7 @@ export const ConfirmPopover = ({
         }}
         className={cn("w-72 text-[13px]", className)}
       >
-        <p id={messageId} className="leading-snug">
+        <p id={messageId} className="leading-snug [overflow-wrap:anywhere]">
           {message}
         </p>
         <div className="mt-3 flex flex-wrap justify-end gap-2">
