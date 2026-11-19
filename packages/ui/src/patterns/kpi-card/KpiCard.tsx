@@ -198,7 +198,7 @@ export const KpiCard = memo(function KpiCard({
         data-testid={testId}
         role="status"
         className={cn(
-          "flex min-w-0 flex-col gap-1 rounded-2xl border border-destructive/40 bg-card p-3",
+          "flex min-w-0 flex-col gap-1 rounded-2xl border border-destructive/40 bg-card p-3 [overflow-wrap:anywhere]",
           hero && "col-span-2 flex-1 lg:col-span-1 lg:max-w-[340px] lg:min-w-[260px]",
         )}
       >
@@ -224,7 +224,7 @@ export const KpiCard = memo(function KpiCard({
     return (
       <div
         data-testid={testId}
-        className="relative col-span-2 flex min-w-0 flex-1 flex-col gap-1.5 overflow-hidden rounded-2xl p-4 md:p-3 lg:col-span-1 lg:max-w-[340px] lg:min-w-[260px]"
+        className="relative col-span-2 flex min-w-0 flex-1 flex-col gap-1.5 overflow-hidden rounded-2xl p-4 [overflow-wrap:anywhere] md:p-3 lg:col-span-1 lg:max-w-[340px] lg:min-w-[260px]"
         style={{
           background: background ?? "var(--color-primary)",
           boxShadow: `0 2px 10px color-mix(in oklch, ${background ?? "var(--color-primary)"} 18%, transparent)`,
@@ -311,7 +311,7 @@ export const KpiCard = memo(function KpiCard({
         data-testid={testId}
         style={bgStyle}
         className={cn(
-          "flex h-full min-w-0 flex-1 flex-col gap-1.5 overflow-hidden rounded-2xl border border-border bg-card p-3 transition-shadow md:p-2.5",
+          "flex h-full min-w-0 flex-1 flex-col gap-1.5 overflow-hidden rounded-2xl border border-border bg-card p-3 transition-shadow md:p-2.5 [overflow-wrap:anywhere]",
           href && "hover:border-primary/20 hover:shadow-md",
         )}
       >
@@ -371,7 +371,7 @@ export const KpiCard = memo(function KpiCard({
     const total = segments?.reduce((sum, s) => sum + s.value, 0) ?? 0;
 
     return (
-      <div data-testid={testId} style={bgStyle} className="rounded-xl border border-border bg-card p-5">
+      <div data-testid={testId} style={bgStyle} className="min-w-0 rounded-xl border border-border bg-card p-5 [overflow-wrap:anywhere]">
         <div className={rowBetween}>
           <p className="min-w-0 text-[11px] font-bold tracking-[0.12em] text-muted-foreground uppercase">{label}</p>
           {Icon && (
@@ -429,7 +429,7 @@ export const KpiCard = memo(function KpiCard({
   const suffix = isSuffix ? parts![1] : null;
 
   return (
-    <div data-testid={testId} style={bgStyle} className="rounded-xl border border-border bg-card p-5">
+    <div data-testid={testId} style={bgStyle} className="min-w-0 rounded-xl border border-border bg-card p-5 [overflow-wrap:anywhere]">
       <div className={rowBetween}>
         <p className="min-w-0 text-[11px] font-bold tracking-[0.12em] text-muted-foreground uppercase">{label}</p>
         {Icon && (

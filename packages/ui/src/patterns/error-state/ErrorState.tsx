@@ -68,7 +68,7 @@ export const ErrorState = ({
         className={cn("shrink-0", compact ? "mt-0.5 h-4 w-4" : "h-8 w-8 text-destructive")}
         aria-hidden="true"
       />
-      <div className={cn("flex min-w-0 flex-col gap-1", compact ? "items-start" : "items-center")}>
+      <div className={cn("flex min-w-0 flex-col gap-1 [overflow-wrap:anywhere]", compact ? "items-start" : "items-center")}>
         <p className="font-semibold">{info.title ?? l.title}</p>
         {info.message ? <p className={cn(!compact && "text-muted-foreground")}>{info.message}</p> : null}
         {info.details ? (
@@ -128,14 +128,14 @@ export const InlineError = ({
       data-testid="inline-error"
       title={info.details}
       className={cn(
-        wrap ? "flex items-start" : "inline-flex items-center",
+        wrap ? "flex items-start" : "inline-flex max-w-full items-center",
         "min-w-0 gap-1.5 text-xs text-red-700 dark:text-red-300",
         className,
       )}
       {...props}
     >
       <ExclamationTriangleIcon className={cn("h-3.5 w-3.5 shrink-0", wrap && "mt-0.5")} aria-hidden="true" />
-      <span className={wrap ? "min-w-0 break-words" : "truncate"}>{text}</span>
+      <span className={wrap ? "min-w-0 break-words" : "min-w-0 truncate"}>{text}</span>
       {onRetry ? (
         <button
           {...retryProps}

@@ -100,7 +100,7 @@ export function GuidedChoice({
         {title}
       </h3>
       {question ? (
-        <div className="min-w-0 rounded-xl border border-foreground/10 bg-muted/40 p-3 dark:border-border">{question}</div>
+        <div className="min-w-0 rounded-xl border border-foreground/10 bg-muted/40 p-3 [overflow-wrap:anywhere] dark:border-border">{question}</div>
       ) : null}
       <fieldset disabled={pending} className="contents">
         <RadioGroup<string | null>
