@@ -83,6 +83,13 @@ describe("Radix contract after the Base UI port", () => {
     expect(screen.getByRole("separator")).toHaveAttribute("aria-orientation", "vertical");
   });
 
+  it("Slider reports arrays even without a value or defaultValue, like Radix", () => {
+    const onChange = vi.fn();
+    render(<Slider min={0} max={100} thumbLabels="Level" onValueChange={onChange} />);
+    fireEvent.keyDown(screen.getByRole("slider", { name: "Level" }), { key: "ArrowRight" });
+    expect(onChange).toHaveBeenLastCalledWith([1]);
+  });
+
   it("Slider PageUp steps ten steps", () => {
     const onChange = vi.fn();
     render(<Slider defaultValue={[10]} step={2} thumbLabels="Level" onValueChange={onChange} />);

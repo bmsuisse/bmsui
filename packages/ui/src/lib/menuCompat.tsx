@@ -14,7 +14,7 @@ import {
 import {
   checkedState,
   DismissProvider,
-  focusProps,
+  useAutoFocus,
   openState,
   type RadixDismissProps,
   type RadixFocusProps,
@@ -99,12 +99,13 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps & { cssPr
     const open = useMenuOpen();
     const portal = useContext(PortalContext);
     useLevelOption("loop", loop);
-    useDismissCallbacks({ onEscapeKeyDown, onPointerDownOutside, onFocusOutside, onInteractOutside });
+  useDismissCallbacks({ onEscapeKeyDown, onPointerDownOutside, onFocusOutside, onInteractOutside });
+    const autoFocus = useAutoFocus({ onCloseAutoFocus }, ref);
     const { position, rest } = splitPosition(props);
     return (
       <Menu.Portal container={portal.container} keepMounted={forceMount ?? portal.forceMount}>
-        <Menu.Positioner {...position} className="z-50" style={radixVars(cssPrefix)}>
-          <Menu.Popup ref={ref} data-state={openState(open)} {...focusProps({ onCloseAutoFocus })} {...rest} />
+        <Menu.Positioner {...position} style={radixVars(cssPrefix)}>
+          <Menu.Popup data-state={openState(open)} {...autoFocus} {...rest} />
         </Menu.Positioner>
       </Menu.Portal>
     );

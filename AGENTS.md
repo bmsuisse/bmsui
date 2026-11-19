@@ -927,7 +927,7 @@ no `@radix-ui/*` package is left. The PUBLIC API stayed Radix's, so apps did
 not change: `asChild`, `onSelect` (+ `preventDefault()` keeps a menu open),
 `onOpenAutoFocus`/`onCloseAutoFocus`/`onEscapeKeyDown`/`onInteractOutside` on
 content parts, `PopoverAnchor virtualRef`, `checked="indeterminate"`, the
-`data-state` attributes (open|closed, checked|unchecked|indeterminate,
+`data-state` attributes (open|closed, Tooltip trigger delayed-open|closed, checked|unchecked|indeterminate,
 active|inactive) and the `--radix-*` CSS variables. `src/lib/radixCompat.tsx`
 (+ `menuCompat.tsx`, `checkedRender.tsx`) maps them; read it before touching a
 primitive, and keep any new primitive on the same pattern (root owns state via

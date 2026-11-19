@@ -252,6 +252,9 @@ export function AlwaysEditCell<TRow>(props: {
     handleEnumOpenCapture(event);
   }
 
+  // Base UI's `<Select>` opens on mousedown, which still fires after a stopped pointerdown.
+  const handleMouseDownCapture = handleClickCapture;
+
   return (
     <fieldset
       disabled={ctx.disabled}
@@ -259,6 +262,7 @@ export function AlwaysEditCell<TRow>(props: {
       onBlur={handleBlur}
       onPointerDownCapture={handlePointerDownCapture}
       onClickCapture={handleClickCapture}
+      onMouseDownCapture={handleMouseDownCapture}
       className="contents"
     >
       {column.type === "enum" && !column.renderEditCell ? (

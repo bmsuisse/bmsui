@@ -57,9 +57,10 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
       <SliderPrimitive.Root
         ref={ref}
         value={value}
-        defaultValue={defaultValue}
-        onValueChange={onValueChange && ((next) => onValueChange(next as number[]))}
-        onValueCommitted={onValueCommit && ((next) => onValueCommit(next as number[]))}
+        // Radix always worked in arrays; Base UI switches to a plain number without one.
+        defaultValue={value === undefined ? (defaultValue ?? [props.min ?? 0]) : undefined}
+        onValueChange={onValueChange && ((next) => onValueChange(toArray(next)))}
+        onValueCommitted={onValueCommit && ((next) => onValueCommit(toArray(next)))}
         step={step}
         largeStep={step * 10}
         minStepsBetweenValues={minStepsBetweenThumbs}
@@ -109,3 +110,5 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
   },
 );
 Slider.displayName = "Slider";
+
+const toArray = (value: number | readonly number[]) => (Array.isArray(value) ? [...value] : [value as number]);

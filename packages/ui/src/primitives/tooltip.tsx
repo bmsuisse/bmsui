@@ -9,7 +9,6 @@ import {
 } from "react";
 import { cn } from "../lib/utils";
 import {
-  openState,
   type RadixPositionProps,
   radixVars,
   slot,
@@ -89,11 +88,11 @@ export const TooltipContent = forwardRef<
   const { position, rest } = splitPosition({ sideOffset, ...props });
   return (
     <TooltipPrimitive.Portal keepMounted={forceMount}>
-      <TooltipPrimitive.Positioner {...position} className="z-50" style={radixVars("tooltip")}>
+      <TooltipPrimitive.Positioner {...position} style={radixVars("tooltip")}>
         <TooltipPrimitive.Popup
           ref={ref}
           id={id}
-          data-state={openState(open)}
+          data-state={open ? "delayed-open" : "closed"}
           className={cn(
             "overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-xs text-popover-foreground shadow-md",
             className,

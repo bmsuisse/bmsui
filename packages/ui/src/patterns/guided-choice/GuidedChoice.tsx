@@ -87,7 +87,7 @@ export function GuidedChoice({
   );
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (value != null) onConfirm(value);
+    if (!pending && value != null) onConfirm(value);
   };
   return (
     <form
@@ -147,6 +147,7 @@ function ChoiceCard({
   shortcut: boolean;
   suggestedLabel: string;
 }) {
+  const contentId = useId();
   return (
     <label
       data-suggested={option.suggested ? "" : undefined}
@@ -166,6 +167,7 @@ function ChoiceCard({
           value={option.value}
           disabled={option.disabled}
           aria-label={option.label}
+          aria-describedby={option.content ? contentId : undefined}
           aria-keyshortcuts={shortcut ? String(number) : undefined}
           className="ml-auto grid size-4 shrink-0 place-items-center rounded-full border border-foreground/30 outline-none data-[checked]:border-primary dark:data-[checked]:border-ring"
         >
@@ -173,7 +175,7 @@ function ChoiceCard({
         </Radio.Root>
       </span>
       <span className="block font-medium [overflow-wrap:anywhere]">{option.label}</span>
-      {option.content ? <div className="min-w-0 text-muted-foreground [overflow-wrap:anywhere]">{option.content}</div> : null}
+      {option.content ? <div id={contentId} className="min-w-0 text-muted-foreground [overflow-wrap:anywhere]">{option.content}</div> : null}
     </label>
   );
 }

@@ -4,7 +4,7 @@ import type { ComponentPropsWithoutRef, HTMLAttributes, ReactElement, ReactNode,
 import { createContext, forwardRef, useCallback, useContext, useLayoutEffect, useRef } from "react";
 import {
   DismissProvider,
-  focusProps,
+  useAutoFocus,
   openState,
   type RadixDismissProps,
   type RadixFocusProps,
@@ -105,12 +105,12 @@ export const DialogPopup = forwardRef<HTMLDivElement, Omit<DialogPopupProps, "fo
     ref,
   ) => {
     const { open } = useDialog();
+    const autoFocus = useAutoFocus({ onOpenAutoFocus, onCloseAutoFocus }, ref);
     useDismissCallbacks({ onEscapeKeyDown, onPointerDownOutside, onFocusOutside, onInteractOutside });
     return (
       <DialogPrimitive.Popup
-        ref={ref}
         data-state={openState(open)}
-        {...focusProps({ onOpenAutoFocus, onCloseAutoFocus })}
+        {...autoFocus}
         {...props}
       />
     );

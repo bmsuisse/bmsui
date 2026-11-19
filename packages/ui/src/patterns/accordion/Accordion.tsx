@@ -133,6 +133,7 @@ Accordion.displayName = "Accordion";
 
 // Base UI dropped the accordion's roving arrow keys (APG update); Radix had them and users expect them.
 function moveTriggerFocus(event: KeyboardEvent<HTMLDivElement>, orientation: Orientation, dir?: "ltr" | "rtl") {
+  if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
   const root = event.currentTarget;
   const triggers = Array.from(root.querySelectorAll<HTMLButtonElement>("[data-slot=accordion-trigger]")).filter(
     (t) => t.closest("[data-slot=accordion]") === root && !t.disabled,

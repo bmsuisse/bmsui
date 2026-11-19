@@ -5,8 +5,10 @@ import {
   type MutableRefObject,
   type ReactElement,
   type ReactNode,
+  type Ref,
   useCallback,
   useContext,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
@@ -22,7 +24,7 @@ export function slot(asChild: boolean | undefined, children: ReactNode, { button
 }
 
 // ponytail: a component child (our Button, an app's own) is assumed to render a <button>;
-// one rendering a <span> still works but lacks Base UI's keyboard handling. Pass nativeButton={false}.
+// one rendering a <span> gets no Enter/Space activation (Radix had none either).
 const rendersButton = (child: ReactElement) => typeof child.type !== "string" || child.type === "button";
 
 /** Value + setter that work controlled (`value` given) and uncontrolled (`defaultValue`). */
@@ -92,8 +94,14 @@ function prevented(handlers: RadixDismissProps, { reason, event }: ChangeDetails
     handlers.onPointerDownOutside?.(event);
     handlers.onInteractOutside?.(event);
   } else if (reason === "focus-out") {
-    handlers.onFocusOutside?.(event);
-    handlers.onInteractOutside?.(event);
+    const focused = (event as FocusEvent).relatedTarget;
+    if (!focused) return false;
+    // Radix's focus-outside event targets the element that took focus, not the one that lost it.
+    const outside = new CustomEvent("dismissableLayer.focusOutside", { cancelable: true, detail: { originalEvent: event } });
+    Object.defineProperty(outside, "target", { value: focused });
+    handlers.onFocusOutside?.(outside);
+    handlers.onInteractOutside?.(outside);
+    return outside.defaultPrevented;
   } else return false;
   return event.defaultPrevented;
 }
@@ -101,20 +109,40 @@ function prevented(handlers: RadixDismissProps, { reason, event }: ChangeDetails
 /** Content side: registers its Radix dismiss callbacks with the root. */
 export function useDismissCallbacks(handlers: RadixDismissProps) {
   const ref = useContext(DismissContext);
-  if (ref) ref.current = handlers;
+  useLayoutEffect(() => {
+    if (ref) ref.current = handlers;
+  });
 }
 
-/** Radix `onOpenAutoFocus` / `onCloseAutoFocus` as Base UI `initialFocus` / `finalFocus`. */
-export function focusProps({ onOpenAutoFocus, onCloseAutoFocus }: RadixFocusProps) {
+/**
+ * Radix `onOpenAutoFocus` / `onCloseAutoFocus` as Base UI `initialFocus` / `finalFocus`. Like Radix, the
+ * event is dispatched on the popup, so handlers can use `event.currentTarget`. Returns the popup's ref too.
+ */
+export function useAutoFocus<T extends HTMLElement>({ onOpenAutoFocus, onCloseAutoFocus }: RadixFocusProps, ref: Ref<T>) {
+  const popup = useRef<T | null>(null);
+  const mergedRef = useCallback(
+    (element: T | null) => {
+      popup.current = element;
+      if (typeof ref === "function") ref(element);
+      else if (ref) ref.current = element;
+    },
+    [ref],
+  );
   return {
-    ...(onOpenAutoFocus ? { initialFocus: () => !callPrevented(onOpenAutoFocus) } : {}),
-    ...(onCloseAutoFocus ? { finalFocus: () => !callPrevented(onCloseAutoFocus) } : {}),
+    ref: mergedRef,
+    ...(onOpenAutoFocus ? { initialFocus: () => !dispatchPrevented(popup.current, "focusScope.autoFocusOnMount", onOpenAutoFocus) } : {}),
+    ...(onCloseAutoFocus ? { finalFocus: () => !dispatchPrevented(popup.current, "focusScope.autoFocusOnUnmount", onCloseAutoFocus) } : {}),
   };
 }
 
-function callPrevented(handler: (event: Event) => void) {
-  const event = new Event("focus", { cancelable: true });
-  handler(event);
+function dispatchPrevented(target: EventTarget | null, name: string, handler: (event: Event) => void) {
+  const event = new CustomEvent(name, { cancelable: true });
+  if (!target) {
+    handler(event);
+    return event.defaultPrevented;
+  }
+  target.addEventListener(name, handler, { once: true });
+  target.dispatchEvent(event);
   return event.defaultPrevented;
 }
 
@@ -147,6 +175,7 @@ export function splitPosition<P extends RadixPositionProps>(props: P) {
     props;
   return {
     position: {
+      className: hideWhenDetached ? "z-50 data-[anchor-hidden]:invisible" : "z-50",
       side,
       align,
       sideOffset,
@@ -155,7 +184,6 @@ export function splitPosition<P extends RadixPositionProps>(props: P) {
       sticky: sticky === "always" ? true : undefined,
       ...(avoidCollisions === false ? { collisionAvoidance: { side: "none", align: "none" } as const } : {}),
     },
-    hideWhenDetached,
     rest,
   };
 }

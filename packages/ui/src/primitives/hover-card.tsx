@@ -111,7 +111,7 @@ export const HoverCardContent = forwardRef<
   const { position, rest } = splitPosition({ align, sideOffset, collisionPadding, ...props });
   return (
     <HoverCardPrimitive.Portal container={container} keepMounted={forceMount}>
-      <HoverCardPrimitive.Positioner {...position} className="z-50" style={radixVars("hover-card")}>
+      <HoverCardPrimitive.Positioner {...position} style={radixVars("hover-card")}>
       <HoverCardPrimitive.Popup
         ref={ref}
         data-state={openState(open)}

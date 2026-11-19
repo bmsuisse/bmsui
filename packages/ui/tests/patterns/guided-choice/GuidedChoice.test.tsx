@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { GuidedChoice } from "../../../src/patterns/guided-choice/GuidedChoice";
@@ -40,10 +40,32 @@ describe("GuidedChoice", () => {
     expect(onConfirm).not.toHaveBeenCalled();
   });
 
-  it("disables the form while pending and leaves number keys alone when shortcuts are off", async () => {
-    render(<GuidedChoice title="t" options={options} onConfirm={() => undefined} pending shortcuts={false} />);
+  it("does not confirm again while the first confirmation is pending", () => {
+    const onConfirm = vi.fn();
+    render(<GuidedChoice title="t" options={options} onConfirm={onConfirm} pending />);
+    fireEvent.keyDown(screen.getByRole("radio", { name: "Sigma 12 cm" }), { key: "Enter" });
+    expect(onConfirm).not.toHaveBeenCalled();
+  });
+
+  it("disables the form and the number keys while pending", async () => {
+    render(<GuidedChoice title="t" options={options} onConfirm={() => undefined} pending />);
     expect(screen.getByRole("button", { name: /Working/ })).toBeDisabled();
     await userEvent.keyboard("2");
     expect(screen.getByRole("radio", { name: "Sigma 12 cm" })).toBeChecked();
+  });
+
+  it("leaves number keys alone when shortcuts are off and describes each radio by its card", async () => {
+    render(
+      <GuidedChoice
+        title="t"
+        options={[{ ...options[0]!, content: "CHF 120 · same SGVSB" }, options[1]!]}
+        onConfirm={() => undefined}
+        shortcuts={false}
+      />,
+    );
+    await userEvent.keyboard("2");
+    const first = screen.getByRole("radio", { name: "Sigma 12 cm" });
+    expect(first).toBeChecked();
+    expect(first).toHaveAccessibleDescription("CHF 120 · same SGVSB");
   });
 });

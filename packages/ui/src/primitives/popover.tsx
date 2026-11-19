@@ -6,12 +6,14 @@ import {
   forwardRef,
   type ReactNode,
   type RefObject,
+  useCallback,
   useContext,
-  useRef,
+  useLayoutEffect,
+  useState,
 } from "react";
 import {
   DismissProvider,
-  focusProps,
+  useAutoFocus,
   openState,
   type RadixDismissProps,
   type RadixFocusProps,
@@ -27,10 +29,11 @@ import { cn } from "../lib/utils";
 
 /** What Radix calls a `Measurable`: an element, or a virtual box like a table row's rectangle. */
 type Measurable = { getBoundingClientRect(): DOMRect };
+type Anchor = Measurable | RefObject<Measurable | null>;
 const PopoverContext = createContext<{
   open: boolean;
-  anchor: RefObject<Measurable | null>;
-  hasAnchor: RefObject<boolean>;
+  anchor: Anchor | null;
+  setAnchor: (anchor: Anchor | null) => void;
 } | null>(null);
 const usePopover = () => {
   const ctx = useContext(PopoverContext);
@@ -53,12 +56,11 @@ export function Popover({
 }) {
   const [open, setOpen] = useControllable(openProp, defaultOpen, onOpenChange);
   const dismiss = useDismissBridge((next: boolean) => setOpen(next));
-  const anchor = useRef<Measurable | null>(null);
-  const hasAnchor = useRef(false);
+  const [anchor, setAnchor] = useState<Anchor | null>(null);
   return (
     <PopoverPrimitive.Root open={open} onOpenChange={dismiss.onOpenChange} modal={modal}>
       <DismissProvider value={dismiss.ref}>
-        <PopoverContext.Provider value={{ open, anchor, hasAnchor }}>{children}</PopoverContext.Provider>
+        <PopoverContext.Provider value={{ open, anchor, setAnchor }}>{children}</PopoverContext.Provider>
       </DismissProvider>
     </PopoverPrimitive.Root>
   );
@@ -92,14 +94,25 @@ export function PopoverAnchor({
   ref?: React.Ref<HTMLDivElement>;
   virtualRef?: RefObject<Measurable | null>;
 }) {
-  const { anchor, hasAnchor } = usePopover();
-  hasAnchor.current = true;
-  if (virtualRef) anchor.current = virtualRef.current;
+  const { setAnchor } = usePopover();
+  // The ref is read when Base UI positions the popup, so a row attached later in the same commit still counts.
+  useLayoutEffect(() => {
+    if (!virtualRef) return;
+    setAnchor(virtualRef);
+    return () => setAnchor(null);
+  }, [virtualRef, setAnchor]);
+  const anchorRef = useCallback(
+    (element: HTMLDivElement | null) => {
+      setAnchor(element);
+      return () => setAnchor(null);
+    },
+    [setAnchor],
+  );
   return useRender({
     enabled: !virtualRef,
     defaultTagName: "div",
     render: asChild ? (children as React.ReactElement) : undefined,
-    ref: ref ? [ref, anchor as RefObject<HTMLDivElement | null>] : (anchor as RefObject<HTMLDivElement | null>),
+    ref: ref ? [ref, anchorRef] : anchorRef,
     props: asChild ? props : { ...props, children },
   });
 }
@@ -134,21 +147,20 @@ export const PopoverContent = forwardRef<
     },
     ref,
   ) => {
-    const { open, anchor, hasAnchor } = usePopover();
+    const { open, anchor } = usePopover();
     useDismissCallbacks({ onEscapeKeyDown, onPointerDownOutside, onFocusOutside, onInteractOutside });
+    const autoFocus = useAutoFocus({ onOpenAutoFocus, onCloseAutoFocus }, ref);
     const { position, rest } = splitPosition({ align, sideOffset, collisionPadding, ...props });
     return (
       <PopoverPrimitive.Portal container={container} keepMounted={forceMount}>
         <PopoverPrimitive.Positioner
           {...position}
-          anchor={hasAnchor.current ? () => anchor.current : undefined}
-          className="z-50"
+          anchor={anchor && "current" in anchor ? () => anchor.current : (anchor ?? undefined)}
           style={radixVars("popover")}
         >
           <PopoverPrimitive.Popup
-            ref={ref}
             data-state={openState(open)}
-            {...focusProps({ onOpenAutoFocus, onCloseAutoFocus })}
+            {...autoFocus}
             className={cn(
               "w-72 max-w-[calc(100vw-1rem)] rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none",
               className,

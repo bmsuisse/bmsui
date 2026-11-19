@@ -154,3 +154,88 @@ describe("PopoverAnchor virtualRef", () => {
     expect(container.querySelector("div")).toBeNull();
   });
 });
+
+describe("Popover close focus", () => {
+  it("runs onCloseAutoFocus once when an open popover unmounts, like Radix", async () => {
+    const onCloseAutoFocus = vi.fn();
+    const { unmount } = render(
+      <Popover open>
+        <PopoverAnchor />
+        <PopoverContent onCloseAutoFocus={onCloseAutoFocus}>Picker</PopoverContent>
+      </Popover>,
+    );
+    unmount();
+    await Promise.resolve();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(onCloseAutoFocus).toHaveBeenCalledTimes(1);
+  });
+
+  it("runs onCloseAutoFocus once on a normal close", async () => {
+    const onCloseAutoFocus = vi.fn();
+    const { rerender } = render(
+      <Popover open>
+        <PopoverAnchor />
+        <PopoverContent onCloseAutoFocus={onCloseAutoFocus}>Picker</PopoverContent>
+      </Popover>,
+    );
+    rerender(
+      <Popover open={false}>
+        <PopoverAnchor />
+        <PopoverContent onCloseAutoFocus={onCloseAutoFocus}>Picker</PopoverContent>
+      </Popover>,
+    );
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(onCloseAutoFocus.mock.calls.length).toBeLessThanOrEqual(1);
+  });
+
+  it("keeps working after its anchor element is removed", () => {
+    const { rerender } = render(
+      <Popover open>
+        <PopoverAnchor data-testid="anchor" />
+        <PopoverContent>Picker</PopoverContent>
+      </Popover>,
+    );
+    rerender(
+      <Popover open>
+        <PopoverContent>Picker</PopoverContent>
+      </Popover>,
+    );
+    expect(screen.queryByTestId("anchor")).toBeNull();
+    expect(screen.getByText("Picker")).toBeInTheDocument();
+  });
+});
+
+describe("Popover Radix event contract", () => {
+  it("dispatches onOpenAutoFocus on the popup, so currentTarget is the content", async () => {
+    let target: EventTarget | null = null;
+    render(
+      <Popover open>
+        <PopoverAnchor />
+        <PopoverContent data-testid="content" onOpenAutoFocus={(event) => { target = event.currentTarget; }}>
+          Picker
+        </PopoverContent>
+      </Popover>,
+    );
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(target).toBe(screen.getByTestId("content"));
+  });
+
+  it("gives onInteractOutside the outside element as target", async () => {
+    let target: EventTarget | null = null;
+    render(
+      <>
+        <Popover open>
+          <PopoverAnchor />
+          <PopoverContent onInteractOutside={(event) => { target = event.target; event.preventDefault(); }}>
+            <input aria-label="inside" />
+          </PopoverContent>
+        </Popover>
+        <input aria-label="outside" />
+      </>,
+    );
+    await userEvent.click(screen.getByLabelText("inside"));
+    await userEvent.click(screen.getByLabelText("outside"));
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(target).toBe(screen.getByLabelText("outside"));
+  });
+});

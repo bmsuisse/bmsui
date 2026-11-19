@@ -11,7 +11,7 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
-import { openState, type RadixPositionProps, radixVars, slot, splitPosition, useControllable } from "../lib/radixCompat";
+import { checkedState, openState, type RadixPositionProps, radixVars, slot, splitPosition, useControllable } from "../lib/radixCompat";
 import { cn } from "../lib/utils";
 
 type Labels = ReadonlyMap<string, ReactNode>;
@@ -91,7 +91,7 @@ export const SelectValue = forwardRef<
   const { labels } = useSelect();
   return (
     <SelectPrimitive.Value ref={ref} {...props}>
-      {children ?? ((value: string | null) => (value == null || value === "" ? placeholder : (labels.get(value) ?? value)))}
+      {children ?? ((value: string | null) => (value == null || value === "" ? placeholder : (labels.get(value) ?? null)))}
     </SelectPrimitive.Value>
   );
 });
@@ -148,7 +148,6 @@ export const SelectContent = forwardRef<
         <SelectPrimitive.Positioner
           {...placement}
           alignItemWithTrigger={position === "item-aligned"}
-          className="z-50"
           style={radixVars("select")}
         >
           <SelectPrimitive.Popup
@@ -180,6 +179,7 @@ SelectContent.displayName = "SelectContent";
 /**
  * Base UI mounts the items only while the popup is open, so <SelectValue> would show the raw value.
  * Like Radix, render them once more into a detached fragment where they only report their labels.
+ * ponytail: that renders every item twice; fine for form-sized lists, for hundreds of options use Combobox.
  */
 function LabelCollector({ children }: { children: ReactNode }) {
   const [fragment] = useState(() => (typeof document === "undefined" ? null : document.createDocumentFragment()));
@@ -218,7 +218,7 @@ const SelectItemView = forwardRef<HTMLDivElement, SelectItemProps>(({ className,
     <SelectPrimitive.Item
       ref={ref}
       label={textValue}
-      data-state={value === props.value ? "checked" : "unchecked"}
+      data-state={checkedState(value === props.value)}
       className={cn(
         "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         className,
