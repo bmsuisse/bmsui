@@ -1,5 +1,5 @@
 import type { ColumnSizingState } from "@tanstack/react-table";
-import type { ReactNode } from "react";
+import type { ReactNode, Ref } from "react";
 import type { ErrorInput, GridStatusLabels } from "../components/status";
 import type { ColumnDef } from "../column/types";
 import type { ColumnVisibility } from "../column-selector/types";
@@ -30,6 +30,25 @@ export interface TreeAccessors<TRow> {
    * supply this.
    */
   hasChildren?: (row: TRow) => boolean;
+}
+
+/** Fourth argument of `getRowProps`: the row's own expansion state. */
+export interface TreeRowState {
+  /** Whether the row is currently expanded (always false when it has no children). */
+  expanded: boolean;
+  /** Whether the row has (or may lazily load) children. */
+  hasChildren: boolean;
+}
+
+/** Imperative handle given to `TreeDataGridProps.apiRef`. */
+export interface TreeDataGridApi {
+  /**
+   * Scrolls the row at `index` (its position among the visible, flattened
+   * rows — the `index` `getRowProps` receives) into view, even when
+   * virtualization has not drawn it yet. The row lands below the sticky
+   * header (and a top totals row).
+   */
+  scrollToIndex(index: number): void;
 }
 
 export interface TreeDataGridProps<TRow> extends TreeAccessors<TRow> {
@@ -143,7 +162,13 @@ export interface TreeDataGridProps<TRow> extends TreeAccessors<TRow> {
    * returned here would still fire from inside either control too, since
    * nothing stops those event types from bubbling.
    */
-  getRowProps?: (row: TRow, depth: number, index: number) => Record<string, unknown>;
+  getRowProps?: (
+    row: TRow,
+    depth: number,
+    index: number,
+    /** Expansion state of this row, e.g. to set `aria-expanded` on rows that have children. */
+    state: TreeRowState,
+  ) => Record<string, unknown>;
   /**
    * Overrides the per-row `data-testid` (default `tree-row-${getRowId(row)}`).
    * Note this is NOT something `getRowProps` above can do despite what its
@@ -269,6 +294,47 @@ export interface TreeDataGridProps<TRow> extends TreeAccessors<TRow> {
    * bottom) but neither requires the other. Defaults to false.
    */
   showTotals?: boolean;
+  /**
+   * A pre-computed total row (e.g. from the server), rendered with every
+   * visible column's own cell renderer (`cell`, number format, ...) as one
+   * extra `<tr data-testid="totals-row">`. Unlike `showTotals` it needs no
+   * `ColumnDef.summary`. Where it renders is `totalsPosition`; when a bottom
+   * `totals` is given it takes the place of the `showTotals` summary row.
+   * Omit for no total row (nothing changes).
+   */
+  totals?: TRow;
+  /**
+   * Where `totals` renders: `"bottom"` (default; pinned to the bottom edge of
+   * the scroll box, like `showTotals`) or `"top"` (pinned directly under the
+   * header, in the `<thead>`). Only used with `totals`.
+   */
+  totalsPosition?: "top" | "bottom";
+  /**
+   * Extra props spread on the total row's `<tr>` (test id, `className`, `data-*`).
+   * A `className` is merged; a `data-testid` replaces the default `totals-row`.
+   */
+  totalsRowProps?: Record<string, unknown>;
+  /**
+   * Extra props spread on the `<table>` (`aria-rowcount`, `data-*`, ...).
+   * A `className` is merged with the grid's own; the grid's own `style` and
+   * `data-fixed-layout` win.
+   */
+  tableProps?: Record<string, unknown>;
+  /**
+   * Imperative handle (see `TreeDataGridApi`), e.g. to scroll to a row the
+   * virtualizer has not drawn.
+   */
+  apiRef?: Ref<TreeDataGridApi>;
+  /**
+   * Cell padding of body, header and total cells: `"default"` (`p-2`) or
+   * `"compact"` (`px-2 py-0.5`) for dense, matrix-like tables. Defaults to `"default"`.
+   */
+  cellPadding?: "compact" | "default";
+  /**
+   * `data-testid` of a column's filter funnel button; defaults to
+   * `filter-trigger-${columnId}`. Lets a host keep an existing test-id convention.
+   */
+  filterTriggerTestId?: (columnId: string) => string;
   /**
    * Opt-in: defaults to false. Gives every header a drag handle (and
    * ArrowLeft/ArrowRight keyboard resize) on its trailing edge, and switches

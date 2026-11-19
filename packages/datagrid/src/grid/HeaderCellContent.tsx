@@ -27,6 +27,8 @@ export interface HeaderCellContentProps<TRow> {
   /** Set = the column gets a header funnel + popover holding this widget. */
   renderFilter?: () => ReactNode;
   filterActive?: boolean;
+  /** `data-testid` of the filter funnel button; defaults to `filter-trigger-${column.id}`. */
+  filterTriggerTestId?: string;
 }
 
 /**
@@ -41,6 +43,7 @@ export function HeaderCellContent<TRow>({
   onToggleSort,
   renderFilter,
   filterActive = false,
+  filterTriggerTestId,
 }: HeaderCellContentProps<TRow>): ReactElement {
   const labels = useFilterLabels();
   const isMobile = useMediaQuery(MOBILE_MEDIA_QUERY);
@@ -51,7 +54,7 @@ export function HeaderCellContent<TRow>({
       variant="ghost"
       size="icon"
       className="group data-[state=open]:bg-primary/15 data-[state=open]:ring-1 data-[state=open]:ring-primary/50"
-      data-testid={`filter-trigger-${column.id}`}
+      data-testid={filterTriggerTestId ?? `filter-trigger-${column.id}`}
       aria-label={filterLabel}
     >
       <FunnelIcon

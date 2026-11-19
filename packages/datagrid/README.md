@@ -27,6 +27,30 @@ const columns: ColumnDef<Row>[] = [
 <DataGrid columns={columns} dataSource={{ mode: "client", data: rows }} />;
 ```
 
+### `<TreeDataGrid>` as a matrix (0.48.0)
+
+Spanning header groups, a pinned total row, per-row state and scroll-to-row, all
+opt-in:
+
+```tsx
+const api = useRef<TreeDataGridApi>(null);
+
+<TreeDataGrid
+  columns={columns} // columns with the same `headerGroup` are merged under one label
+  data={rows}
+  getRowId={(r) => r.id}
+  getChildren={(r) => r.children}
+  totals={grandTotal} // pre-computed, rendered with each column's own `cell`
+  totalsPosition="top" // "bottom" (default) | "top", pinned under the header
+  totalsRowProps={{ "data-testid": "grand-total" }}
+  getRowProps={(row, depth, index, { expanded, hasChildren }) =>
+    hasChildren ? { "aria-expanded": expanded } : {}}
+  tableProps={{ "aria-rowcount": rows.length + 1 }}
+  cellPadding="compact"
+  apiRef={api} // api.current?.scrollToIndex(1500)
+/>;
+```
+
 ### Built-in translations
 
 The grid's texts (filter UI, loading/error states, row/selection labels, the

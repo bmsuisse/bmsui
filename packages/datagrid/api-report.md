@@ -131,7 +131,7 @@ const defaultFilterLabels: FilterLabels
 const defaultGridStatusLabels: GridStatusLabels
 ```
 
-## Interfaces (53)
+## Interfaces (55)
 
 ```text
 interface ActiveFilterBarProps<TRow>
@@ -507,8 +507,12 @@ interface TreeAccessors<TRow>
   getChildren: (row: TRow) => TRow[] | undefined
   getRowId: (row: TRow) => string
   hasChildren?: (row: TRow) => boolean
+interface TreeDataGridApi
+  scrollToIndex(index: number): void
 interface TreeDataGridProps<TRow> extends TreeAccessors<TRow>
   activeRowId?: string | null
+  apiRef?: Ref<TreeDataGridApi>
+  cellPadding?: "compact" | "default"
   childrenMap?: ReadonlyMap<string, TRow[]>
   columnOrder?: string[]
   columnSizing?: ColumnSizingState
@@ -524,7 +528,8 @@ interface TreeDataGridProps<TRow> extends TreeAccessors<TRow>
   expanded?: Record<string, boolean>
   expandedGroups?: Record<string, boolean>
   filterLabels?: Partial<FilterLabels>
-  getRowProps?: (row: TRow, depth: number, index: number) => Record<string, unknown>
+  filterTriggerTestId?: (columnId: string) => string
+  getRowProps?: (row: TRow, depth: number, index: number, state: TreeRowState) => Record<string, unknown>
   getRowSelectionState?: (row: TRow) => { checked: boolean; indeterminate?: boolean } | undefined
   getRowTestId?: (row: TRow) => string
   gridState?: Pick<GridState, "filter" | "sort">
@@ -549,10 +554,17 @@ interface TreeDataGridProps<TRow> extends TreeAccessors<TRow>
   selectedIds?: ReadonlySet<string>
   showTotals?: boolean
   statusLabels?: Partial<GridStatusLabels>
+  tableProps?: Record<string, unknown>
   testId?: string
+  totals?: TRow
+  totalsPosition?: "top" | "bottom"
+  totalsRowProps?: Record<string, unknown>
   treeColumnId?: string
   virtualizeThreshold?: number
   zebra?: boolean
+interface TreeRowState
+  expanded: boolean
+  hasChildren: boolean
 interface TreeStateController<TRow>
   childrenMap: ReadonlyMap<string, TRow[]>
   errorIds: ReadonlyMap<string, string>

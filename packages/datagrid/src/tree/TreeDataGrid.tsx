@@ -6,7 +6,7 @@ import {
   ChevronRightIcon,
 } from "@heroicons/react/24/outline";
 import type { CSSProperties, ReactElement, ReactNode } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { alignClassName } from "../column/format";
 import type { ColumnDef } from "../column/types";
 import { getColumnValue, isFilterable, isSortable } from "../column/types";
@@ -22,8 +22,10 @@ import type { FilterDescriptor } from "../filter/types";
 import { fieldKey, leafFilters } from "../filter/types";
 import { groupRows } from "../grid/groupRows";
 import { HeaderCellContent } from "../grid/HeaderCellContent";
+import { computeHeaderRuns } from "../grid/headerRuns";
 import { withColumnFilter, withToggledSort } from "../grid/useGridState";
 import { useGroupExpansion } from "../hooks/useGroupExpansion";
+import { useBottomOffset } from "../hooks/useBottomOffset";
 import { useColumnSizing } from "../hooks/useColumnSizing";
 import { useStickyGroupHeaderTop } from "../hooks/useStickyGroupHeaderTop";
 import { useViewportWidthVar } from "../hooks/useViewportWidthVar";
@@ -40,6 +42,11 @@ import { computeSelectionStates } from "./selectionState";
 import type { RowSelectionState } from "./selectionState";
 import type { TreeAccessors, TreeDataGridProps } from "./types";
 import { useTreeState } from "./useTreeState";
+
+// The separator line of a pinned cell is an inset shadow, not a `border`: with collapsed borders
+// a cell's background stops short of its border, so the scrolling rows would show through it.
+const HEAD_LINE = "shadow-[inset_0_-1px_0_0_var(--color-border)]";
+const FOOT_LINE = "shadow-[inset_0_1px_0_0_var(--color-border)]";
 
 const EMPTY_SELECTED_IDS: ReadonlySet<string> = new Set();
 const UNCHECKED_STATE: RowSelectionState = { checked: false, indeterminate: false };
@@ -181,6 +188,13 @@ export function TreeDataGrid<TRow>({
   onExpandedGroupsChange,
   zebra = true,
   showTotals = false,
+  totals,
+  totalsPosition = "bottom",
+  totalsRowProps,
+  tableProps,
+  apiRef,
+  cellPadding = "default",
+  filterTriggerTestId,
   editing,
   enableColumnResizing = false,
   columnSizing: controlledColumnSizing,
@@ -376,6 +390,18 @@ export function TreeDataGrid<TRow>({
 
   const { theadRef, groupHeaderTop } = useStickyGroupHeaderTop(Boolean(groupBy));
 
+  // Optional spanning header row (see `ColumnDef.headerGroup`): both header
+  // rows stick, the second one directly below the measured first. A top
+  // `totals` row sticks below the last header row the same way.
+  const headerRuns = useMemo(() => computeHeaderRuns(visibleColumns), [visibleColumns]);
+  const hasHeaderGroups = visibleColumns.some((column) => column.headerGroup);
+  const groupRow = useBottomOffset<HTMLTableRowElement>(hasHeaderGroups);
+  const leafHeaderRow = useBottomOffset<HTMLTableRowElement>(true);
+  const topTotals = totals !== undefined && totalsPosition === "top";
+  const bottomTotals = totals !== undefined && totalsPosition === "bottom";
+  const topTotalsRow = useBottomOffset<HTMLTableRowElement>(topTotals);
+  const cellPad = cellPadding === "compact" ? "px-2 py-0.5" : "p-2";
+
   // Computed once (not per visible row) over the whole *loaded* tree, not
   // just `flatRows` — see `computeSelectionStates`'s own doc for why a
   // collapsed parent's indeterminate state still depends on children loaded
@@ -437,11 +463,11 @@ export function TreeDataGrid<TRow>({
     // Fixed layout lets a narrowed column's text paint over its neighbours unless clipped.
     const clip = enableColumnResizing ? "overflow-hidden " : "";
     for (const column of visibleColumns) {
-      const base = `${clip}p-2 ${alignClassName(column)}`;
+      const base = `${clip}${cellPad} ${alignClassName(column)}`;
       map.set(column.id, column.cellClassName ? cn(base, column.cellClassName) : base);
     }
     return map;
-  }, [visibleColumns, enableColumnResizing]);
+  }, [visibleColumns, enableColumnResizing, cellPad]);
 
   // Same "entirely opt-in" convention `<DataGrid>`'s own `hasColumnSummary`
   // has — the per-group summary row below and the `showTotals` `<tfoot>`
@@ -477,12 +503,33 @@ export function TreeDataGrid<TRow>({
     enabled: shouldVirtualize,
   });
 
+  useImperativeHandle(
+    apiRef,
+    () => ({
+      scrollToIndex(index: number): void {
+        const box = scrollRef.current;
+        if (!box) return;
+        if (shouldVirtualize) {
+          virtualizer.scrollToIndex(index, { align: "start" });
+          return;
+        }
+        const row = box.querySelector<HTMLElement>(`tr[data-index="${index}"]`);
+        if (!row) return;
+        box.scrollTop = Math.max(0, row.offsetTop - (topTotals ? topTotalsRow.bottom : leafHeaderRow.bottom));
+      },
+    }),
+    [shouldVirtualize, virtualizer, topTotals, topTotalsRow.bottom, leafHeaderRow.bottom],
+  );
+
   function renderRow(
     flatRow: FlatTreeRow<TRow>,
     index: number,
     measureRef?: (el: Element | null) => void,
   ): ReactElement {
-    const rowProps = getRowProps?.(flatRow.row, flatRow.depth, index);
+    const rowProps = getRowProps?.(flatRow.row, flatRow.depth, index, {
+      expanded: flatRow.isExpanded,
+      hasChildren: flatRow.hasChildren,
+    });
     const rowTestId = getRowTestId?.(flatRow.row) ?? `tree-row-${flatRow.id}`;
     const isOddRow = zebra && index % 2 === 1;
     const isActive = activeRowId === flatRow.id;
@@ -562,7 +609,7 @@ export function TreeDataGrid<TRow>({
           </td>
         ))}
         {showRowActionsColumn && rowActions && (
-          <td className="p-2">
+          <td className={cellPad}>
             <ActionsMenu
               items={rowActions}
               ctx={{ row: flatRow.row }}
@@ -570,6 +617,124 @@ export function TreeDataGrid<TRow>({
             />
           </td>
         )}
+      </tr>
+    );
+  }
+
+  // Header cells: shared by the one-row and the two-row (`headerGroup`) layouts.
+  // `rowSpan` 2 = spans the group row and the leaf row. Cells in the leaf row of
+  // a grouped header stick below the measured group row.
+  function renderSelectionHeaderCell(rowSpan: number | undefined): ReactElement {
+    return (
+      <th
+        rowSpan={rowSpan}
+        className={cn("sticky top-0 z-20 bg-muted p-1", HEAD_LINE)}
+        style={{ width: SELECTION_COLUMN_WIDTH }}
+      >
+        <Checkbox
+          aria-label={t("grid.selectAllVisibleRows")}
+          checked={allVisibleSelected}
+          onCheckedChange={toggleAllVisibleSelected}
+        />
+      </th>
+    );
+  }
+
+  function renderRowActionsHeaderCell(rowSpan: number | undefined): ReactElement {
+    return (
+      <th
+        rowSpan={rowSpan}
+        className={cn("sticky top-0 z-20 bg-muted", HEAD_LINE, cellPad)}
+        aria-label={t("grid.rowActions")}
+      />
+    );
+  }
+
+  function renderHeaderCell(column: ColumnDef<TRow>, rowSpan: number | undefined): ReactElement {
+    const sortEntry = gridState?.sort.find((s) => s.field === column.id);
+    const sortable = viewEnabled && isSortable(column);
+    const labelId = `tree-header-${column.id}-label`;
+    const inLeafRowOfGroups = hasHeaderGroups && column.headerGroup !== undefined;
+    return (
+      <th
+        key={column.id}
+        rowSpan={rowSpan}
+        style={{ ...columnWidthStyle(column), ...(inLeafRowOfGroups ? { top: groupRow.bottom } : undefined) }}
+        className={cn(
+          "sticky top-0 z-20 bg-muted font-medium",
+          HEAD_LINE,
+          cellPad,
+          enableColumnResizing && "overflow-hidden",
+          alignClassName(column),
+          column.headerClassName,
+        )}
+        aria-sort={sortable ? sortDirToAriaSort(sortEntry?.dir) : undefined}
+        aria-labelledby={viewEnabled ? labelId : undefined}
+      >
+        {viewEnabled && gridState ? (
+          <HeaderCellContent
+            column={column}
+            labelId={labelId}
+            sortDir={sortEntry?.dir}
+            onToggleSort={
+              sortable
+                ? (event) =>
+                    onGridStateChange?.({
+                      ...gridState,
+                      sort: withToggledSort(gridState.sort, column.id, enableMultiSort && event.shiftKey, column.sortDescFirst === true),
+                    })
+                : undefined
+            }
+            renderFilter={isFilterable(column) ? () => renderFilterWidget(column) : undefined}
+            filterActive={filtersByColumn.has(column.id)}
+            filterTriggerTestId={filterTriggerTestId?.(column.id)}
+          />
+        ) : (
+          column.header
+        )}
+        {enableColumnResizing && (
+          <ColumnResizeHandle columnId={column.id} label={String(column.header)}
+            width={columnSizing[column.id] ?? column.width}
+            onResize={setColumnSize} />
+        )}
+      </th>
+    );
+  }
+
+  // The pre-computed `totals` row: every visible column's own cell renderer,
+  // pinned under the header (top, inside the thead) or to the bottom edge.
+  function renderTotalsRow(position: "top" | "bottom"): ReactElement {
+    const top = position === "top";
+    const pinStyle: CSSProperties | undefined = top ? { top: leafHeaderRow.bottom } : undefined;
+    const pinClass = cn("sticky z-20 bg-muted", top ? HEAD_LINE : cn("bottom-0", FOOT_LINE));
+    const { className: extraClassName, ...restRowProps } = totalsRowProps ?? {};
+    return (
+      <tr
+        ref={top ? topTotalsRow.ref : undefined}
+        data-testid="totals-row"
+        {...restRowProps}
+        className={cn("divide-x divide-border", extraClassName as string | undefined)}
+      >
+        {showSelectionColumn && (
+          <td className={cn(pinClass, cellPad)} style={{ width: SELECTION_COLUMN_WIDTH, ...pinStyle }} />
+        )}
+        {visibleColumns.map((column) => (
+          <td
+            key={column.id}
+            style={{ ...columnWidthStyle(column), ...pinStyle }}
+            className={cn(
+              pinClass,
+              "font-medium",
+              cellPad,
+              enableColumnResizing && "overflow-hidden",
+              alignClassName(column),
+              column.cellClassName,
+            )}
+          >
+            {renderCell(column, totals as TRow, undefined)}
+          </td>
+        ))}
+        {showRowActionsColumn && <td className={cn(pinClass, cellPad)} style={pinStyle} aria-hidden />}
       </tr>
     );
   }
@@ -617,77 +782,42 @@ export function TreeDataGrid<TRow>({
         style={{ maxHeight: maxBodyHeight }}
       >
         <table
+          {...tableProps}
           data-fixed-layout={enableColumnResizing ? "" : undefined}
           className={cn(
             "border-collapse text-sm",
             fixedTableWidth === undefined && "w-full",
             enableColumnResizing && "table-fixed",
+            tableProps?.className as string | undefined,
           )}
           style={fixedTableWidth === undefined ? undefined : { width: fixedTableWidth }}
         >
           <thead ref={theadRef}>
-            <tr className="divide-x divide-border">
-              {showSelectionColumn && (
-                <th
-                  className="sticky top-0 z-20 border-b border-border bg-muted p-1"
-                  style={{ width: SELECTION_COLUMN_WIDTH }}
-                >
-                  <Checkbox
-                    aria-label={t("grid.selectAllVisibleRows")}
-                    checked={allVisibleSelected}
-                    onCheckedChange={toggleAllVisibleSelected}
-                  />
-                </th>
-              )}
-              {visibleColumns.map((column) => {
-                const sortEntry = gridState?.sort.find((s) => s.field === column.id);
-                const sortable = viewEnabled && isSortable(column);
-                const labelId = `tree-header-${column.id}-label`;
-                return (
-                <th
-                  key={column.id}
-                  style={columnWidthStyle(column)}
-                  className={cn(
-                    "sticky top-0 z-20 border-b border-border bg-muted p-2 font-medium",
-                    enableColumnResizing && "overflow-hidden",
-                    alignClassName(column),
-                    column.headerClassName,
-                  )}
-                  aria-sort={sortable ? sortDirToAriaSort(sortEntry?.dir) : undefined}
-                  aria-labelledby={viewEnabled ? labelId : undefined}
-                >
-                  {viewEnabled && gridState ? (
-                    <HeaderCellContent
-                      column={column}
-                      labelId={labelId}
-                      sortDir={sortEntry?.dir}
-                      onToggleSort={
-                        sortable
-                          ? (event) =>
-                              onGridStateChange?.({
-                                ...gridState,
-                                sort: withToggledSort(gridState.sort, column.id, enableMultiSort && event.shiftKey, column.sortDescFirst === true),
-                              })
-                          : undefined
-                      }
-                      renderFilter={isFilterable(column) ? () => renderFilterWidget(column) : undefined}
-                      filterActive={filtersByColumn.has(column.id)}
-                    />
+            {hasHeaderGroups && (
+              <tr ref={groupRow.ref} data-testid="header-group-row" className="divide-x divide-border">
+                {showSelectionColumn && renderSelectionHeaderCell(2)}
+                {headerRuns.map((run) =>
+                  run.kind === "single" ? (
+                    renderHeaderCell(run.column, 2)
                   ) : (
-                    column.header
-                  )}
-                  {enableColumnResizing && (
-                    <ColumnResizeHandle columnId={column.id} label={String(column.header)}
-                      width={columnSizing[column.id] ?? column.width}
-                      onResize={setColumnSize} />
-                  )}
-                </th>
-                );
-              })}
-              {showRowActionsColumn && (
-                <th className="sticky top-0 z-20 border-b border-border bg-muted p-2" aria-label={t("grid.rowActions")} />
-              )}
+                    <th
+                      key={`group-${run.label}-${run.columns[0]!.id}`}
+                      colSpan={run.columns.length}
+                      className={cn("sticky top-0 z-20 bg-muted text-center font-medium", HEAD_LINE, cellPad)}
+                    >
+                      {run.label}
+                    </th>
+                  ),
+                )}
+                {showRowActionsColumn && renderRowActionsHeaderCell(2)}
+              </tr>
+            )}
+            <tr ref={leafHeaderRow.ref} className="divide-x divide-border">
+              {!hasHeaderGroups && showSelectionColumn && renderSelectionHeaderCell(undefined)}
+              {visibleColumns.map((column) => (hasHeaderGroups && !column.headerGroup ? null : renderHeaderCell(column, undefined)))}
+              {!hasHeaderGroups && showRowActionsColumn && renderRowActionsHeaderCell(undefined)}
             </tr>
+            {topTotals && renderTotalsRow("top")}
           </thead>
           {/* One `<tbody>` per group, with the sticky on the header `<tr>`: a sticky row is bounded by its tbody (a sticky `<td>` is bounded by the whole table),
               so each group header is pushed out by the next instead of all of them piling up under the column header. */}
@@ -792,7 +922,9 @@ export function TreeDataGrid<TRow>({
             )}
           </tbody>
           )}
-          {showTotals && hasColumnSummary && (
+          {bottomTotals ? (
+            <tfoot>{renderTotalsRow("bottom")}</tfoot>
+          ) : showTotals && hasColumnSummary && (
             // Sticky to the BOTTOM of the scroll container, mirroring the
             // `<thead>`'s own `top-0` stickiness — see `<DataGrid>`'s own
             // `renderTotalsFooter` for the full reasoning. Summarizes `data`
@@ -813,7 +945,8 @@ export function TreeDataGrid<TRow>({
                     key={column.id}
                     style={columnWidthStyle(column)}
                     className={cn(
-                      "sticky bottom-0 z-20 border-t border-border bg-muted p-2 font-medium",
+                      "sticky bottom-0 z-20 border-t border-border bg-muted font-medium",
+                      cellPad,
                       enableColumnResizing && "overflow-hidden",
                       alignClassName(column),
                       column.cellClassName,

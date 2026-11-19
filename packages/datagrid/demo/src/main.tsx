@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
+import { MatrixDemo } from "./MatrixDemo";
 import { WhatsNew } from "./WhatsNew";
 import "./globals.css";
 
@@ -9,6 +10,12 @@ if (!rootElement) throw new Error("#root element not found"); // guaranteed by i
 
 createRoot(rootElement).render(
   <StrictMode>
-    {new URLSearchParams(window.location.search).has("whats-new") ? <WhatsNew /> : <App />}
+    {new URLSearchParams(window.location.search).has("matrix") ? (
+      <MatrixDemo />
+    ) : new URLSearchParams(window.location.search).has("whats-new") ? (
+      <WhatsNew />
+    ) : (
+      <App />
+    )}
   </StrictMode>,
 );

@@ -149,7 +149,7 @@ export type { PersistedColumnSizing } from "./hooks/usePersistedColumnSizing";
 export { mergeSizing, usePersistedColumnSizing } from "./hooks/usePersistedColumnSizing";
 
 // --- tree grid ---------------------------------------------------------------
-export type { TreeAccessors, TreeDataGridProps } from "./tree/types";
+export type { TreeAccessors, TreeDataGridApi, TreeDataGridProps, TreeRowState } from "./tree/types";
 export { TreeDataGrid } from "./tree/TreeDataGrid";
 export type { FlatTreeRow } from "./tree/flattenTree";
 export { flattenTree } from "./tree/flattenTree";

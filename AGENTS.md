@@ -2216,6 +2216,23 @@ entirely bespoke, no shared abstraction) into a reusable component in
 second column-definition system. Without `gridState` it has no sorting or
 filtering, matching `ContractTreelist` (hierarchy order from the backend).
 
+- **Matrix layout (0.48.0), all opt-in props, nothing changes without them.**
+  `ColumnDef.headerGroup` now renders in `<TreeDataGrid>` too (shared
+  `grid/headerRuns.ts`, same positional runs as `<DataGrid>`): a
+  `data-testid="header-group-row"` above the leaf row, ungrouped columns
+  (and the selection / row-actions cells) `rowSpan={2}`, both rows sticky; the
+  second row's `top` is the measured first row (`hooks/useBottomOffset.ts`, fractional
+  on purpose). `totals` (a pre-computed row, rendered with every column's own
+  `cell`) + `totalsPosition` (`"bottom"` default, a `<tfoot>` pinned like
+  `showTotals`, which it replaces; `"top"` a last `<thead>` row pinned under the
+  header, so it needs no scroll padding) + `totalsRowProps` (spread on the
+  `<tr>`; default `data-testid="totals-row"`). `getRowProps` gets a 4th argument
+  `{ expanded, hasChildren }`; `tableProps` is spread on the `<table>`;
+  `apiRef` (`TreeDataGridApi.scrollToIndex`) scrolls an undrawn virtualized row
+  into view; `cellPadding="compact"` (`px-2 py-0.5`); `filterTriggerTestId`
+  renames the funnel's test id. A pinned cell draws its separator as an inset
+  `box-shadow`, not a `border`: with `border-collapse` the cell background stops short
+  of its border and scrolling rows show through it. Demo: `demo/?matrix`.
 - **Sort + filter (0.42.0), opt-in and fully controlled.** Pass
   `gridState` (`Pick<GridState, "filter" | "sort">`) **and**
   `onGridStateChange`; then `sortable`/`filterable` columns render the same
