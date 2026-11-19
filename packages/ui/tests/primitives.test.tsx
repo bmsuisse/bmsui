@@ -11,6 +11,9 @@ import {
   DialogTitle,
   Input,
   Label,
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
   Skeleton,
 } from "../src/index";
 
@@ -135,5 +138,19 @@ describe("DialogContent", () => {
       </Dialog>,
     );
     expect(screen.queryByRole("button", { name: "Close" })).not.toBeInTheDocument();
+  });
+});
+
+describe("PopoverAnchor virtualRef", () => {
+  it("opens against a virtual box without rendering an anchor element", () => {
+    const box = { getBoundingClientRect: () => new DOMRect(10, 20, 100, 30) };
+    const { container } = render(
+      <Popover open>
+        <PopoverAnchor virtualRef={{ current: box }} />
+        <PopoverContent>Picker</PopoverContent>
+      </Popover>,
+    );
+    expect(screen.getByText("Picker")).toBeInTheDocument();
+    expect(container.querySelector("div")).toBeNull();
   });
 });

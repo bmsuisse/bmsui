@@ -1,4 +1,3 @@
-import { Slot } from "@radix-ui/react-slot";
 import { type VariantProps, cva } from "class-variance-authority";
 import type { ButtonHTMLAttributes } from "react";
 import { forwardRef } from "react";
@@ -27,15 +26,10 @@ export const buttonVariants = cva(
   },
 );
 
-export interface ButtonProps
-  extends ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
-  asChild?: boolean;
-}
+export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & VariantProps<typeof buttonVariants>;
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot : "button";
+  ({ className, variant, size, ...props }, ref) => {
     // `buttonVariants` (via `cva`) already appends `className` itself —
     // through plain `clsx` concatenation, not `twMerge` — so it's already
     // present in `variantClass` below; the separate `cn()` call exists only
@@ -48,7 +42,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     // clsx+twMerge parse of an already-final, already-conflict-free string.
     const variantClass = buttonVariants({ variant, size });
     return (
-      <Comp className={className ? cn(variantClass, className) : variantClass} ref={ref} {...props} />
+      <button className={className ? cn(variantClass, className) : variantClass} ref={ref} {...props} />
     );
   },
 );

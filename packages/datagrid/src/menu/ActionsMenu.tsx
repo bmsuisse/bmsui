@@ -53,7 +53,7 @@ export function ActionsMenu<TRow>({ items, ctx, triggerLabel }: ActionsMenuProps
             key={item.id}
             danger={item.danger}
             disabled={item.isDisabled}
-            onSelect={() => item.onSelect(ctx)}
+            onClick={() => item.onSelect(ctx)}
           >
             {item.label}
           </DropdownMenuItem>

@@ -118,7 +118,7 @@ const EMPTY_ID_ARRAY: string[] = [];
  * Whether a clipboard event's target is a genuine native text field — an
  * `<input>` (covers `StringEditor`/`NumberEditor`/`DateEditor`, the last via
  * `<input type="date">`) or a `<textarea>` (`MultilineStringEditor`) —
- * deliberately NOT true for `EnumEditor`/`BooleanEditor`'s Radix-based
+ * deliberately NOT true for `EnumEditor`/`BooleanEditor`'s Base UI-based
  * button/listbox widgets, which have no free text of their own to copy/paste
  * natively. Used by `handleCopy`/`handlePaste` to defer to the browser under
  * `cellEditing.alwaysEdit`, where every editable cell's own editor is always
@@ -920,7 +920,7 @@ export function DataGrid<TRow extends RowData>({
   const dragMovedRef = useRef(false);
   // The one built-in enum (`<Select>`) cell (if any) that should open its
   // dropdown right now — see `AtomicGestureContext.shouldOpenEnum`'s own
-  // doc for why `AlwaysEditCell` needs this instead of just letting Radix's
+  // doc for why `AlwaysEditCell` needs this instead of just letting Base UI's
   // native open-on-click happen. Set (once) by `handleMouseUp` below;
   // deliberately never cleared back to `undefined` afterward — once set,
   // `AlwaysEditCell` opens itself and takes over its own open/close state
@@ -1174,7 +1174,7 @@ export function DataGrid<TRow extends RowData>({
     // its editor (click-to-edit mode's Excel convention) or, under
     // `alwaysEdit`, opens a built-in enum widget's own dropdown (see
     // `AtomicGestureContext`'s own doc for why that needs a signal from
-    // here rather than just Radix's native click handling). Reset per
+    // here rather than just Base UI's native click handling). Reset per
     // mousedown, not per click, so a genuine drag never leaves a stale
     // "moved" flag around to falsely block the *next* plain click.
     // `wasEditing` must be read NOW, before `scrollRef.current?.focus()`

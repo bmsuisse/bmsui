@@ -20,7 +20,7 @@ copy-pasted into your repo.
 | `Popover` | `Popover`, `PopoverTrigger`, `PopoverContent`. |
 | `Select` | `Select`, `SelectTrigger`, `SelectValue`, `SelectContent`, `SelectItem`. |
 | `Skeleton` | Loading placeholder block. |
-| `DropdownMenu` | Full Radix feature set: `DropdownMenuCheckboxItem`, `DropdownMenuRadioItem`/`DropdownMenuRadioGroup`, submenus, `DropdownMenuShortcut`. |
+| `DropdownMenu` | Full menu feature set: `DropdownMenuCheckboxItem`, `DropdownMenuRadioItem`/`DropdownMenuRadioGroup`, submenus, `DropdownMenuShortcut`. |
 | `Sheet` | Slide-in panel (`SheetTrigger`, `SheetContent`, `SheetHeader`, `SheetTitle`, `SheetDescription`). Its slide transition uses a plain `transition-transform` toggle rather than `tailwindcss-animate`, so it works without that plugin installed. |
 | `Tooltip` | `Tooltip`, `TooltipTrigger`, `TooltipContent`, `TooltipProvider`. |
 | `HoverCard` | `HoverCard`, `HoverCardTrigger`, `HoverCardContent` — rich preview on hover/focus (see Patterns). |

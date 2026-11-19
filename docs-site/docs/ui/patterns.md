@@ -224,7 +224,7 @@ bare toggle use the `Collapsible` primitive.
 </HoverCard>
 ```
 
-Radix HoverCard with a 300ms open / 150ms close delay. It opens on hover and
+HoverCard (Base UI PreviewCard) with a 300ms open / 150ms close delay. It opens on hover and
 keyboard focus, not on touch — keep it an extra, never the only way to reach
 the information. Click-to-open content belongs in a `Popover`.
 
@@ -500,12 +500,12 @@ outlined connected buttons, `Tabs` when segments switch whole panels.
 ```
 
 Each radio is named by its label and described by its description.
-`RadioGroup` + `RadioGroupItem` are the bare Radix primitives for your own
+`RadioGroup` + `RadioGroupItem` are the bare radio primitives for your own
 layout.
 
 ### `Slider` / `RangeSlider`
 
-`Slider` is the Radix primitive (one thumb per value). `RangeSlider` is a
+`Slider` is the bare slider primitive (one thumb per value). `RangeSlider` is a
 two-thumb range with typed min/max `NumberInput`s:
 
 ```tsx

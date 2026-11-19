@@ -1,6 +1,7 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { createRef } from "react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   Dialog,
   DialogBody,
@@ -8,6 +9,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "../../src/primitives/dialog";
 import { ConfirmDialog } from "../../src/patterns/modal/ConfirmDialog";
 
@@ -200,5 +202,53 @@ describe("DialogContent / DialogBody layout", () => {
     fireEvent.scroll(body);
     expect(body).toHaveAttribute("data-overflow-top");
     expect(body).not.toHaveAttribute("data-overflow-bottom");
+  });
+});
+
+describe("Dialog keeps the Radix API on Base UI", () => {
+  it("asChild trigger opens it, with data-state on trigger, overlay and content", async () => {
+    render(
+      <Dialog>
+        <DialogTrigger asChild>
+          <button type="button">Open</button>
+        </DialogTrigger>
+        <DialogContent data-testid="content">
+          <DialogTitle>Title</DialogTitle>
+        </DialogContent>
+      </Dialog>,
+    );
+    const trigger = screen.getByRole("button", { name: "Open" });
+    expect(trigger).toHaveAttribute("data-state", "closed");
+    await userEvent.click(trigger);
+    const content = await screen.findByTestId("content");
+    expect(content).toHaveAttribute("data-state", "open");
+    expect(trigger).toHaveAttribute("data-state", "open");
+    expect(document.querySelector(".bg-black\\/50")).toHaveAttribute("data-state", "open");
+  });
+
+  it("onEscapeKeyDown / onInteractOutside can keep it open; onOpenAutoFocus can move the focus", async () => {
+    const onOpenChange = vi.fn();
+    render(
+      <Dialog open onOpenChange={onOpenChange}>
+        <DialogContent
+          onEscapeKeyDown={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+          onOpenAutoFocus={(e) => {
+            e.preventDefault();
+            document.getElementById("second")?.focus();
+          }}
+        >
+          <DialogTitle>Title</DialogTitle>
+          <input aria-label="first" />
+          <input aria-label="second" id="second" />
+        </DialogContent>
+      </Dialog>,
+    );
+    await waitFor(() => expect(screen.getByLabelText("second")).toHaveFocus());
+    await userEvent.keyboard("{Escape}");
+    await userEvent.click(document.querySelector(".bg-black\\/50") as HTMLElement);
+    expect(onOpenChange).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole("button", { name: /close/i }));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 });

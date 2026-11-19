@@ -12,7 +12,7 @@ import {
   DialogTrigger,
 } from "../components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
-import { focusFirstTextInput } from "../filter/focus";
+import { firstTextInput } from "../filter/focus";
 import { useFilterLabels } from "../filter/labels";
 import { MOBILE_MEDIA_QUERY, useMediaQuery } from "../hooks/useMediaQuery";
 import { cn } from "../lib/utils";
@@ -93,17 +93,15 @@ export function HeaderCellContent<TRow>({
             <DialogTrigger asChild>{filterTrigger}</DialogTrigger>
             <DialogContent
               className="max-h-[85vh] w-[calc(100%-2rem)] max-w-md overflow-y-auto"
-              onOpenAutoFocus={focusFirstTextInput}
+              focusOnOpen={firstTextInput}
             >
               <DialogTitle>{filterLabel}</DialogTitle>
               <DialogDescription className="sr-only">{filterLabel}</DialogDescription>
               {/* Widgets carry popover-era fixed widths; in the modal they fill it instead (the widget root, and the capped panel inside it). */}
               <div className="mt-4 [&>*]:w-full! [&>*]:max-w-none! [&>*>*]:max-w-none!">{renderFilter()}</div>
               <DialogFooter className="mt-4">
-                <DialogClose asChild>
-                  <Button type="button" data-testid={`filter-done-${column.id}`}>
-                    {labels.filterDone}
-                  </Button>
+                <DialogClose render={<Button type="button" data-testid={`filter-done-${column.id}`} />}>
+                  {labels.filterDone}
                 </DialogClose>
               </DialogFooter>
             </DialogContent>
@@ -112,8 +110,8 @@ export function HeaderCellContent<TRow>({
           <Popover>
             <PopoverTrigger asChild>{filterTrigger}</PopoverTrigger>
             <PopoverContent
-              className="w-auto max-w-[var(--radix-popover-content-available-width)]"
-              onOpenAutoFocus={focusFirstTextInput}
+              className="w-auto max-w-[var(--available-width)]"
+              focusOnOpen={firstTextInput}
             >
               {renderFilter()}
             </PopoverContent>

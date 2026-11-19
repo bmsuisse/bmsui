@@ -18,7 +18,7 @@ repo's `AGENTS.md`.
 | `useFormatLocale` | The BCP 47 tag for number/date formatting: a component's `locale` prop, else the provider's, else `de-CH`. |
 | `LANGUAGES`, `resolveLanguage`, `formatMessage` | The supported languages, a tag -> language lookup (fallback `en`), and the `{placeholder}`/plural formatter. |
 
-## Primitives (shadcn/ui on Radix)
+## Primitives (shadcn/ui on Base UI, Radix-compatible API)
 
 | Export | Use for |
 | --- | --- |
@@ -28,8 +28,8 @@ repo's `AGENTS.md`.
 | `Link`, `linkVariants`, `defaultLinkLabels` | Text link: `variant` default/subtle/inline, `asChild` for a router link, `external` (new tab, safe `rel`, icon, screen-reader hint). Instead of a hand-styled `<a>`; for a button-looking link use `Button asChild`. |
 | `Label` | Form label. Prefer `FormField`, which wires label + error + ids. |
 | `Checkbox`, `Switch` | Boolean inputs. |
-| `RadioGroup`, `RadioGroupItem` | Radix radio group + circle, for your own layout. With labels/descriptions use `RadioList`. |
-| `Slider` | Radix slider, one thumb per value (`[50]`, `[10, 80]`); `thumbLabels`, `getValueText`. Range with typed bounds: `RangeSlider`. |
+| `RadioGroup`, `RadioGroupItem` | Radio group + circle, for your own layout. With labels/descriptions use `RadioList`. |
+| `Slider` | Slider, one thumb per value (`[50]`, `[10, 80]`); `thumbLabels`, `getValueText`. Range with typed bounds: `RangeSlider`. |
 | `Select`, `SelectContent`, `SelectGroup`, `SelectItem`, `SelectTrigger`, `SelectValue` | Short fixed option list without search. With search use `Combobox`. |
 | `Card`, `CardHeader`, `CardTitle`, `CardDescription`, `CardContent`, `CardFooter` | Bordered content block. |
 | `Badge`, `badgeVariants` | Small label. For statuses use `StatusBadge`. |
@@ -194,7 +194,7 @@ repo's `AGENTS.md`.
 | `announce` | Same as `useAnnounce()`'s function, callable outside React (stores, query callbacks). |
 | `Announcer` | Optional in-tree live regions; mount inside a modal so announcements aren't hidden by it. |
 | `useMergedRefs` | One callback ref from several refs (own ref + forwarded ref). |
-| `useFocusTrap` | Keep Tab focus inside a custom overlay/panel and restore it on close. Radix `Dialog`/`Sheet` already trap. |
+| `useFocusTrap` | Keep Tab focus inside a custom overlay/panel and restore it on close. `Dialog`/`Sheet` already trap. |
 | `useLongPress` | Press-and-hold (touch/mouse/pen) with threshold and move-cancel; spread handlers on the element. |
 | `useScrollOverflow` | `{ ref, top, bottom, left, right }` overflow flags for fade edges on a scroll container. |
 | `useLocalStorageState` | `useState` persisted in `localStorage`: SSR-safe, never throws, synced across hooks and tabs. |

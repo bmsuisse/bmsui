@@ -25,7 +25,8 @@ describe("SplitButton", () => {
       </SplitButton>,
     );
     await user.click(screen.getByRole("button", { name: "More actions" }));
-    expect(screen.getByRole("menuitem", { name: "Send later" })).toHaveAttribute("data-disabled");
+    // Base UI opens a pointer-opened menu one animation frame after mousedown.
+    expect(await screen.findByRole("menuitem", { name: "Send later" })).toHaveAttribute("data-disabled");
     await user.click(screen.getByRole("menuitem", { name: "Send and close" }));
     expect(onSelect).toHaveBeenCalledTimes(1);
   });

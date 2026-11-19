@@ -10,7 +10,7 @@ afterEach(() => {
   cleanup();
 });
 
-// jsdom doesn't implement these, but Radix primitives (Popover/Select/DropdownMenu/
+// jsdom doesn't implement these, but the Base UI primitives (Popover/Select/Menu/
 // Checkbox) call them during open/close and keyboard-navigation handling. Without
 // these no-op polyfills, interaction tests throw on "not a function".
 if (typeof window.ResizeObserver === "undefined") {
@@ -35,6 +35,20 @@ if (typeof Element.prototype.releasePointerCapture !== "function") {
 
 if (typeof Element.prototype.setPointerCapture !== "function") {
   Element.prototype.setPointerCapture = () => {};
+}
+
+// jsdom has no PointerEvent; Base UI's Checkbox constructs one when it is clicked.
+if (typeof window.PointerEvent === "undefined") {
+  class PointerEventPolyfill extends MouseEvent {
+    pointerId: number;
+    pointerType: string;
+    constructor(type: string, params: PointerEventInit = {}) {
+      super(type, params);
+      this.pointerId = params.pointerId ?? 0;
+      this.pointerType = params.pointerType ?? "";
+    }
+  }
+  window.PointerEvent = PointerEventPolyfill as unknown as typeof PointerEvent;
 }
 
 // Newer Node versions ship their own global `localStorage` that is undefined

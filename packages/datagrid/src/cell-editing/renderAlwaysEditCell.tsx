@@ -18,7 +18,7 @@ import type { CellEditingCellContext } from "./useCellEditingState";
  * Bridges an atomic (enum/boolean/date/datetime) `AlwaysEditCell`'s own
  * gesture handling back into `<DataGrid>`'s shared cell-selection state —
  * needed only because these cells' widgets are permanently-mounted, LIVE
- * controls (a Radix `<Select>` trigger, a checkbox), unlike a non-atomic
+ * controls (a Base UI `<Select>` trigger, a checkbox), unlike a non-atomic
  * editor's plain `<input>`, so a mouse gesture that's supposed to just
  * select the cell (shift+click, or a drag) can otherwise be swallowed or
  * misinterpreted by the widget's own native mouse handling before
@@ -37,7 +37,7 @@ export interface AtomicGestureContext {
    * native behavior while a built-in enum widget is closed (see its own
    * `onPointerDownCapture` doc): unlike the other atomic types, a `<Select>`
    * also supports a native "press, drag to an option, release to pick it"
-   * gesture — letting it open immediately on ANY mousedown (as Radix does
+   * gesture — letting it open immediately on ANY mousedown (as Base UI does
    * by default) means a drag that merely passes through its now-open
    * popover can silently commit the wrong option as this cell's value,
    * not just steal the range-select gesture. A plain click needs this
@@ -178,14 +178,14 @@ export function AlwaysEditCell<TRow>(props: {
     else commit(draft!.value);
   }
 
-  // `stopPropagation()` alone does NOT stop Radix's own handlers on the
+  // `stopPropagation()` alone does NOT stop Base UI's own handlers on the
   // widget from still firing here — React dispatches capture- and
   // bubble-phase handlers off separate root-level native listeners, so a
   // synthetic `stopPropagation()` called from a CAPTURE handler only halts
   // React's own capture-side traversal, not the independent bubble-side one
   // that would still reach the widget's own bubble-phase prop. Only
   // stopping the underlying native event itself reliably prevents that
-  // (verified against a live Radix `<Select>` trigger). Shared by both
+  // (verified against a live Radix `<Select>` trigger; Base UI's are React props too). Shared by both
   // capture handlers below. Returns `true` when it actually suppressed
   // anything, so callers know whether to also call `registerSelection`.
   function suppressNative(event: ReactPointerEvent | ReactMouseEvent): boolean {
@@ -198,7 +198,7 @@ export function AlwaysEditCell<TRow>(props: {
   // enum editor (which gets the stronger, always-while-closed interception
   // below instead): a shift/ctrl/meta-held click meant to just select the
   // cell would otherwise still reach the widget's own native click handling
-  // (a checkbox's toggle, or focusing a native date input) — Radix/native
+  // (a checkbox's toggle, or focusing a native date input) — Base UI/native
   // controls don't know to treat those modifiers as "don't act, just
   // select" the way this grid does. These don't cover nearby rows with a
   // draggable popover the way `<Select>` does, so a PLAIN drag starting on
@@ -217,7 +217,7 @@ export function AlwaysEditCell<TRow>(props: {
   // allowed to open on ANY plain mousedown also lets a drag starting on it
   // silently commit whichever option the drag happens to end up over.
   // Once open, this stops intercepting entirely — closing it again (click
-  // the trigger, pick an option, click away, Escape) is left to Radix's own
+  // the trigger, pick an option, click away, Escape) is left to Base UI's own
   // normal behavior, via `onOpenChange={setEnumOpen}` below.
   function handleEnumOpenCapture(event: ReactPointerEvent | ReactMouseEvent): boolean {
     if (!isBuiltinEnum || enumOpen) return false;
@@ -237,14 +237,13 @@ export function AlwaysEditCell<TRow>(props: {
   }
 
   // A SEPARATE interception from the pointerdown one above, and just as
-  // required: Radix's `<Select>` trigger also opens from its own `onClick`
-  // handler, but only when `pointerType !== "mouse"` (its own touch
-  // fallback) — and that internal pointer-type tracking is itself only
+  // required: Base UI's `<Select>` trigger (floating-ui's `useClick`) also
+  // opens from its own `onClick` handler when it saw no mouse `pointerdown`
+  // (its touch/keyboard fallback) — and that pointer-type tracking is only
   // ever updated inside the very `onPointerDown` handler this file
-  // suppresses, so once that's blocked, the trigger's `pointerType` gets
-  // stuck at Radix's own initial default ("touch"), and its `onClick`
-  // fallback opens the dropdown anyway on the ensuing native `click`
-  // (mousedown+mouseup on the same target) if this isn't ALSO suppressed.
+  // suppresses, so once that's blocked, its `onClick` fallback opens the
+  // dropdown anyway on the ensuing native `click` (mousedown+mouseup on the
+  // same target) if this isn't ALSO suppressed.
   // No `registerSelection` here — `handlePointerDownCapture` above already
   // covers it, and click fires (if at all) strictly after pointerdown for
   // the same gesture.

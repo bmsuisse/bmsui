@@ -920,16 +920,28 @@ where an implementation existed. Each has a story, tests and a `CATALOG.md` line
 - Known follow-ups: `ChatConversation` scroll anchoring on iOS Safari is untested; `text-[11px]/[13px]` do not
   scale with root font size.
 
-### `GuidedChoice` on Base UI — a trial (ui 0.31.0)
+### Base UI under a Radix-compatible API (ui 0.31.0, datagrid 0.47.0)
 
-`GuidedChoice` is the first component on Base UI (`@base-ui/react`, the
-primitives shadcn offers next to Radix since 2026-01, pinned to an exact
-version): its radio group gives arrows, one tab stop and the disabled state;
-Enter submits the form (our `onKeyDown`, a radio is not a text field) and 1-9
-come from our own `useHotkeys`. Everything else stays on Radix; do not move
-other components until this trial was judged in a real app (OneDocs' guided
-product review). Base UI supports React 17-19; the package went to React 19
-(peer `^19`) in the same release by decision, not because Base UI needs it.
+Every primitive runs on Base UI (`@base-ui/react`, pinned to an exact version);
+no `@radix-ui/*` package is left. The PUBLIC API stayed Radix's, so apps did
+not change: `asChild`, `onSelect` (+ `preventDefault()` keeps a menu open),
+`onOpenAutoFocus`/`onCloseAutoFocus`/`onEscapeKeyDown`/`onInteractOutside` on
+content parts, `PopoverAnchor virtualRef`, `checked="indeterminate"`, the
+`data-state` attributes (open|closed, checked|unchecked|indeterminate,
+active|inactive) and the `--radix-*` CSS variables. `src/lib/radixCompat.tsx`
+(+ `menuCompat.tsx`, `checkedRender.tsx`) maps them; read it before touching a
+primitive, and keep any new primitive on the same pattern (root owns state via
+`useControllable`, parts read it from context for `data-state`, `z-50` on the
+Positioner). Notes elsewhere in this file that name Radix describe how the
+component behaved before the move. Known differences: a sheet stays mounted
+~300 ms while it slides out; a mouse-opened menu appears one frame later (jsdom
+tests use `findBy`); select lists scroll instead of showing scroll buttons; a
+disabled tab is `aria-disabled`, not `disabled`; Base UI renders a hidden
+`<input>` next to checkboxes, switches, radios and selects; some rarely used
+Radix props are gone or ignored (`asChild` on Checkbox/Switch/RadioGroup/Slider/
+Separator/ScrollArea and on content parts, RadioGroup `loop`/`dir`, Slider
+`inverted`/`dir`, ScrollArea `type`/`scrollHideDelay`, ContextMenu `modal`).
+`GuidedChoice` is the first component written for Base UI directly.
 
 ## `php/bmsui-blade` — Blade components for PHP/Laravel (OneDesk)
 

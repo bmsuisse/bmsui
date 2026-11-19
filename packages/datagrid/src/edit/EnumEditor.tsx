@@ -25,8 +25,11 @@ export function EnumEditor<TRow>({
   return (
     <div>
       <Select
-        value={value === null || value === undefined ? "" : String(value)}
-        onValueChange={onChange}
+        items={column.options}
+        value={value === null || value === undefined ? null : String(value)}
+        onValueChange={(next) => {
+          if (next !== null) onChange(next);
+        }}
         open={open}
         onOpenChange={onOpenChange}
       >

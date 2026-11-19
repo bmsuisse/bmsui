@@ -10,6 +10,9 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "../src/primitives/dropdown-menu";
 
@@ -104,5 +107,61 @@ describe("DropdownMenu", () => {
     await userEvent.click(screen.getByText("Sort"));
     await userEvent.click(await screen.findByText("Descending"));
     expect(onValueChange).toHaveBeenCalledWith("desc");
+  });
+
+  it("keeps Radix's data-state on trigger, content, checked items and sub-trigger", async () => {
+    render(
+      <DropdownMenu defaultOpen>
+        <DropdownMenuTrigger>Menu</DropdownMenuTrigger>
+        <DropdownMenuContent data-testid="content">
+          <DropdownMenuCheckboxItem checked>On</DropdownMenuCheckboxItem>
+          <DropdownMenuCheckboxItem checked="indeterminate">Some</DropdownMenuCheckboxItem>
+          <DropdownMenuRadioGroup value="b">
+            <DropdownMenuRadioItem value="a">A</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="b">B</DropdownMenuRadioItem>
+          </DropdownMenuRadioGroup>
+          <DropdownMenuSub defaultOpen>
+            <DropdownMenuSubTrigger>More</DropdownMenuSubTrigger>
+            <DropdownMenuSubContent>
+              <DropdownMenuItem>Nested</DropdownMenuItem>
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
+        </DropdownMenuContent>
+      </DropdownMenu>,
+    );
+    expect(screen.getByText("Menu")).toHaveAttribute("data-state", "open");
+    expect(await screen.findByTestId("content")).toHaveAttribute("data-state", "open");
+    expect(screen.getByRole("menuitemcheckbox", { name: "On" })).toHaveAttribute("data-state", "checked");
+    const some = screen.getByRole("menuitemcheckbox", { name: "Some" });
+    expect(some).toHaveAttribute("data-state", "indeterminate");
+    expect(some).toHaveAttribute("aria-checked", "mixed");
+    expect(screen.getByRole("menuitemradio", { name: "A" })).toHaveAttribute("data-state", "unchecked");
+    expect(screen.getByRole("menuitemradio", { name: "B" })).toHaveAttribute("data-state", "checked");
+    expect(screen.getByText("More").closest("[role=menuitem]")).toHaveAttribute("data-state", "open");
+    expect(await screen.findByText("Nested")).toBeInTheDocument();
+  });
+
+  it("stays open when onSelect calls preventDefault, and a checkbox still toggles", async () => {
+    const onCheckedChange = vi.fn();
+    render(
+      <DropdownMenu defaultOpen>
+        <DropdownMenuTrigger>Menu</DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem onSelect={(event) => event.preventDefault()}>Stay</DropdownMenuItem>
+          <DropdownMenuCheckboxItem
+            checked={false}
+            onCheckedChange={onCheckedChange}
+            onSelect={(event) => event.preventDefault()}
+          >
+            Flag
+          </DropdownMenuCheckboxItem>
+        </DropdownMenuContent>
+      </DropdownMenu>,
+    );
+    await userEvent.click(await screen.findByText("Stay"));
+    await userEvent.click(screen.getByText("Flag"));
+    expect(onCheckedChange).toHaveBeenCalledWith(true);
+    expect(screen.getByRole("menu")).toBeInTheDocument();
+    expect(screen.getByText("Menu")).toHaveAttribute("data-state", "open");
   });
 });

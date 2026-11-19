@@ -1,8 +1,8 @@
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
-import { Slot, Slottable } from "@radix-ui/react-slot";
+import { useRender } from "@base-ui/react/use-render";
 import { cva, type VariantProps } from "class-variance-authority";
-import type { AnchorHTMLAttributes } from "react";
-import { forwardRef } from "react";
+import type { AnchorHTMLAttributes, ReactElement, ReactNode } from "react";
+import { cloneElement, forwardRef } from "react";
 import { cn } from "../lib/utils";
 import { getI18n, useLabels } from "../i18n/locale";
 import type { IntegratedI18n } from "../i18n/locale";
@@ -52,32 +52,34 @@ export interface LinkProps extends AnchorHTMLAttributes<HTMLAnchorElement>, Vari
 export const Link = forwardRef<HTMLAnchorElement, LinkProps>(
   ({ className, variant, asChild = false, external = false, labels, children, target, rel, ...props }, ref) => {
     const l = useLabels(linkLabelsFor, labels);
-    const Comp = asChild ? Slot : "a";
     const relTokens = new Set((rel ?? "").split(/\s+/).filter(Boolean));
     if (external) {
       relTokens.add("noopener");
       relTokens.add("noreferrer");
     }
-    return (
-      <Comp
-        ref={ref}
-        className={cn(linkVariants({ variant }), className)}
-        target={external ? (target ?? "_blank") : target}
-        rel={relTokens.size ? [...relTokens].join(" ") : undefined}
-        {...props}
-      >
-        {asChild ? <Slottable>{children}</Slottable> : children}
-        {external ? (
-          <>
-            <span className="whitespace-nowrap">
-              <span aria-hidden="true">&#8288;</span>
-              <ArrowTopRightOnSquareIcon aria-hidden="true" className="ml-1 inline-block h-[0.85em] w-[0.85em] shrink-0 align-[-0.1em]" />
-            </span>
-            <span className="sr-only">{l.newTab}</span>
-          </>
-        ) : null}
-      </Comp>
-    );
+    const icon = external ? (
+      <>
+        <span className="whitespace-nowrap">
+          <span aria-hidden="true">&#8288;</span>
+          <ArrowTopRightOnSquareIcon aria-hidden="true" className="ml-1 inline-block h-[0.85em] w-[0.85em] shrink-0 align-[-0.1em]" />
+        </span>
+        <span className="sr-only">{l.newTab}</span>
+      </>
+    ) : null;
+    const child = children as ReactElement<{ children?: ReactNode }>;
+    return useRender({
+      defaultTagName: "a",
+      // Like Radix's Slottable: the icon goes after the child's own content.
+      render: asChild ? (icon ? cloneElement(child, undefined, child.props.children, icon) : child) : undefined,
+      ref,
+      props: {
+        className: cn(linkVariants({ variant }), className),
+        target: external ? (target ?? "_blank") : target,
+        rel: relTokens.size ? [...relTokens].join(" ") : undefined,
+        ...props,
+        ...(asChild ? {} : { children: <>{children}{icon}</> }),
+      },
+    });
   },
 );
 Link.displayName = "Link";

@@ -67,7 +67,7 @@ Messages go to a shared, visually hidden live region that is created on
 Repeating the same text is announced again. `announce` also works outside
 React.
 
-Radix modal dialogs mark everything outside the dialog `aria-hidden`, which
+Modal dialogs mark everything outside the dialog `aria-hidden`, which
 silences the body-level region. Mount `<Announcer />` inside the dialog
 content: while it is mounted, announcements go through it.
 
@@ -94,7 +94,7 @@ Tab and Shift+Tab wrap inside the element; focus that escapes is pulled back.
 On activation focus moves to `initialFocus` (`"first"` tabbable by default,
 `"container"`, a ref, or `false`); on deactivation or unmount it goes back to
 the element that had it before (`restoreFocus`, default `true`). Escape is up
-to you. Radix `Dialog`/`Sheet` already trap focus; this is for custom
+to you. `Dialog`/`Sheet` already trap focus; this is for custom
 overlays and inline editors.
 
 ## `useLongPress`
