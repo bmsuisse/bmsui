@@ -62,6 +62,32 @@ describe("Accordion", () => {
     expect(screen.getByRole("button", { name: "Second" })).toHaveFocus();
   });
 
+  it("wraps, jumps with Home/End, skips disabled items and swaps arrows in RTL", async () => {
+    const user = userEvent.setup();
+    render(
+      <Accordion type="single" collapsible orientation="horizontal" dir="rtl">
+        {["One", "Two", "Three"].map((label) => (
+          <AccordionItem key={label} value={label} disabled={label === "Two"}>
+            <AccordionTrigger>{label}</AccordionTrigger>
+            <AccordionContent>{label} body</AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>,
+    );
+    const [one, , three] = ["One", "Two", "Three"].map((name) => screen.getByRole("button", { name })) as [HTMLElement, HTMLElement, HTMLElement];
+    one.focus();
+    await user.keyboard("{ArrowLeft}");
+    expect(three).toHaveFocus();
+    await user.keyboard("{ArrowLeft}");
+    expect(one).toHaveFocus();
+    await user.keyboard("{End}");
+    expect(three).toHaveFocus();
+    await user.keyboard("{Home}");
+    expect(one).toHaveFocus();
+    await user.keyboard("{Alt>}{ArrowLeft}{/Alt}");
+    expect(one).toHaveFocus();
+  });
+
   it("wraps each trigger in a heading and supports controlled value", () => {
     render(tree({ value: "b" } as never));
     expect(screen.getAllByRole("heading")).toHaveLength(2);

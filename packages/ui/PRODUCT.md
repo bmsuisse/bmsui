@@ -16,15 +16,15 @@ React developers building data-dense internal tools, dashboards, and admin/back-
 
 ## Positioning
 
-A Radix + shadcn/ui foundation composed into higher-level, ready-to-use patterns (not just raw primitives), tuned for operate-mode surfaces — dashboards and admin tools — rather than marketing/persuasion UI.
+A Base UI + shadcn/ui foundation composed into higher-level, ready-to-use patterns (not just raw primitives), tuned for operate-mode surfaces — dashboards and admin tools — rather than marketing/persuasion UI.
 
 ## Operating Context
 
-Consumed as an npm dependency (peer deps: React 18/19) by React apps, most commonly data-dense internal tools and dashboards. `packages/ui/demo` is the runnable reference app exercising every component.
+Consumed as an npm dependency (peer deps: React 19, since 0.31.0) by React apps, most commonly data-dense internal tools and dashboards. `packages/ui/demo` is the runnable reference app exercising every component.
 
 ## Capabilities and Constraints
 
-- Built on Radix UI primitives + class-variance-authority + Tailwind-merge; styling follows the shadcn/ui convention.
+- Built on Base UI primitives (with Radix's API kept, see AGENTS.md) + class-variance-authority + Tailwind-merge; styling follows the shadcn/ui convention.
 - Ships as ESM only (`dist/index.js` + types), no CSS runtime dependency beyond consumer's Tailwind setup.
 - Components must work standalone (tree-shakeable, `sideEffects: false`).
 
@@ -37,10 +37,10 @@ Consumed as an npm dependency (peer deps: React 18/19) by React apps, most commo
 ## Product Principles
 
 - Operate mode by default: scanability, consistency, and native interaction expectations outrank visual expression.
-- Compose on top of Radix rather than reinventing accessible interaction patterns.
+- Compose on top of Base UI rather than reinventing accessible interaction patterns.
 - Every component must be usable standalone and tree-shakeable — no hidden coupling between patterns.
 - Consistency across components (spacing, tokens, variants) matters more than any single component's novelty, since this is a shared system many apps depend on.
 
 ## Accessibility & Inclusion
 
-Baseline: WCAG 2.1 AA, inherited largely for free from Radix primitives; no additional binding brand/accessibility constraints recorded yet.
+Baseline: WCAG 2.1 AA, inherited largely for free from Base UI primitives; no additional binding brand/accessibility constraints recorded yet.

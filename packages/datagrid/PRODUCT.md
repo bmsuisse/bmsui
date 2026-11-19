@@ -24,7 +24,7 @@ Consumed as an npm dependency (peer deps: React 18/19) by React apps displaying/
 
 ## Capabilities and Constraints
 
-- Built on TanStack Table v9 + TanStack Virtual, with `@bmsuisse/ui`-style Radix/shadcn primitives for filter widgets and menus.
+- Built on TanStack Table v9 + TanStack Virtual, with `@bmsuisse/ui`-style Base UI/shadcn primitives for filter widgets and menus.
 - Ships as ESM only (`dist/index.js` + types), tree-shakeable (`sideEffects: false`).
 - Cell editing, column menus, tree/hierarchical rows, and lazy loading are first-class, not bolted on.
 - The filter/sort contract must stay compatible with the Python `bmsdna-datagrid` package — it's a cross-language protocol, not just a UI concern.
@@ -45,4 +45,4 @@ Consumed as an npm dependency (peer deps: React 18/19) by React apps displaying/
 
 ## Accessibility & Inclusion
 
-Baseline: WCAG 2.1 AA, inherited largely for free from Radix primitives; no additional binding brand/accessibility constraints recorded yet.
+Baseline: WCAG 2.1 AA, inherited largely for free from Base UI primitives; no additional binding brand/accessibility constraints recorded yet.

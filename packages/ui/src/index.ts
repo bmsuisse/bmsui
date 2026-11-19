@@ -238,6 +238,8 @@ export type {
   ApprovalStatus,
 } from "./patterns/approval-card/ApprovalCard";
 export { ApprovalCard, defaultApprovalCardLabels } from "./patterns/approval-card/ApprovalCard";
+export type { GuidedChoiceLabels, GuidedChoiceOption, GuidedChoiceProps } from "./patterns/guided-choice/GuidedChoice";
+export { defaultGuidedChoiceLabels, GuidedChoice } from "./patterns/guided-choice/GuidedChoice";
 export type { StepperProps, StepperStep } from "./patterns/stepper/Stepper";
 export { Stepper } from "./patterns/stepper/Stepper";
 

@@ -164,7 +164,7 @@ export function SelectionOverlay({
   });
 
   // Layout can also shift with NO React render at all: an editor mounting in
-  // a cell reflows the table's auto column widths, a Radix Select fills its
+  // a cell reflows the table's auto column widths, a Base UI Select fills its
   // value in after the first paint, fonts load. A ResizeObserver over the
   // table, its headers and the corner cells re-measures on every such shift,
   // so the overlay never lingers at a stale position. One observer, re-pointed

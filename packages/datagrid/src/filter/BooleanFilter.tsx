@@ -84,21 +84,22 @@ export function BooleanFilter<TRow>({
     onChange({ field: column.id, operator: "eq", value: next === "yes" });
   }
 
+  const items = BOOLEAN_CHOICES.map((option) => ({ value: option.value, label: labels[option.labelKey] }));
   const panel = (
     <Select
+      items={items}
       value={choice}
       onValueChange={(next) => {
-        const match = BOOLEAN_CHOICES.find((option) => option.value === next)?.value;
-        if (match) emit(match);
+        if (next) emit(next);
       }}
     >
       <SelectTrigger aria-label={labels.booleanAriaLabel(column.header)}>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        {BOOLEAN_CHOICES.map((option) => (
-          <SelectItem key={option.value} value={option.value}>
-            {labels[option.labelKey]}
+        {items.map((item) => (
+          <SelectItem key={item.value} value={item.value}>
+            {item.label}
           </SelectItem>
         ))}
       </SelectContent>

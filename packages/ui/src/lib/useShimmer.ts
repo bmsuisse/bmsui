@@ -6,7 +6,7 @@ import { animate, prefersReducedMotion } from "./motion";
  * (the gradient/clip classes key off it) and drives `background-position` with the Web Animations
  * API. Nothing happens without WAAPI or under reduced motion, so the text just stays plain.
  */
-export function useShimmer<T extends HTMLElement>(active: boolean): RefObject<T> {
+export function useShimmer<T extends HTMLElement>(active: boolean): RefObject<T | null> {
   const ref = useRef<T>(null);
   useEffect(() => {
     const el = ref.current;

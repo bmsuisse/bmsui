@@ -56,9 +56,9 @@ export function FillOptionsMenu({
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="start"
-        onCloseAutoFocus={(event) => {
-          event.preventDefault();
+        finalFocus={() => {
           onClosed();
+          return false;
         }}
       >
         {items.map((item) => (
@@ -66,7 +66,7 @@ export function FillOptionsMenu({
             key={item.mode}
             disabled={item.disabled}
             data-testid={`cell-fill-option-${item.mode}`}
-            onSelect={() => onSelect(item.mode)}
+            onClick={() => onSelect(item.mode)}
           >
             <span className="flex h-4 w-4 items-center justify-center">
               {item.mode === mode && <CheckIcon className="h-4 w-4" aria-hidden />}

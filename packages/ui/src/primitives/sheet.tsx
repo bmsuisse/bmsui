@@ -1,34 +1,26 @@
 import { type VariantProps, cva } from "class-variance-authority";
-import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import type {
-  ComponentPropsWithoutRef,
-  CSSProperties,
-  ElementRef,
-  HTMLAttributes,
-  PointerEvent as ReactPointerEvent,
-  ReactElement,
-} from "react";
+import type { CSSProperties, HTMLAttributes, PointerEvent as ReactPointerEvent, ReactElement } from "react";
 import { forwardRef, useEffect, useRef, useState } from "react";
 import { cn } from "../lib/utils";
 import { I18nText } from "../i18n/locale";
+import {
+  Dialog,
+  DialogClose,
+  DialogDescription,
+  DialogOverlay,
+  DialogPopup,
+  type DialogPopupProps,
+  DialogPortal,
+  DialogTitle,
+  DialogTrigger,
+} from "./dialog";
 
-export const Sheet = DialogPrimitive.Root;
-export const SheetTrigger = DialogPrimitive.Trigger;
-export const SheetClose = DialogPrimitive.Close;
-export const SheetPortal = DialogPrimitive.Portal;
-
-export const SheetOverlay = forwardRef<
-  ElementRef<typeof DialogPrimitive.Overlay>,
-  ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
->(({ className, ...props }, ref) => (
-  <DialogPrimitive.Overlay
-    ref={ref}
-    className={cn("fixed inset-0 z-50 bg-black/50", className)}
-    {...props}
-  />
-));
-SheetOverlay.displayName = "SheetOverlay";
+export const Sheet = Dialog;
+export const SheetTrigger = DialogTrigger;
+export const SheetClose = DialogClose;
+export const SheetPortal = DialogPortal;
+export const SheetOverlay = DialogOverlay;
 
 // Neither this package nor any other package in the monorepo depends on the
 // `tailwindcss-animate` plugin (grepped for "animate-in"/"tailwindcss-animate"
@@ -37,7 +29,7 @@ SheetOverlay.displayName = "SheetOverlay";
 // Rather than have @bmsuisse/ui silently assume a consumer has that plugin
 // installed, the slide transition here is done with Tailwind's built-in
 // `transition-transform` plus a `translate-x`/`translate-y` toggle driven off
-// Radix's own `data-[state=open]`/`data-[state=closed]` attributes.
+// the `data-[state=open]`/`data-[state=closed]` attributes (Radix's, kept by DialogPopup).
 // `flex flex-col overflow-hidden` (added alongside DialogContent's identical
 // fix, same bug): a consumer combining SheetHeader/children/SheetFooter with
 // its own `overflow-y-auto` on THIS element (the only way to scroll tall
@@ -74,9 +66,7 @@ export const sheetVariants = cva(
   },
 );
 
-export interface SheetContentProps
-  extends ComponentPropsWithoutRef<typeof DialogPrimitive.Content>,
-    VariantProps<typeof sheetVariants> {
+export interface SheetContentProps extends DialogPopupProps, VariantProps<typeof sheetVariants> {
   /**
    * Bottom sheets only: adds a drag handle so the user can pull the sheet
    * taller (up to 95% of the viewport) or shorter (down to 30%) with the
@@ -95,15 +85,15 @@ const enterFromTransform: Record<"top" | "bottom" | "left" | "right", string> = 
   right: "translateX(100%)",
 };
 
-export const SheetContent = forwardRef<ElementRef<typeof DialogPrimitive.Content>, SheetContentProps>(
-  ({ side = "right", className, children, resizable = false, style: styleProp, ...props }, ref) => {
-    // Radix mounts Content with `data-state="open"` already on first paint,
+export const SheetContent = forwardRef<HTMLDivElement, SheetContentProps>(
+  ({ side = "right", className, children, resizable = false, style: styleProp, forceMount, ...props }, ref) => {
+    // The popup mounts with `data-state="open"` already on first paint,
     // so the `data-[state=...]` translate classes above never see a "before"
     // position to transition from — it just appears instead of sliding in.
     // Render one frame off-screen via an inline transform (which overrides
     // the class-based one), then clear it so the transition plays. Exit
-    // already animates correctly: Radix flips to `data-state="closed"` while
-    // still mounted and defers unmounting until the transition ends.
+    // already animates correctly: the popup flips to `data-state="closed"` while
+    // still mounted and Base UI defers unmounting until the transition ends.
     const [entered, setEntered] = useState(false);
     useEffect(() => {
       const id = requestAnimationFrame(() => setEntered(true));
@@ -143,9 +133,9 @@ export const SheetContent = forwardRef<ElementRef<typeof DialogPrimitive.Content
       : { ...styleProp, transform: enterFromTransform[side ?? "right"] };
 
     return (
-      <SheetPortal>
+      <SheetPortal forceMount={forceMount}>
         <SheetOverlay />
-        <DialogPrimitive.Content
+        <DialogPopup
           ref={ref}
           data-slot="sheet-content"
           style={style}
@@ -170,11 +160,11 @@ export const SheetContent = forwardRef<ElementRef<typeof DialogPrimitive.Content
             </div>
           )}
           {children}
-          <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100">
+          <SheetClose className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100">
             <XMarkIcon className="h-4 w-4" />
             <span className="sr-only"><I18nText k="common.close" /></span>
-          </DialogPrimitive.Close>
-        </DialogPrimitive.Content>
+          </SheetClose>
+        </DialogPopup>
       </SheetPortal>
     );
   },
@@ -209,22 +199,5 @@ export const SheetFooter = ({
   <div className={cn("flex shrink-0 flex-wrap justify-end gap-2", className)} {...props} />
 );
 
-export const SheetTitle = forwardRef<
-  ElementRef<typeof DialogPrimitive.Title>,
-  ComponentPropsWithoutRef<typeof DialogPrimitive.Title>
->(({ className, ...props }, ref) => (
-  <DialogPrimitive.Title ref={ref} className={cn("text-lg font-semibold", className)} {...props} />
-));
-SheetTitle.displayName = "SheetTitle";
-
-export const SheetDescription = forwardRef<
-  ElementRef<typeof DialogPrimitive.Description>,
-  ComponentPropsWithoutRef<typeof DialogPrimitive.Description>
->(({ className, ...props }, ref) => (
-  <DialogPrimitive.Description
-    ref={ref}
-    className={cn("text-sm text-muted-foreground", className)}
-    {...props}
-  />
-));
-SheetDescription.displayName = "SheetDescription";
+export const SheetTitle = DialogTitle;
+export const SheetDescription = DialogDescription;

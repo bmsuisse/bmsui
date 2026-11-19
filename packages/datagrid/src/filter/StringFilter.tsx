@@ -15,7 +15,7 @@ import {
 import { cn } from "../lib/utils";
 import type { FilterOperator } from "./types";
 import { useFilterLabels } from "./labels";
-import { focusFirstTextInput } from "./focus";
+import { firstTextInput } from "./focus";
 import type { FilterWidgetProps } from "./widget-types";
 
 interface StringOperatorOption {
@@ -75,14 +75,13 @@ export function StringFilter<TRow>({
     onChange({ field: column.id, operator: nextOperator, value: nextText });
   }
 
+  const operatorItems = STRING_OPERATORS.map((option) => ({ value: option.value, label: labels[option.labelKey] }));
   const panel = (
     <div className="flex w-full max-w-[220px] flex-col gap-2">
       <Select
+        items={operatorItems}
         value={operator}
         onValueChange={(next) => {
-          // radix Select's onValueChange is typed as (value: string) => void, but the
-          // value can only ever be one of the `value` props on the SelectItems below,
-          // which are drawn from STRING_OPERATORS.
           const nextOperator = STRING_OPERATORS.find((option) => option.value === next)?.value;
           if (!nextOperator) return;
           setOperator(nextOperator);
@@ -93,9 +92,9 @@ export function StringFilter<TRow>({
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          {STRING_OPERATORS.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
-              {labels[option.labelKey]}
+          {operatorItems.map((item) => (
+            <SelectItem key={item.value} value={item.value}>
+              {item.label}
             </SelectItem>
           ))}
         </SelectContent>
@@ -130,7 +129,7 @@ export function StringFilter<TRow>({
           {isFiltered && <span className="truncate">{text}</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-3" onOpenAutoFocus={focusFirstTextInput}>{panel}</PopoverContent>
+      <PopoverContent className="w-auto p-3" focusOnOpen={firstTextInput}>{panel}</PopoverContent>
     </Popover>
   );
 }

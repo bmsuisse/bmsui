@@ -10,7 +10,7 @@ import { cn } from "../lib/utils";
 import { descriptorFor, rangeOf } from "./numberRangeShared";
 import type { FilterDescriptor } from "./types";
 import { useFilterLabels } from "./labels";
-import { focusFirstTextInput } from "./focus";
+import { firstTextInput } from "./focus";
 import type { FilterWidgetProps } from "./widget-types";
 
 function parseNumber(raw: string): number | undefined {
@@ -149,7 +149,7 @@ export function NumberRangeFilter<TRow>({
           {isFiltered && <span className="truncate">{summary}</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-3" onOpenAutoFocus={focusFirstTextInput}>{panel}</PopoverContent>
+      <PopoverContent className="w-auto p-3" focusOnOpen={firstTextInput}>{panel}</PopoverContent>
     </Popover>
   );
 }

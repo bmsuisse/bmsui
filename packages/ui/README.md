@@ -11,7 +11,7 @@ Shared shadcn/ui-based React primitives and composed UI patterns: `Modal`,
 npm install @bmsuisse/ui
 ```
 
-Peer dependencies: `react` and `react-dom` (`^18` or `^19`).
+Peer dependencies: `react` and `react-dom` `^19` (React 18 is no longer supported since 0.31.0).
 
 ## Usage
 

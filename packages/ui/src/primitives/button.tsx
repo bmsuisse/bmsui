@@ -1,6 +1,6 @@
-import { Slot } from "@radix-ui/react-slot";
+import { useRender } from "@base-ui/react/use-render";
 import { type VariantProps, cva } from "class-variance-authority";
-import type { ButtonHTMLAttributes } from "react";
+import type { ButtonHTMLAttributes, ReactElement } from "react";
 import { forwardRef } from "react";
 import { cn } from "../lib/utils";
 
@@ -66,15 +66,12 @@ export interface ButtonProps
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot : "button";
-    return (
-      <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
-        ref={ref}
-        {...props}
-      />
-    );
-  },
+  ({ className, variant, size, asChild = false, children, ...props }, ref) =>
+    // `render={<button />}` rather than the default tag: Base UI's default button gets `type="button"`, a plain one submits forms.
+    useRender({
+      render: asChild ? (children as ReactElement) : <button />,
+      ref,
+      props: { className: cn(buttonVariants({ variant, size, className })), ...props, ...(asChild ? {} : { children }) },
+    }),
 );
 Button.displayName = "Button";

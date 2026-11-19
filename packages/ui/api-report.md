@@ -7,12 +7,12 @@ Every public export with its kind and signature. Interfaces and object types
 list their own members one per line (inherited members come from the `extends`
 clause), so the diff of this file shows exactly what changed in the public API.
 
-## Components (236)
+## Components (237)
 
 ```text
 const Accordion: react.ForwardRefExoticComponent<AccordionProps & react.RefAttributes<HTMLDivElement>>
-const AccordionContent: react.ForwardRefExoticComponent<Omit<AccordionPrimitive.AccordionContentProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
-const AccordionItem: react.ForwardRefExoticComponent<Omit<AccordionPrimitive.AccordionItemProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
+const AccordionContent: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<react.HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "ref"> & { forceMount?: boolean } & react.RefAttributes<HTMLDivElement>>
+const AccordionItem: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<react.HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "ref"> & { value: string; disabled?: boolean; asChild?: boolean } & react.RefAttributes<HTMLDivElement>>
 const AccordionTrigger: react.ForwardRefExoticComponent<AccordionTriggerProps & react.RefAttributes<HTMLButtonElement>>
 function ActiveFacets(props: ActiveFacetsProps): ReactElement | null
 const AiButton: react.ForwardRefExoticComponent<AiButtonProps & react.RefAttributes<HTMLButtonElement>>
@@ -43,67 +43,67 @@ const CardHeader: (props: HTMLAttributes<HTMLDivElement>) => ReactElement
 const CardTitle: (props: HTMLAttributes<HTMLDivElement>) => ReactElement
 const ChatConversation: react.ForwardRefExoticComponent<ChatConversationProps & react.RefAttributes<HTMLDivElement>>
 const ChatMessage: react.ForwardRefExoticComponent<ChatMessageProps & react.RefAttributes<HTMLElement>>
-const Checkbox: react.ForwardRefExoticComponent<Omit<CheckboxPrimitive.CheckboxProps & react.RefAttributes<HTMLButtonElement>, "ref"> & react.RefAttributes<HTMLButtonElement>>
+const Checkbox: react.ForwardRefExoticComponent<CheckboxProps & react.RefAttributes<HTMLButtonElement>>
 const Chip: react.ForwardRefExoticComponent<ChipProps & react.RefAttributes<HTMLElement>>
 const CircularProgress: (props: CircularProgressProps) => ReactElement
 const Citation: (props: CitationProps) => ReactElement
 const CodeBlock: react.ForwardRefExoticComponent<CodeBlockProps & react.RefAttributes<HTMLDivElement>>
-const Collapsible: react.ForwardRefExoticComponent<CollapsiblePrimitive.CollapsibleProps & react.RefAttributes<HTMLDivElement>>
-const CollapsibleContent: react.ForwardRefExoticComponent<Omit<CollapsiblePrimitive.CollapsibleContentProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
+const Collapsible: react.ForwardRefExoticComponent<CollapsibleProps & react.RefAttributes<HTMLDivElement>>
+const CollapsibleContent: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<react.HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "ref"> & { forceMount?: boolean; asChild?: boolean } & react.RefAttributes<HTMLDivElement>>
 const CollapsibleSection: (props: CollapsibleSectionProps) => ReactElement
-const CollapsibleTrigger: react.ForwardRefExoticComponent<CollapsiblePrimitive.CollapsibleTriggerProps & react.RefAttributes<HTMLButtonElement>>
+const CollapsibleTrigger: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<react.ButtonHTMLAttributes<HTMLButtonElement>, HTMLButtonElement>, "ref"> & { asChild?: boolean } & react.RefAttributes<HTMLButtonElement>>
 function Combobox(props: ComboboxProps): ReactElement
 function CommandPalette(props: CommandPaletteProps): ReactElement
 const CommandPaletteTrigger: react.ForwardRefExoticComponent<CommandPaletteTriggerProps & react.RefAttributes<HTMLButtonElement>>
 function CommandRegistryProvider(props: { children: ReactNode }): ReactElement
 const ConfirmDialog: (props: ConfirmDialogProps) => ReactElement
 const ConfirmPopover: (props: ConfirmPopoverProps) => ReactElement
-const ContextMenu: react.FC<ContextMenuPrimitive.ContextMenuProps>
-const ContextMenuCheckboxItem: react.ForwardRefExoticComponent<Omit<ContextMenuPrimitive.ContextMenuCheckboxItemProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
-const ContextMenuContent: react.ForwardRefExoticComponent<Omit<ContextMenuPrimitive.ContextMenuContentProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
-const ContextMenuGroup: react.ForwardRefExoticComponent<ContextMenuPrimitive.ContextMenuGroupProps & react.RefAttributes<HTMLDivElement>>
-const ContextMenuItem: react.ForwardRefExoticComponent<Omit<ContextMenuPrimitive.ContextMenuItemProps & react.RefAttributes<HTMLDivElement>, "ref"> & { danger?: boolean } & react.RefAttributes<HTMLDivElement>>
-const ContextMenuLabel: react.ForwardRefExoticComponent<Omit<ContextMenuPrimitive.ContextMenuLabelProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
-const ContextMenuPortal: react.FC<ContextMenuPrimitive.ContextMenuPortalProps>
-const ContextMenuRadioGroup: react.ForwardRefExoticComponent<ContextMenuPrimitive.ContextMenuRadioGroupProps & react.RefAttributes<HTMLDivElement>>
-const ContextMenuRadioItem: react.ForwardRefExoticComponent<Omit<ContextMenuPrimitive.ContextMenuRadioItemProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
-const ContextMenuSeparator: react.ForwardRefExoticComponent<Omit<ContextMenuPrimitive.ContextMenuSeparatorProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
+function ContextMenu(props: { onOpenChange?: (open: boolean) => void; modal?: boolean; dir?: "ltr" | "rtl"; children?: ReactNode }): react.JSX.Element
+const ContextMenuCheckboxItem: react.ForwardRefExoticComponent<Omit<Omit<react.DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "ref">, "onSelect"> & { disabled?: boolean; onSelect?: (event: Event) => void; textValue?: string } & { checked?: boolean | "indeterminate"; onCheckedChange?: (checked: boolean) => void } & react.RefAttributes<HTMLDivElement>>
+const ContextMenuContent: react.ForwardRefExoticComponent<Omit<MenuContentProps, "side" | "align" | "sideOffset"> & react.RefAttributes<HTMLDivElement>>
+const ContextMenuGroup: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "ref"> & { asChild?: boolean } & react.RefAttributes<HTMLDivElement>>
+const ContextMenuItem: react.ForwardRefExoticComponent<Omit<Omit<react.DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "ref">, "onSelect"> & { disabled?: boolean; onSelect?: (event: Event) => void; textValue?: string } & { asChild?: boolean } & { danger?: boolean } & react.RefAttributes<HTMLDivElement>>
+const ContextMenuLabel: react.ForwardRefExoticComponent<Omit<Omit<react.DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "ref"> & { asChild?: boolean } & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
+const ContextMenuPortal: typeof MenuPortal
+const ContextMenuRadioGroup: react.ForwardRefExoticComponent<Omit<Omit<react.DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "ref">, "defaultValue"> & { value?: string; onValueChange?: (value: string) => void; asChild?: boolean } & react.RefAttributes<HTMLDivElement>>
+const ContextMenuRadioItem: react.ForwardRefExoticComponent<Omit<Omit<Omit<Omit<react.DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "ref">, "onSelect"> & { disabled?: boolean; onSelect?: (event: Event) => void; textValue?: string } & { value: string; indicator: ReactNode } & react.RefAttributes<HTMLDivElement>, "ref">, "indicator"> & react.RefAttributes<HTMLDivElement>>
+const ContextMenuSeparator: react.ForwardRefExoticComponent<Omit<Omit<react.DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "ref"> & { asChild?: boolean } & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
 const ContextMenuShortcut: (props: HTMLAttributes<HTMLSpanElement>) => react.JSX.Element
-const ContextMenuSub: react.FC<ContextMenuPrimitive.ContextMenuSubProps>
-const ContextMenuSubContent: react.ForwardRefExoticComponent<Omit<ContextMenuPrimitive.ContextMenuSubContentProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
-const ContextMenuSubTrigger: react.ForwardRefExoticComponent<Omit<ContextMenuPrimitive.ContextMenuSubTriggerProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
-const ContextMenuTrigger: react.ForwardRefExoticComponent<ContextMenuPrimitive.ContextMenuTriggerProps & react.RefAttributes<HTMLSpanElement>>
+const ContextMenuSub: typeof MenuSub
+const ContextMenuSubContent: react.ForwardRefExoticComponent<Omit<MenuContentProps, "side" | "align"> & react.RefAttributes<HTMLDivElement>>
+const ContextMenuSubTrigger: react.ForwardRefExoticComponent<Omit<Omit<Omit<Omit<react.DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "ref">, "onSelect"> & { disabled?: boolean; onSelect?: (event: Event) => void; textValue?: string }, "onSelect"> & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
+const ContextMenuTrigger: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<HTMLAttributes<HTMLSpanElement>, HTMLSpanElement>, "ref"> & { asChild?: boolean; disabled?: boolean } & react.RefAttributes<HTMLSpanElement>>
 const ConversationList: react.ForwardRefExoticComponent<ConversationListProps & react.RefAttributes<HTMLUListElement>>
 const ConversationRow: react.ForwardRefExoticComponent<ConversationRowProps & react.RefAttributes<HTMLLIElement>>
 const CopyButton: react.ForwardRefExoticComponent<CopyButtonProps & react.RefAttributes<HTMLButtonElement>>
 const DateInput: react.ForwardRefExoticComponent<DateInputProps & react.RefAttributes<HTMLInputElement>>
 function DateRangePicker(props: DateRangePickerProps): ReactElement
 function DateTimeInput(props: DateTimeInputProps): ReactElement
-const Dialog: react.FC<DialogPrimitive.DialogProps>
+function Dialog(props: { open?: boolean; defaultOpen?: boolean; onOpenChange?: (open: boolean) => void; modal?: boolean; children?: ReactNode }): react.JSX.Element
 function DialogActions(props: DialogActionsProps): ReactElement
 const DialogBody: react.ForwardRefExoticComponent<HTMLAttributes<HTMLDivElement> & react.RefAttributes<HTMLDivElement>>
-const DialogContent: react.ForwardRefExoticComponent<Omit<DialogPrimitive.DialogContentProps & react.RefAttributes<HTMLDivElement>, "ref"> & { showCloseButton?: boolean; closeButtonTestId?: string } & react.RefAttributes<HTMLDivElement>>
-const DialogDescription: react.ForwardRefExoticComponent<Omit<DialogPrimitive.DialogDescriptionProps & react.RefAttributes<HTMLParagraphElement>, "ref"> & react.RefAttributes<HTMLParagraphElement>>
+const DialogContent: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "ref"> & RadixDismissProps & RadixFocusProps & { forceMount?: boolean } & { showCloseButton?: boolean; closeButtonTestId?: string } & react.RefAttributes<HTMLDivElement>>
+const DialogDescription: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<HTMLAttributes<HTMLParagraphElement>, HTMLParagraphElement>, "ref"> & { asChild?: boolean } & react.RefAttributes<HTMLParagraphElement>>
 const DialogFooter: (props: HTMLAttributes<HTMLDivElement>) => ReactElement
 const DialogHeader: (props: HTMLAttributes<HTMLDivElement>) => ReactElement
-const DialogTitle: react.ForwardRefExoticComponent<Omit<DialogPrimitive.DialogTitleProps & react.RefAttributes<HTMLHeadingElement>, "ref"> & react.RefAttributes<HTMLHeadingElement>>
-const DialogTrigger: react.ForwardRefExoticComponent<DialogPrimitive.DialogTriggerProps & react.RefAttributes<HTMLButtonElement>>
+const DialogTitle: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<HTMLAttributes<HTMLHeadingElement>, HTMLHeadingElement>, "ref"> & { asChild?: boolean } & react.RefAttributes<HTMLHeadingElement>>
+const DialogTrigger: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<react.ButtonHTMLAttributes<HTMLButtonElement>, HTMLButtonElement>, "ref"> & { asChild?: boolean } & react.RefAttributes<HTMLButtonElement>>
 function DonutChart(props: { data: DonutSegment[]; size?: number; thickness?: number; centerValue?: string; centerLabel?: string }): ReactElement | null
-const DropdownMenu: react.FC<DropdownMenuPrimitive.DropdownMenuProps>
-const DropdownMenuCheckboxItem: react.ForwardRefExoticComponent<Omit<DropdownMenuPrimitive.DropdownMenuCheckboxItemProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
-const DropdownMenuContent: react.ForwardRefExoticComponent<Omit<DropdownMenuPrimitive.DropdownMenuContentProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
-const DropdownMenuGroup: react.ForwardRefExoticComponent<DropdownMenuPrimitive.DropdownMenuGroupProps & react.RefAttributes<HTMLDivElement>>
-const DropdownMenuItem: react.ForwardRefExoticComponent<Omit<DropdownMenuPrimitive.DropdownMenuItemProps & react.RefAttributes<HTMLDivElement>, "ref"> & { danger?: boolean } & react.RefAttributes<HTMLDivElement>>
-const DropdownMenuLabel: react.ForwardRefExoticComponent<Omit<DropdownMenuPrimitive.DropdownMenuLabelProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
-const DropdownMenuPortal: react.FC<DropdownMenuPrimitive.DropdownMenuPortalProps>
-const DropdownMenuRadioGroup: react.ForwardRefExoticComponent<DropdownMenuPrimitive.DropdownMenuRadioGroupProps & react.RefAttributes<HTMLDivElement>>
-const DropdownMenuRadioItem: react.ForwardRefExoticComponent<Omit<DropdownMenuPrimitive.DropdownMenuRadioItemProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
-const DropdownMenuSeparator: react.ForwardRefExoticComponent<Omit<DropdownMenuPrimitive.DropdownMenuSeparatorProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
+function DropdownMenu(props: { open?: boolean; defaultOpen?: boolean; onOpenChange?: (open: boolean) => void; modal?: boolean; dir?: "ltr" | "rtl"; children?: ReactNode }): react.JSX.Element
+const DropdownMenuCheckboxItem: react.ForwardRefExoticComponent<Omit<Omit<react.DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "ref">, "onSelect"> & { disabled?: boolean; onSelect?: (event: Event) => void; textValue?: string } & { checked?: boolean | "indeterminate"; onCheckedChange?: (checked: boolean) => void } & react.RefAttributes<HTMLDivElement>>
+const DropdownMenuContent: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "ref"> & RadixPositionProps & RadixDismissProps & Pick<RadixFocusProps, "onCloseAutoFocus"> & { loop?: boolean; forceMount?: true } & react.RefAttributes<HTMLDivElement>>
+const DropdownMenuGroup: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "ref"> & { asChild?: boolean } & react.RefAttributes<HTMLDivElement>>
+const DropdownMenuItem: react.ForwardRefExoticComponent<Omit<Omit<react.DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "ref">, "onSelect"> & { disabled?: boolean; onSelect?: (event: Event) => void; textValue?: string } & { asChild?: boolean } & { danger?: boolean } & react.RefAttributes<HTMLDivElement>>
+const DropdownMenuLabel: react.ForwardRefExoticComponent<Omit<Omit<react.DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "ref"> & { asChild?: boolean } & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
+const DropdownMenuPortal: typeof MenuPortal
+const DropdownMenuRadioGroup: react.ForwardRefExoticComponent<Omit<Omit<react.DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "ref">, "defaultValue"> & { value?: string; onValueChange?: (value: string) => void; asChild?: boolean } & react.RefAttributes<HTMLDivElement>>
+const DropdownMenuRadioItem: react.ForwardRefExoticComponent<Omit<Omit<Omit<Omit<react.DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "ref">, "onSelect"> & { disabled?: boolean; onSelect?: (event: Event) => void; textValue?: string } & { value: string; indicator: ReactNode } & react.RefAttributes<HTMLDivElement>, "ref">, "indicator"> & react.RefAttributes<HTMLDivElement>>
+const DropdownMenuSeparator: react.ForwardRefExoticComponent<Omit<Omit<react.DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "ref"> & { asChild?: boolean } & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
 const DropdownMenuShortcut: (props: HTMLAttributes<HTMLSpanElement>) => react.JSX.Element
-const DropdownMenuSub: react.FC<DropdownMenuPrimitive.DropdownMenuSubProps>
-const DropdownMenuSubContent: react.ForwardRefExoticComponent<Omit<DropdownMenuPrimitive.DropdownMenuSubContentProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
-const DropdownMenuSubTrigger: react.ForwardRefExoticComponent<Omit<DropdownMenuPrimitive.DropdownMenuSubTriggerProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
-const DropdownMenuTrigger: react.ForwardRefExoticComponent<DropdownMenuPrimitive.DropdownMenuTriggerProps & react.RefAttributes<HTMLButtonElement>>
+const DropdownMenuSub: typeof MenuSub
+const DropdownMenuSubContent: react.ForwardRefExoticComponent<Omit<MenuContentProps, "side" | "align"> & react.RefAttributes<HTMLDivElement>>
+const DropdownMenuSubTrigger: react.ForwardRefExoticComponent<Omit<Omit<Omit<Omit<react.DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "ref">, "onSelect"> & { disabled?: boolean; onSelect?: (event: Event) => void; textValue?: string }, "onSelect"> & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
+const DropdownMenuTrigger: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<react.ButtonHTMLAttributes<HTMLButtonElement>, HTMLButtonElement>, "ref"> & { asChild?: boolean } & react.RefAttributes<HTMLButtonElement>>
 const EmailAddressInput: react.ForwardRefExoticComponent<EmailAddressInputProps & react.RefAttributes<HTMLInputElement>>
 const EmptyState: (props: EmptyStateProps) => ReactElement
 const ErrorState: (props: ErrorStateProps) => ReactElement | null
@@ -116,9 +116,10 @@ const FilterSheetTrigger: (props: FilterSheetTriggerProps) => ReactElement
 const FilteredEmptyState: (props: FilteredEmptyStateProps) => ReactElement
 function FormField(props: FormFieldProps): ReactElement
 const FormModal: (props: FormModalProps) => ReactElement
-const HoverCard: (props: ComponentPropsWithoutRef<typeof HoverCardPrimitive.Root> & { animated?: boolean }) => react.JSX.Element
-const HoverCardContent: react.ForwardRefExoticComponent<Omit<HoverCardPrimitive.HoverCardContentProps & react.RefAttributes<HTMLDivElement>, "ref"> & { container?: ComponentPropsWithoutRef<typeof HoverCardPrimitive.Portal>["container"] } & react.RefAttributes<HTMLDivElement>>
-const HoverCardTrigger: react.ForwardRefExoticComponent<HoverCardPrimitive.HoverCardTriggerProps & react.RefAttributes<HTMLAnchorElement>>
+function GuidedChoice(props: GuidedChoiceProps): react.JSX.Element
+const HoverCard: (props: { openDelay?: number; closeDelay?: number; open?: boolean; defaultOpen?: boolean; onOpenChange?: (open: boolean) => void; animated?: boolean; children?: ReactNode }) => react.JSX.Element
+const HoverCardContent: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<react.HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "ref"> & RadixPositionProps & { container?: HTMLElement | null; forceMount?: boolean } & react.RefAttributes<HTMLDivElement>>
+const HoverCardTrigger: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<react.AnchorHTMLAttributes<HTMLAnchorElement>, HTMLAnchorElement>, "ref"> & { asChild?: boolean } & react.RefAttributes<HTMLAnchorElement>>
 const InlineError: (props: InlineErrorProps) => ReactElement | null
 const Input: react.ForwardRefExoticComponent<InputProps & react.RefAttributes<HTMLInputElement>>
 const InputGroup: react.ForwardRefExoticComponent<InputGroupProps & react.RefAttributes<HTMLDivElement>>
@@ -145,17 +146,17 @@ const NumberInput: react.ForwardRefExoticComponent<NumberInputProps & react.RefA
 function PageHeader(props: PageHeaderProps): ReactElement
 function Pagination(props: PaginationProps): ReactElement
 const PhoneInput: react.ForwardRefExoticComponent<PhoneInputProps & react.RefAttributes<HTMLInputElement>>
-const Popover: react.FC<PopoverPrimitive.PopoverProps>
-const PopoverAnchor: react.ForwardRefExoticComponent<PopoverPrimitive.PopoverAnchorProps & react.RefAttributes<HTMLDivElement>>
-const PopoverContent: react.ForwardRefExoticComponent<Omit<PopoverPrimitive.PopoverContentProps & react.RefAttributes<HTMLDivElement>, "ref"> & { container?: ComponentPropsWithoutRef<typeof PopoverPrimitive.Portal>["container"] } & react.RefAttributes<HTMLDivElement>>
-const PopoverTrigger: react.ForwardRefExoticComponent<PopoverPrimitive.PopoverTriggerProps & react.RefAttributes<HTMLButtonElement>>
+function Popover(props: { open?: boolean; defaultOpen?: boolean; onOpenChange?: (open: boolean) => void; modal?: boolean; children?: ReactNode }): react.JSX.Element
+function PopoverAnchor(props: ComponentPropsWithoutRef<"div"> & { asChild?: boolean; ref?: React.Ref<HTMLDivElement>; virtualRef?: RefObject<Measurable | null> }): react.ReactElement<unknown, string | react.JSXElementConstructor<any>> | null
+const PopoverContent: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<react.HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "ref"> & RadixPositionProps & RadixDismissProps & RadixFocusProps & { container?: HTMLElement | null; forceMount?: boolean } & react.RefAttributes<HTMLDivElement>>
+const PopoverTrigger: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<react.ButtonHTMLAttributes<HTMLButtonElement>, HTMLButtonElement>, "ref"> & { asChild?: boolean } & react.RefAttributes<HTMLButtonElement>>
 const ProgressBar: (props: ProgressBarProps) => ReactElement
 const PromptInput: react.ForwardRefExoticComponent<PromptInputProps & react.RefAttributes<HTMLFormElement>>
 const PromptSuggestions: (props: PromptSuggestionsProps) => ReactElement | null
 const QuestionDialog: (props: QuestionDialogProps) => ReactElement
 const QuotedText: react.ForwardRefExoticComponent<QuotedTextProps & react.RefAttributes<HTMLDivElement>>
-const RadioGroup: react.ForwardRefExoticComponent<Omit<RadioGroupPrimitive.RadioGroupProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
-const RadioGroupItem: react.ForwardRefExoticComponent<Omit<RadioGroupPrimitive.RadioGroupItemProps & react.RefAttributes<HTMLButtonElement>, "ref"> & react.RefAttributes<HTMLButtonElement>>
+const RadioGroup: react.ForwardRefExoticComponent<RadioGroupProps & react.RefAttributes<HTMLDivElement>>
+const RadioGroupItem: react.ForwardRefExoticComponent<RadioGroupItemProps & react.RefAttributes<HTMLButtonElement>>
 function RadioList<T extends string = string>(props: RadioListProps<T>): ReactElement
 function RangeSlider(props: RangeSliderProps): ReactElement
 const RankBadge: (props: RankBadgeProps) => ReactElement
@@ -166,35 +167,35 @@ const ResponsivePanel: (props: ResponsivePanelProps) => ReactElement
 const ResultCard: (props: ResultCardProps) => ReactElement
 const ResultList: (props: ResultListProps) => ReactElement
 const ScoreBadge: (props: ScoreBadgeProps) => ReactElement | null
-const ScrollArea: react.ForwardRefExoticComponent<Omit<ScrollAreaPrimitive.ScrollAreaProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
-const ScrollBar: react.ForwardRefExoticComponent<Omit<ScrollAreaPrimitive.ScrollAreaScrollbarProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
+const ScrollArea: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<react.HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
+const ScrollBar: react.ForwardRefExoticComponent<ScrollBarProps & react.RefAttributes<HTMLDivElement>>
 function SearchBar(props: SearchBarProps): ReactElement
 function SearchPanel(props: SearchPanelProps): ReactElement
 function SearchTrigger(props: SearchTriggerProps): ReactElement
 function SegmentedControl<T extends string = string>(props: SegmentedControlProps<T>): ReactElement
-const Select: react.FC<SelectPrimitive.SelectProps>
-const SelectContent: react.ForwardRefExoticComponent<Omit<SelectPrimitive.SelectContentProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
-const SelectGroup: react.ForwardRefExoticComponent<SelectPrimitive.SelectGroupProps & react.RefAttributes<HTMLDivElement>>
-const SelectItem: react.ForwardRefExoticComponent<Omit<SelectPrimitive.SelectItemProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
+function Select(props: { value?: string; defaultValue?: string; onValueChange?: (value: string) => void; open?: boolean; defaultOpen?: boolean; onOpenChange?: (open: boolean) => void; disabled?: boolean; name?: string; required?: boolean; form?: string; autoComplete?: string; children?: ReactNode }): react.JSX.Element
+const SelectContent: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<react.HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "ref"> & RadixPositionProps & { position?: "popper" | "item-aligned"; container?: HTMLElement | null } & react.RefAttributes<HTMLDivElement>>
+const SelectGroup: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<react.HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
+const SelectItem: react.ForwardRefExoticComponent<Omit<Omit<react.DetailedHTMLProps<react.HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "ref">, "children"> & { value: string; disabled?: boolean; textValue?: string; children?: ReactNode } & react.RefAttributes<HTMLDivElement>>
 const SelectTrigger: react.ForwardRefExoticComponent<SelectTriggerProps & react.RefAttributes<HTMLButtonElement>>
-const SelectValue: react.ForwardRefExoticComponent<SelectPrimitive.SelectValueProps & react.RefAttributes<HTMLSpanElement>>
-const Separator: react.ForwardRefExoticComponent<Omit<SeparatorPrimitive.SeparatorProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
-const Sheet: react.FC<DialogPrimitive.DialogProps>
+const SelectValue: react.ForwardRefExoticComponent<Omit<Omit<react.DetailedHTMLProps<react.HTMLAttributes<HTMLSpanElement>, HTMLSpanElement>, "ref">, "children"> & { placeholder?: ReactNode; children?: ReactNode } & react.RefAttributes<HTMLSpanElement>>
+const Separator: react.ForwardRefExoticComponent<SeparatorProps & react.RefAttributes<HTMLDivElement>>
+const Sheet: typeof Dialog
 const SheetBody: (props: HTMLAttributes<HTMLDivElement>) => ReactElement
-const SheetClose: react.ForwardRefExoticComponent<DialogPrimitive.DialogCloseProps & react.RefAttributes<HTMLButtonElement>>
+const SheetClose: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<react.ButtonHTMLAttributes<HTMLButtonElement>, HTMLButtonElement>, "ref"> & { asChild?: boolean } & react.RefAttributes<HTMLButtonElement>>
 const SheetContent: react.ForwardRefExoticComponent<SheetContentProps & react.RefAttributes<HTMLDivElement>>
-const SheetDescription: react.ForwardRefExoticComponent<Omit<DialogPrimitive.DialogDescriptionProps & react.RefAttributes<HTMLParagraphElement>, "ref"> & react.RefAttributes<HTMLParagraphElement>>
+const SheetDescription: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<HTMLAttributes<HTMLParagraphElement>, HTMLParagraphElement>, "ref"> & { asChild?: boolean } & react.RefAttributes<HTMLParagraphElement>>
 const SheetFooter: (props: HTMLAttributes<HTMLDivElement>) => ReactElement
 const SheetHeader: (props: HTMLAttributes<HTMLDivElement>) => ReactElement
-const SheetPortal: react.FC<DialogPrimitive.DialogPortalProps>
-const SheetTitle: react.ForwardRefExoticComponent<Omit<DialogPrimitive.DialogTitleProps & react.RefAttributes<HTMLHeadingElement>, "ref"> & react.RefAttributes<HTMLHeadingElement>>
-const SheetTrigger: react.ForwardRefExoticComponent<DialogPrimitive.DialogTriggerProps & react.RefAttributes<HTMLButtonElement>>
+const SheetPortal: (props: Omit<react.ComponentPropsWithoutRef<typeof _base_ui_react.DialogPortal>, "keepMounted"> & { forceMount?: boolean }) => react.JSX.Element
+const SheetTitle: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<HTMLAttributes<HTMLHeadingElement>, HTMLHeadingElement>, "ref"> & { asChild?: boolean } & react.RefAttributes<HTMLHeadingElement>>
+const SheetTrigger: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<react.ButtonHTMLAttributes<HTMLButtonElement>, HTMLButtonElement>, "ref"> & { asChild?: boolean } & react.RefAttributes<HTMLButtonElement>>
 const ShortcutSheet: (props: ShortcutSheetProps) => ReactElement
 function Sidebar(props: SidebarProps): ReactElement
 function SidebarNav(props: SidebarNavProps): ReactElement
 const Skeleton: (props: HTMLAttributes<HTMLDivElement>) => ReactElement
 const SkipLinks: (props: SkipLinksProps) => ReactElement
-const Slider: react.ForwardRefExoticComponent<SliderProps & react.RefAttributes<HTMLSpanElement>>
+const Slider: react.ForwardRefExoticComponent<SliderProps & react.RefAttributes<HTMLDivElement>>
 const SourceList: (props: SourceListProps) => ReactElement | null
 function Sparkline(props: { data: number[]; color?: string }): ReactElement | null
 const SplitButton: react.ForwardRefExoticComponent<SplitButtonProps & react.RefAttributes<HTMLButtonElement>>
@@ -219,10 +220,10 @@ const TableRow: react.ForwardRefExoticComponent<HTMLAttributes<HTMLTableRowEleme
 function TableSearch(props: TableSearchProps): ReactElement
 function TableShell(props: TableShellProps): ReactElement
 function TableToolbar(props: TableToolbarProps): ReactElement
-const Tabs: react.ForwardRefExoticComponent<TabsPrimitive.TabsProps & react.RefAttributes<HTMLDivElement>>
-const TabsContent: react.ForwardRefExoticComponent<Omit<TabsPrimitive.TabsContentProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
-const TabsList: react.ForwardRefExoticComponent<Omit<TabsPrimitive.TabsListProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
-const TabsTrigger: react.ForwardRefExoticComponent<Omit<TabsPrimitive.TabsTriggerProps & react.RefAttributes<HTMLButtonElement>, "ref"> & react.RefAttributes<HTMLButtonElement>>
+const Tabs: react.ForwardRefExoticComponent<TabsProps & react.RefAttributes<HTMLDivElement>>
+const TabsContent: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<react.HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "ref"> & { value: string; forceMount?: boolean; asChild?: boolean } & react.RefAttributes<HTMLDivElement>>
+const TabsList: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<react.HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "ref"> & { loop?: boolean; asChild?: boolean } & react.RefAttributes<HTMLDivElement>>
+const TabsTrigger: react.ForwardRefExoticComponent<Omit<Omit<react.DetailedHTMLProps<react.ButtonHTMLAttributes<HTMLButtonElement>, HTMLButtonElement>, "ref">, "value"> & { value: string; asChild?: boolean } & react.RefAttributes<HTMLButtonElement>>
 function TagCombobox(props: TagComboboxProps): ReactElement
 const Textarea: react.ForwardRefExoticComponent<TextareaProps & react.RefAttributes<HTMLTextAreaElement>>
 const Thumbnail: (props: ThumbnailProps) => ReactElement
@@ -237,10 +238,10 @@ const ToolCallGroup: react.ForwardRefExoticComponent<ToolCallGroupProps & react.
 function Toolbar(props: ToolbarProps): ReactElement
 const ToolbarButton: react.ForwardRefExoticComponent<ToolbarButtonProps & react.RefAttributes<HTMLButtonElement>>
 function ToolbarSeparator(props: HTMLAttributes<HTMLDivElement>): ReactElement
-const Tooltip: react.FC<TooltipPrimitive.TooltipProps>
-const TooltipContent: react.ForwardRefExoticComponent<Omit<TooltipPrimitive.TooltipContentProps & react.RefAttributes<HTMLDivElement>, "ref"> & react.RefAttributes<HTMLDivElement>>
-const TooltipProvider: react.FC<TooltipPrimitive.TooltipProviderProps>
-const TooltipTrigger: react.ForwardRefExoticComponent<TooltipPrimitive.TooltipTriggerProps & react.RefAttributes<HTMLButtonElement>>
+function Tooltip(props: { open?: boolean; defaultOpen?: boolean; onOpenChange?: (open: boolean) => void; delayDuration?: number; disableHoverableContent?: boolean; children?: ReactNode }): react.JSX.Element
+const TooltipContent: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<react.HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "ref"> & RadixPositionProps & { forceMount?: boolean } & react.RefAttributes<HTMLDivElement>>
+function TooltipProvider(props: { delayDuration?: number; skipDelayDuration?: number; disableHoverableContent?: boolean; children?: ReactNode }): react.JSX.Element
+const TooltipTrigger: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<react.ButtonHTMLAttributes<HTMLButtonElement>, HTMLButtonElement>, "ref"> & { asChild?: boolean } & react.RefAttributes<HTMLButtonElement>>
 function TreeSelect(props: TreeSelectProps): ReactElement
 const TreeView: react.ForwardRefExoticComponent<TreeViewProps & react.RefAttributes<HTMLDivElement>>
 const TypingIndicator: (props: TypingIndicatorProps) => ReactElement
@@ -327,7 +328,7 @@ function toTime(value: string | undefined): string
 const toast: typeof show & { info: (message: string, options?: ToneOptions) => number; success: (message: string, options?: ToneOptions) => number; warning: (message: string, options?: ToneOptions) => number; error: (message: string, options?: ToneOptions) => number; dismiss: typeof dismissToast }
 ```
 
-## Constants (53)
+## Constants (54)
 
 ```text
 const BRAND_ANIMATIONS: readonly [{ readonly id: "bounce"; readonly label: "Bounce home" }, { readonly id: "orbit"; readonly label: "Orbit and settle" }, { readonly id: "impact"; readonly label: "Shot in, boom" }, { readonly id: "liquid"; readonly label: "Liquid split" }, { readonly id: "signature"; readonly label: "Solid to signature" }, { readonly id: "burst"; readonly label: "Big bang, small dot" }, { readonly id: "gravity"; readonly label: "Gravity press" }]
@@ -359,6 +360,7 @@ const defaultFacetFilterLabels: FacetFilterLabels
 const defaultFileInputLabels: FileInputLabels
 const defaultFilterSheetLabels: FilterSheetLabels
 const defaultFilteredEmptyStateLabels: FilteredEmptyStateLabels
+const defaultGuidedChoiceLabels: GuidedChoiceLabels
 const defaultJsonViewLabels: JsonViewLabels
 const defaultKeyComboLabels: KeyComboLabels
 const defaultLinkLabels: LinkLabels
@@ -385,10 +387,10 @@ const defaultToolbarLabels: ToolbarLabels
 const defaultTreeViewLabels: TreeViewLabels
 ```
 
-## Interfaces (238)
+## Interfaces (241)
 
 ```text
-interface AccordionTriggerProps extends ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger>
+interface AccordionTriggerProps extends ComponentPropsWithoutRef<"button">
   description?: ReactNode
   icon?: ReactNode
   meta?: ReactNode
@@ -1216,6 +1218,27 @@ interface FormModalProps
 interface FormatNumberOptions
   decimals?: number
   formatOptions?: Intl.NumberFormatOptions
+interface GuidedChoiceLabels
+  confirm: string
+  options: string
+  suggested: string
+  working: string
+interface GuidedChoiceOption
+  content?: ReactNode
+  disabled?: boolean
+  label: string
+  suggested?: boolean
+  value: string
+interface GuidedChoiceProps extends Omit<FormHTMLAttributes<HTMLFormElement>, "title" | "onSubmit">
+  actions?: ReactNode
+  defaultValue?: string
+  labels?: Partial<GuidedChoiceLabels>
+  onConfirm: (value: string) => void
+  options: ReadonlyArray<GuidedChoiceOption>
+  pending?: boolean
+  question?: ReactNode
+  shortcuts?: boolean
+  title: ReactNode
 interface Hotkey
   allowInInputs?: boolean
   enabled?: boolean
@@ -1696,9 +1719,10 @@ interface SegmentedControlProps<T extends string = string>
   options: SegmentedControlOption<T>[]
   size?: "sm" | "default"
   value: T
-interface SelectTriggerProps extends ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
+interface SelectTriggerProps extends ComponentPropsWithoutRef<"button">
+  asChild?: boolean
   size?: "sm" | "default"
-interface SheetContentProps extends ComponentPropsWithoutRef<typeof DialogPrimitive.Content>, VariantProps<typeof sheetVariants>
+interface SheetContentProps extends DialogPopupProps, VariantProps<typeof sheetVariants>
   resizable?: boolean
 interface Shortcut
   id?: string
@@ -1743,10 +1767,22 @@ interface SkipLinksProps
   label?: string
   labels?: Partial<SkipLinksLabels>
   links: SkipLink[]
-interface SliderProps extends ComponentPropsWithoutRef<typeof SliderPrimitive.Root>
+interface SliderProps extends Omit<ComponentPropsWithoutRef<"div">, "defaultValue" | "onChange">
   animated?: boolean
+  defaultValue?: number[]
+  disabled?: boolean
+  form?: string
   getValueText?: (value: number, index: number) => string
+  max?: number
+  min?: number
+  minStepsBetweenThumbs?: number
+  name?: string
+  onValueChange?: (value: number[]) => void
+  onValueCommit?: (value: number[]) => void
+  orientation?: "horizontal" | "vertical"
+  step?: number
   thumbLabels?: string | string[]
+  value?: number[]
 interface SourceListProps
   className?: string
   labels?: Partial<CitationLabels>
@@ -1852,8 +1888,14 @@ interface StepperStep
   label: string
   n: number
   phase?: string
-interface SwitchProps extends ComponentPropsWithoutRef<typeof SwitchPrimitive.Root>
+interface SwitchProps extends Omit<ComponentPropsWithoutRef<"button">, "checked" | "defaultChecked" | "value" | "onChange">
+  checked?: boolean
+  defaultChecked?: boolean
+  name?: string
+  onCheckedChange?: (checked: boolean) => void
+  required?: boolean
   size?: "sm" | "default"
+  value?: string
 interface TablePageProps extends Partial<Pick<PageHeaderProps, "title" | "description" | "actions" | "badge" | "onBack" | "backHref" | "breadcrumbs" | "tabs" | "labels">>
   "data-testid"?: string
   children: ReactNode
@@ -2172,9 +2214,14 @@ interface VoiceTranscriptProps extends Omit<HTMLAttributes<HTMLDivElement>, "onC
 ## Types (52)
 
 ```text
-type AccordionContentProps = ComponentPropsWithoutRef<typeof AccordionPrimitive.Content>
-type AccordionProps = ComponentPropsWithoutRef<typeof AccordionPrimitive.Root> & {…}
+type AccordionContentProps = ComponentPropsWithoutRef<"div"> & {…}
+  forceMount?: boolean
+type AccordionProps = Omit<ComponentPropsWithoutRef<"div">, "defaultValue" | "dir"> & AccordionValueProps & {…}
   animated?: boolean
+  asChild?: boolean
+  dir?: "ltr" | "rtl"
+  disabled?: boolean
+  orientation?: Orientation
   variant?: AccordionVariant
 type AccordionVariant = "plain" | "card"
 type AiButtonVariant = "ai" | "ai-subtle" | "ai-ghost"

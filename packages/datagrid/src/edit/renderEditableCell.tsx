@@ -56,11 +56,11 @@ export function renderEditableCell<TRow>(
       <div
         onKeyDown={(event) => {
           if (event.key !== "Escape") return;
-          // The default EnumEditor's Radix <Select> (or any custom
+          // The default EnumEditor's Base UI <Select> (or any custom
           // `renderEditCell` popover/dropdown) is a REACT descendant of
           // this `<div>` — so its synthetic events still bubble up to this
           // handler — but its actual DOM node lives in a portal OUTSIDE
-          // this `<div>`. Radix's own Escape-closes-the-dropdown handling
+          // this `<div>`. Base UI's own Escape-closes-the-dropdown handling
           // doesn't stopPropagation, so without this real-DOM containment
           // check, pressing Escape just to close an open dropdown would
           // ALSO silently revert whatever this cell already had selected.

@@ -12,7 +12,7 @@ import { isNumberPair } from "./numberRangeShared";
 import type { FilterDescriptor, FilterOperator } from "./types";
 import type { FilterLabels } from "./labels";
 import { useFilterLabels } from "./labels";
-import { focusFirstTextInput } from "./focus";
+import { firstTextInput } from "./focus";
 import type { FilterWidgetProps } from "./widget-types";
 
 type NumberOperator = "eq" | "neq" | "gt" | "gte" | "lt" | "lte" | "between";
@@ -156,9 +156,11 @@ export function NumberComparisonFilter<TRow>({
     return "";
   })();
 
+  const operatorItems = NUMBER_OPERATORS.map((option) => ({ value: option.value, label: labels[option.labelKey] }));
   const panel = (
     <div className="flex w-full max-w-[220px] flex-col gap-2">
       <Select
+        items={operatorItems}
         value={operator}
         onValueChange={(next) => {
           const nextOperator = NUMBER_OPERATORS.find((option) => option.value === next)?.value;
@@ -171,9 +173,9 @@ export function NumberComparisonFilter<TRow>({
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          {NUMBER_OPERATORS.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
-              {labels[option.labelKey]}
+          {operatorItems.map((item) => (
+            <SelectItem key={item.value} value={item.value}>
+              {item.label}
             </SelectItem>
           ))}
         </SelectContent>
@@ -232,7 +234,7 @@ export function NumberComparisonFilter<TRow>({
           {isFiltered && <span className="truncate">{summary}</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-3" onOpenAutoFocus={focusFirstTextInput}>{panel}</PopoverContent>
+      <PopoverContent className="w-auto p-3" focusOnOpen={firstTextInput}>{panel}</PopoverContent>
     </Popover>
   );
 }

@@ -10,7 +10,7 @@ import { MOBILE_MEDIA_QUERY, useMediaQuery } from "../hooks/useMediaQuery";
 import { cn } from "../lib/utils";
 import type { FilterDescriptor } from "./types";
 import { useFilterLabels } from "./labels";
-import { focusFirstTextInput } from "./focus";
+import { firstTextInput } from "./focus";
 import type { FilterWidgetProps } from "./widget-types";
 
 interface Preset {
@@ -171,7 +171,7 @@ export function DateRangeFilter<TRow>({
           {isFiltered && <span className="truncate">{summary}</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto max-w-[var(--radix-popover-content-available-width)]" onOpenAutoFocus={focusFirstTextInput}>{panel}</PopoverContent>
+      <PopoverContent className="w-auto max-w-[var(--available-width)]" focusOnOpen={firstTextInput}>{panel}</PopoverContent>
     </Popover>
   );
 }
