@@ -268,5 +268,22 @@
   "guidedChoice.confirm": "Bevestigen",
   "guidedChoice.suggested": "Voorstel",
   "guidedChoice.options": "Opties",
-  "guidedChoice.working": "Bezig…"
+  "guidedChoice.working": "Bezig…",
+  "pwa.update.message": "Er is een nieuwe versie beschikbaar.",
+  "pwa.update.action": "Opnieuw laden",
+  "pwa.update.updating": "Bijwerken…",
+  "pwa.update.later": "Later",
+  "pwa.update.blocked": "Sla eerst je wijzigingen op en laad dan opnieuw.",
+  "pwa.update.offlineReady": "Klaar voor offline gebruik.",
+  "pwa.install.title": "{appName} installeren",
+  "pwa.install.description": "Zet de app op je beginscherm voor snelle toegang.",
+  "pwa.install.action": "Installeren",
+  "pwa.install.notNow": "Niet nu",
+  "pwa.install.iosTitle": "Installeren op iPhone of iPad",
+  "pwa.install.iosShare": "Tik op de knop Deel in de werkbalk.",
+  "pwa.install.iosAdd": "Kies ‘Zet op beginscherm’.",
+  "pwa.install.iosConfirm": "Tik rechtsboven op ‘Voeg toe’.",
+  "pwa.install.close": "Sluiten",
+  "pwa.offline.message": "Je bent offline. Wat op het scherm staat werkt nog, maar er wordt niets nieuws geladen of opgeslagen.",
+  "pwa.offline.backOnline": "Weer online."
 }

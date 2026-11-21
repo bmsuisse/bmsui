@@ -33,3 +33,19 @@ export function isMacPlatform(): boolean {
   const platform = nav.userAgentData?.platform ?? nav.platform ?? "";
   return /mac|iphone|ipad|ipod/i.test(platform) || /Mac OS X|iPhone|iPad/i.test(nav.userAgent);
 }
+
+/** iPhone, iPad or iPod, including iPadOS 13+, which reports itself as a Mac but has a touch screen. `false` outside a browser. */
+export function isIosPlatform(): boolean {
+  if (typeof navigator === "undefined") return false;
+  if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) return true;
+  return /Macintosh/i.test(navigator.userAgent) && navigator.maxTouchPoints > 1;
+}
+
+/**
+ * Safari on iOS/iPadOS (not Chrome, Firefox, Edge, Opera or an in-app browser on iOS, whose "Add to Home Screen"
+ * lives in different places). `false` elsewhere and outside a browser.
+ */
+export function isIosSafari(): boolean {
+  if (!isIosPlatform()) return false;
+  return !/CriOS|FxiOS|EdgiOS|OPiOS|GSA|FBAN|FBAV|Instagram/i.test(navigator.userAgent);
+}

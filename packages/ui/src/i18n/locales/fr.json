@@ -268,5 +268,22 @@
   "guidedChoice.confirm": "Confirmer",
   "guidedChoice.suggested": "Suggestion",
   "guidedChoice.options": "Options",
-  "guidedChoice.working": "Traitement…"
+  "guidedChoice.working": "Traitement…",
+  "pwa.update.message": "Une nouvelle version est disponible.",
+  "pwa.update.action": "Recharger",
+  "pwa.update.updating": "Mise à jour…",
+  "pwa.update.later": "Plus tard",
+  "pwa.update.blocked": "Enregistrez d’abord vos modifications, puis rechargez.",
+  "pwa.update.offlineReady": "Prêt pour une utilisation hors ligne.",
+  "pwa.install.title": "Installer {appName}",
+  "pwa.install.description": "Ajoutez-la à l’écran d’accueil pour y accéder rapidement.",
+  "pwa.install.action": "Installer",
+  "pwa.install.notNow": "Pas maintenant",
+  "pwa.install.iosTitle": "Installer sur iPhone ou iPad",
+  "pwa.install.iosShare": "Touchez le bouton Partager dans la barre d’outils.",
+  "pwa.install.iosAdd": "Choisissez « Sur l’écran d’accueil ».",
+  "pwa.install.iosConfirm": "Touchez « Ajouter » en haut à droite.",
+  "pwa.install.close": "Fermer",
+  "pwa.offline.message": "Vous êtes hors ligne. Ce qui est affiché fonctionne encore, mais rien ne se charge ni ne s’enregistre.",
+  "pwa.offline.backOnline": "De nouveau en ligne."
 }

@@ -268,5 +268,22 @@
   "guidedChoice.confirm": "Confirmar",
   "guidedChoice.suggested": "Sugerencia",
   "guidedChoice.options": "Opciones",
-  "guidedChoice.working": "Procesando…"
+  "guidedChoice.working": "Procesando…",
+  "pwa.update.message": "Hay una nueva versión disponible.",
+  "pwa.update.action": "Recargar",
+  "pwa.update.updating": "Actualizando…",
+  "pwa.update.later": "Más tarde",
+  "pwa.update.blocked": "Guarda primero tus cambios y luego recarga.",
+  "pwa.update.offlineReady": "Lista para usar sin conexión.",
+  "pwa.install.title": "Instalar {appName}",
+  "pwa.install.description": "Añádela a la pantalla de inicio para acceder más rápido.",
+  "pwa.install.action": "Instalar",
+  "pwa.install.notNow": "Ahora no",
+  "pwa.install.iosTitle": "Instalar en iPhone o iPad",
+  "pwa.install.iosShare": "Toca el botón Compartir de la barra de herramientas.",
+  "pwa.install.iosAdd": "Elige «Añadir a pantalla de inicio».",
+  "pwa.install.iosConfirm": "Toca «Añadir» arriba a la derecha.",
+  "pwa.install.close": "Cerrar",
+  "pwa.offline.message": "Estás sin conexión. Lo que ves sigue funcionando, pero no se carga ni se guarda nada nuevo.",
+  "pwa.offline.backOnline": "De nuevo en línea."
 }

@@ -9,7 +9,7 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: '@bmsuisse/ui',
       link: {type: 'doc', id: 'ui/getting-started'},
-      items: ['ui/getting-started', 'ui/primitives', 'ui/patterns', 'ui/animated-brand', 'ui/hooks', 'ui/blade', 'ui/translations'],
+      items: ['ui/getting-started', 'ui/primitives', 'ui/patterns', 'ui/animated-brand', 'ui/hooks', 'ui/pwa', 'ui/blade', 'ui/translations'],
     },
     {
       type: 'category',

@@ -268,5 +268,22 @@
   "guidedChoice.confirm": "Bestätigen",
   "guidedChoice.suggested": "Vorschlag",
   "guidedChoice.options": "Optionen",
-  "guidedChoice.working": "Wird bearbeitet…"
+  "guidedChoice.working": "Wird bearbeitet…",
+  "pwa.update.message": "Eine neue Version ist verfügbar.",
+  "pwa.update.action": "Neu laden",
+  "pwa.update.updating": "Wird aktualisiert…",
+  "pwa.update.later": "Später",
+  "pwa.update.blocked": "Speichere zuerst deine Änderungen und lade dann neu.",
+  "pwa.update.offlineReady": "Bereit für die Offline-Nutzung.",
+  "pwa.install.title": "{appName} installieren",
+  "pwa.install.description": "Füge die App zum Home-Bildschirm hinzu für schnellen Zugriff.",
+  "pwa.install.action": "Installieren",
+  "pwa.install.notNow": "Nicht jetzt",
+  "pwa.install.iosTitle": "Auf iPhone oder iPad installieren",
+  "pwa.install.iosShare": "Tippe in der Symbolleiste auf «Teilen».",
+  "pwa.install.iosAdd": "Wähle «Zum Home-Bildschirm».",
+  "pwa.install.iosConfirm": "Tippe oben rechts auf «Hinzufügen».",
+  "pwa.install.close": "Schliessen",
+  "pwa.offline.message": "Du bist offline. Was angezeigt wird, funktioniert weiter, aber es wird nichts Neues geladen oder gespeichert.",
+  "pwa.offline.backOnline": "Wieder online."
 }

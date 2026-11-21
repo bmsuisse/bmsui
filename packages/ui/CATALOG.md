@@ -108,6 +108,9 @@ repo's `AGENTS.md`.
 | `StatusBadge` | Status string → colored badge. |
 | `StatusDot` | Quiet status: colored dot + label (table cells, presence). Same tones/vocabulary as `StatusBadge`. |
 | `Chip`, `chipClass`, `defaultChipLabels` | Pill for a value the user picked: static, `selected`, toggle (`onClick`, `aria-pressed`) or removable (`onRemove`, x/Backspace). Not `Badge`/`StatusBadge` (static labels/statuses). |
+| `UpdatePrompt`, `defaultUpdatePromptLabels` | PWA "new version available, reload" bar (a top `Banner`) with Later snooze, updating state and a `canReload` guard for unsaved work; first-time "ready offline" toast. Use with `registerType: "prompt"`. |
+| `InstallPrompt`, `defaultInstallPromptLabels` | PWA install card or banner: native install dialog on Chrome/Edge/Android, "Share, Add to Home Screen" guide in iOS Safari. You decide when (`open`). |
+| `OfflineIndicator`, `defaultOfflineIndicatorLabels` | The offline `Banner` plus "back online" toast, wired to `useOnlineStatus` (or your own `online` flag). |
 | `Banner`, `BannerAction`, `defaultBannerLabels` | Slim full-width app-shell bar (offline, update available, impersonating, test env, session expired) with tone, actions, dismiss; live region stays mounted. Not `AlertBox` (inline in content). |
 | `LiveIndicator`, `defaultLiveIndicatorLabels` | Pulsing dot + "Updated 14:02:11" for a polled page; fetching/paused states. |
 | `ProgressBar`, `CircularProgress` | Determinate or indeterminate progress (`role=progressbar`) with label, value, tones. Ring for tight spots. |
@@ -188,7 +191,10 @@ repo's `AGENTS.md`.
 | --- | --- |
 | `useHotkeys` | Keyboard shortcuts: `useHotkeys([{ keys: "mod+k", handler }])`. `mod` = ⌘/Ctrl, chords (`"g i"`), skips inputs unless `allowInInputs`, `enabled`, `preventDefault`. |
 | `formatHotkey` | Shortcut label for the platform: `formatHotkey("mod+k")` → `⌘K` / `Ctrl+K`. Use in menus, tooltips, `DropdownMenuShortcut`. |
-| `useOnlineStatus` | `false` while the browser is offline (`online`/`offline` events), SSR-safe; drives an offline `Banner`. |
+| `useOnlineStatus` | `false` while the browser is offline (`online`/`offline` events), SSR-safe; drives an offline `Banner` (or just use `OfflineIndicator`). |
+| `useStandaloneMode` | `true` while the app runs as an installed PWA (`display-mode: standalone` / iOS `navigator.standalone`). |
+| `useServiceWorkerUpdate` | Headless "new version" state machine (`idle`/`available`/`updating`/`blocked`, snooze, `canReload` guard for unsaved work); you pass vite-plugin-pwa's `needRefresh`/`updateServiceWorker`. Ready-made bar: `UpdatePrompt`. |
+| `useInstallPrompt`, `captureInstallPrompt` | PWA install state (`native`/`ios`/`none`, `canInstall`, `promptInstall`, "Not now" snooze). Call `captureInstallPrompt()` in the entry file before React renders. Ready-made UI: `InstallPrompt`. |
 | `useClipboard` | Copy button: `{ copy, copied, error, reset }`; `copied` resets after `timeout`; falls back without `navigator.clipboard`. |
 | `useAnnounce` | Screen-reader announcement: `announce("3 results", { politeness })` through a shared hidden live region. |
 | `announce` | Same as `useAnnounce()`'s function, callable outside React (stores, query callbacks). |
