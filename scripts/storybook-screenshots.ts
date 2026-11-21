@@ -35,7 +35,20 @@ const SHOTS: Shot[] = [
   { name: "search-bar-actions", id: "patterns-searchbar--with-actions", width: 520, height: 140 },
   { name: "filter-sheet", id: "patterns-filtersheet--with-apply", open: "Filters", width: 900, height: 640 },
   { name: "filter-sheet-mobile", id: "patterns-filtersheet--with-apply", open: "Filters", width: 390, height: 720 },
+  { name: "pwa-update-available", id: "patterns-updateprompt--available", width: 900, height: 80 },
+  { name: "pwa-update-updating", id: "patterns-updateprompt--updating", width: 900, height: 120 },
+  { name: "pwa-update-blocked", id: "patterns-updateprompt--blocked-by-unsaved-work", width: 900, height: 140 },
+  { name: "pwa-update-german", id: "patterns-updateprompt--german", width: 900, height: 80 },
+  { name: "pwa-update-phone", id: "patterns-updateprompt--phone", width: 390, height: 140 },
+  { name: "pwa-install-native", id: "patterns-installprompt--native", width: 440, height: 200 },
+  { name: "pwa-install-ios", id: "patterns-installprompt--ios", width: 440, height: 200 },
+  { name: "pwa-install-ios-guide", id: "patterns-installprompt--ios", open: "^Install$", width: 900, height: 640 },
+  { name: "pwa-install-ios-guide-mobile", id: "patterns-installprompt--ios", open: "^Install$", width: 390, height: 720 },
+  { name: "pwa-install-banner", id: "patterns-installprompt--banner", width: 900, height: 80 },
+  { name: "pwa-offline", id: "patterns-offlineindicator--offline", width: 900, height: 80 },
 ];
+
+const SELECTED = SHOTS.filter((shot) => !process.env.ONLY || shot.name.startsWith(process.env.ONLY));
 
 const server = Bun.serve({
   port: 0,
@@ -50,7 +63,7 @@ await mkdir(OUT_DIR, { recursive: true });
 const browser = await chromium.launch();
 try {
   for (const theme of ["light", "dark"] as const) {
-    for (const shot of SHOTS) {
+    for (const shot of SELECTED) {
       const page = await browser.newPage({
         viewport: { width: shot.width ?? 600, height: shot.height ?? 300 },
         deviceScaleFactor: 2,

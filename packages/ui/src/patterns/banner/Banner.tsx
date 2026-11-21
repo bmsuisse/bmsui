@@ -46,6 +46,8 @@ export interface BannerProps extends Omit<HTMLAttributes<HTMLDivElement>, "role"
   role?: "status" | "alert";
   /** Fade the content in when it appears. Skipped under reduced motion. @default true */
   animated?: boolean;
+  /** Pads the top by the device's safe-area inset (notch, status bar) for a full-screen PWA with `viewport-fit=cover`. @default false */
+  safeArea?: boolean;
   "data-testid"?: string;
 }
 
@@ -66,6 +68,7 @@ export const Banner = forwardRef<HTMLDivElement, BannerProps>(
       open = true,
       role = "status",
       animated = true,
+      safeArea = false,
       className,
       ...props
     },
@@ -79,6 +82,7 @@ export const Banner = forwardRef<HTMLDivElement, BannerProps>(
             data-tone={tone}
             className={cn(
               "flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-b px-4 py-2 text-[13px] max-md:text-sm",
+              safeArea && "pt-[calc(env(safe-area-inset-top,0px)+0.5rem)]",
               animated && "transition-opacity duration-200 ease-out starting:opacity-0 motion-reduce:transition-none",
               TONE[tone],
               className,

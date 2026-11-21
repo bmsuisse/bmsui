@@ -321,6 +321,12 @@ export { Chip, chipClass, defaultChipLabels } from "./patterns/chip/Chip";
 
 export type { BannerLabels, BannerProps, BannerTone } from "./patterns/banner/Banner";
 export { Banner, BannerAction, defaultBannerLabels } from "./patterns/banner/Banner";
+export type { UpdatePromptLabels, UpdatePromptProps } from "./patterns/pwa/UpdatePrompt";
+export { UpdatePrompt, defaultUpdatePromptLabels } from "./patterns/pwa/UpdatePrompt";
+export type { InstallPromptLabels, InstallPromptProps } from "./patterns/pwa/InstallPrompt";
+export { InstallPrompt, defaultInstallPromptLabels } from "./patterns/pwa/InstallPrompt";
+export type { OfflineIndicatorLabels, OfflineIndicatorProps } from "./patterns/pwa/OfflineIndicator";
+export { OfflineIndicator, defaultOfflineIndicatorLabels } from "./patterns/pwa/OfflineIndicator";
 
 export type { ConfirmPopoverLabels, ConfirmPopoverProps } from "./patterns/confirm-popover/ConfirmPopover";
 export { ConfirmPopover, defaultConfirmPopoverLabels } from "./patterns/confirm-popover/ConfirmPopover";
@@ -457,6 +463,11 @@ export { formatHotkey, useHotkeys } from "./hooks/useHotkeys";
 export type { UseClipboardOptions, UseClipboardResult } from "./hooks/useClipboard";
 export { useClipboard } from "./hooks/useClipboard";
 export { useOnlineStatus } from "./hooks/useOnlineStatus";
+export { useStandaloneMode } from "./hooks/useStandaloneMode";
+export type { ServiceWorkerUpdateStatus, UseServiceWorkerUpdateOptions, UseServiceWorkerUpdateResult } from "./hooks/useServiceWorkerUpdate";
+export { useServiceWorkerUpdate } from "./hooks/useServiceWorkerUpdate";
+export type { InstallOutcome, InstallPlatform, UseInstallPromptOptions, UseInstallPromptResult } from "./hooks/useInstallPrompt";
+export { captureInstallPrompt, useInstallPrompt } from "./hooks/useInstallPrompt";
 export type { AnnounceOptions, AnnouncePoliteness } from "./hooks/useAnnounce";
 export { announce, Announcer, useAnnounce } from "./hooks/useAnnounce";
 export { useMergedRefs } from "./hooks/useMergedRefs";
