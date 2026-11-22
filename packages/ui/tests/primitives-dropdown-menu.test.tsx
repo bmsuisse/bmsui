@@ -141,13 +141,14 @@ describe("DropdownMenu", () => {
     expect(await screen.findByText("Nested")).toBeInTheDocument();
   });
 
-  it("Escape in a submenu closes the whole menu, like Radix", async () => {
+  it("Escape in a submenu closes the whole menu without asking the menu's content, like Radix", async () => {
     const onOpenChange = vi.fn();
+    const onEscapeKeyDown = vi.fn((event: KeyboardEvent) => event.preventDefault());
     render(
-      <DropdownMenu defaultOpen onOpenChange={onOpenChange}>
+      <DropdownMenu onOpenChange={onOpenChange}>
         <DropdownMenuTrigger>Menu</DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuSub defaultOpen>
+        <DropdownMenuContent onEscapeKeyDown={onEscapeKeyDown}>
+          <DropdownMenuSub>
             <DropdownMenuSubTrigger>More</DropdownMenuSubTrigger>
             <DropdownMenuSubContent>
               <DropdownMenuItem>Nested</DropdownMenuItem>
@@ -156,10 +157,28 @@ describe("DropdownMenu", () => {
         </DropdownMenuContent>
       </DropdownMenu>,
     );
-    const nested = await screen.findByRole("menuitem", { name: "Nested" });
-    nested.focus();
+    // Real order: the menu opens first, then the submenu (each layer listens for Escape from its own open).
+    await userEvent.click(screen.getByText("Menu"));
+    (await screen.findByRole("menuitem", { name: "More" })).focus();
+    await userEvent.keyboard("{ArrowRight}");
+    expect(await screen.findByRole("menuitem", { name: "Nested" })).toHaveFocus();
     await userEvent.keyboard("{Escape}");
-    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(onOpenChange).toHaveBeenLastCalledWith(false);
+    expect(onEscapeKeyDown).not.toHaveBeenCalled();
+  });
+
+  it("onEscapeKeyDown preventDefault on the content keeps the menu open", async () => {
+    render(
+      <DropdownMenu defaultOpen>
+        <DropdownMenuTrigger>Menu</DropdownMenuTrigger>
+        <DropdownMenuContent onEscapeKeyDown={(event) => event.preventDefault()}>
+          <DropdownMenuItem>Top</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>,
+    );
+    (await screen.findByRole("menuitem", { name: "Top" })).focus();
+    await userEvent.keyboard("{Escape}");
+    expect(screen.getByRole("menuitem", { name: "Top" })).toBeInTheDocument();
   });
 
   it("stays open when onSelect calls preventDefault, and a checkbox still toggles", async () => {
