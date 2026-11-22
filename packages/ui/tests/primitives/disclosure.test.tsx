@@ -22,7 +22,9 @@ describe("Radix-compatible disclosure state", () => {
     );
     expect(screen.getByRole("tab", { name: "A" })).toHaveAttribute("data-state", "inactive");
     expect(screen.queryByText("Content A")).toBeNull();
-    expect(screen.getByText("Content B")).toHaveAttribute("hidden");
+    // Radix leaves a force-mounted panel visible and usable; apps hide it with data-state CSS.
+    expect(screen.getByText("Content B")).not.toHaveAttribute("hidden");
+    expect(screen.getByText("Content B")).not.toHaveAttribute("inert");
     fireEvent.click(screen.getByRole("tab", { name: "B" }));
     expect(onValueChange).toHaveBeenCalledWith("b");
     expect(screen.getByRole("tab", { name: "B" })).toHaveAttribute("data-state", "active");
@@ -76,5 +78,35 @@ describe("Radix-compatible disclosure state", () => {
     fireEvent.click(screen.getByRole("button", { name: "Second" }));
     expect(onValueChange).toHaveBeenCalledWith("b");
     expect(first).toHaveAttribute("data-state", "closed");
+  });
+
+  it("Tabs: the previous panel leaves at once and a force-mounted one stays visible, like Radix", () => {
+    // jsdom has no getAnimations, so Base UI unmounts synchronously there; a browser waits a frame.
+    const original = Object.getOwnPropertyDescriptor(Element.prototype, "getAnimations");
+    Object.defineProperty(Element.prototype, "getAnimations", { value: () => [], configurable: true });
+    try {
+      const { unmount } = render(
+        <Tabs defaultValue="a">
+          <TabsList>
+            <TabsTrigger value="a">A</TabsTrigger>
+            <TabsTrigger value="b">B</TabsTrigger>
+          </TabsList>
+          <TabsContent value="a">Content A</TabsContent>
+          <TabsContent value="b">Content B</TabsContent>
+          <TabsContent value="c" forceMount>
+            Content C
+          </TabsContent>
+        </Tabs>,
+      );
+      fireEvent.click(screen.getByRole("tab", { name: "B" }));
+      expect(screen.queryByText("Content A")).toBeNull();
+      expect(screen.getByText("Content B")).not.toHaveAttribute("hidden");
+      expect(screen.getByText("Content C")).toHaveAttribute("data-state", "inactive");
+      expect(screen.getByText("Content C")).not.toHaveAttribute("hidden");
+      unmount(); // before the stub goes: Base UI's queued frames call getAnimations
+    } finally {
+      if (original) Object.defineProperty(Element.prototype, "getAnimations", original);
+      else delete (Element.prototype as { getAnimations?: unknown }).getAnimations;
+    }
   });
 });
