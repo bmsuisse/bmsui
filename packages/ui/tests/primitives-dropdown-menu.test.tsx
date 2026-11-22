@@ -141,6 +141,27 @@ describe("DropdownMenu", () => {
     expect(await screen.findByText("Nested")).toBeInTheDocument();
   });
 
+  it("Escape in a submenu closes the whole menu, like Radix", async () => {
+    const onOpenChange = vi.fn();
+    render(
+      <DropdownMenu defaultOpen onOpenChange={onOpenChange}>
+        <DropdownMenuTrigger>Menu</DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuSub defaultOpen>
+            <DropdownMenuSubTrigger>More</DropdownMenuSubTrigger>
+            <DropdownMenuSubContent>
+              <DropdownMenuItem>Nested</DropdownMenuItem>
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
+        </DropdownMenuContent>
+      </DropdownMenu>,
+    );
+    const nested = await screen.findByRole("menuitem", { name: "Nested" });
+    nested.focus();
+    await userEvent.keyboard("{Escape}");
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
   it("stays open when onSelect calls preventDefault, and a checkbox still toggles", async () => {
     const onCheckedChange = vi.fn();
     render(

@@ -75,11 +75,15 @@ interface ChangeDetails {
  * Root side of the content-level dismiss callbacks: returns the ref to provide and an
  * `onOpenChange` that cancels a close the content's callbacks prevented.
  */
+/** Events that already closed a layer, so an outer layer can tell Base UI's preventDefault from the app's. */
+const dismissed = new WeakSet<Event>();
+
 export function useDismissBridge<D extends ChangeDetails>(setOpen: (open: boolean, details: D) => void) {
   const ref = useRef<RadixDismissProps>({});
   const onOpenChange = useCallback(
     (open: boolean, details: D) => {
       if (!open && prevented(ref.current, details)) return details.cancel();
+      if (!open && details.event) dismissed.add(details.event);
       setOpen(open, details);
     },
     [setOpen],
@@ -89,8 +93,11 @@ export function useDismissBridge<D extends ChangeDetails>(setOpen: (open: boolea
 
 function prevented(handlers: RadixDismissProps, { reason, event }: ChangeDetails) {
   if (!event) return false;
-  if (reason === "escape-key") handlers.onEscapeKeyDown?.(event as KeyboardEvent);
-  else if (reason === "outside-press") {
+  if (reason === "escape-key") {
+    handlers.onEscapeKeyDown?.(event as KeyboardEvent);
+    // An Escape a submenu already closed on (and Base UI prevented) bubbles on: not the app's preventDefault.
+    if (dismissed.has(event)) return false;
+  } else if (reason === "outside-press") {
     handlers.onPointerDownOutside?.(event);
     handlers.onInteractOutside?.(event);
   } else if (reason === "focus-out") {

@@ -944,10 +944,11 @@ reports `aria-hidden-focus`; Base UI renders a hidden
 Radix props are gone or ignored (`asChild` on Checkbox/Switch/RadioGroup/Slider/
 Separator/ScrollArea and on content parts, RadioGroup `loop`/`dir`, Slider
 `inverted`/`dir`, ScrollArea `type`/`scrollHideDelay`, ContextMenu `modal`).
-Tabs swap panels at once like Radix (0.31.1): Base UI would keep the old panel
-shown until its animations end (at least a frame, both panels visible), so an
-inactive `TabsContent` renders nothing and a force-mounted one is `hidden` at
-once; tab panels therefore have no exit transition.
+Tabs behave like Radix again (0.31.1): Base UI would keep the old panel shown
+until its animations end (at least a frame, both panels visible) and would put
+`hidden` + `inert` on an inactive force-mounted panel; now an inactive
+`TabsContent` renders nothing and a force-mounted one stays visible and usable
+(hide it with `data-state` CSS), so tab panels have no exit transition.
 `GuidedChoice` is the first component written for Base UI directly.
 
 ## `php/bmsui-blade` — Blade components for PHP/Laravel (OneDesk)

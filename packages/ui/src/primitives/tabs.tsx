@@ -100,16 +100,17 @@ export const TabsContent = forwardRef<
   ComponentPropsWithoutRef<"div"> & { value: string; forceMount?: boolean; asChild?: boolean }
 >(({ className, value, forceMount, asChild, children, ...props }, ref) => {
   const ctx = useContext(TabsContext);
-  const active = ctx.value === value;
-  // Base UI keeps the previous panel shown until its animations finish (at least a frame, so both
-  // panels show); Radix swapped at once, which consumers' layouts and tests rely on.
-  if (!active && !forceMount) return null;
+  // Radix: an inactive panel is gone at once (Base UI keeps it shown until its animations end, so
+  // both panels show for a frame); a force-mounted one stays visible and usable, hidden only by the
+  // app's `data-state` CSS (Base UI would add `hidden` and `inert`).
+  if (ctx.value !== value && !forceMount) return null;
   return (
     <TabsPrimitive.Panel
       ref={ref}
       value={value}
       keepMounted={forceMount}
-      hidden={!active}
+      hidden={false}
+      inert={false}
       data-state={tabState(ctx, value)}
       className={cn("mt-2 flex-1 outline-none", className)}
       {...props}
