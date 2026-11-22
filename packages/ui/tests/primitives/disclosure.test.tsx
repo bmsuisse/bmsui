@@ -77,4 +77,33 @@ describe("Radix-compatible disclosure state", () => {
     expect(onValueChange).toHaveBeenCalledWith("b");
     expect(first).toHaveAttribute("data-state", "closed");
   });
+
+  it("Tabs: the previous panel leaves at once, like Radix (Base UI would keep it for an animation frame)", () => {
+    // jsdom has no getAnimations, so Base UI unmounts synchronously there; a browser waits a frame.
+    const original = Object.getOwnPropertyDescriptor(Element.prototype, "getAnimations");
+    Object.defineProperty(Element.prototype, "getAnimations", { value: () => [], configurable: true });
+    try {
+      const { unmount } = render(
+        <Tabs defaultValue="a">
+          <TabsList>
+            <TabsTrigger value="a">A</TabsTrigger>
+            <TabsTrigger value="b">B</TabsTrigger>
+          </TabsList>
+          <TabsContent value="a">Content A</TabsContent>
+          <TabsContent value="b">Content B</TabsContent>
+          <TabsContent value="c" forceMount>
+            Content C
+          </TabsContent>
+        </Tabs>,
+      );
+      fireEvent.click(screen.getByRole("tab", { name: "B" }));
+      expect(screen.queryByText("Content A")).toBeNull();
+      expect(screen.getByText("Content B")).not.toHaveAttribute("hidden");
+      expect(screen.getByText("Content C")).toHaveAttribute("hidden");
+      unmount(); // before the stub goes: Base UI's queued frames call getAnimations
+    } finally {
+      if (original) Object.defineProperty(Element.prototype, "getAnimations", original);
+      else delete (Element.prototype as { getAnimations?: unknown }).getAnimations;
+    }
+  });
 });
