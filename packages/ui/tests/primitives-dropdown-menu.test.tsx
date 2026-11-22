@@ -167,6 +167,26 @@ describe("DropdownMenu", () => {
     expect(onEscapeKeyDown).not.toHaveBeenCalled();
   });
 
+  it("Escape closes the menu even when the focused element handles Escape itself, like Radix", async () => {
+    // Radix listens in the capture phase, before the element; Base UI only sees the key after it bubbled.
+    const onOpenChange = vi.fn();
+    render(
+      <>
+        <input aria-label="Search" onKeyDown={(event) => event.key === "Escape" && event.preventDefault()} />
+        <DropdownMenu defaultOpen modal={false} onOpenChange={onOpenChange}>
+          <DropdownMenuTrigger>Menu</DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem>Top</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </>,
+    );
+    await screen.findByRole("menuitem", { name: "Top" });
+    screen.getByRole("textbox", { name: "Search" }).focus();
+    await userEvent.keyboard("{Escape}");
+    expect(onOpenChange).toHaveBeenLastCalledWith(false);
+  });
+
   it("onEscapeKeyDown preventDefault on the content keeps the menu open", async () => {
     render(
       <DropdownMenu defaultOpen>
