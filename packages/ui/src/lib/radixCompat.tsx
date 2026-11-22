@@ -91,12 +91,32 @@ export function useDismissBridge<D extends ChangeDetails>(setOpen: (open: boolea
   return { ref, onOpenChange };
 }
 
+/**
+ * Whether `handler` calls `preventDefault`. Radix heard Escape in the capture phase, before the focused element;
+ * Base UI hears it after it bubbled, when an input's own Escape handling may already have prevented it.
+ */
+function vetoedBy(handler: ((event: KeyboardEvent) => void) | undefined, event: KeyboardEvent) {
+  if (!handler) return false;
+  let vetoed = false;
+  const preventDefault = event.preventDefault;
+  event.preventDefault = () => {
+    vetoed = true;
+    preventDefault.call(event);
+  };
+  try {
+    handler(event);
+  } finally {
+    delete (event as { preventDefault?: unknown }).preventDefault;
+  }
+  return vetoed;
+}
+
 function prevented(handlers: RadixDismissProps, { reason, event }: ChangeDetails) {
   if (!event) return false;
   if (reason === "escape-key") {
     // Bubbled from a submenu that closed on it (Base UI prevented it): close, like Radix, without the handler.
     if (escaped.has(event)) return false;
-    handlers.onEscapeKeyDown?.(event as KeyboardEvent);
+    return vetoedBy(handlers.onEscapeKeyDown, event as KeyboardEvent);
   } else if (reason === "outside-press") {
     handlers.onPointerDownOutside?.(event);
     handlers.onInteractOutside?.(event);
