@@ -83,7 +83,7 @@ repo's `AGENTS.md`.
 | `FileInput`, `defaultFileInputLabels`, `formatFileSize`, `matchesAccept` | Drop zone + click to browse, `accept`/`maxSize`/`maxFiles` errors, removable file list. Controlled `files`. |
 | `TreeSelect` | Searchable single selection from an expandable hierarchy; keyboard navigation, parent selection, and display of saved values outside the available choices. |
 | `TreeView`, `defaultTreeViewLabels` | Always-visible tree (file/category/org browser): single or multiple selection or tri-state `checkable`, lazy `onLoadChildren` with loading + retry row, WAI-ARIA keyboard + typeahead, `renderNode`. Not a dropdown: to pick one value in a form use `TreeSelect`; for a tree with columns use `TreeDataGrid`. |
-| `Combobox` | Searchable dropdown, single or `multiple`; `searchable={false}` drops the search box for a short list. |
+| `Combobox` | Searchable dropdown, single or `multiple`; `searchable={false}` drops the search box for a short list; `fitContent` lets the popup grow and wrap so long labels stay readable (the trigger always shows the full selection as its title). |
 | `TagCombobox` | Multi-select with chips inline in the field. |
 | `ButtonGroup` | Connected single-select segment buttons. |
 | `EmailAddressInput`, `isValidEmail`, `parseEmailAddresses`, `defaultEmailAddressInputLabels` | To/Cc/Bcc field: addresses become chips (Enter/comma/semicolon/space/Tab/blur, paste splits lists and `Name <a@b.ch>`), invalid ones stay as red chips, optional `suggestions`. Not `TagCombobox` (fixed option list). |

@@ -71,6 +71,9 @@ interface ChangeDetails {
   cancel: () => void;
 }
 
+/** Escape events a submenu already closed on: Radix closes the parent menu then without asking its content. */
+const escaped = new WeakSet<Event>();
+
 /**
  * Root side of the content-level dismiss callbacks: returns the ref to provide and an
  * `onOpenChange` that cancels a close the content's callbacks prevented.
@@ -80,6 +83,7 @@ export function useDismissBridge<D extends ChangeDetails>(setOpen: (open: boolea
   const onOpenChange = useCallback(
     (open: boolean, details: D) => {
       if (!open && prevented(ref.current, details)) return details.cancel();
+      if (!open && details.reason === "escape-key" && details.event) escaped.add(details.event);
       setOpen(open, details);
     },
     [setOpen],
@@ -87,10 +91,33 @@ export function useDismissBridge<D extends ChangeDetails>(setOpen: (open: boolea
   return { ref, onOpenChange };
 }
 
+/**
+ * Whether `handler` calls `preventDefault`. Radix heard Escape in the capture phase, before the focused element;
+ * Base UI hears it after it bubbled, when an input's own Escape handling may already have prevented it.
+ */
+function vetoedBy(handler: ((event: KeyboardEvent) => void) | undefined, event: KeyboardEvent) {
+  if (!handler) return false;
+  let vetoed = false;
+  const preventDefault = event.preventDefault;
+  event.preventDefault = () => {
+    vetoed = true;
+    preventDefault.call(event);
+  };
+  try {
+    handler(event);
+  } finally {
+    delete (event as { preventDefault?: unknown }).preventDefault;
+  }
+  return vetoed;
+}
+
 function prevented(handlers: RadixDismissProps, { reason, event }: ChangeDetails) {
   if (!event) return false;
-  if (reason === "escape-key") handlers.onEscapeKeyDown?.(event as KeyboardEvent);
-  else if (reason === "outside-press") {
+  if (reason === "escape-key") {
+    // Bubbled from a submenu that closed on it (Base UI prevented it): close, like Radix, without the handler.
+    if (escaped.has(event)) return false;
+    return vetoedBy(handlers.onEscapeKeyDown, event as KeyboardEvent);
+  } else if (reason === "outside-press") {
     handlers.onPointerDownOutside?.(event);
     handlers.onInteractOutside?.(event);
   } else if (reason === "focus-out") {

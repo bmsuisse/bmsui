@@ -226,7 +226,12 @@ export function MenuSub({
   children?: ReactNode;
 }) {
   const { rootProps, provide } = useMenuLevel(open, defaultOpen, onOpenChange);
-  return <Menu.SubmenuRoot {...rootProps}>{provide(children)}</Menu.SubmenuRoot>;
+  // Radix closes the whole menu on Escape in a submenu; Base UI only the submenu by default.
+  return (
+    <Menu.SubmenuRoot closeParentOnEsc {...rootProps}>
+      {provide(children)}
+    </Menu.SubmenuRoot>
+  );
 }
 
 export const MenuSubTrigger = forwardRef<HTMLDivElement, Omit<ItemBase, "onSelect">>(({ textValue, ...props }, ref) => (

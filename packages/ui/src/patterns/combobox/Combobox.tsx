@@ -91,6 +91,12 @@ interface ComboboxBaseProps {
    * columns, so `group` is ignored on every option while this is set. The
    * popup grows to fit the columns (at least as wide as the trigger). */
   columns?: GridColumn[];
+  /** Lets the popup grow to the widest option (at least as wide as the trigger, at most
+   * `min(40rem, 90vw)`) and wraps a longer label instead of cutting it off with an ellipsis,
+   * so the whole text is readable in the open list. For options with long labels, e.g.
+   * an id plus a name. Grid mode (`columns`) already grows to fit its columns. Defaults to
+   * `false`: the popup is as wide as the trigger and long labels are truncated. */
+  fitContent?: boolean;
 }
 
 export interface ComboboxSingleProps extends ComboboxBaseProps {
@@ -181,6 +187,7 @@ export function Combobox(props: ComboboxProps): ReactElement {
     onSearchChange,
     selectedLabel,
     columns,
+    fitContent = false,
   } = props;
   const { t } = useIntegratedI18n();
   const placeholder = placeholderProp ?? t("combobox.placeholder");
@@ -329,7 +336,7 @@ export function Combobox(props: ComboboxProps): ReactElement {
         ) : (
           <CheckIcon className={cn("h-4 w-4 shrink-0", isSelected ? "opacity-100" : "opacity-0")} />
         )}
-        <span className="truncate">{option.label}</span>
+        <span className={fitContent ? "break-words" : "truncate"}>{option.label}</span>
       </button>
     );
   }
@@ -345,6 +352,8 @@ export function Combobox(props: ComboboxProps): ReactElement {
           role="combobox"
           aria-expanded={open}
           aria-invalid={hasError || undefined}
+          // The trigger truncates a long selection: the title keeps the whole text readable on hover.
+          title={selectedOptions.length > 0 && !loading ? selectedOptions.map((o) => o.label).join(", ") : undefined}
           disabled={disabled || loading}
           className={cn(
             "w-full justify-between font-normal",
@@ -382,7 +391,8 @@ export function Combobox(props: ComboboxProps): ReactElement {
         container={container}
         className={cn(
           "w-[var(--radix-popover-trigger-width)] min-w-[10rem] p-2",
-          columns && "w-max min-w-[var(--radix-popover-trigger-width)] max-w-[min(40rem,90vw)]",
+          (columns || fitContent) &&
+            "w-max min-w-[var(--radix-popover-trigger-width)] max-w-[min(40rem,90vw)]",
         )}
         onOpenAutoFocus={(event) => event.preventDefault()}
       >

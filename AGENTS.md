@@ -936,11 +936,22 @@ Positioner). Notes elsewhere in this file that name Radix describe how the
 component behaved before the move. Known differences: a sheet stays mounted
 ~300 ms while it slides out; a mouse-opened menu appears one frame later (jsdom
 tests use `findBy`); select lists scroll instead of showing scroll buttons; a
-disabled tab is `aria-disabled`, not `disabled`; Base UI renders a hidden
+disabled tab is `aria-disabled`, not `disabled`; an `asChild` trigger that
+is not a `<button>` (a `<span>` anchor of a menu opened at the pointer) gets
+`role="button"` + `tabindex="0"`, so give a hidden anchor `tabIndex={-1}` or axe
+reports `aria-hidden-focus`; Base UI renders a hidden
 `<input>` next to checkboxes, switches, radios and selects; some rarely used
 Radix props are gone or ignored (`asChild` on Checkbox/Switch/RadioGroup/Slider/
 Separator/ScrollArea and on content parts, RadioGroup `loop`/`dir`, Slider
 `inverted`/`dir`, ScrollArea `type`/`scrollHideDelay`, ContextMenu `modal`).
+Tabs behave like Radix again (0.31.1): Base UI would keep the old panel shown
+until its animations end (at least a frame, both panels visible) and would put
+`hidden` + `inert` on an inactive force-mounted panel; now an inactive
+`TabsContent` renders nothing and a force-mounted one stays visible and usable
+(hide it with `data-state` CSS), so tab panels have no exit transition.
+Escape is heard like Radix heard it in the capture phase (0.31.2): only the
+content's own `onEscapeKeyDown` `preventDefault` keeps a layer open, not a
+focused input that already handled the key on its way up.
 `GuidedChoice` is the first component written for Base UI directly.
 
 ## `php/bmsui-blade` — Blade components for PHP/Laravel (OneDesk)
