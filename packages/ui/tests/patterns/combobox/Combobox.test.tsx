@@ -604,3 +604,40 @@ describe("Combobox with columns (grid mode)", () => {
     expect(screen.getByText("No matches.")).toBeInTheDocument();
   });
 });
+
+describe("Combobox long labels", () => {
+  const LONG = "100234 Muster Holzbau und Innenausbau Aktiengesellschaft Zweigniederlassung Zuerich-Oerlikon";
+  const LONG_OPTIONS: ComboboxOption[] = [
+    { value: "long", label: LONG },
+    { value: "short", label: "Short" },
+  ];
+
+  it("shows the whole selected label as the trigger title", () => {
+    render(<Combobox options={LONG_OPTIONS} value="long" onChange={vi.fn()} />);
+    expect(screen.getByRole("combobox")).toHaveAttribute("title", LONG);
+  });
+
+  it("joins the labels of a multi-select selection into the trigger title", () => {
+    render(<Combobox options={LONG_OPTIONS} value={["long", "short"]} onChange={vi.fn()} multiple />);
+    expect(screen.getByRole("combobox")).toHaveAttribute("title", `${LONG}, Short`);
+  });
+
+  it("has no trigger title while nothing is selected", () => {
+    render(<Combobox options={LONG_OPTIONS} value={null} onChange={vi.fn()} />);
+    expect(screen.getByRole("combobox")).not.toHaveAttribute("title");
+  });
+
+  it("truncates option labels by default and wraps them with fitContent", async () => {
+    const { unmount } = render(<Combobox options={LONG_OPTIONS} value={null} onChange={vi.fn()} />);
+    await userEvent.click(screen.getByRole("combobox"));
+    expect((await screen.findByRole("option", { name: LONG })).querySelector("span.truncate")).not.toBeNull();
+    unmount();
+
+    render(<Combobox options={LONG_OPTIONS} value={null} onChange={vi.fn()} fitContent />);
+    await userEvent.click(screen.getByRole("combobox"));
+    const option = await screen.findByRole("option", { name: LONG });
+    expect(option.querySelector("span.truncate")).toBeNull();
+    expect(option.querySelector("span.break-words")).not.toBeNull();
+    expect(document.querySelector(".w-max")).not.toBeNull();
+  });
+});
