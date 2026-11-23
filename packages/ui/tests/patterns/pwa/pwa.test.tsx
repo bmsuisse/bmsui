@@ -39,6 +39,36 @@ describe("useServiceWorkerUpdate", () => {
     expect(reload).toHaveBeenCalledTimes(1);
   });
 
+  it("does not reload when work became unsaved while the worker activated, nor after unmount", async () => {
+    vi.useFakeTimers();
+    const reload = vi.fn();
+    let dirty = false;
+    const { result, unmount } = renderHook(() =>
+      useServiceWorkerUpdate({ needRefresh: true, onUpdate: () => Promise.resolve(), canReload: () => !dirty, reload, reloadTimeoutMs: 1000 }),
+    );
+    await act(async () => result.current.update());
+    dirty = true;
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1000);
+    });
+    expect(reload).not.toHaveBeenCalled();
+    expect(result.current.status).toBe("blocked");
+
+    dirty = false;
+    let resolve = (): void => {};
+    const late = renderHook(() =>
+      useServiceWorkerUpdate({ needRefresh: true, onUpdate: () => new Promise<void>((r) => (resolve = r)), reload, reloadTimeoutMs: 1000 }),
+    );
+    await act(async () => late.result.current.update());
+    late.unmount();
+    await act(async () => {
+      resolve();
+      await vi.advanceTimersByTimeAsync(2000);
+    });
+    expect(reload).not.toHaveBeenCalled();
+    unmount();
+  });
+
   it("blocks while canReload is false and updates once it is true", async () => {
     const onUpdate = vi.fn();
     let dirty = true;
@@ -190,6 +220,16 @@ describe("useInstallPrompt", () => {
     expect(result.current.canInstall).toBe(false);
   });
 
+  it("keeps capturing the browser event after one consumer unmounts", () => {
+    const first = renderHook(() => useInstallPrompt());
+    const second = renderHook(() => useInstallPrompt());
+    first.unmount();
+    act(() => {
+      window.dispatchEvent(fakeInstallEvent("accepted"));
+    });
+    expect(second.result.current.platform).toBe("native");
+  });
+
   it("forgets a snooze after snoozeDays", () => {
     window.localStorage.setItem("bmsui:pwa-install", String(Date.now() - 2 * 86_400_000));
     const { result } = renderHook(() => useInstallPrompt({ platform: "native", snoozeDays: 1 }));
@@ -237,5 +277,15 @@ describe("InstallPrompt", () => {
     expect(screen.queryByRole("region")).toBeNull();
     rerender(<InstallPrompt appName="A" platform="native" open />);
     expect(screen.getByRole("region")).toBeInTheDocument();
+  });
+
+  it("stays hidden inside the installed app even when open is forced", () => {
+    captureInstallPrompt();
+    render(<InstallPrompt appName="A" platform="ios" open />);
+    expect(screen.getByRole("region")).toBeInTheDocument();
+    act(() => {
+      window.dispatchEvent(new Event("appinstalled"));
+    });
+    expect(screen.queryByRole("region")).toBeNull();
   });
 });

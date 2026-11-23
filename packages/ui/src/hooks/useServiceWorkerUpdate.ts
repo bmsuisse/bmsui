@@ -57,7 +57,15 @@ export function useServiceWorkerUpdate({
   const busy = useRef(false);
   const reloadTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  useEffect(() => () => clearTimeout(reloadTimer.current), []);
+  const mounted = useRef(false);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      clearTimeout(reloadTimer.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (!snoozed) return;
@@ -78,12 +86,21 @@ export function useServiceWorkerUpdate({
     busy.current = true;
     setBlocked(false);
     setUpdating(true);
-    const armFallback = (): void => {
-      reloadTimer.current = setTimeout(() => (latest.current.reload ?? (() => window.location.reload()))(), reloadTimeoutMs);
-    };
     const fail = (): void => {
       busy.current = false;
-      setUpdating(false);
+      if (mounted.current) setUpdating(false);
+    };
+    const armFallback = (): void => {
+      if (!mounted.current) return;
+      reloadTimer.current = setTimeout(() => {
+        // The user may have started editing while the worker was activating.
+        if (latest.current.canReload && !latest.current.canReload()) {
+          fail();
+          setBlocked(true);
+          return;
+        }
+        (latest.current.reload ?? (() => window.location.reload()))();
+      }, reloadTimeoutMs);
     };
     try {
       Promise.resolve(latest.current.onUpdate()).then(armFallback, fail);

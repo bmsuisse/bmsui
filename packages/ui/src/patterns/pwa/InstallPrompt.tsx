@@ -105,7 +105,7 @@ export function InstallPrompt({
   const [guideOpen, setGuideOpen] = useState(false);
   const titleId = useId();
 
-  const visible = install.platform !== "none" && (open ?? (install.canInstall && !install.dismissed));
+  const visible = install.platform !== "none" && !install.installed && (open ?? (install.canInstall && !install.dismissed));
   if (!visible && !guideOpen) return null;
 
   const handleInstall = async (): Promise<void> => {

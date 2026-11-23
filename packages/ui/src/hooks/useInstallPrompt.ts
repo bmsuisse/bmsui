@@ -97,7 +97,10 @@ export function useInstallPrompt({
   snoozeDays = 30,
   platform: forced,
 }: UseInstallPromptOptions = {}): UseInstallPromptResult {
-  useEffect(() => captureInstallPrompt(), []);
+  // Not disposed on unmount: the capture is app-wide and shared by every consumer.
+  useEffect(() => {
+    captureInstallPrompt();
+  }, []);
   const snapshot = useSyncExternalStore(subscribe, () => state, () => state);
   const standalone = useStandaloneMode();
   const [dismissedAt, setDismissedAt] = useLocalStorageState<number | null>(storageKey, null);
