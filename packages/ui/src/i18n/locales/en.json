@@ -268,5 +268,22 @@
   "guidedChoice.confirm": "Confirm",
   "guidedChoice.suggested": "Suggested",
   "guidedChoice.options": "Options",
-  "guidedChoice.working": "Working…"
+  "guidedChoice.working": "Working…",
+  "pwa.update.message": "A new version is available.",
+  "pwa.update.action": "Reload",
+  "pwa.update.updating": "Updating…",
+  "pwa.update.later": "Later",
+  "pwa.update.blocked": "Save your changes first, then reload to update.",
+  "pwa.update.offlineReady": "Ready to work offline.",
+  "pwa.install.title": "Install {appName}",
+  "pwa.install.description": "Add it to your home screen for quick access.",
+  "pwa.install.action": "Install",
+  "pwa.install.notNow": "Not now",
+  "pwa.install.iosTitle": "Install on iPhone or iPad",
+  "pwa.install.iosShare": "Tap the Share button in the toolbar.",
+  "pwa.install.iosAdd": "Choose “Add to Home Screen”.",
+  "pwa.install.iosConfirm": "Tap “Add” in the top right corner.",
+  "pwa.install.close": "Close",
+  "pwa.offline.message": "You are offline. What is on screen still works, but nothing new loads or saves.",
+  "pwa.offline.backOnline": "Back online."
 }

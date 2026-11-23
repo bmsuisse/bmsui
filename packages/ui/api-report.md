@@ -7,7 +7,7 @@ Every public export with its kind and signature. Interfaces and object types
 list their own members one per line (inherited members come from the `extends`
 clause), so the diff of this file shows exactly what changed in the public API.
 
-## Components (237)
+## Components (240)
 
 ```text
 const Accordion: react.ForwardRefExoticComponent<AccordionProps & react.RefAttributes<HTMLDivElement>>
@@ -126,6 +126,7 @@ const InputGroup: react.ForwardRefExoticComponent<InputGroupProps & react.RefAtt
 const InputGroupAddon: react.ForwardRefExoticComponent<HTMLAttributes<HTMLDivElement> & react.RefAttributes<HTMLDivElement>>
 const InputGroupButton: react.ForwardRefExoticComponent<ButtonProps & react.RefAttributes<HTMLButtonElement>>
 const InputGroupInput: react.ForwardRefExoticComponent<InputProps & react.RefAttributes<HTMLInputElement>>
+function InstallPrompt(props: InstallPromptProps): ReactElement | null
 const JsonView: (props: JsonViewProps) => ReactElement
 const Kbd: (props: KbdProps) => ReactElement
 const KeyCombo: (props: KeyComboProps) => ReactElement
@@ -143,6 +144,7 @@ const Modal: (props: ModalProps) => ReactElement
 function NavGroup(props: NavGroupProps): ReactElement
 function NavItem<T extends ElementType = "a">(props: NavItemProps<T>): ReactElement
 const NumberInput: react.ForwardRefExoticComponent<NumberInputProps & react.RefAttributes<HTMLInputElement>>
+function OfflineIndicator(props: OfflineIndicatorProps): ReactElement
 function PageHeader(props: PageHeaderProps): ReactElement
 function Pagination(props: PaginationProps): ReactElement
 const PhoneInput: react.ForwardRefExoticComponent<PhoneInputProps & react.RefAttributes<HTMLInputElement>>
@@ -245,11 +247,12 @@ const TooltipTrigger: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLPro
 function TreeSelect(props: TreeSelectProps): ReactElement
 const TreeView: react.ForwardRefExoticComponent<TreeViewProps & react.RefAttributes<HTMLDivElement>>
 const TypingIndicator: (props: TypingIndicatorProps) => ReactElement
+function UpdatePrompt(props: UpdatePromptProps): ReactElement
 const VoiceInputButton: react.ForwardRefExoticComponent<VoiceInputButtonProps & react.RefAttributes<HTMLButtonElement>>
 function VoiceTranscript(props: VoiceTranscriptProps): ReactElement
 ```
 
-## Hooks (19)
+## Hooks (22)
 
 ```text
 function useAnnounce(): (message: string, options?: AnnounceOptions) => void
@@ -259,6 +262,7 @@ function useDelayedFlag(active: boolean, delayMs?: number): boolean
 function useFocusTrap<T extends HTMLElement = HTMLElement>(options?: UseFocusTrapOptions): RefCallback<T>
 function useFormatLocale(locale?: string): string
 function useHotkeys(hotkeys: Hotkey[], options?: UseHotkeysOptions): void
+function useInstallPrompt(props?: UseInstallPromptOptions): UseInstallPromptResult
 function useIntegratedI18n(locale?: string): IntegratedI18n
 function useLocalStorageState<T>(key: string, defaultValue: T, options?: UseLocalStorageStateOptions<T>): [T, SetLocalStorageState<T>, () => void]
 function useLongPress(callback: (event: PointerEvent<Element>) => void, options?: UseLongPressOptions): LongPressHandlers
@@ -269,17 +273,20 @@ function useRecentCommands(storageKey: string, max?: number): { recent: string[]
 function useRegisterCommands(commands: CommandItem[]): void
 function useRegisteredCommands(): CommandItem[]
 function useScrollOverflow<T extends HTMLElement = HTMLElement>(): UseScrollOverflowResult<T>
+function useServiceWorkerUpdate(props: UseServiceWorkerUpdateOptions): UseServiceWorkerUpdateResult
 function useSidebarCollapsed(): boolean
 function useSpeechRecognition(props?: UseSpeechRecognitionOptions): SpeechRecognitionState
+function useStandaloneMode(): boolean
 ```
 
-## Functions (50)
+## Functions (51)
 
 ```text
 function announce(message: string, options?: AnnounceOptions): void
 function avatarColorIndex(name: string): number
 const badgeVariants: (props?: ({ variant?: "default" | "outline" | "destructive" | "secondary" | "warning" | null | undefined } & class_variance_authority_types.ClassProp) | undefined) => string
 const buttonVariants: (props?: ({ variant?: "link" | "default" | "outline" | "ghost" | "destructive" | "secondary" | "swiss-primary" | "swiss-secondary" | "ai" | "ai-subtle" | "ai-ghost" | null | undefined; size?: "default" | "xs" | "sm" | "lg" | "icon" | "icon-xs" | "icon-sm" | "icon-lg" | null | undefined } & class_variance_authority_types.ClassProp) | undefined) => string
+function captureInstallPrompt(): () => void
 function chipClass(props?: ChipClassOptions): string
 function cn(...inputs: ClassValue[]): string
 function countActiveFacets(value: FacetFilterValue): number
@@ -328,7 +335,7 @@ function toTime(value: string | undefined): string
 const toast: typeof show & { info: (message: string, options?: ToneOptions) => number; success: (message: string, options?: ToneOptions) => number; warning: (message: string, options?: ToneOptions) => number; error: (message: string, options?: ToneOptions) => number; dismiss: typeof dismissToast }
 ```
 
-## Constants (54)
+## Constants (57)
 
 ```text
 const BRAND_ANIMATIONS: readonly [{ readonly id: "bounce"; readonly label: "Bounce home" }, { readonly id: "orbit"; readonly label: "Orbit and settle" }, { readonly id: "impact"; readonly label: "Shot in, boom" }, { readonly id: "liquid"; readonly label: "Liquid split" }, { readonly id: "signature"; readonly label: "Solid to signature" }, { readonly id: "burst"; readonly label: "Big bang, small dot" }, { readonly id: "gravity"; readonly label: "Gravity press" }]
@@ -361,6 +368,7 @@ const defaultFileInputLabels: FileInputLabels
 const defaultFilterSheetLabels: FilterSheetLabels
 const defaultFilteredEmptyStateLabels: FilteredEmptyStateLabels
 const defaultGuidedChoiceLabels: GuidedChoiceLabels
+const defaultInstallPromptLabels: InstallPromptLabels
 const defaultJsonViewLabels: JsonViewLabels
 const defaultKeyComboLabels: KeyComboLabels
 const defaultLinkLabels: LinkLabels
@@ -368,6 +376,7 @@ const defaultLiveIndicatorLabels: LiveIndicatorLabels
 const defaultMailMessageLabels: MailMessageLabels
 const defaultMetadataListLabels: MetadataListLabels
 const defaultNumberInputLabels: NumberInputLabels
+const defaultOfflineIndicatorLabels: OfflineIndicatorLabels
 const defaultPageHeaderLabels: PageHeaderLabels
 const defaultPaginationLabels: PaginationLabels
 const defaultPromptInputLabels: PromptInputLabels
@@ -385,9 +394,10 @@ const defaultToasterLabels: ToasterLabels
 const defaultToolCallLabels: ToolCallLabels
 const defaultToolbarLabels: ToolbarLabels
 const defaultTreeViewLabels: TreeViewLabels
+const defaultUpdatePromptLabels: UpdatePromptLabels
 ```
 
-## Interfaces (241)
+## Interfaces (251)
 
 ```text
 interface AccordionTriggerProps extends ComponentPropsWithoutRef<"button">
@@ -529,6 +539,7 @@ interface BannerProps extends Omit<HTMLAttributes<HTMLDivElement>, "role">
   onDismiss?: () => void
   open?: boolean
   role?: "status" | "alert"
+  safeArea?: boolean
   tone?: BannerTone
 interface BottomNavigationActionProps extends HTMLAttributes<HTMLButtonElement>
   "data-testid"?: string
@@ -1255,6 +1266,30 @@ interface InlineErrorProps extends Omit<HTMLAttributes<HTMLSpanElement>, "title"
   wrap?: boolean
 interface InputGroupProps extends HTMLAttributes<HTMLDivElement>
   size?: InputGroupSize
+interface InstallPromptLabels
+  close: string
+  description: string
+  install: string
+  iosAdd: string
+  iosConfirm: string
+  iosShare: string
+  iosTitle: string
+  notNow: string
+  title: (appName: string) => string
+interface InstallPromptProps
+  "data-testid"?: string
+  animated?: boolean
+  appName: string
+  className?: string
+  description?: ReactNode
+  icon?: ReactNode
+  labels?: Partial<InstallPromptLabels>
+  onDismiss?: () => void
+  onInstalled?: () => void
+  open?: boolean
+  platform?: InstallPlatform
+  position?: "fixed" | "static"
+  variant?: "card" | "banner"
 interface IntegratedI18n
   explicit: boolean
   language: BmsLanguage
@@ -1448,6 +1483,17 @@ interface NumberInputProps extends Omit<InputProps, "value" | "defaultValue" | "
   step?: number
   stepper?: boolean
   value: number | null
+interface OfflineIndicatorLabels
+  backOnline: string
+  offline: string
+interface OfflineIndicatorProps
+  "data-testid"?: string
+  animated?: boolean
+  backOnlineToast?: boolean
+  className?: string
+  labels?: Partial<OfflineIndicatorLabels>
+  online?: boolean
+  safeArea?: boolean
 interface PageHeaderLabels
   back: string
 interface PageHeaderProps extends Omit<HTMLAttributes<HTMLElement>, "title">
@@ -2155,6 +2201,27 @@ interface TypingIndicatorProps extends Omit<HTMLAttributes<HTMLSpanElement>, "ch
   labels?: Partial<TypingIndicatorLabels>
   showLabel?: boolean
   size?: "sm" | "md"
+interface UpdatePromptLabels
+  blockedHint: string
+  later: string
+  message: string
+  offlineReady: string
+  update: string
+  updating: string
+interface UpdatePromptProps
+  "data-testid"?: string
+  animated?: boolean
+  canReload?: () => boolean
+  className?: string
+  dismissible?: boolean
+  labels?: Partial<UpdatePromptLabels>
+  needRefresh: boolean
+  offlineReady?: boolean
+  onOfflineReadyShown?: () => void
+  onUpdate: () => void | Promise<void>
+  safeArea?: boolean
+  snoozeMs?: number
+  tone?: BannerTone
 interface UseClipboardOptions
   timeout?: number
 interface UseClipboardResult
@@ -2174,6 +2241,17 @@ interface UseHotkeysOptions
   chordTimeoutMs?: number
   enabled?: boolean
   preventDefault?: boolean
+interface UseInstallPromptOptions
+  platform?: InstallPlatform
+  snoozeDays?: number
+  storageKey?: string
+interface UseInstallPromptResult
+  canInstall: boolean
+  dismiss: () => void
+  dismissed: boolean
+  installed: boolean
+  platform: InstallPlatform
+  promptInstall: () => Promise<InstallOutcome>
 interface UseLocalStorageStateOptions<T>
   deserialize?: (raw: string) => T
   serialize?: (value: T) => string
@@ -2186,6 +2264,20 @@ interface UseLongPressOptions
   threshold?: number
 interface UseScrollOverflowResult<T extends HTMLElement> extends ScrollOverflow
   ref: RefCallback<T>
+interface UseServiceWorkerUpdateOptions
+  canReload?: () => boolean
+  needRefresh: boolean
+  offlineReady?: boolean
+  onUpdate: () => void | Promise<void>
+  reload?: () => void
+  reloadTimeoutMs?: number
+  snoozeMs?: number
+interface UseServiceWorkerUpdateResult
+  acknowledgeOfflineReady: () => void
+  offlineReady: boolean
+  snooze: () => void
+  status: ServiceWorkerUpdateStatus
+  update: () => void
 interface UseSpeechRecognitionOptions
   engine?: SpeechRecognitionEngineFactory
   lang?: string
@@ -2213,7 +2305,7 @@ interface VoiceTranscriptProps extends Omit<HTMLAttributes<HTMLDivElement>, "onC
   value: string
 ```
 
-## Types (52)
+## Types (55)
 
 ```text
 type AccordionContentProps = ComponentPropsWithoutRef<"div"> & {…}
@@ -2248,6 +2340,8 @@ type DateInputError = "invalid" | "range" | "disabled"
 type ErrorInput = ErrorInfo | Error | string | null | undefined | false
 type FacetFilterValue = Record<string, string[]>
 type InputProps = InputHTMLAttributes<HTMLInputElement>
+type InstallOutcome = "accepted" | "dismissed" | "unavailable"
+type InstallPlatform = "native" | "ios" | "none"
 type MailDirection = "inbound" | "outbound" | "note"
 type MailEventTone = "neutral" | "success" | "warning" | "danger"
 type MailMessageStatus = "sent" | "sending" | "failed" | "bounced" | "draft"
@@ -2267,6 +2361,7 @@ type RelativeTimeStyle = "long" | "short" | "narrow"
 type ResponsivePanelSize = keyof typeof desktopSizeClasses
 type RetryButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "onClick" | "type" | "children"> & {…}
   "data-testid"?: string
+type ServiceWorkerUpdateStatus = "idle" | "available" | "updating" | "blocked"
 type SetLocalStorageState<T> = (value: T | ((previous: T) => T)) => void
 type SidebarNavProps = Omit<ComponentPropsWithoutRef<"div">, "className" | "children" | "ref"> & {…}
   children: ReactNode
