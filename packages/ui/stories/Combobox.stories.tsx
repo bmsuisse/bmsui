@@ -37,3 +37,23 @@ export const Multiple: Story = {
     );
   },
 };
+
+export const LongLabelsFitContent: Story = {
+  render: () => {
+    const [value, setValue] = useState<string | null>(null);
+    return (
+      <div className="w-64 max-w-full">
+        <Combobox
+          fitContent
+          options={[
+            { value: "1", label: "100234 Muster Holzbau und Innenausbau Aktiengesellschaft Zweigniederlassung Zuerich-Oerlikon" },
+            { value: "2", label: "100235 Beispiel AG" },
+          ]}
+          value={value}
+          onChange={setValue}
+          placeholder="Template customer"
+        />
+      </div>
+    );
+  },
+};

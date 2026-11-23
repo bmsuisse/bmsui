@@ -556,6 +556,12 @@ this package's own `Popover`/`Input` rather than pulling in `cmdk` — a
 plain substring filter over a manually rendered list is enough for the
 sizes this component is used at.
 
+The trigger carries the full label(s) of the selection as its `title`, so a
+selection cut off by the ellipsis stays readable on hover. For options with
+long labels (an id plus a name, say) set `fitContent`: the popup then grows to
+the widest option, up to `min(40rem, 90vw)`, and wraps a longer label instead
+of truncating it. `columns` (grid mode) already grows to fit its columns.
+
 ### `Sidebar` / `SidebarNav` / `NavGroup` / `NavItem`
 
 The app shell's left navigation panel: fixed-width or drag-resizable
