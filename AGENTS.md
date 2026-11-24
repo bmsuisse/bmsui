@@ -954,6 +954,17 @@ content's own `onEscapeKeyDown` `preventDefault` keeps a layer open, not a
 focused input that already handled the key on its way up.
 `GuidedChoice` is the first component written for Base UI directly.
 
+### One build entry per module (ui 0.33.1)
+
+`tsup.config.ts` builds every source file as an entry (tests and stories
+excluded), not only `src/index.ts`: `dist/index.js` only re-exports, each
+component is a small file, shared code sits in `chunk-*.js`. A bundler can then
+put each component into the chunk of the app page that uses it; with a single
+`index.js` (one module, which no bundler splits) the first page of an app
+loaded every component the app used anywhere (OneDocs: 55 KB gzip off the start
+page). Types stay one `dist/index.d.ts` (`dts.entry`), the public API is only
+`"."`. Keep new modules side-effect free (`sideEffects: false`).
+
 ## `php/bmsui-blade` — Blade components for PHP/Laravel (OneDesk)
 
 Composer package `bmsuisse/bmsui-blade`: `<x-bmsui::chip|banner|stat-strip|stat|timeline|timeline-item|copy-button|confirm|ai-button|brand>`
