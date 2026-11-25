@@ -34,3 +34,34 @@ export const WithDisabledTab: Story = {
     </Tabs>
   ),
 };
+
+export const Underline: Story = {
+  render: () => {
+    const [tab, setTab] = useState("details");
+    return (
+      <Tabs value={tab} onValueChange={setTab} variant="underline" className="w-[32rem] max-w-full">
+        <TabsList aria-label="Offer sections">
+          <TabsTrigger value="details">Details</TabsTrigger>
+          <TabsTrigger value="sub" count={4}>Sub-offers</TabsTrigger>
+          <TabsTrigger value="addresses" count={12}>Addresses</TabsTrigger>
+          <TabsTrigger value="lines" disabled>Lines</TabsTrigger>
+        </TabsList>
+        <TabsContent value="details" className="pt-4 text-sm text-muted-foreground">Details content.</TabsContent>
+        <TabsContent value="sub" className="pt-4 text-sm text-muted-foreground">Four sub-offers.</TabsContent>
+        <TabsContent value="addresses" className="pt-4 text-sm text-muted-foreground">Twelve addresses.</TabsContent>
+      </Tabs>
+    );
+  },
+};
+/** Too many tabs for the width: the list scrolls sideways instead of wrapping. */
+export const UnderlineScrolls: Story = {
+  render: () => (
+    <Tabs defaultValue="overview" variant="underline" className="w-72 max-w-full">
+      <TabsList aria-label="Customer sections">
+        {["Overview", "Portfolio", "Customers", "Map", "Activity", "One on one"].map((label) => (
+          <TabsTrigger key={label} value={label.toLowerCase().replace(" ", "-")}>{label}</TabsTrigger>
+        ))}
+      </TabsList>
+    </Tabs>
+  ),
+};

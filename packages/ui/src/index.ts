@@ -47,6 +47,7 @@ export { Skeleton } from "./primitives/skeleton";
 export { Checkbox } from "./primitives/checkbox";
 export type { SwitchProps } from "./primitives/switch";
 export { Switch } from "./primitives/switch";
+export type { TabsVariant } from "./primitives/tabs";
 export { Tabs, TabsContent, TabsList, TabsTrigger } from "./primitives/tabs";
 export { Separator } from "./primitives/separator";
 export { ScrollArea, ScrollBar } from "./primitives/scroll-area";

@@ -41,9 +41,10 @@ export interface PageHeaderProps extends Omit<HTMLAttributes<HTMLElement>, "titl
   titleAs?: ElementType;
   labels?: Partial<PageHeaderLabels>;
   /**
-   * When `tabs` is a Radix `TabsList`, one shared pill slides to the active tab
+   * When `tabs` is a `TabsList` (pill variant), one shared pill slides to the active tab
    * (150ms ease-out, instant under reduced motion) instead of the active
-   * trigger's own background jumping. @default true
+   * trigger's own background jumping. The `underline` variant has no pill and is left alone;
+   * it draws its own hairline, so leave `divider` off with it. @default true
    */
   animated?: boolean;
 }
@@ -160,6 +161,8 @@ export function PageHeader({
             "relative -mx-1 min-w-0 overflow-x-auto px-1 pb-px",
             // While the sliding pill is placed, triggers sit above it and drop their own active surface.
             "[&_[role=tab]]:relative [&[data-indicator]_[role=tab][data-state=active]]:bg-transparent [&[data-indicator]_[role=tab][data-state=active]]:shadow-none",
+            // The underline variant marks its active tab itself: no sliding pill behind it.
+            "[&:has([role=tablist][data-variant=underline])>span[aria-hidden=true]]:hidden",
           )}
         >
           <span

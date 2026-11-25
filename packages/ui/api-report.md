@@ -225,7 +225,7 @@ function TableToolbar(props: TableToolbarProps): ReactElement
 const Tabs: react.ForwardRefExoticComponent<TabsProps & react.RefAttributes<HTMLDivElement>>
 const TabsContent: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<react.HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "ref"> & { value: string; forceMount?: boolean; asChild?: boolean } & react.RefAttributes<HTMLDivElement>>
 const TabsList: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<react.HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "ref"> & { loop?: boolean; asChild?: boolean } & react.RefAttributes<HTMLDivElement>>
-const TabsTrigger: react.ForwardRefExoticComponent<Omit<Omit<react.DetailedHTMLProps<react.ButtonHTMLAttributes<HTMLButtonElement>, HTMLButtonElement>, "ref">, "value"> & { value: string; asChild?: boolean } & react.RefAttributes<HTMLButtonElement>>
+const TabsTrigger: react.ForwardRefExoticComponent<Omit<Omit<react.DetailedHTMLProps<react.ButtonHTMLAttributes<HTMLButtonElement>, HTMLButtonElement>, "ref">, "value"> & { value: string; count?: number; asChild?: boolean } & react.RefAttributes<HTMLButtonElement>>
 function TagCombobox(props: TagComboboxProps): ReactElement
 const Textarea: react.ForwardRefExoticComponent<TextareaProps & react.RefAttributes<HTMLTextAreaElement>>
 const Thumbnail: (props: ThumbnailProps) => ReactElement
@@ -2305,7 +2305,7 @@ interface VoiceTranscriptProps extends Omit<HTMLAttributes<HTMLDivElement>, "onC
   value: string
 ```
 
-## Types (55)
+## Types (56)
 
 ```text
 type AccordionContentProps = ComponentPropsWithoutRef<"div"> & {…}
@@ -2371,6 +2371,7 @@ type SplitPaneLimit = number | `${number}px`
 type StatStripTone = "default" | "success" | "warning" | "danger"
 type StatusTone = "success" | "warning" | "error" | "info" | "neutral"
 type TableSearchProps = SearchBarProps
+type TabsVariant = "pill" | "underline"
 type TimeInputError = "invalid" | "range"
 type TimelineSize = "sm" | "md"
 type TimelineStatus = "done" | "active" | "pending" | "error"
