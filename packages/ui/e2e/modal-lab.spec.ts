@@ -51,7 +51,17 @@ async function expectClean(page: Page): Promise<void> {
 
   const counter = page.getByTestId("page-counter");
   const before = Number((await counter.innerText()).replace(/\D/g, ""));
-  await counter.click({ timeout: 3000 });
+  try {
+    await counter.click({ timeout: 3000 });
+  } catch (error) {
+    const info = await page.evaluate(() => {
+      const el = document.querySelector('[data-testid="page-counter"]');
+      const r = el?.getBoundingClientRect();
+      const hit = r ? document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2) : null;
+      return JSON.stringify({ rect: r && [r.x, r.y, r.width, r.height], hit: hit?.outerHTML.slice(0, 120), vw: innerWidth, vh: innerHeight, scrollY });
+    });
+    throw new Error(`page counter not clickable: ${info}`, { cause: error });
+  }
   await expect(counter).toHaveText(`Page button: ${before + 1}`);
 
   await page.evaluate(() => window.scrollTo(0, 300));

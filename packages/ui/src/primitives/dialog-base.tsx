@@ -1,7 +1,7 @@
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import type { ComponentPropsWithoutRef, HTMLAttributes, ReactElement, ReactNode, RefObject } from "react";
-import { createContext, forwardRef, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createContext, forwardRef, useCallback, useContext, useEffect, useLayoutEffect, useRef } from "react";
 import {
   DismissProvider,
   useAutoFocus,
@@ -31,9 +31,8 @@ export const useDialog = () => {
  */
 const STUCK_CLOSE_MS = 1200;
 
-/** Lets popups tell their `Dialog` they are mounted (never counted when a portal deliberately keeps them). */
+/** Lets popups tell their `Dialog` they are mounted. */
 const PopupRegistry = createContext<(() => () => void) | null>(null);
-const KeepMountedContext = createContext(false);
 
 export function Dialog({
   open: openProp,
@@ -50,7 +49,7 @@ export function Dialog({
 }) {
   const [open, setOpen] = useControllable(openProp, defaultOpen, onOpenChange);
   const dismiss = useDismissBridge((next: boolean) => setOpen(next));
-  const [rebuilds, setRebuilds] = useState(0);
+  const actionsRef = useRef<DialogPrimitive.Root.Actions | null>(null);
   const mountedPopups = useRef(0);
   const registerPopup = useCallback(() => {
     mountedPopups.current += 1;
@@ -61,13 +60,14 @@ export function Dialog({
   useEffect(() => {
     if (open) return undefined;
     const timer = setTimeout(() => {
-      // Still mounted long after closing: drop it by rebuilding the root (closed, so nothing renders).
-      if (mountedPopups.current > 0) setRebuilds((n) => n + 1);
+      // Still mounted long after closing: end the closing phase ourselves. Only Base UI's own state is
+      // touched, so anything rendered next to the content keeps its state.
+      if (mountedPopups.current > 0) actionsRef.current?.unmount();
     }, STUCK_CLOSE_MS);
     return () => clearTimeout(timer);
   }, [open]);
   return (
-    <DialogPrimitive.Root key={rebuilds} open={open} onOpenChange={dismiss.onOpenChange} modal={modal}>
+    <DialogPrimitive.Root actionsRef={actionsRef} open={open} onOpenChange={dismiss.onOpenChange} modal={modal}>
       <DismissProvider value={dismiss.ref}>
         <PopupRegistry.Provider value={registerPopup}>
           <DialogContext.Provider value={{ open, modal }}>{children}</DialogContext.Provider>
@@ -102,9 +102,7 @@ export const DialogPortal = ({
   forceMount,
   ...props
 }: Omit<ComponentPropsWithoutRef<typeof DialogPrimitive.Portal>, "keepMounted"> & { forceMount?: boolean }) => (
-  <KeepMountedContext.Provider value={Boolean(forceMount)}>
-    <DialogPrimitive.Portal keepMounted={forceMount} {...props} />
-  </KeepMountedContext.Provider>
+  <DialogPrimitive.Portal keepMounted={forceMount} {...props} />
 );
 
 export const DialogOverlay = forwardRef<HTMLDivElement, ComponentPropsWithoutRef<"div">>(
@@ -138,8 +136,7 @@ export const DialogPopup = forwardRef<HTMLDivElement, Omit<DialogPopupProps, "fo
   ) => {
     const { open } = useDialog();
     const registerPopup = useContext(PopupRegistry);
-    const keepMounted = useContext(KeepMountedContext);
-    useLayoutEffect(() => (keepMounted ? undefined : registerPopup?.()), [keepMounted, registerPopup]);
+    useLayoutEffect(() => registerPopup?.(), [registerPopup]);
     const autoFocus = useAutoFocus({ onOpenAutoFocus, onCloseAutoFocus }, ref);
     useDismissCallbacks({ onEscapeKeyDown, onPointerDownOutside, onFocusOutside, onInteractOutside });
     return (

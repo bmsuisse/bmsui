@@ -140,7 +140,10 @@ const SheetPopup = forwardRef<HTMLDivElement, Omit<SheetContentProps, "forceMoun
     // both clipped while the keyboard is up and restored when it closes.
     const style: CSSProperties = {
       ...styleProp,
-      ...(canResize && dragHeight != null ? { height: dragHeight, maxHeight: dragHeight } : null),
+      ...(canResize && dragHeight != null
+        ? // Never taller than the screen, even if the screen shrank after the drag (rotation).
+          { height: `min(${dragHeight}px, 100dvh)`, maxHeight: `min(${dragHeight}px, 100dvh)` }
+        : null),
       ...(keyboard.offset || keyboard.visibleHeight
         ? { bottom: `${keyboard.offset}px`, maxHeight: `${keyboard.visibleHeight}px` }
         : null),

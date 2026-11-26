@@ -61,7 +61,7 @@ export const DialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
         keyboardAware={keyboardAware}
         // The built-in X is centred on the title row below the drag handle (header pt-3 + 28px title line).
         className={cn(
-          "gap-0 rounded-t-2xl p-0 max-h-[92dvh] [&>[data-slot=sheet-close]]:top-[30px] max-md:[&>[data-slot=sheet-close]]:top-[26px]",
+          "gap-0 rounded-t-2xl p-0 max-h-[92dvh] [--dialog-divider:color-mix(in_oklab,var(--color-foreground)_12%,transparent)] dark:[--dialog-divider:var(--color-border)] [&>[data-slot=sheet-close]]:top-[30px] max-md:[&>[data-slot=sheet-close]]:top-[26px]",
           className,
           "max-w-none",
         )}
