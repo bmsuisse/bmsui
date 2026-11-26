@@ -31,7 +31,7 @@ export interface ModalProps {
    * `ModalBody` or `ModalFooter` the children are laid out as given (compose your own body/footer).
    */
   children: ReactNode;
-  /** Optional footer content (typically action buttons), rendered in `DialogFooter`. */
+  /** Optional footer content (typically action buttons), rendered in `DialogFooter`. Ignored when `children` are composed from `ModalBody`/`ModalFooter`. */
   footer?: ReactNode;
   /** Extra classes applied to the centred dialog, e.g. to override the default width. */
   className?: string;
@@ -109,11 +109,14 @@ export const Modal = ({
         </div>
       </DialogHeader>
       {isComposed(children) ? (
+        // Composed: the caller lays out body and footer; the `footer` prop is ignored.
         children
       ) : (
-        <DialogBody>{children}</DialogBody>
+        <>
+          <DialogBody>{children}</DialogBody>
+          {footer ? <DialogFooter>{footer}</DialogFooter> : null}
+        </>
       )}
-      {footer ? <DialogFooter>{footer}</DialogFooter> : null}
     </DialogContent>
   </Dialog>
 );

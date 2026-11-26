@@ -73,7 +73,8 @@ export function useTabsOverflow({
   }, [enabled, key, wrapRef, listRef, moreRef]);
 
   return useMemo(() => {
-    if (!enabled || rowWidth === 0 || values.some((v) => widths[v] === undefined)) return { inline: null, hasOverflow: false };
+    // All-zero widths: laid out inside something hidden (`display: none`); wait for a real measurement.
+    if (!enabled || rowWidth === 0 || values.some((v) => !widths[v])) return { inline: null, hasOverflow: false };
     const total = values.reduce((sum, v) => sum + (widths[v] ?? 0), 0) + gap * Math.max(0, values.length - 1);
     if (total <= rowWidth) return { inline: new Set(values), hasOverflow: false };
 
