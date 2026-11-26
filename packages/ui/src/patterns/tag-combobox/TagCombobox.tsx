@@ -88,6 +88,8 @@ export interface TagComboboxProps {
  * built on the same `Popover`/keyboard-nav shape rather than forking it,
  * so both patterns share one mental model.
  */
+const FOCUS_GUARD = "[data-floating-ui-focus-guard],[data-base-ui-focus-guard],[data-radix-focus-guard]";
+
 export function TagCombobox({
   options,
   value,
@@ -200,6 +202,28 @@ export function TagCombobox({
 
   const hasError = toErrorInfo(error) !== undefined;
 
+  const TABBABLE = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+
+  /** Moves focus to the first tab stop after the field, skipping the popup, like Tab would with the list closed. */
+  function focusAfterField(): void {
+    const field = fieldRef.current;
+    if (!field) return;
+    const scope = field.closest('[role="dialog"]') ?? document.body;
+    const stops = Array.from(scope.querySelectorAll<HTMLElement>(TABBABLE)).filter(
+      (el) => !contentRef.current?.contains(el) && !el.matches(FOCUS_GUARD) && el.tabIndex >= 0,
+    );
+    const lastInField = stops.filter((el) => field.contains(el)).at(-1);
+    const index = lastInField ? stops.indexOf(lastInField) : -1;
+    (stops[index + 1] ?? stops[0])?.focus();
+  }
+
+  // Focus moving to something that is neither the field, the list, nor a floating popup's focus guard.
+  function leftTheCombobox(next: EventTarget | null): boolean {
+    if (!(next instanceof Node)) return false;
+    if (next instanceof Element && next.matches(FOCUS_GUARD)) return false;
+    return !fieldRef.current?.contains(next) && !contentRef.current?.contains(next);
+  }
+
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>): void {
     if (event.key === "ArrowDown") {
       event.preventDefault();
@@ -214,6 +238,7 @@ export function TagCombobox({
       // The list is replaced by the error line, so the active option is hidden.
       if (option && !hasError) toggleOption(option);
     } else if (event.key === "Escape") {
+      if (event.nativeEvent.isComposing) return; // cancels an IME composition, not the list
       // The first Escape closes the option list; the dialog around it stays. Without the stop, the dialog
       // hears the same key right after the list closed (nothing is "above" it anymore) and closes too,
       // taking the user's input with it. With the list already closed, Escape goes on to the dialog.
@@ -223,8 +248,10 @@ export function TagCombobox({
       }
     } else if (event.key === "Tab") {
       // Close before the browser moves focus: with the list open, the next tab stop is the floating
-      // popup's focus guard, and removing it afterwards would drop focus to <body>.
-      setOpen(false);
+      // popup's focus guard, and removing it afterwards would drop focus to <body>. Options are reached with
+      // the arrow keys, but group toggles have no other keyboard path, so with those in the list Tab flows
+      // into it instead and the list closes when focus leaves it.
+      if (!contentRef.current?.querySelector("[data-group-header] input")) setOpen(false);
     } else if (event.key === "Backspace" && search === "") {
       // Standard tag-input convention: Backspace on an empty search field
       // removes the most recently added chip instead of doing nothing.
@@ -316,11 +343,7 @@ export function TagCombobox({
             onBlur={(event) => {
               // Focus moved on (Tab, code): close. A `null` target is a click on something that cannot take
               // focus (Safari does not focus buttons), which an outside press or an option click handles.
-              const next = event.relatedTarget;
-              const isGuard = next instanceof Element && next.matches("[data-floating-ui-focus-guard],[data-base-ui-focus-guard]");
-              if (next instanceof Node && !isGuard && !fieldRef.current?.contains(next) && !contentRef.current?.contains(next)) {
-                setOpen(false);
-              }
+              if (leftTheCombobox(event.relatedTarget)) setOpen(false);
             }}
             onChange={(event) => updateSearch(event.target.value)}
             onKeyDown={handleKeyDown}
@@ -329,6 +352,18 @@ export function TagCombobox({
       </PopoverAnchor>
       <PopoverContent
         ref={contentRef}
+        onBlur={(event) => {
+          // Tabbing out of the list (group toggles are tab stops) closes it like leaving the input does.
+          const next = event.relatedTarget;
+          if (next instanceof Element && next.matches(FOCUS_GUARD) && contentRef.current) {
+            // Ran off an end of the list onto the popup's focus guard: take focus ourselves, because the guard
+            // would otherwise send it to <body> and out of the dialog when the list closes.
+            const leading = Boolean(next.compareDocumentPosition(contentRef.current) & Node.DOCUMENT_POSITION_FOLLOWING);
+            if (leading) inputRef.current?.focus();
+            else focusAfterField();
+            setOpen(false);
+          } else if (leftTheCombobox(next)) setOpen(false);
+        }}
         align="start"
         container={container}
         className={cn(

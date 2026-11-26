@@ -208,8 +208,10 @@ export const EmailAddressInput = forwardRef<HTMLInputElement, EmailAddressInputP
         setActive((i) => (i + step + matches.length) % matches.length);
         return;
       }
-      if (event.key === "Escape" && listOpen) {
+      if (event.key === "Escape" && listOpen && !event.nativeEvent.isComposing) {
+        // Closes the suggestions only; a dialog around the field must keep the address list being edited.
         event.preventDefault();
+        event.stopPropagation();
         setText("");
         setActive(-1);
         return;

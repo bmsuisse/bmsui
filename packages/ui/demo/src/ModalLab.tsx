@@ -2,6 +2,8 @@ import { useEffect, useRef, useState, type ReactElement } from "react";
 import {
   Button,
   ConfirmDialog,
+  DateRangePicker,
+  EmailAddressInput,
   FormModal,
   Input,
   Label,
@@ -32,6 +34,7 @@ type Scenario =
   | "confirm"
   | "formmodal"
   | "tags"
+  | "pickers"
   | "panel";
 
 const filler = (n: number): string[] => Array.from({ length: n }, (_, i) => `Row ${i + 1} of the scrolling body`);
@@ -47,6 +50,8 @@ export function ModalLab(): ReactElement {
   const [log, setLog] = useState<string[]>([]);
   const [tab, setTab] = useState("one");
   const [tags, setTags] = useState<string[]>([]);
+  const [grouped, setGrouped] = useState<string[]>([]);
+  const [range, setRange] = useState({ from: "2026-11-02", to: "2026-11-27" });
   const [chip, setChip] = useState("c0");
   const [menuTab, setMenuTab] = useState("m0");
   const [overflowMode, setOverflowMode] = useState<"menu" | "scroll">("menu");
@@ -102,6 +107,7 @@ export function ModalLab(): ReactElement {
             ["confirm", "ConfirmDialog"],
             ["formmodal", "FormModal"],
             ["tags", "TagCombobox inside"],
+            ["pickers", "Pickers inside"],
             ["panel", "ResponsivePanel"],
           ] as const
         ).map(([name, label]) => (
@@ -354,6 +360,28 @@ export function ModalLab(): ReactElement {
             data-testid="tags-field"
           />
           <Input aria-label="Next field" data-testid="tags-next" />
+          <TagCombobox
+            options={[
+              { value: "a1", label: "Alice", group: "Team A" },
+              { value: "a2", label: "Bob", group: "Team A" },
+              { value: "b1", label: "Carol", group: "Team B" },
+            ]}
+            value={grouped}
+            onChange={setGrouped}
+            data-testid="tags-grouped-field"
+          />
+        </div>
+      </Modal>
+
+      <Modal open={open === "pickers"} onOpenChange={onOpenChange("pickers")} title="Pickers inside a modal">
+        <div className="flex flex-col gap-3">
+          <DateRangePicker value={range} onValueChange={setRange} data-testid="range-picker" />
+          <EmailAddressInput
+            aria-label="To"
+            data-testid="email-field"
+            suggestions={[{ email: "anna@example.ch", name: "Anna Keller" }]}
+          />
+          <Input aria-label="After" data-testid="pickers-next" />
         </div>
       </Modal>
 

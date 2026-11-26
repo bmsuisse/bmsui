@@ -457,6 +457,43 @@ test.describe("TagCombobox inside a modal", () => {
     await expectClean(page);
   });
 
+  test("grouped options: Tab flows into the group toggles, then out closes the list", async ({ page }) => {
+    await page.getByTestId("open-tags").click();
+    await expect(topDialog(page)).toBeVisible();
+    await settle(page);
+    await page.getByTestId("tags-grouped-field").locator("input[type=text], input:not([type])").first().click();
+    await expect(page.getByRole("option", { name: "Alice" })).toBeVisible();
+    await page.keyboard.press("Tab");
+    await expect(page.getByRole("checkbox", { name: /Team A/ })).toBeFocused();
+    await expect(page.getByRole("option", { name: "Alice" })).toBeVisible();
+    // Keep tabbing: through the options and out of the list, which closes.
+    for (let i = 0; i < 10 && (await page.getByRole("option", { name: "Alice" }).isVisible()); i++) {
+      await page.keyboard.press("Tab");
+    }
+    await expect(page.getByRole("option", { name: "Alice" })).toBeHidden();
+    // Focus stays inside the modal (not <body>, not the page behind it).
+    expect(await page.evaluate(() => document.activeElement?.closest('[role="dialog"]') !== null)).toBe(true);
+    await expect(topDialog(page)).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expectClean(page);
+  });
+
+  test("grouped options: Shift+Tab out of the first group toggle returns to the input", async ({ page }) => {
+    await page.getByTestId("open-tags").click();
+    await expect(topDialog(page)).toBeVisible();
+    await settle(page);
+    const input = page.getByTestId("tags-grouped-field").locator("input").first();
+    await input.click();
+    await expect(page.getByRole("option", { name: "Alice" })).toBeVisible();
+    await page.keyboard.press("Tab");
+    await expect(page.getByRole("checkbox", { name: /Team A/ })).toBeFocused();
+    await page.keyboard.press("Shift+Tab");
+    await expect(input).toBeFocused();
+    await page.keyboard.press("Escape");
+    await page.keyboard.press("Escape");
+    await expectClean(page);
+  });
+
   test("picking options keeps the list open and the typed values in place", async ({ page }) => {
     const input = await openTags(page);
     await page.getByRole("option", { name: "Switzerland" }).click();
@@ -467,6 +504,37 @@ test.describe("TagCombobox inside a modal", () => {
     await expect(topDialog(page)).toBeVisible();
     await expect(topDialog(page).getByText("Switzerland")).toBeVisible();
     await expect(topDialog(page).getByText("Germany")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expectClean(page);
+  });
+});
+
+test.describe("Popup components inside a modal: the first Escape closes only the popup", () => {
+  async function openPickers(page: Page): Promise<void> {
+    await page.getByTestId("open-pickers").click();
+    await expect(topDialog(page)).toBeVisible();
+    await settle(page);
+  }
+
+  test("DateRangePicker calendar", async ({ page }) => {
+    test.skip(await isPhone(page), "phones use the native date inputs, there is no popup");
+    await openPickers(page);
+    await page.getByRole("button", { name: "Choose dates" }).click();
+    await expect(page.getByRole("grid")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("grid")).toBeHidden();
+    await expect(topDialog(page)).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expectClean(page);
+  });
+
+  test("EmailAddressInput suggestions", async ({ page }) => {
+    await openPickers(page);
+    await page.getByRole("combobox", { name: "Add address…" }).fill("anna");
+    await expect(page.getByRole("option", { name: /anna@example.ch/ })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("option", { name: /anna@example.ch/ })).toBeHidden();
+    await expect(topDialog(page)).toBeVisible();
     await page.keyboard.press("Escape");
     await expectClean(page);
   });
