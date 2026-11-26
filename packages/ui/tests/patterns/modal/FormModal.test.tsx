@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { mockViewport } from "../../viewport";
 import { FormModal } from "../../../src/patterns/modal/FormModal";
 
 interface Deferred<T> {
@@ -17,6 +18,9 @@ function createDeferred<T>(): Deferred<T> {
 }
 
 describe("FormModal", () => {
+  beforeEach(() => mockViewport("desktop"));
+  afterEach(() => vi.restoreAllMocks());
+
   it("renders title, description, and its form fields", () => {
     render(
       <FormModal

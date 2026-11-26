@@ -33,7 +33,7 @@ repo's `AGENTS.md`.
 | `Select`, `SelectContent`, `SelectGroup`, `SelectItem`, `SelectTrigger`, `SelectValue` | Short fixed option list without search. With search use `Combobox`. |
 | `Card`, `CardHeader`, `CardTitle`, `CardDescription`, `CardContent`, `CardFooter` | Bordered content block. |
 | `Badge`, `badgeVariants` | Small label. For statuses use `StatusBadge`. |
-| `Dialog`, `DialogTrigger`, `DialogContent`, `DialogHeader`, `DialogTitle`, `DialogDescription`, `DialogBody`, `DialogFooter` | Low-level dialog. Usually use `Modal` / `FormModal` / `ConfirmDialog` / `ResponsivePanel` instead. |
+| `Dialog`, `DialogTrigger`, `DialogContent`, `DialogHeader`, `DialogTitle`, `DialogDescription`, `DialogBody`, `DialogFooter` | Low-level dialog; `DialogContent` is already responsive (bottom sheet below `lg`, `alwaysCentered` opts out). Usually use `Modal` / `FormModal` / `ConfirmDialog` instead. |
 | `Sheet`, `SheetTrigger`, `SheetContent`, `SheetHeader`, `SheetTitle`, `SheetDescription`, `SheetBody`, `SheetFooter`, `SheetClose`, `SheetPortal`, `sheetVariants` | Side or bottom drawer. |
 | `Popover`, `PopoverTrigger`, `PopoverContent`, `PopoverAnchor` | Floating panel anchored to a trigger. |
 | `Tooltip`, `TooltipTrigger`, `TooltipContent`, `TooltipProvider` | Hover/focus hint text. |
@@ -41,7 +41,7 @@ repo's `AGENTS.md`.
 | `Collapsible`, `CollapsibleTrigger`, `CollapsibleContent` | Bare show/hide region. For a titled foldable section use `CollapsibleSection`. |
 | `ContextMenu`, `ContextMenuTrigger`, `ContextMenuContent`, `ContextMenuItem`, `ContextMenuCheckboxItem`, `ContextMenuRadioGroup`, `ContextMenuRadioItem`, `ContextMenuLabel`, `ContextMenuSeparator`, `ContextMenuShortcut`, `ContextMenuGroup`, `ContextMenuPortal`, `ContextMenuSub`, `ContextMenuSubTrigger`, `ContextMenuSubContent` | Right-click / long-press menu on rows and cards, same look as `DropdownMenu` (`danger` item too). Always also offer the actions through a visible "⋯" `DropdownMenu`. |
 | `DropdownMenu`, `DropdownMenuTrigger`, `DropdownMenuContent`, `DropdownMenuItem`, `DropdownMenuCheckboxItem`, `DropdownMenuRadioGroup`, `DropdownMenuRadioItem`, `DropdownMenuLabel`, `DropdownMenuSeparator`, `DropdownMenuShortcut`, `DropdownMenuGroup`, `DropdownMenuPortal`, `DropdownMenuSub`, `DropdownMenuSubTrigger`, `DropdownMenuSubContent` | Action menus ("⋯" menus, row actions). |
-| `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent` | Switching between views of one page. `variant="pill"` (default) is a segmented control for a few short views in a card; `variant="underline"` is the tab strip for the sections of a page, sheet or modal (hairline, primary underline, scrolls sideways when it does not fit). `TabsTrigger count={n}` adds the small count badge. |
+| `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent` | Switching between views of one page. `variant="pill"` (default) is a segmented control for a few short views in a card; `variant="underline"` is the tab strip for the sections of a page, sheet or modal (hairline, primary underline, scrolls sideways when it does not fit). `variant="chips"` is a row of rounded chips (active one inverted) that swipes sideways on a phone and wraps from `md` up: filters and lanes above a list. `TabsTrigger count={n}` adds the small count badge (`countTone="danger"|"warning"` colours it). A row that overflows fades at the edge and keeps the active tab in view. `overflow="menu"` (instead of the default sideways `scroll`) keeps the tabs that fit in the row and moves the rest into a "More" menu, the active tab always staying in the row; bind it to a user setting if you like. Tabs without `TabsContent` work as a plain switch. |
 | `Table`, `TableHeader`, `TableBody`, `TableFooter`, `TableRow`, `TableHead`, `TableCell`, `TableCaption` | Static HTML table. For sorting/filtering/paging data use `@bmsuisse/datagrid`. |
 | `Separator` | Horizontal/vertical rule. |
 | `ScrollArea`, `ScrollBar` | Styled scroll container. |
@@ -51,13 +51,13 @@ repo's `AGENTS.md`.
 
 | Export | Use for |
 | --- | --- |
-| `Modal` | Generic dialog: title, description, body, footer. |
+| `Modal`, `ModalBody`, `ModalFooter` | **The** dialog: centred on desktop, bottom sheet on phones (below `lg`; `alwaysCentered` opts out). Title, description, body, footer, `headerActions`, `onBack`. Pass `ModalBody`/`ModalFooter` as children to lay out your own body and footer. |
 | `ConfirmPopover`, `defaultConfirmPopoverLabels` | In-page confirm next to a risky button (no modal): message, Keep/Confirm, focus on the safe action, async-aware. |
 | `FormModal` | Dialog wrapping a form; does **not** auto-close on submit (server validation). |
 | `ConfirmDialog` | "Are you sure?"; closes itself after a successful confirm. |
 | `QuestionDialog` | Question with several actions + Cancel ("Save changes before closing?"). |
 | `DialogActions` | Buttons in the platform's order (Cancel right on Windows, left elsewhere). |
-| `ResponsivePanel` | Large dialog on desktop, bottom sheet on phones. Prefer over `Modal` for long forms/lists. |
+| `ResponsivePanel` | `Modal` with a `size` scale and desktop drag/resize (`resizable`, `draggable`). Only for panels the user should move or resize; otherwise use `Modal`. |
 
 ## Forms and inputs
 
@@ -200,6 +200,8 @@ repo's `AGENTS.md`.
 | `announce` | Same as `useAnnounce()`'s function, callable outside React (stores, query callbacks). |
 | `Announcer` | Optional in-tree live regions; mount inside a modal so announcements aren't hidden by it. |
 | `useMergedRefs` | One callback ref from several refs (own ref + forwarded ref). |
+| `useKeyboardOffset` | Px gap between the layout viewport and the on-screen keyboard (0 when none): lift a bottom-docked element above it on iOS. `SheetContent keyboardAware` uses it. |
+| `useVisualViewportHeight` | Height of the visual viewport (shrinks while the keyboard is up). |
 | `useFocusTrap` | Keep Tab focus inside a custom overlay/panel and restore it on close. `Dialog`/`Sheet` already trap. |
 | `useLongPress` | Press-and-hold (touch/mouse/pen) with threshold and move-cancel; spread handlers on the element. |
 | `useScrollOverflow` | `{ ref, top, bottom, left, right }` overflow flags for fade edges on a scroll container. |

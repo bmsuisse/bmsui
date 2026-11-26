@@ -138,3 +138,4 @@ e2e/server/bin/
 e2e/server/*.db
 e2e/server/meili_data/
 storybook-static
+packages/*/e2e/report/

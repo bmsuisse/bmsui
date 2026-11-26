@@ -65,3 +65,35 @@ export const UnderlineScrolls: Story = {
     </Tabs>
   ),
 };
+
+export const Chips: Story = {
+  render: () => {
+    const [lane, setLane] = useState("all");
+    return (
+      <Tabs value={lane} onValueChange={setLane} variant="chips" className="w-96 max-w-full">
+        <TabsList aria-label="Lanes">
+          <TabsTrigger value="all" count={24}>All</TabsTrigger>
+          <TabsTrigger value="open" count={9}>Open</TabsTrigger>
+          <TabsTrigger value="overdue" count={3} countTone="danger">Overdue</TabsTrigger>
+          <TabsTrigger value="risks" count={2} countTone="warning">Risks</TabsTrigger>
+          <TabsTrigger value="done">Done</TabsTrigger>
+        </TabsList>
+      </Tabs>
+    );
+  },
+};
+
+export const OverflowMenu: Story = {
+  render: () => {
+    const [tab, setTab] = useState("t0");
+    return (
+      <Tabs value={tab} onValueChange={setTab} variant="underline" overflow="menu" className="w-96 max-w-full">
+        <TabsList aria-label="Sections">
+          {Array.from({ length: 8 }, (_, i) => (
+            <TabsTrigger key={i} value={`t${i}`} count={i === 4 ? 3 : undefined}>Section {i + 1}</TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+    );
+  },
+};

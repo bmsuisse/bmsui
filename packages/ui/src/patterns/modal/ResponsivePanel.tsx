@@ -268,6 +268,8 @@ export const ResponsivePanel = ({
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
+          // `breakpoint` already decided this is the desktop branch; DialogContent must not second-guess it.
+          alwaysCentered
           data-slot="dialog-content"
           onInteractOutside={onInteractOutside}
           style={resizable || draggable ? geometry.style : undefined}
