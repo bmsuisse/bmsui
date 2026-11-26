@@ -208,8 +208,14 @@ export const EmailAddressInput = forwardRef<HTMLInputElement, EmailAddressInputP
         setActive((i) => (i + step + matches.length) % matches.length);
         return;
       }
+      if (event.key === "Escape" && event.nativeEvent.isComposing) {
+        event.stopPropagation(); // cancels an IME composition: the dialog must not close on it
+        return;
+      }
       if (event.key === "Escape" && listOpen) {
+        // Closes the suggestions only; a dialog around the field must keep the address list being edited.
         event.preventDefault();
+        event.stopPropagation();
         setText("");
         setActive(-1);
         return;
