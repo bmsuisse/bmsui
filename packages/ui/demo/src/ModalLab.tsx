@@ -45,6 +45,8 @@ export function ModalLab(): ReactElement {
   const [log, setLog] = useState<string[]>([]);
   const [tab, setTab] = useState("one");
   const [chip, setChip] = useState("c0");
+  const [menuTab, setMenuTab] = useState("m0");
+  const [overflowMode, setOverflowMode] = useState<"menu" | "scroll">("menu");
   const timers = useRef<number[]>([]);
   useEffect(() => () => timers.current.forEach((id) => window.clearTimeout(id)), []);
 
@@ -141,6 +143,24 @@ export function ModalLab(): ReactElement {
       <Button size="sm" variant="outline" data-testid="chips-select-last" onClick={() => setChip("c11")}>
         Select the last chip
       </Button>
+
+      <Button
+        size="sm"
+        variant="outline"
+        data-testid="overflow-toggle"
+        onClick={() => setOverflowMode((m) => (m === "menu" ? "scroll" : "menu"))}
+      >
+        Tabs overflow: {overflowMode}
+      </Button>
+      <Tabs variant="underline" overflow={overflowMode} value={menuTab} onValueChange={setMenuTab}>
+        <TabsList aria-label="Overflow">
+          {Array.from({ length: 9 }, (_, i) => (
+            <TabsTrigger key={i} value={`m${i}`} data-testid={`mtab-m${i}`} count={i === 5 ? 4 : undefined}>
+              Section number {i + 1}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
       <section aria-label="Scrolling page content" className="flex flex-col gap-1 rounded-lg border p-3 text-sm">
         {filler(30).map((row) => (

@@ -82,3 +82,18 @@ export const Chips: Story = {
     );
   },
 };
+
+export const OverflowMenu: Story = {
+  render: () => {
+    const [tab, setTab] = useState("t0");
+    return (
+      <Tabs value={tab} onValueChange={setTab} variant="underline" overflow="menu" className="w-96 max-w-full">
+        <TabsList aria-label="Sections">
+          {Array.from({ length: 8 }, (_, i) => (
+            <TabsTrigger key={i} value={`t${i}`} count={i === 4 ? 3 : undefined}>Section {i + 1}</TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+    );
+  },
+};

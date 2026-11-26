@@ -2316,7 +2316,7 @@ interface VoiceTranscriptProps extends Omit<HTMLAttributes<HTMLDivElement>, "onC
   value: string
 ```
 
-## Types (56)
+## Types (58)
 
 ```text
 type AccordionContentProps = ComponentPropsWithoutRef<"div"> & {…}
@@ -2382,6 +2382,8 @@ type SplitPaneLimit = number | `${number}px`
 type StatStripTone = "default" | "success" | "warning" | "danger"
 type StatusTone = "success" | "warning" | "error" | "info" | "neutral"
 type TableSearchProps = SearchBarProps
+type TabsCountTone = "danger" | "warning"
+type TabsOverflow = "scroll" | "menu"
 type TabsVariant = "pill" | "underline" | "chips"
 type TimeInputError = "invalid" | "range"
 type TimelineSize = "sm" | "md"

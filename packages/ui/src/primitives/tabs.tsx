@@ -1,19 +1,41 @@
 import { Tabs as TabsPrimitive } from "@base-ui/react/tabs";
-import { type ComponentPropsWithoutRef, createContext, forwardRef, useContext, useEffect, useRef } from "react";
+import {
+  Children,
+  type ComponentPropsWithoutRef,
+  type ReactElement,
+  cloneElement,
+  createContext,
+  forwardRef,
+  isValidElement,
+  useContext,
+  useEffect,
+  useRef,
+} from "react";
 import { useMergedRefs } from "../hooks/useMergedRefs";
 import { slot, useControllable } from "../lib/radixCompat";
 import { useScrollFade } from "../lib/scrollFade";
 import { cn } from "../lib/utils";
+import { TabsOverflowMenu, useTabsOverflow } from "./tabs-overflow";
 
 export type TabsVariant = "pill" | "underline" | "chips";
 export type TabsCountTone = "danger" | "warning";
+/** What a row of tabs that does not fit does: `scroll` sideways, or move the rest into a `menu` ("More"). */
+export type TabsOverflow = "scroll" | "menu";
 
 interface TabsContextValue {
   value: string | undefined;
+  setValue: (value: string) => void;
   activationMode: "automatic" | "manual";
   variant: TabsVariant;
+  overflow: TabsOverflow;
 }
-const TabsContext = createContext<TabsContextValue>({ value: undefined, activationMode: "automatic", variant: "pill" });
+const TabsContext = createContext<TabsContextValue>({
+  value: undefined,
+  setValue: () => {},
+  activationMode: "automatic",
+  variant: "pill",
+  overflow: "scroll",
+});
 const tabState = (ctx: TabsContextValue, value: string) => (ctx.value === value ? "active" : "inactive");
 
 export interface TabsProps extends Omit<ComponentPropsWithoutRef<"div">, "defaultValue"> {
@@ -31,6 +53,13 @@ export interface TabsProps extends Omit<ComponentPropsWithoutRef<"div">, "defaul
    * wrapping from `md` up; for filters and lanes ("All / Open / Overdue") above a list.
    */
   variant?: TabsVariant;
+  /**
+   * What `underline` and `chips` rows do when the tabs do not fit. `scroll` (default): the row swipes sideways.
+   * `menu`: as many tabs as fit stay in the row, the rest move into a "More" menu; the active tab always keeps a
+   * place in the row, and the tab that went longest without being used moves out when another is picked from
+   * the menu. `menu` needs `TabsTrigger`s as direct children of `TabsList`. Make it a user setting if you like.
+   */
+  overflow?: TabsOverflow;
   asChild?: boolean;
 }
 
@@ -74,6 +103,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
       orientation = "horizontal",
       activationMode = "automatic",
       variant = "pill",
+      overflow = "scroll",
       asChild,
       children,
       ...props
@@ -82,7 +112,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
   ) => {
     const [value, setValue] = useControllable<string | undefined>(valueProp, defaultValue, onValueChange as (v?: string) => void);
     return (
-      <TabsContext.Provider value={{ value, activationMode, variant }}>
+      <TabsContext.Provider value={{ value, setValue: (next) => setValue(next), activationMode, variant, overflow }}>
         <TabsPrimitive.Root
           ref={ref}
           // Always controlled: Base UI's own fallback would select the first tab where Radix selects none.
@@ -98,20 +128,38 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
 );
 Tabs.displayName = "Tabs";
 
+type TriggerElement = ReactElement<{ value: string; className?: string; count?: number; children?: React.ReactNode }>;
+const isTrigger = (node: unknown): node is TriggerElement =>
+  isValidElement(node) && node.type === TabsTrigger && typeof (node.props as { value?: unknown }).value === "string";
+
 export const TabsList = forwardRef<
   HTMLDivElement,
   ComponentPropsWithoutRef<"div"> & { loop?: boolean; asChild?: boolean }
 >(({ className, loop = true, asChild, children, style, ...props }, forwardedRef) => {
-  const { value, activationMode, variant } = useContext(TabsContext);
+  const { value, setValue, activationMode, variant, overflow } = useContext(TabsContext);
+  const menuMode = overflow === "menu" && variant !== "pill" && !asChild;
+  const wrapRef = useRef<HTMLDivElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
+  const moreRef = useRef<HTMLButtonElement | null>(null);
   const fade = useScrollFade<HTMLDivElement>();
   const ref = useMergedRefs(listRef, fade.ref, forwardedRef);
+
+  const nodes = menuMode ? Children.toArray(children) : [];
+  const triggers = nodes.filter(isTrigger);
+  const layout = useTabsOverflow({
+    enabled: menuMode,
+    values: triggers.map((t) => t.props.value),
+    active: value,
+    wrapRef,
+    listRef,
+    moreRef,
+  });
 
   // Keep the active tab visible in a row that scrolls sideways (a deep link, a programmatic change, a
   // keyboard move). Scrolls the row itself, never `scrollIntoView`, which would also move the page.
   useEffect(() => {
     const list = listRef.current;
-    if (!list || list.scrollWidth <= list.clientWidth + 1) return;
+    if (menuMode || !list || list.scrollWidth <= list.clientWidth + 1) return;
     const active = list.querySelector<HTMLElement>('[data-state="active"]');
     if (!active) return;
     // From where the tab's centre is to where the row's centre is: the same in LTR and RTL (whose
@@ -119,19 +167,81 @@ export const TabsList = forwardRef<
     const tab = active.getBoundingClientRect();
     const row = list.getBoundingClientRect();
     list.scrollBy({ left: tab.left + tab.width / 2 - (row.left + row.width / 2), behavior: "smooth" });
-  }, [value]);
+  }, [value, menuMode]);
+
+  if (!menuMode) {
+    return (
+      <TabsPrimitive.List
+        ref={ref}
+        loopFocus={loop}
+        activateOnFocus={activationMode === "automatic"}
+        data-variant={variant}
+        className={cn(listClass[variant], className)}
+        style={variant === "pill" ? style : { ...fade.style, ...style }}
+        {...props}
+        {...slot(asChild, children)}
+      />
+    );
+  }
+
+  // Tabs that do not fit stay mounted (so they can be measured and Base UI keeps its registry) but are
+  // invisible, out of the way and out of the tab order; the menu offers them instead.
+  const inRow = (node: unknown): boolean => !layout.inline || !isTrigger(node) || layout.inline.has(node.props.value);
+  const rendered = nodes.map((node) =>
+    isTrigger(node) && !inRow(node)
+      ? cloneElement(node as ReactElement<Record<string, unknown>>, {
+          disabled: true,
+          "aria-hidden": true,
+          tabIndex: -1,
+          className: cn(node.props.className, "invisible absolute left-0 top-0 pointer-events-none"),
+        })
+      : node,
+  );
+  const overflowItems = triggers
+    .filter((t) => !inRow(t))
+    .map((t) => ({
+      value: t.props.value,
+      content: (
+        <>
+          {t.props.children}
+          {t.props.count == null ? null : <span className="ml-auto text-xs tabular-nums text-muted-foreground">{t.props.count}</span>}
+        </>
+      ),
+    }));
 
   return (
-    <TabsPrimitive.List
-      ref={ref}
-      loopFocus={loop}
-      activateOnFocus={activationMode === "automatic"}
-      data-variant={variant}
-      className={cn(listClass[variant], className)}
-      style={variant === "pill" ? style : { ...fade.style, ...style }}
-      {...props}
-      {...slot(asChild, children)}
-    />
+    <div
+      ref={wrapRef}
+      data-slot="tabs-overflow-row"
+      className={cn("relative flex w-full min-w-0 items-end", variant === "underline" && "border-b border-border")}
+    >
+      <TabsPrimitive.List
+        ref={ref}
+        loopFocus={loop}
+        activateOnFocus={activationMode === "automatic"}
+        data-variant={variant}
+        className={cn(
+          listClass[variant],
+          "relative min-w-0 flex-1 overflow-hidden border-b-0 md:flex-nowrap md:overflow-hidden",
+          className,
+        )}
+        style={style}
+        {...props}
+      >
+        {rendered}
+      </TabsPrimitive.List>
+      <TabsOverflowMenu
+        items={overflowItems}
+        onSelect={setValue}
+        hidden={!layout.hasOverflow}
+        buttonRef={moreRef}
+        buttonClassName={cn(
+          triggerClass[variant],
+          "group/more ml-1",
+          !layout.hasOverflow && "invisible absolute right-0 top-0 pointer-events-none",
+        )}
+      />
+    </div>
   );
 });
 TabsList.displayName = "TabsList";
@@ -165,6 +275,7 @@ export const TabsTrigger = forwardRef<
       ref={ref}
       value={value}
       data-state={tabState(ctx, value)}
+      data-tab-value={value}
       className={cn("group/tab", triggerClass[ctx.variant], className)}
       {...props}
       {...slot(asChild, content, { button: true })}

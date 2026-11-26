@@ -403,3 +403,25 @@ test("chips: a row that overflows scrolls the selected chip into view", async ({
   await expect(page.getByTestId("chip-c11")).toBeInViewport({ ratio: 0.9, timeout: 3000 });
   if (phone) expect(await list.evaluate((el) => el.scrollLeft)).toBeGreaterThan(0);
 });
+
+test("tabs overflow=menu: the rest sit in a More menu, picking one promotes it into the row", async ({ page }) => {
+  const more = page.getByTestId("tabs-overflow");
+  await expect(more).toBeVisible();
+  await expect(page.getByTestId("mtab-m0")).toBeVisible();
+  // The last tab does not fit: invisible and not reachable by keyboard.
+  await expect(page.getByTestId("mtab-m8")).toBeHidden();
+  const stops = await page.evaluate(() =>
+    Array.from(document.querySelectorAll<HTMLElement>('[data-tab-value^="m"]')).filter((el) => el.getAttribute("aria-hidden") === "true" && el.tabIndex >= 0).length,
+  );
+  expect(stops).toBe(0);
+
+  await more.click();
+  await page.locator('[data-tab-menu-value="m8"]').click();
+  await expect(page.getByTestId("mtab-m8")).toBeVisible();
+  await expect(page.getByTestId("mtab-m8")).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByTestId("mtab-m8")).toBeInViewport({ ratio: 0.9 });
+
+  // The setting: back to a sideways-scrolling row.
+  await page.getByTestId("overflow-toggle").click();
+  await expect(page.getByTestId("tabs-overflow")).toHaveCount(0);
+});
