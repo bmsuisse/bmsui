@@ -1,9 +1,12 @@
 import { Tabs as TabsPrimitive } from "@base-ui/react/tabs";
-import { type ComponentPropsWithoutRef, createContext, forwardRef, useContext } from "react";
+import { type ComponentPropsWithoutRef, createContext, forwardRef, useContext, useEffect, useRef } from "react";
+import { useMergedRefs } from "../hooks/useMergedRefs";
 import { slot, useControllable } from "../lib/radixCompat";
+import { useScrollFade } from "../lib/scrollFade";
 import { cn } from "../lib/utils";
 
-export type TabsVariant = "pill" | "underline";
+export type TabsVariant = "pill" | "underline" | "chips";
+export type TabsCountTone = "danger" | "warning";
 
 interface TabsContextValue {
   value: string | undefined;
@@ -24,6 +27,8 @@ export interface TabsProps extends Omit<ComponentPropsWithoutRef<"div">, "defaul
    * `pill` (default): segmented control, grey track with a raised active tab; for a handful of short
    * views inside a card or panel. `underline`: a hairline under the list and a primary underline on the
    * active tab; for the sections of a page, sheet or modal, scrolls sideways instead of wrapping.
+   * `chips`: separate rounded chips, the active one inverted; one swipeable row (with an edge fade) on a phone,
+   * wrapping from `md` up; for filters and lanes ("All / Open / Overdue") above a list.
    */
   variant?: TabsVariant;
   asChild?: boolean;
@@ -34,6 +39,8 @@ const listClass: Record<TabsVariant, string> = {
   // Scrolls sideways when the tabs do not fit; the scrollbar stays out of the way.
   underline:
     "flex w-full min-w-0 items-end justify-start gap-1 overflow-x-auto border-b border-border text-muted-foreground [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+  chips:
+    "flex w-full min-w-0 items-center justify-start gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex-wrap md:overflow-x-visible",
 };
 
 const triggerClass: Record<TabsVariant, string> = {
@@ -41,6 +48,21 @@ const triggerClass: Record<TabsVariant, string> = {
   // `-mb-px` lets the active underline sit on the list's hairline instead of above it.
   underline:
     "-mb-px inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 border-transparent px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[state=active]:border-primary data-[state=active]:text-foreground max-md:min-h-11",
+  chips:
+    "inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-muted px-3.5 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[state=active]:bg-foreground data-[state=active]:text-background max-md:h-11 md:h-8 md:rounded-lg md:px-3 md:text-xs",
+};
+
+const countClass: Record<TabsVariant, string> = {
+  pill: "rounded-full bg-muted px-1.5 text-[11px] font-normal tabular-nums text-muted-foreground",
+  underline: "rounded-full bg-muted px-1.5 text-[11px] font-normal tabular-nums text-muted-foreground",
+  chips:
+    "min-w-5 rounded-full bg-muted-foreground/20 px-1.5 py-0.5 text-center text-xs font-bold tabular-nums group-data-[state=active]/tab:bg-background/20 group-data-[state=active]/tab:text-background md:min-w-0 md:text-[10px]",
+};
+
+const toneClass: Record<TabsCountTone, string> = {
+  danger: "!bg-destructive/15 !text-destructive group-data-[state=active]/tab:!bg-background/20 group-data-[state=active]/tab:!text-background",
+  warning:
+    "!bg-amber-500/15 !text-amber-700 dark:!text-amber-400 group-data-[state=active]/tab:!bg-background/20 group-data-[state=active]/tab:!text-background",
 };
 
 export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
@@ -79,8 +101,24 @@ Tabs.displayName = "Tabs";
 export const TabsList = forwardRef<
   HTMLDivElement,
   ComponentPropsWithoutRef<"div"> & { loop?: boolean; asChild?: boolean }
->(({ className, loop = true, asChild, children, ...props }, ref) => {
-  const { activationMode, variant } = useContext(TabsContext);
+>(({ className, loop = true, asChild, children, style, ...props }, forwardedRef) => {
+  const { value, activationMode, variant } = useContext(TabsContext);
+  const listRef = useRef<HTMLDivElement | null>(null);
+  const fade = useScrollFade<HTMLDivElement>();
+  const ref = useMergedRefs(listRef, fade.ref, forwardedRef);
+
+  // Keep the active tab visible in a row that scrolls sideways (a deep link, a programmatic change, a
+  // keyboard move). Scrolls the row itself, never `scrollIntoView`, which would also move the page.
+  useEffect(() => {
+    const list = listRef.current;
+    if (!list || list.scrollWidth <= list.clientWidth + 1) return;
+    const active = list.querySelector<HTMLElement>('[data-state="active"]');
+    if (!active) return;
+    const left = active.offsetLeft - list.offsetLeft;
+    const target = left - (list.clientWidth - active.offsetWidth) / 2;
+    list.scrollTo({ left: Math.max(0, target), behavior: "smooth" });
+  }, [value]);
+
   return (
     <TabsPrimitive.List
       ref={ref}
@@ -88,6 +126,7 @@ export const TabsList = forwardRef<
       activateOnFocus={activationMode === "automatic"}
       data-variant={variant}
       className={cn(listClass[variant], className)}
+      style={variant === "pill" ? style : { ...fade.style, ...style }}
       {...props}
       {...slot(asChild, children)}
     />
@@ -101,9 +140,11 @@ export const TabsTrigger = forwardRef<
     value: string;
     /** A small count badge after the label (e.g. the number of items behind the tab). Not with `asChild`. */
     count?: number;
+    /** Colours the count badge: an overdue task or a risk wants a look. */
+    countTone?: TabsCountTone;
     asChild?: boolean;
   }
->(({ className, value, count, asChild, children, ...props }, ref) => {
+>(({ className, value, count, countTone, asChild, children, ...props }, ref) => {
   const ctx = useContext(TabsContext);
   // `asChild` hands the single child element to the primitive as is, so the badge needs the plain button.
   const content =
@@ -112,7 +153,7 @@ export const TabsTrigger = forwardRef<
     ) : (
       <>
         {children}
-        <span data-slot="tab-count" className="rounded-full bg-muted px-1.5 text-[11px] font-normal tabular-nums text-muted-foreground">
+        <span data-slot="tab-count" className={cn(countClass[ctx.variant], countTone && toneClass[countTone])}>
           {count}
         </span>
       </>
@@ -122,7 +163,7 @@ export const TabsTrigger = forwardRef<
       ref={ref}
       value={value}
       data-state={tabState(ctx, value)}
-      className={cn(triggerClass[ctx.variant], className)}
+      className={cn("group/tab", triggerClass[ctx.variant], className)}
       {...props}
       {...slot(asChild, content, { button: true })}
     />

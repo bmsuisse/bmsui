@@ -44,6 +44,7 @@ export function ModalLab(): ReactElement {
   const [count, setCount] = useState(0);
   const [log, setLog] = useState<string[]>([]);
   const [tab, setTab] = useState("one");
+  const [chip, setChip] = useState("c0");
   const timers = useRef<number[]>([]);
   useEffect(() => () => timers.current.forEach((id) => window.clearTimeout(id)), []);
 
@@ -127,6 +128,19 @@ export function ModalLab(): ReactElement {
           Reopen during exit
         </Button>
       </div>
+
+      <Tabs variant="chips" value={chip} onValueChange={setChip}>
+        <TabsList aria-label="Lanes" data-testid="chips-list">
+          {Array.from({ length: 12 }, (_, i) => (
+            <TabsTrigger key={i} value={`c${i}`} data-testid={`chip-c${i}`} count={i % 4 === 0 ? i + 1 : undefined} countTone={i === 4 ? "danger" : undefined}>
+              Lane {i + 1}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+      <Button size="sm" variant="outline" data-testid="chips-select-last" onClick={() => setChip("c11")}>
+        Select the last chip
+      </Button>
 
       <section aria-label="Scrolling page content" className="flex flex-col gap-1 rounded-lg border p-3 text-sm">
         {filler(30).map((row) => (
@@ -224,6 +238,9 @@ export function ModalLab(): ReactElement {
       </Modal>
 
       <Modal open={open === "tabs"} onOpenChange={onOpenChange("tabs")} title="Tabs inside a modal">
+        <Button size="sm" variant="outline" data-testid="tabs-select-last" onClick={() => setTab("seven")} className="mb-2">
+          Select the last tab
+        </Button>
         <Tabs variant="underline" value={tab} onValueChange={setTab}>
           <TabsList aria-label="Sections">
             {["one", "two", "three", "four", "five", "six", "seven"].map((value) => (

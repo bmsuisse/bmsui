@@ -294,3 +294,26 @@ test("phone: the drag handle resizes the sheet", async ({ page }) => {
   await closeViaEscape(page);
   await expectClean(page);
 });
+
+test("tabs: selecting the last tab programmatically scrolls it into view inside the modal", async ({ page }) => {
+  await page.getByTestId("open-tabs").click();
+  await expect(topDialog(page)).toBeVisible();
+  const list = topDialog(page).getByRole("tablist");
+  const overflows = await list.evaluate((el) => el.scrollWidth > el.clientWidth);
+  await page.getByTestId("tabs-select-last").click();
+  await expect(page.getByTestId("tab-seven")).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByTestId("tab-seven")).toBeInViewport({ ratio: 0.9, timeout: 3000 });
+  if (overflows) expect(await list.evaluate((el) => el.scrollLeft)).toBeGreaterThan(0);
+  await closeViaEscape(page);
+  await expectClean(page);
+});
+
+test("chips: a row that overflows scrolls the selected chip into view", async ({ page }) => {
+  const phone = await isPhone(page);
+  const list = page.getByTestId("chips-list");
+  if (phone) expect(await list.evaluate((el) => el.scrollWidth > el.clientWidth)).toBe(true);
+  await page.getByTestId("chips-select-last").click();
+  await expect(page.getByTestId("chip-c11")).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByTestId("chip-c11")).toBeInViewport({ ratio: 0.9, timeout: 3000 });
+  if (phone) expect(await list.evaluate((el) => el.scrollLeft)).toBeGreaterThan(0);
+});
