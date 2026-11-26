@@ -50,7 +50,7 @@ describe("TabsList keeps the active tab in view", () => {
     Object.defineProperty(list, "scrollWidth", { configurable: true, value: 900 });
     Object.defineProperty(list, "clientWidth", { configurable: true, value: 300 });
     const scrollTo = vi.fn();
-    list.scrollTo = scrollTo as unknown as typeof list.scrollTo;
+    list.scrollBy = scrollTo as unknown as typeof list.scrollBy;
     return scrollTo;
   }
 
@@ -80,7 +80,7 @@ describe("TabsList keeps the active tab in view", () => {
     const { rerender } = render(<List value="a" />);
     const list = screen.getByRole("tablist");
     const scrollTo = vi.fn();
-    list.scrollTo = scrollTo as unknown as typeof list.scrollTo;
+    list.scrollBy = scrollTo as unknown as typeof list.scrollBy;
     rerender(<List value="b" />);
     expect(scrollTo).not.toHaveBeenCalled();
   });

@@ -2,7 +2,7 @@ import { type VariantProps, cva } from "class-variance-authority";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import type { ComponentPropsWithoutRef, CSSProperties, HTMLAttributes, PointerEvent as ReactPointerEvent, ReactElement } from "react";
 import { forwardRef, useRef, useState } from "react";
-import { useKeyboardOffset } from "../hooks/useKeyboardOffset";
+import { useKeyboardGeometry } from "../hooks/useKeyboardOffset";
 import { useMergedRefs } from "../hooks/useMergedRefs";
 import { cn } from "../lib/utils";
 import { fadeMotion, sheetMotion, usePresenceMotion } from "../lib/sheetMotion";
@@ -85,7 +85,10 @@ export interface SheetContentProps extends DialogPopupProps, VariantProps<typeof
   keyboardAware?: boolean;
 }
 
-export const SheetContent = forwardRef<HTMLDivElement, SheetContentProps>(
+// Rendered inside the portal on purpose: Base UI creates the portal node over a couple of commits, so the
+// popup only exists (and `ref.current` is only set) once this component mounts. Hooks that need the element,
+// like the slide animation, therefore live here and not in SheetContent.
+const SheetPopup = forwardRef<HTMLDivElement, Omit<SheetContentProps, "forceMount">>(
   (
     {
       side = "right",
@@ -96,7 +99,6 @@ export const SheetContent = forwardRef<HTMLDivElement, SheetContentProps>(
       closeButtonTestId,
       keyboardAware = false,
       style: styleProp,
-      forceMount,
       ...props
     },
     forwardedRef,
@@ -104,7 +106,7 @@ export const SheetContent = forwardRef<HTMLDivElement, SheetContentProps>(
     const { open } = useDialog();
     const popupRef = useRef<HTMLDivElement | null>(null);
     usePresenceMotion(popupRef, open, sheetMotion(side ?? "right"));
-    const keyboardOffset = useKeyboardOffset(keyboardAware && side === "bottom");
+    const keyboard = useKeyboardGeometry(keyboardAware && side === "bottom");
 
     // Drag-to-resize: track the sheet's height in local state once the user
     // starts dragging the handle, clamped between 30% and 95% of the
@@ -139,54 +141,60 @@ export const SheetContent = forwardRef<HTMLDivElement, SheetContentProps>(
     const style: CSSProperties = {
       ...styleProp,
       ...(canResize && dragHeight != null ? { height: dragHeight, maxHeight: dragHeight } : null),
-      ...(keyboardOffset
-        ? { bottom: `${keyboardOffset}px`, maxHeight: `calc(100dvh - ${keyboardOffset}px)` }
+      ...(keyboard.offset || keyboard.visibleHeight
+        ? { bottom: `${keyboard.offset}px`, maxHeight: `${keyboard.visibleHeight}px` }
         : null),
     };
 
     return (
-      <SheetPortal forceMount={forceMount}>
-        <SheetOverlay />
-        <DialogPopup
-          ref={useMergedRefs(popupRef, forwardedRef)}
-          data-slot="sheet-content"
-          data-side={side}
-          style={style}
-          className={cn(sheetVariants({ side }), isDragging && "shadow-2xl", className)}
-          {...props}
-        >
-          {canResize && (
+      <DialogPopup
+        ref={useMergedRefs(popupRef, forwardedRef)}
+        data-slot="sheet-content"
+        data-side={side}
+        style={style}
+        className={cn(sheetVariants({ side }), isDragging && "shadow-2xl", className)}
+        {...props}
+      >
+        {canResize && (
+          <div
+            data-testid="sheet-drag-handle"
+            className="group -mb-2 flex shrink-0 cursor-grab touch-none justify-center py-2 active:cursor-grabbing"
+            onPointerDown={onHandlePointerDown}
+            onPointerMove={onHandlePointerMove}
+            onPointerUp={onHandlePointerUp}
+            onPointerCancel={onHandlePointerUp}
+          >
             <div
-              data-testid="sheet-drag-handle"
-              className="group -mb-2 flex shrink-0 cursor-grab touch-none justify-center py-2 active:cursor-grabbing"
-              onPointerDown={onHandlePointerDown}
-              onPointerMove={onHandlePointerMove}
-              onPointerUp={onHandlePointerUp}
-              onPointerCancel={onHandlePointerUp}
-            >
-              <div
-                className={cn(
-                  "h-1 w-10 rounded-[var(--radius-pill,9999px)] bg-muted-foreground/30 transition-all duration-150 group-hover:w-14 group-hover:bg-muted-foreground/50",
-                  isDragging && "w-14 bg-primary/60 dark:bg-ring/60",
-                )}
-              />
-            </div>
-          )}
-          {children}
-          {showCloseButton ? (
-            <SheetClose
-              data-testid={closeButtonTestId}
-              className="absolute right-4 top-4 z-20 rounded-sm opacity-70 hover:opacity-100 max-md:-m-2.5 max-md:p-2.5"
-            >
-              <XMarkIcon className="h-4 w-4 max-md:h-6 max-md:w-6" />
-              <span className="sr-only"><I18nText k="common.close" /></span>
-            </SheetClose>
-          ) : null}
-        </DialogPopup>
-      </SheetPortal>
+              className={cn(
+                "h-1 w-10 rounded-[var(--radius-pill,9999px)] bg-muted-foreground/30 transition-all duration-150 group-hover:w-14 group-hover:bg-muted-foreground/50",
+                isDragging && "w-14 bg-primary/60 dark:bg-ring/60",
+              )}
+            />
+          </div>
+        )}
+        {children}
+        {showCloseButton ? (
+          <SheetClose
+            data-slot="sheet-close"
+            data-testid={closeButtonTestId}
+            className="absolute right-4 top-4 z-20 -m-2 rounded-md p-2 opacity-70 hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-md:-m-2.5 max-md:p-2.5"
+          >
+            <XMarkIcon className="h-4 w-4 max-md:h-6 max-md:w-6" />
+            <span className="sr-only"><I18nText k="common.close" /></span>
+          </SheetClose>
+        ) : null}
+      </DialogPopup>
     );
   },
 );
+SheetPopup.displayName = "SheetPopup";
+
+export const SheetContent = forwardRef<HTMLDivElement, SheetContentProps>(({ forceMount, ...props }, ref) => (
+  <SheetPortal forceMount={forceMount}>
+    <SheetOverlay />
+    <SheetPopup ref={ref} {...props} />
+  </SheetPortal>
+));
 SheetContent.displayName = "SheetContent";
 
 // `shrink-0`: without it, flexbox's default `flex-shrink: 1` would let this

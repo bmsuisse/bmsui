@@ -69,6 +69,20 @@ describe("Modal responsive surface", () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
+  it("the header close button closes the modal and is a generous touch target on a phone", async () => {
+    mockViewport("phone");
+    const onOpenChange = vi.fn();
+    render(
+      <Modal open onOpenChange={onOpenChange} title="Edit">
+        <p>Body</p>
+      </Modal>,
+    );
+    const close = screen.getByTestId("modal-close");
+    expect(close.className).toContain("max-md:size-11");
+    await userEvent.click(close);
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
   it("Escape closes a sheet", async () => {
     mockViewport("phone");
     const onOpenChange = vi.fn();

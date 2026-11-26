@@ -89,6 +89,22 @@ describe("usePresenceMotion", () => {
     expect(exit?.finish).not.toHaveBeenCalled();
   });
 
+  it("also bounds a stalled enter, so a later close cannot be blocked by it", () => {
+    render(<Probe open />);
+    const enter = animations[0];
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(enter?.finish).toHaveBeenCalledTimes(1);
+  });
+
+  it("cancels the enter when closing starts, so only the exit is left to wait for", () => {
+    const { rerender } = render(<Probe open />);
+    const enter = animations[0];
+    rerender(<Probe open={false} />);
+    expect(enter?.cancel).toHaveBeenCalledTimes(1);
+  });
+
   it("does not animate under prefers-reduced-motion", () => {
     vi.spyOn(window, "matchMedia").mockReturnValue({ matches: true } as MediaQueryList);
     render(<Probe open />);

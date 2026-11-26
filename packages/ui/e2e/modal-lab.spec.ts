@@ -69,7 +69,13 @@ async function closeViaEscape(page: Page): Promise<void> {
   await page.keyboard.press("Escape");
 }
 
+/** Waits for running animations (the sheet's slide-in) so positions are measured at rest. */
+async function settle(page: Page): Promise<void> {
+  await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished.catch(() => undefined))));
+}
+
 async function expectInViewport(page: Page, locator: Locator): Promise<void> {
+  await settle(page);
   const box = await locator.boundingBox();
   const size = page.viewportSize();
   expect(box, "element has a box").not.toBeNull();
@@ -202,6 +208,20 @@ test("rapid: reopening during the exit animation does not hold the sheet off-scr
   await expectClean(page);
 });
 
+for (const scenario of ["basic", "centered"] as const) {
+  test(`${scenario}: withheld animation frames (backgrounded page) cannot leave a closed dialog mounted`, async ({ page }) => {
+    await page.getByTestId(`open-${scenario}`).click();
+    await expect(topDialog(page)).toBeVisible();
+    await page.waitForTimeout(700);
+    // Base UI unmounts from a requestAnimationFrame callback; stall them as an iOS background tab does.
+    await page.evaluate(() => {
+      window.requestAnimationFrame = () => 0;
+    });
+    await closeViaEscape(page);
+    await expectClean(page);
+  });
+}
+
 test("a stalled animation timeline cannot leave an invisible overlay behind (watchdog)", async ({ page }) => {
   await page.getByTestId("open-basic").click();
   await expect(topDialog(page)).toBeVisible();
@@ -241,6 +261,11 @@ test("header actions and back arrow work and do not collide with the close butto
   const close = dialog.getByRole("button", { name: "Close", exact: true }).first();
   const [a, c] = [await action.boundingBox(), await close.boundingBox()];
   expect(a && c && a.x + a.width <= c.x + 1).toBe(true);
+  const title = dialog.getByRole("heading").first();
+  const t = await title.boundingBox();
+  // The close button sits on the title's row, not above it.
+  expect(c && t && Math.abs(c.y + c.height / 2 - (t.y + t.height / 2)) < 24).toBe(true);
+  if (c && (await isPhone(page))) expect(Math.min(c.width, c.height)).toBeGreaterThanOrEqual(43);
   await dialog.getByTestId("modal-back").click();
   await expect(page.getByTestId("log")).toHaveText("back");
   await closeViaEscape(page);
@@ -263,6 +288,50 @@ test("rotating the device or resizing the window while a modal is open keeps it 
   await expectInViewport(page, topDialog(page));
   await closeViaEscape(page);
   await expectClean(page);
+});
+
+test("crossing the breakpoint while open keeps the typed draft and the same surface", async ({ page }) => {
+  const size = page.viewportSize();
+  if (!size) throw new Error("needs a viewport");
+  await page.getByTestId("open-form").click();
+  await expect(topDialog(page)).toBeVisible();
+  const slotBefore = await topDialog(page).getAttribute("data-slot");
+  await page.getByTestId("field-Email").fill("draft@example.com");
+  // Wide enough for desktop if we are a phone, phone-sized if we are desktop: the other side of 1024px.
+  const crossed = size.width < DESKTOP_MIN ? { width: 1280, height: 800 } : { width: 700, height: 900 };
+  await page.setViewportSize(crossed);
+  await page.waitForTimeout(500);
+  await expect(topDialog(page)).toBeVisible();
+  await expect(page.getByTestId("field-Email")).toHaveValue("draft@example.com");
+  expect(await topDialog(page).getAttribute("data-slot")).toBe(slotBefore);
+  await closeViaEscape(page);
+  await expectClean(page);
+  // Closed, it follows the viewport again.
+  await page.getByTestId("open-form").click();
+  await expect(topDialog(page)).toBeVisible();
+  const expectSheet = crossed.width < DESKTOP_MIN;
+  expect((await topDialog(page).getAttribute("data-slot")) === "sheet-content").toBe(expectSheet);
+  await closeViaEscape(page);
+  await expectClean(page);
+});
+
+test("the sheet slide-in and slide-out animations really run", async ({ page }) => {
+  test.skip(!(await isPhone(page)), "sheet only");
+  await page.evaluate(() => {
+    const original = Element.prototype.animate;
+    (window as unknown as { __animated: string[] }).__animated = [];
+    Element.prototype.animate = function (this: Element, ...args: Parameters<Element["animate"]>) {
+      (window as unknown as { __animated: string[] }).__animated.push(this.getAttribute("data-slot") ?? this.tagName);
+      return original.apply(this, args);
+    };
+  });
+  await page.getByTestId("open-basic").click();
+  await expect(topDialog(page)).toBeVisible();
+  await closeViaEscape(page);
+  await expectClean(page);
+  const animated = await page.evaluate(() => (window as unknown as { __animated: string[] }).__animated);
+  // enter + exit of the sheet itself
+  expect(animated.filter((slot) => slot === "sheet-content").length).toBeGreaterThanOrEqual(2);
 });
 
 test("a focused input stays inside the visible sheet", async ({ page }) => {
@@ -300,6 +369,13 @@ test("tabs: selecting the last tab programmatically scrolls it into view inside 
   await expect(topDialog(page)).toBeVisible();
   const list = topDialog(page).getByRole("tablist");
   const overflows = await list.evaluate((el) => el.scrollWidth > el.clientWidth);
+  if (overflows) {
+    const mask = await list.evaluate((el) => {
+      const style = getComputedStyle(el);
+      return style.maskImage || style.webkitMaskImage || "none";
+    });
+    expect(mask, "an overflowing tab row fades at its edge").not.toBe("none");
+  }
   await page.getByTestId("tabs-select-last").click();
   await expect(page.getByTestId("tab-seven")).toHaveAttribute("aria-selected", "true");
   await expect(page.getByTestId("tab-seven")).toBeInViewport({ ratio: 0.9, timeout: 3000 });

@@ -40,6 +40,15 @@ export const fadeMotion: PresenceMotion = {
   enterEasing: "ease-out",
 };
 
+/** Jumps every running animation on `el` to its end so Base UI's "wait for animations" resolves. */
+function finishAll(el: HTMLElement, ...tracked: Array<Animation | null>): void {
+  const all = new Set<Animation>(typeof el.getAnimations === "function" ? el.getAnimations() : []);
+  for (const animation of tracked) if (animation) all.add(animation);
+  for (const animation of all) {
+    if (animation.playState !== "finished") animation.finish();
+  }
+}
+
 const useIsoLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 /**
@@ -56,6 +65,7 @@ export function usePresenceMotion(ref: RefObject<HTMLElement | null>, open: bool
   const motionRef = useRef(motion);
   motionRef.current = motion;
   const exitRef = useRef<Animation | null>(null);
+  const enterRef = useRef<Animation | null>(null);
   const watchdogRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const wasOpen = useRef<boolean | undefined>(undefined);
 
@@ -70,21 +80,27 @@ export function usePresenceMotion(ref: RefObject<HTMLElement | null>, open: bool
       clearTimeout(watchdogRef.current);
       exitRef.current?.cancel();
       exitRef.current = null;
-      el.animate(current.enter, {
-        duration: current.enterMs ?? ENTER_MS,
+      const enterMs = current.enterMs ?? ENTER_MS;
+      enterRef.current = el.animate(current.enter, {
+        duration: enterMs,
         easing: current.enterEasing ?? ENTER_EASE,
         fill: "backwards",
       });
+      // A stalled enter would also hold the popup mounted after a later close (Base UI awaits every
+      // finite animation), so it gets the same bound.
+      const entering = enterRef.current;
+      watchdogRef.current = setTimeout(() => finishAll(el, entering), enterMs + WATCHDOG_SLACK_MS);
       return;
     }
 
     if (previous === true) {
+      clearTimeout(watchdogRef.current);
+      enterRef.current?.cancel();
+      enterRef.current = null;
       const exitMs = current.exitMs ?? EXIT_MS;
       const animation = el.animate(current.exit, { duration: exitMs, easing: EASE_IN, fill: "forwards" });
       exitRef.current = animation;
-      watchdogRef.current = setTimeout(() => {
-        if (animation.playState !== "finished") animation.finish();
-      }, exitMs + WATCHDOG_SLACK_MS);
+      watchdogRef.current = setTimeout(() => finishAll(el, animation), exitMs + WATCHDOG_SLACK_MS);
     }
   }, [open, ref]);
 

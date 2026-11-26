@@ -1,9 +1,10 @@
-import { ArrowLeftIcon } from "@heroicons/react/24/outline";
+import { ArrowLeftIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { Children, Fragment, isValidElement, type ReactElement, type ReactNode } from "react";
 import { I18nText } from "../../i18n/locale";
 import {
   Dialog,
   DialogBody,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -74,9 +75,9 @@ export const Modal = ({
   alwaysCentered,
 }: ModalProps): ReactElement => (
   <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent className={className} alwaysCentered={alwaysCentered}>
+    <DialogContent className={className} alwaysCentered={alwaysCentered} showCloseButton={false}>
       <DialogHeader>
-        <div className="flex items-start gap-2 pr-8">
+        <div className="flex items-start gap-2">
           {onBack ? (
             <button
               type="button"
@@ -96,6 +97,15 @@ export const Modal = ({
             {description ? <DialogDescription>{description}</DialogDescription> : null}
           </div>
           {headerActions ? <div className="flex shrink-0 items-center gap-1">{headerActions}</div> : null}
+          <DialogClose
+            data-testid="modal-close"
+            className="-mr-2 flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-md:-mr-2.5 max-md:size-11"
+          >
+            <XMarkIcon className="size-4 max-md:size-6" />
+            <span className="sr-only">
+              <I18nText k="common.close" />
+            </span>
+          </DialogClose>
         </div>
       </DialogHeader>
       {isComposed(children) ? (

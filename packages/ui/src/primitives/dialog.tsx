@@ -1,7 +1,7 @@
-import { forwardRef } from "react";
+import { forwardRef, useEffect, useRef } from "react";
 import { useMediaQuery } from "../lib/useMediaQuery";
 import { cn } from "../lib/utils";
-import { DialogCenteredContent, type DialogPopupProps } from "./dialog-base";
+import { DialogCenteredContent, type DialogPopupProps, useDialog } from "./dialog-base";
 import { SheetContent } from "./sheet";
 
 export * from "./dialog-base";
@@ -37,7 +37,19 @@ export const DialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
     { alwaysCentered = false, breakpoint = DIALOG_DESKTOP_QUERY, keyboardAware = true, className, ...props },
     ref,
   ) => {
-    const isDesktop = useMediaQuery(breakpoint);
+    const matchesDesktop = useMediaQuery(breakpoint);
+    // The surface is chosen when the dialog opens and kept until it opens again, including through the exit
+    // animation: crossing the breakpoint (an iPad rotating, a window resize) must not swap centred dialog
+    // for sheet, which would remount the content and lose what the user typed, and swapping surfaces
+    // mid-exit would mount a second popup into a dialog that is already closing.
+    const { open } = useDialog();
+    const surface = useRef(matchesDesktop);
+    const wasOpen = useRef(false);
+    if (open && !wasOpen.current) surface.current = matchesDesktop;
+    useEffect(() => {
+      wasOpen.current = open;
+    }, [open]);
+    const isDesktop = surface.current;
     if (isDesktop || alwaysCentered) {
       return <DialogCenteredContent ref={ref} className={className} {...props} />;
     }
@@ -47,7 +59,12 @@ export const DialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
         side="bottom"
         resizable
         keyboardAware={keyboardAware}
-        className={cn("gap-0 rounded-t-2xl p-0", "max-h-[92dvh]", className, "max-w-none")}
+        // The built-in X is centred on the title row below the drag handle (header pt-3 + 28px title line).
+        className={cn(
+          "gap-0 rounded-t-2xl p-0 max-h-[92dvh] [&>[data-slot=sheet-close]]:top-[30px] max-md:[&>[data-slot=sheet-close]]:top-[26px]",
+          className,
+          "max-w-none",
+        )}
         {...props}
       />
     );

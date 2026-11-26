@@ -102,6 +102,8 @@ export function CommandPalette({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
+        // A top-anchored popup on every width, not the bottom sheet other dialogs become on a phone.
+        alwaysCentered
         data-testid={testId}
         className={cn(
           "top-4 w-[calc(100%-2rem)] max-w-xl translate-y-0 overflow-hidden rounded-xl border-foreground/10 shadow-2xl sm:top-[12vh] dark:border-border",

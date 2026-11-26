@@ -114,9 +114,11 @@ export const TabsList = forwardRef<
     if (!list || list.scrollWidth <= list.clientWidth + 1) return;
     const active = list.querySelector<HTMLElement>('[data-state="active"]');
     if (!active) return;
-    const left = active.offsetLeft - list.offsetLeft;
-    const target = left - (list.clientWidth - active.offsetWidth) / 2;
-    list.scrollTo({ left: Math.max(0, target), behavior: "smooth" });
+    // From where the tab's centre is to where the row's centre is: the same in LTR and RTL (whose
+    // `scrollLeft` is negative), unlike an absolute `scrollTo` target.
+    const tab = active.getBoundingClientRect();
+    const row = list.getBoundingClientRect();
+    list.scrollBy({ left: tab.left + tab.width / 2 - (row.left + row.width / 2), behavior: "smooth" });
   }, [value]);
 
   return (
