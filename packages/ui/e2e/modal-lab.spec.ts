@@ -361,6 +361,7 @@ test("phone: the drag handle resizes the sheet", async ({ page }) => {
   await page.getByTestId("open-basic").click();
   const handle = page.getByTestId("sheet-drag-handle");
   await expect(handle).toBeVisible();
+  await settle(page);
   const before = await topDialog(page).boundingBox();
   const grip = await handle.boundingBox();
   if (!before || !grip) throw new Error("no boxes");
