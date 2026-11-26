@@ -128,7 +128,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
 );
 Tabs.displayName = "Tabs";
 
-type TriggerElement = ReactElement<{ value: string; className?: string; count?: number; children?: React.ReactNode }>;
+type TriggerElement = ReactElement<{ value: string; className?: string; count?: number; disabled?: boolean; children?: React.ReactNode }>;
 const isTrigger = (node: unknown): node is TriggerElement =>
   isValidElement(node) && node.type === TabsTrigger && typeof (node.props as { value?: unknown }).value === "string";
 
@@ -201,6 +201,7 @@ export const TabsList = forwardRef<
     .filter((t) => !inRow(t))
     .map((t) => ({
       value: t.props.value,
+      disabled: t.props.disabled,
       content: (
         <>
           {t.props.children}

@@ -65,6 +65,8 @@ export function useTabsOverflow({
     if (typeof ResizeObserver === "undefined") return undefined;
     const observer = new ResizeObserver(measure);
     observer.observe(wrap);
+    // The button's own width changes with the locale ("More" / "Weitere").
+    if (moreRef.current) observer.observe(moreRef.current);
     for (const el of Array.from(list.querySelectorAll("[data-tab-value]"))) observer.observe(el);
     return () => observer.disconnect();
     // `key`: observe the new tabs when the set changes.
@@ -100,6 +102,7 @@ function sameWidths(a: Record<string, number>, b: Record<string, number>): boole
 export interface TabsOverflowItem {
   value: string;
   content: ReactNode;
+  disabled?: boolean;
 }
 
 /** The "More" button and its menu; picking an entry selects that tab. */
@@ -132,7 +135,12 @@ export function TabsOverflowMenu({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         {items.map((item) => (
-          <DropdownMenuItem key={item.value} data-tab-menu-value={item.value} onClick={() => onSelect(item.value)}>
+          <DropdownMenuItem
+            key={item.value}
+            data-tab-menu-value={item.value}
+            disabled={item.disabled}
+            onClick={() => onSelect(item.value)}
+          >
             {item.content}
           </DropdownMenuItem>
         ))}

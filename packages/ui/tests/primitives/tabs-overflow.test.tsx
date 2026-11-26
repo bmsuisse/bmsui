@@ -87,6 +87,25 @@ describe("Tabs overflow=menu", () => {
     expect(screen.getByRole("tab", { name: /Tab e/ })).toHaveAttribute("aria-selected", "true");
   });
 
+  it("a disabled tab stays disabled in the menu", async () => {
+    render(
+      <Tabs defaultValue="a" variant="underline" overflow="menu">
+        <TabsList aria-label="Sections">
+          {NAMES.map((name) => (
+            <TabsTrigger key={name} value={name} disabled={name === "c"}>
+              Tab {name}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>,
+    );
+    await userEvent.click(screen.getByTestId("tabs-overflow"));
+    const items = await screen.findAllByRole("menuitem");
+    expect(items[0]).toHaveAttribute("data-tab-menu-value", "c");
+    expect(items[0]).toHaveAttribute("aria-disabled", "true");
+    expect(items[1]).not.toHaveAttribute("aria-disabled", "true");
+  });
+
   it("shows no menu when everything fits", () => {
     mockLayout(1000);
     render(<Demo />);
