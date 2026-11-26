@@ -142,7 +142,7 @@ const SheetPopup = forwardRef<HTMLDivElement, Omit<SheetContentProps, "forceMoun
       ...styleProp,
       ...(canResize && dragHeight != null
         ? // Never taller than the screen, even if the screen shrank after the drag (rotation).
-          { height: `min(${dragHeight}px, 100dvh)`, maxHeight: `min(${dragHeight}px, 100dvh)` }
+          { height: `min(${dragHeight}px, 95dvh)`, maxHeight: `min(${dragHeight}px, 95dvh)` }
         : null),
       ...(keyboard.offset || keyboard.visibleHeight
         ? { bottom: `${keyboard.offset}px`, maxHeight: `${keyboard.visibleHeight}px` }

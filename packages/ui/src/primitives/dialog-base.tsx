@@ -13,6 +13,7 @@ import {
   useDismissBridge,
   useDismissCallbacks,
 } from "../lib/radixCompat";
+import { useMergedRefs } from "../hooks/useMergedRefs";
 import { cn } from "../lib/utils";
 import { I18nText } from "../i18n/locale";
 
@@ -32,7 +33,7 @@ export const useDialog = () => {
 const STUCK_CLOSE_MS = 1200;
 
 /** Lets popups tell their `Dialog` they are mounted. */
-const PopupRegistry = createContext<(() => () => void) | null>(null);
+const PopupRegistry = createContext<((el: HTMLElement | null) => () => void) | null>(null);
 
 export function Dialog({
   open: openProp,
@@ -50,19 +51,21 @@ export function Dialog({
   const [open, setOpen] = useControllable(openProp, defaultOpen, onOpenChange);
   const dismiss = useDismissBridge((next: boolean) => setOpen(next));
   const actionsRef = useRef<DialogPrimitive.Root.Actions | null>(null);
-  const mountedPopups = useRef(0);
-  const registerPopup = useCallback(() => {
-    mountedPopups.current += 1;
+  const popups = useRef(new Set<HTMLElement>());
+  const registerPopup = useCallback((el: HTMLElement | null) => {
+    if (!el) return () => {};
+    popups.current.add(el);
     return () => {
-      mountedPopups.current -= 1;
+      popups.current.delete(el);
     };
   }, []);
   useEffect(() => {
     if (open) return undefined;
     const timer = setTimeout(() => {
-      // Still mounted long after closing: end the closing phase ourselves. Only Base UI's own state is
-      // touched, so anything rendered next to the content keeps its state.
-      if (mountedPopups.current > 0) actionsRef.current?.unmount();
+      // A popup still in its closing phase (`data-ending-style`) long after closing is stuck: end the phase
+      // ourselves. Only Base UI's own state is touched, so anything rendered next to the content keeps its
+      // state, and a deliberately kept-mounted popup that closed properly is left alone.
+      if ([...popups.current].some((el) => el.hasAttribute("data-ending-style"))) actionsRef.current?.unmount();
     }, STUCK_CLOSE_MS);
     return () => clearTimeout(timer);
   }, [open]);
@@ -136,8 +139,9 @@ export const DialogPopup = forwardRef<HTMLDivElement, Omit<DialogPopupProps, "fo
   ) => {
     const { open } = useDialog();
     const registerPopup = useContext(PopupRegistry);
-    useLayoutEffect(() => registerPopup?.(), [registerPopup]);
-    const autoFocus = useAutoFocus({ onOpenAutoFocus, onCloseAutoFocus }, ref);
+    const ownRef = useRef<HTMLDivElement | null>(null);
+    useLayoutEffect(() => registerPopup?.(ownRef.current), [registerPopup]);
+    const autoFocus = useAutoFocus({ onOpenAutoFocus, onCloseAutoFocus }, useMergedRefs(ownRef, ref));
     useDismissCallbacks({ onEscapeKeyDown, onPointerDownOutside, onFocusOutside, onInteractOutside });
     return (
       <DialogPrimitive.Popup

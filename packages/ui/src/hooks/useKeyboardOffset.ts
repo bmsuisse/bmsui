@@ -14,6 +14,8 @@ export interface KeyboardGeometry {
 export function useKeyboardGeometry(enabled = true): KeyboardGeometry {
   const viewport = useVisualViewport();
   if (!enabled || !viewport) return { offset: 0, visibleHeight: 0 };
+  // Pinch-zoom shrinks the visual viewport too, but that is not a keyboard.
+  if (window.visualViewport && Math.abs(window.visualViewport.scale - 1) > 0.01) return { offset: 0, visibleHeight: 0 };
   // Safari also pans the visual viewport down when it scrolls a field into view, so the visible bottom is
   // offsetTop + height from the top of the layout viewport, not just height.
   const offset = window.innerHeight - viewport.height - viewport.offsetTop;

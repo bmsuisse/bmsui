@@ -45,7 +45,10 @@ function finishAll(el: HTMLElement, ...tracked: Array<Animation | null>): void {
   const all = new Set<Animation>(typeof el.getAnimations === "function" ? el.getAnimations() : []);
   for (const animation of tracked) if (animation) all.add(animation);
   for (const animation of all) {
-    if (animation.playState !== "finished") animation.finish();
+    // Leave CSS transitions/animations alone (a shadow fading while dragging is healthy); only the
+    // Web Animations this module starts can stall the timeline.
+    const css = typeof CSSTransition !== "undefined" && (animation instanceof CSSTransition || animation instanceof CSSAnimation);
+    if (!css && animation.playState !== "finished") animation.finish();
   }
 }
 

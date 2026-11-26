@@ -78,7 +78,9 @@ export function useTabsOverflow({
     if (total <= rowWidth) return { inline: new Set(values), hasOverflow: false };
 
     const known = new Set(values);
-    const order = [...recent.filter((v) => known.has(v)), ...values.filter((v) => !recent.includes(v))];
+    // The active tab leads at once (the `recent` state only catches up one commit later).
+    const rest = [...recent.filter((v) => known.has(v)), ...values.filter((v) => !recent.includes(v))].filter((v) => v !== active);
+    const order = active !== undefined && known.has(active) ? [active, ...rest] : rest;
     const budget = rowWidth - moreWidth - RESERVE_SLACK;
     const inline = new Set<string>();
     let used = 0;
