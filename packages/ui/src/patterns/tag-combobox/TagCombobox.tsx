@@ -117,6 +117,7 @@ export function TagCombobox({
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const fieldRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const selectedOptions = useMemo(
     () => value.map((v) => options.find((o) => o.value === v) ?? { value: v, label: v }),
@@ -213,6 +214,16 @@ export function TagCombobox({
       // The list is replaced by the error line, so the active option is hidden.
       if (option && !hasError) toggleOption(option);
     } else if (event.key === "Escape") {
+      // The first Escape closes the option list; the dialog around it stays. Without the stop, the dialog
+      // hears the same key right after the list closed (nothing is "above" it anymore) and closes too,
+      // taking the user's input with it. With the list already closed, Escape goes on to the dialog.
+      if (open) {
+        event.stopPropagation();
+        setOpen(false);
+      }
+    } else if (event.key === "Tab") {
+      // Close before the browser moves focus: with the list open, the next tab stop is the floating
+      // popup's focus guard, and removing it afterwards would drop focus to <body>.
       setOpen(false);
     } else if (event.key === "Backspace" && search === "") {
       // Standard tag-input convention: Backspace on an empty search field
@@ -302,12 +313,22 @@ export function TagCombobox({
             aria-label={placeholder}
             className="min-w-24 flex-1 bg-transparent outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed"
             onFocus={() => setOpen(true)}
+            onBlur={(event) => {
+              // Focus moved on (Tab, code): close. A `null` target is a click on something that cannot take
+              // focus (Safari does not focus buttons), which an outside press or an option click handles.
+              const next = event.relatedTarget;
+              const isGuard = next instanceof Element && next.matches("[data-floating-ui-focus-guard],[data-base-ui-focus-guard]");
+              if (next instanceof Node && !isGuard && !fieldRef.current?.contains(next) && !contentRef.current?.contains(next)) {
+                setOpen(false);
+              }
+            }}
             onChange={(event) => updateSearch(event.target.value)}
             onKeyDown={handleKeyDown}
           />
         </div>
       </PopoverAnchor>
       <PopoverContent
+        ref={contentRef}
         align="start"
         container={container}
         className={cn(

@@ -9,6 +9,7 @@ import {
   ModalBody,
   ModalFooter,
   ResponsivePanel,
+  TagCombobox,
   Tabs,
   TabsContent,
   TabsList,
@@ -30,6 +31,7 @@ type Scenario =
   | "unmount"
   | "confirm"
   | "formmodal"
+  | "tags"
   | "panel";
 
 const filler = (n: number): string[] => Array.from({ length: n }, (_, i) => `Row ${i + 1} of the scrolling body`);
@@ -44,6 +46,7 @@ export function ModalLab(): ReactElement {
   const [count, setCount] = useState(0);
   const [log, setLog] = useState<string[]>([]);
   const [tab, setTab] = useState("one");
+  const [tags, setTags] = useState<string[]>([]);
   const [chip, setChip] = useState("c0");
   const [menuTab, setMenuTab] = useState("m0");
   const [overflowMode, setOverflowMode] = useState<"menu" | "scroll">("menu");
@@ -98,6 +101,7 @@ export function ModalLab(): ReactElement {
             ["unmount", "Unmount on close"],
             ["confirm", "ConfirmDialog"],
             ["formmodal", "FormModal"],
+            ["tags", "TagCombobox inside"],
             ["panel", "ResponsivePanel"],
           ] as const
         ).map(([name, label]) => (
@@ -336,6 +340,22 @@ export function ModalLab(): ReactElement {
       >
         <Input aria-label="Name" data-testid="formmodal-name" />
       </FormModal>
+
+      <Modal open={open === "tags"} onOpenChange={onOpenChange("tags")} title="TagCombobox inside a modal">
+        <div className="flex flex-col gap-3">
+          <TagCombobox
+            options={[
+              { value: "ch", label: "Switzerland" },
+              { value: "de", label: "Germany" },
+              { value: "fr", label: "France" },
+            ]}
+            value={tags}
+            onChange={setTags}
+            data-testid="tags-field"
+          />
+          <Input aria-label="Next field" data-testid="tags-next" />
+        </div>
+      </Modal>
 
       <ResponsivePanel open={open === "panel"} onOpenChange={onOpenChange("panel")} title="ResponsivePanel" resizable>
         <p>Larger panel.</p>

@@ -426,3 +426,48 @@ test("tabs overflow=menu: the rest sit in a More menu, picking one promotes it i
   await page.getByTestId("overflow-toggle").click();
   await expect(page.getByTestId("tabs-overflow")).toHaveCount(0);
 });
+
+test.describe("TagCombobox inside a modal", () => {
+  async function openTags(page: Page): Promise<Locator> {
+    await page.getByTestId("open-tags").click();
+    await expect(topDialog(page)).toBeVisible();
+    await settle(page);
+    const input = page.getByTestId("tags-field").locator("input");
+    await input.click();
+    await expect(page.getByRole("option", { name: "Switzerland" })).toBeVisible();
+    return input;
+  }
+
+  test("the first Escape closes only the option list, the second the modal", async ({ page }) => {
+    await openTags(page);
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("option", { name: "Switzerland" })).toBeHidden();
+    await expect(topDialog(page)).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expectClean(page);
+  });
+
+  test("Tab to the next field closes the option list and keeps focus there", async ({ page }) => {
+    await openTags(page);
+    await page.keyboard.press("Tab");
+    await expect(page.getByTestId("tags-next")).toBeFocused();
+    await expect(page.getByRole("option", { name: "Switzerland" })).toBeHidden();
+    await expect(topDialog(page)).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expectClean(page);
+  });
+
+  test("picking options keeps the list open and the typed values in place", async ({ page }) => {
+    const input = await openTags(page);
+    await page.getByRole("option", { name: "Switzerland" }).click();
+    await page.getByRole("option", { name: "Germany" }).click();
+    await expect(page.getByRole("option", { name: "France" })).toBeVisible();
+    await expect(input).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(topDialog(page)).toBeVisible();
+    await expect(topDialog(page).getByText("Switzerland")).toBeVisible();
+    await expect(topDialog(page).getByText("Germany")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expectClean(page);
+  });
+});
