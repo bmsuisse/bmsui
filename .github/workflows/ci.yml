@@ -67,6 +67,20 @@ jobs:
         env:
           CI: "true"
 
+  ui-e2e:
+    name: "Playwright: Modal/Dialog/Tabs on Chromium + iPhone WebKit (@bmsuisse/ui)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - working-directory: packages/ui
+        run: bunx playwright install --with-deps chromium webkit
+      - working-directory: packages/ui
+        run: bun run test:e2e
+        env:
+          CI: "true"
+
   storybook:
     name: "Storybook: every story renders in light + dark, visual diff"
     runs-on: ubuntu-latest

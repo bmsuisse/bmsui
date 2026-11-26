@@ -128,6 +128,14 @@ logic above, which already had its own extraction). Structure:
   after some of that app's call sites had already switched to this `Input`
   while others hadn't, mid-migration. Ref-forwarding was already correct,
   just untested — added a test for it alongside.
+- **One dialog surface (v0.35.0):** `DialogContent` (and so `Modal`, `FormModal`, `ConfirmDialog`) is a
+  bottom `SheetContent` below `lg` and a centred dialog from `lg` up; `alwaysCentered` opts out. Consumers must not
+  keep their own modal/sheet/tabs copies. Sheet motion is the Web Animations API (`lib/sheetMotion.ts`), never
+  CSS keyframes (none are shipped) and never an inline transform that waits for `requestAnimationFrame`: the
+  resting state must always be "visible", and the exit has a watchdog, because a sheet stuck off-screen or an
+  invisible overlay that never unmounts is what "stuck on iPhone" looks like. Prove changes here with
+  `bun run test:e2e` in `packages/ui` (the `/modal-lab` demo page on desktop Chromium, Pixel Chromium and iPhone
+  WebKit); a rootless WebKit setup for sandboxes without `sudo` is described in the PR that introduced it.
 - v0.25.2 visual-QA conventions: overlay primitives (`PopoverContent`,
   `HoverCardContent`, `DropdownMenuContent`, both packages) default
   `collisionPadding={8}` (overridable), and popover/hover-card content has
