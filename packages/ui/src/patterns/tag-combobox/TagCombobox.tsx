@@ -77,6 +77,11 @@ export interface TagComboboxProps {
   columns?: GridColumn[];
 }
 
+const FOCUS_GUARD = "[data-floating-ui-focus-guard],[data-base-ui-focus-guard],[data-radix-focus-guard]";
+
+const TABBABLE =
+  'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+
 /**
  * A tags-and-search multi-select: selected options render as removable chips
  * inline inside one bordered field, with a search input immediately after
@@ -88,8 +93,6 @@ export interface TagComboboxProps {
  * built on the same `Popover`/keyboard-nav shape rather than forking it,
  * so both patterns share one mental model.
  */
-const FOCUS_GUARD = "[data-floating-ui-focus-guard],[data-base-ui-focus-guard],[data-radix-focus-guard]";
-
 export function TagCombobox({
   options,
   value,
@@ -202,15 +205,19 @@ export function TagCombobox({
 
   const hasError = toErrorInfo(error) !== undefined;
 
-  const TABBABLE = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
-
   /** Moves focus to the first tab stop after the field, skipping the popup, like Tab would with the list closed. */
   function focusAfterField(): void {
     const field = fieldRef.current;
     if (!field) return;
     const scope = field.closest('[role="dialog"]') ?? document.body;
     const stops = Array.from(scope.querySelectorAll<HTMLElement>(TABBABLE)).filter(
-      (el) => !contentRef.current?.contains(el) && !el.matches(FOCUS_GUARD) && el.tabIndex >= 0,
+      (el) =>
+        !contentRef.current?.contains(el) &&
+        !el.matches(FOCUS_GUARD) &&
+        el.tabIndex >= 0 &&
+        !(el instanceof HTMLInputElement && el.type === "hidden") &&
+        !el.closest("[inert],[aria-hidden=true]") &&
+        (typeof el.checkVisibility !== "function" || el.checkVisibility({ visibilityProperty: true })),
     );
     const lastInField = stops.filter((el) => field.contains(el)).at(-1);
     const index = lastInField ? stops.indexOf(lastInField) : -1;
@@ -238,7 +245,11 @@ export function TagCombobox({
       // The list is replaced by the error line, so the active option is hidden.
       if (option && !hasError) toggleOption(option);
     } else if (event.key === "Escape") {
-      if (event.nativeEvent.isComposing) return; // cancels an IME composition, not the list
+      if (event.nativeEvent.isComposing) {
+        // Cancels an IME composition: neither the list nor the dialog should react.
+        event.stopPropagation();
+        return;
+      }
       // The first Escape closes the option list; the dialog around it stays. Without the stop, the dialog
       // hears the same key right after the list closed (nothing is "above" it anymore) and closes too,
       // taking the user's input with it. With the list already closed, Escape goes on to the dialog.
@@ -251,7 +262,7 @@ export function TagCombobox({
       // popup's focus guard, and removing it afterwards would drop focus to <body>. Options are reached with
       // the arrow keys, but group toggles have no other keyboard path, so with those in the list Tab flows
       // into it instead and the list closes when focus leaves it.
-      if (!contentRef.current?.querySelector("[data-group-header] input")) setOpen(false);
+      if (event.shiftKey || !contentRef.current?.querySelector("[data-group-header] input")) setOpen(false);
     } else if (event.key === "Backspace" && search === "") {
       // Standard tag-input convention: Backspace on an empty search field
       // removes the most recently added chip instead of doing nothing.

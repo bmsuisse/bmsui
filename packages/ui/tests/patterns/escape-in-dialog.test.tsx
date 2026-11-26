@@ -1,6 +1,6 @@
 // Audit: every component that opens a popup must close only that popup on the first Escape when it sits in a
 // dialog (the dialog stays, so the user keeps what they typed) and let the second Escape through.
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { type ReactElement, type ReactNode, useState } from "react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
@@ -166,3 +166,21 @@ describe.each(cases.filter((c) => KEEPS_FOCUS_IN_INPUT.includes(c.name)))("$name
     await waitFor(() => expect(showing()).toBe(false));
   });
 });
+
+// Escape that cancels an IME composition belongs to the IME: it must not close the popup or the dialog.
+describe.each(cases.filter((c) => ["TagCombobox", "EmailAddressInput (suggestions)"].includes(c.name)))(
+  "$name: Escape during IME composition",
+  ({ render: renderCase, open }) => {
+    it("leaves the dialog and the popup alone", async () => {
+      mockViewport("desktop");
+      const onOpenChange = vi.fn();
+      render(<Host onOpenChange={onOpenChange}>{renderCase()}</Host>);
+      const showing = await open();
+      const input = document.activeElement as HTMLElement;
+      fireEvent.keyDown(input, { key: "Escape", isComposing: true });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(onOpenChange).not.toHaveBeenCalledWith(false);
+      expect(showing()).toBe(true);
+    });
+  },
+);
