@@ -1,7 +1,8 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRef } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { mockViewport } from "../viewport";
 import {
   Dialog,
   DialogBody,
@@ -14,6 +15,9 @@ import {
 import { ConfirmDialog } from "../../src/patterns/modal/ConfirmDialog";
 
 describe("DialogContent / DialogBody layout", () => {
+  beforeEach(() => mockViewport("desktop"));
+  afterEach(() => vi.restoreAllMocks());
+
   it("DialogContent is a flex column, not a single scrolling box", () => {
     render(
       <Dialog open onOpenChange={() => {}}>
@@ -143,7 +147,7 @@ describe("DialogContent / DialogBody layout", () => {
     const body = screen.getByTestId("body").className;
     expect(body).toContain("pt-1");
     // Own bottom inset when there's no footer, pb-1 when one follows.
-    expect(body).toContain("pb-6");
+    expect(body).toContain("pb-[max(1.5rem,env(safe-area-inset-bottom))]");
     expect(body).toContain("[&:has(+[data-slot=dialog-footer])]:pb-1");
   });
 

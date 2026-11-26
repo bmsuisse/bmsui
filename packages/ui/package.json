@@ -38,6 +38,7 @@
     "check": "bun run typecheck && bun run test",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build -o storybook-static",
+    "test:e2e": "playwright test -c e2e/playwright.config.ts",
     "test:visual": "playwright test -c visual/playwright.config.ts",
     "test:visual:update": "playwright test -c visual/playwright.config.ts --update-snapshots=missing"
   },

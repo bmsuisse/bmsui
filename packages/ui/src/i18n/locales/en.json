@@ -218,6 +218,7 @@
   "typingIndicator.typing": "Assistant is typing",
   "link.newTab": "(opens in new tab)",
   "common.close": "Close",
+  "common.back": "Back",
   "modal.confirm": "Confirm",
   "modal.cancel": "Cancel",
   "modal.save": "Save",

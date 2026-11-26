@@ -218,6 +218,7 @@
   "typingIndicator.typing": "El asistente está escribiendo",
   "link.newTab": "(se abre en una pestaña nueva)",
   "common.close": "Cerrar",
+  "common.back": "Atrás",
   "modal.confirm": "Confirmar",
   "modal.cancel": "Cancelar",
   "modal.save": "Guardar",
