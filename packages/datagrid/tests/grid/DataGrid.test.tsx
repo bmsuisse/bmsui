@@ -1558,8 +1558,22 @@ describe("DataGrid (groupBy)", () => {
       <DataGrid columns={columns} dataSource={{ mode: "client", data: rows }} getRowId={(row) => row.id} groupBy={groupByTier} />,
     );
     const groupHeaderCell = screen.getByText("Senior (2)").closest("td")!;
-    expect(groupHeaderCell).toHaveClass("sticky", "z-20", "bg-muted");
+    expect(groupHeaderCell).toHaveClass("sticky", "z-[19]", "bg-muted");
     expect(groupHeaderCell.style.top).not.toBe("");
+  });
+
+  it("tucks the sticky group header 1px under a fractional-height header so no rows show through", () => {
+    const rectSpy = vi
+      .spyOn(HTMLTableSectionElement.prototype, "getBoundingClientRect")
+      .mockReturnValue({ height: 52.5 } as DOMRect);
+    try {
+      render(
+        <DataGrid columns={columns} dataSource={{ mode: "client", data: rows }} getRowId={(row) => row.id} groupBy={groupByTier} />,
+      );
+      expect(screen.getByText("Senior (2)").closest("td")!.style.top).toBe("51.5px");
+    } finally {
+      rectSpy.mockRestore();
+    }
   });
 
   it("omits the group-header shading when zebra is false", () => {
