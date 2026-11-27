@@ -5,9 +5,8 @@ import type { DateRange } from "react-day-picker";
 import type { DateColumn } from "../column/types";
 import { Button } from "../components/ui/button";
 import { Calendar } from "../components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
 import { MOBILE_MEDIA_QUERY, useMediaQuery } from "../hooks/useMediaQuery";
-import { cn } from "../lib/utils";
+import { FilterShell } from "./FilterShell";
 import type { FilterDescriptor } from "./types";
 import { useFilterLabels } from "./labels";
 import { firstTextInput } from "./focus";
@@ -153,25 +152,19 @@ export function DateRangeFilter<TRow>({
     </div>
   );
 
-  if (bare) {
-    return <div data-testid={`filter-${column.id}`}>{panel}</div>;
-  }
-
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className={cn("gap-1", isFiltered ? "max-w-[220px] px-2" : "w-8 justify-center px-0")}
-          aria-label={labels.filterAriaLabel(column.header)}
-          data-testid={`filter-${column.id}`}
-        >
-          <CalendarDaysIcon className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
-          {isFiltered && <span className="truncate">{summary}</span>}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto max-w-[var(--available-width)]" focusOnOpen={firstTextInput}>{panel}</PopoverContent>
-    </Popover>
+    <FilterShell
+      columnId={column.id}
+      ariaLabel={labels.filterAriaLabel(column.header)}
+      bare={bare}
+      isFiltered={isFiltered}
+      summary={summary}
+      maxWidthClass="max-w-[220px]"
+      icon={<CalendarDaysIcon className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />}
+      contentClassName="w-auto max-w-[var(--available-width)]"
+      focusOnOpen={firstTextInput}
+    >
+      {panel}
+    </FilterShell>
   );
 }
