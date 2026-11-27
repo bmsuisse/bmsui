@@ -1606,8 +1606,11 @@ export function DataGrid<TRow extends RowData>({
         <tr data-testid={`group-header-${key}`}>
           <td
             colSpan={totalColumnCount}
-            className={cn("sticky z-20 border-b p-2 font-medium", zebra ? "bg-muted" : "bg-background")}
-            style={{ top: groupHeaderTop }}
+            // 1px overlap under the column header, z-[19] so the header paints over it: a fractional
+            // header height (52.5px) plus per-layer pixel snapping otherwise leaves a sliver where
+            // the rows below show through (same fix as `<TreeDataGrid>`'s group header).
+            className={cn("sticky z-[19] border-b p-2 font-medium", zebra ? "bg-muted" : "bg-background")}
+            style={{ top: Math.max(0, groupHeaderTop - 1) }}
           >
             <button
               type="button"

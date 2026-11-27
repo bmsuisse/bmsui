@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
-import { Button, FormField, FormModal, Input, Modal, QuestionDialog, ResponsivePanel } from "@bmsuisse/ui";
+import { Button, FormField, FormModal, Input, Modal, ModalBody, ModalFooter, QuestionDialog, ResponsivePanel } from "@bmsuisse/ui";
 
 const meta: Meta = { title: "Patterns/Modal" };
 export default meta;
@@ -93,6 +93,36 @@ export const Question: Story = {
             { label: "Save", onClick: () => sleep(800) },
           ]}
         />
+      </>
+    );
+  },
+};
+
+/** A centred dialog on desktop, a bottom sheet on phones: resize the viewport below 1024px to see it. */
+export const Composed: Story = {
+  render: () => {
+    const [open, setOpen] = useState(false);
+    return (
+      <>
+        <Button onClick={() => setOpen(true)}>Open composed modal</Button>
+        <Modal
+          open={open}
+          onOpenChange={setOpen}
+          title="Offer 1042 for Muster AG"
+          onBack={() => setOpen(false)}
+          backTitle="Customer"
+          headerActions={<Button size="sm" variant="outline">Export</Button>}
+        >
+          <ModalBody>
+            {Array.from({ length: 30 }, (_, i) => (
+              <p key={i} className="text-sm">Line {i + 1} of a body that scrolls while header and footer stay put.</p>
+            ))}
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button onClick={() => setOpen(false)}>Save</Button>
+          </ModalFooter>
+        </Modal>
       </>
     );
   },

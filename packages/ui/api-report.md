@@ -7,7 +7,7 @@ Every public export with its kind and signature. Interfaces and object types
 list their own members one per line (inherited members come from the `extends`
 clause), so the diff of this file shows exactly what changed in the public API.
 
-## Components (240)
+## Components (242)
 
 ```text
 const Accordion: react.ForwardRefExoticComponent<AccordionProps & react.RefAttributes<HTMLDivElement>>
@@ -82,7 +82,7 @@ function DateTimeInput(props: DateTimeInputProps): ReactElement
 function Dialog(props: { open?: boolean; defaultOpen?: boolean; onOpenChange?: (open: boolean) => void; modal?: boolean; children?: ReactNode }): react.JSX.Element
 function DialogActions(props: DialogActionsProps): ReactElement
 const DialogBody: react.ForwardRefExoticComponent<HTMLAttributes<HTMLDivElement> & react.RefAttributes<HTMLDivElement>>
-const DialogContent: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "ref"> & RadixDismissProps & RadixFocusProps & { forceMount?: boolean } & { showCloseButton?: boolean; closeButtonTestId?: string } & react.RefAttributes<HTMLDivElement>>
+const DialogContent: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<react.HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "ref"> & RadixDismissProps & RadixFocusProps & { forceMount?: boolean } & { showCloseButton?: boolean; closeButtonTestId?: string; alwaysCentered?: boolean; breakpoint?: string; keyboardAware?: boolean } & react.RefAttributes<HTMLDivElement>>
 const DialogDescription: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<HTMLAttributes<HTMLParagraphElement>, HTMLParagraphElement>, "ref"> & { asChild?: boolean } & react.RefAttributes<HTMLParagraphElement>>
 const DialogFooter: (props: HTMLAttributes<HTMLDivElement>) => ReactElement
 const DialogHeader: (props: HTMLAttributes<HTMLDivElement>) => ReactElement
@@ -141,6 +141,8 @@ const MailEvent: react.ForwardRefExoticComponent<MailEventProps & react.RefAttri
 const MailMessage: react.ForwardRefExoticComponent<MailMessageProps & react.RefAttributes<HTMLElement>>
 const MetadataList: (props: MetadataListProps) => ReactElement
 const Modal: (props: ModalProps) => ReactElement
+const ModalBody: react.ForwardRefExoticComponent<react.HTMLAttributes<HTMLDivElement> & react.RefAttributes<HTMLDivElement>>
+const ModalFooter: (props: react.HTMLAttributes<HTMLDivElement>) => ReactElement
 function NavGroup(props: NavGroupProps): ReactElement
 function NavItem<T extends ElementType = "a">(props: NavItemProps<T>): ReactElement
 const NumberInput: react.ForwardRefExoticComponent<NumberInputProps & react.RefAttributes<HTMLInputElement>>
@@ -189,7 +191,7 @@ const SheetContent: react.ForwardRefExoticComponent<SheetContentProps & react.Re
 const SheetDescription: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<HTMLAttributes<HTMLParagraphElement>, HTMLParagraphElement>, "ref"> & { asChild?: boolean } & react.RefAttributes<HTMLParagraphElement>>
 const SheetFooter: (props: HTMLAttributes<HTMLDivElement>) => ReactElement
 const SheetHeader: (props: HTMLAttributes<HTMLDivElement>) => ReactElement
-const SheetPortal: (props: Omit<react.ComponentPropsWithoutRef<typeof _base_ui_react.DialogPortal>, "keepMounted"> & { forceMount?: boolean }) => react.JSX.Element
+const SheetPortal: (props: Omit<ComponentPropsWithoutRef<typeof _base_ui_react.DialogPortal>, "keepMounted"> & { forceMount?: boolean }) => react.JSX.Element
 const SheetTitle: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<HTMLAttributes<HTMLHeadingElement>, HTMLHeadingElement>, "ref"> & { asChild?: boolean } & react.RefAttributes<HTMLHeadingElement>>
 const SheetTrigger: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<react.ButtonHTMLAttributes<HTMLButtonElement>, HTMLButtonElement>, "ref"> & { asChild?: boolean } & react.RefAttributes<HTMLButtonElement>>
 const ShortcutSheet: (props: ShortcutSheetProps) => ReactElement
@@ -225,7 +227,7 @@ function TableToolbar(props: TableToolbarProps): ReactElement
 const Tabs: react.ForwardRefExoticComponent<TabsProps & react.RefAttributes<HTMLDivElement>>
 const TabsContent: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<react.HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "ref"> & { value: string; forceMount?: boolean; asChild?: boolean } & react.RefAttributes<HTMLDivElement>>
 const TabsList: react.ForwardRefExoticComponent<Omit<react.DetailedHTMLProps<react.HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "ref"> & { loop?: boolean; asChild?: boolean } & react.RefAttributes<HTMLDivElement>>
-const TabsTrigger: react.ForwardRefExoticComponent<Omit<Omit<react.DetailedHTMLProps<react.ButtonHTMLAttributes<HTMLButtonElement>, HTMLButtonElement>, "ref">, "value"> & { value: string; asChild?: boolean } & react.RefAttributes<HTMLButtonElement>>
+const TabsTrigger: react.ForwardRefExoticComponent<Omit<Omit<react.DetailedHTMLProps<react.ButtonHTMLAttributes<HTMLButtonElement>, HTMLButtonElement>, "ref">, "value"> & { value: string; count?: number; countTone?: TabsCountTone; asChild?: boolean } & react.RefAttributes<HTMLButtonElement>>
 function TagCombobox(props: TagComboboxProps): ReactElement
 const Textarea: react.ForwardRefExoticComponent<TextareaProps & react.RefAttributes<HTMLTextAreaElement>>
 const Thumbnail: (props: ThumbnailProps) => ReactElement
@@ -252,7 +254,7 @@ const VoiceInputButton: react.ForwardRefExoticComponent<VoiceInputButtonProps & 
 function VoiceTranscript(props: VoiceTranscriptProps): ReactElement
 ```
 
-## Hooks (22)
+## Hooks (24)
 
 ```text
 function useAnnounce(): (message: string, options?: AnnounceOptions) => void
@@ -264,6 +266,7 @@ function useFormatLocale(locale?: string): string
 function useHotkeys(hotkeys: Hotkey[], options?: UseHotkeysOptions): void
 function useInstallPrompt(props?: UseInstallPromptOptions): UseInstallPromptResult
 function useIntegratedI18n(locale?: string): IntegratedI18n
+function useKeyboardOffset(enabled?: boolean): number
 function useLocalStorageState<T>(key: string, defaultValue: T, options?: UseLocalStorageStateOptions<T>): [T, SetLocalStorageState<T>, () => void]
 function useLongPress(callback: (event: PointerEvent<Element>) => void, options?: UseLongPressOptions): LongPressHandlers
 function useMediaQuery(query: string): boolean
@@ -277,6 +280,7 @@ function useServiceWorkerUpdate(props: UseServiceWorkerUpdateOptions): UseServic
 function useSidebarCollapsed(): boolean
 function useSpeechRecognition(props?: UseSpeechRecognitionOptions): SpeechRecognitionState
 function useStandaloneMode(): boolean
+function useVisualViewportHeight(): number | null
 ```
 
 ## Functions (51)
@@ -1448,10 +1452,14 @@ interface MetadataListProps extends Omit<HTMLAttributes<HTMLDListElement>, "chil
   labels?: Partial<MetadataListLabels>
   layout?: "vertical" | "horizontal"
 interface ModalProps
+  alwaysCentered?: boolean
+  backTitle?: string
   children: ReactNode
   className?: string
   description?: string
   footer?: ReactNode
+  headerActions?: ReactNode
+  onBack?: () => void
   onOpenChange: (open: boolean) => void
   open: boolean
   title: string
@@ -1771,7 +1779,10 @@ interface SelectTriggerProps extends ComponentPropsWithoutRef<"button">
   asChild?: boolean
   size?: "sm" | "default"
 interface SheetContentProps extends DialogPopupProps, VariantProps<typeof sheetVariants>
+  closeButtonTestId?: string
+  keyboardAware?: boolean
   resizable?: boolean
+  showCloseButton?: boolean
 interface Shortcut
   id?: string
   keys: string | string[]
@@ -2305,7 +2316,7 @@ interface VoiceTranscriptProps extends Omit<HTMLAttributes<HTMLDivElement>, "onC
   value: string
 ```
 
-## Types (55)
+## Types (58)
 
 ```text
 type AccordionContentProps = ComponentPropsWithoutRef<"div"> & {…}
@@ -2371,6 +2382,9 @@ type SplitPaneLimit = number | `${number}px`
 type StatStripTone = "default" | "success" | "warning" | "danger"
 type StatusTone = "success" | "warning" | "error" | "info" | "neutral"
 type TableSearchProps = SearchBarProps
+type TabsCountTone = "danger" | "warning"
+type TabsOverflow = "scroll" | "menu"
+type TabsVariant = "pill" | "underline" | "chips"
 type TimeInputError = "invalid" | "range"
 type TimelineSize = "sm" | "md"
 type TimelineStatus = "done" | "active" | "pending" | "error"

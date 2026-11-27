@@ -1,6 +1,6 @@
 {
   "name": "@bmsuisse/ui",
-  "version": "0.33.1",
+  "version": "0.35.3",
   "description": "Shared shadcn/ui-based React primitives, composed UI patterns (dialogs, forms, inputs, date picking, feedback, page layout, command palette) and hooks. See CATALOG.md for the full list.",
   "type": "module",
   "license": "MIT",
@@ -38,6 +38,7 @@
     "check": "bun run typecheck && bun run test",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build -o storybook-static",
+    "test:e2e": "playwright test -c e2e/playwright.config.ts",
     "test:visual": "playwright test -c visual/playwright.config.ts",
     "test:visual:update": "playwright test -c visual/playwright.config.ts --update-snapshots=missing"
   },

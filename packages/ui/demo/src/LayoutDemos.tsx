@@ -103,6 +103,25 @@ export function PageHeaderDemo(): ReactElement {
           }
         />
       </div>
+      <div className="rounded-xl border border-border bg-background p-5 shadow-sm" data-testid="demo-tabs-underline">
+        <PageHeader
+          title="Offer 983201"
+          description="Sections of one record: underline variant with counts."
+          tabs={
+            <Tabs defaultValue="details" variant="underline">
+              <TabsList aria-label="Offer sections">
+                <TabsTrigger value="details">Details</TabsTrigger>
+                <TabsTrigger value="sub" count={4}>
+                  Sub-offers
+                </TabsTrigger>
+                <TabsTrigger value="addresses" count={12}>
+                  Addresses
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          }
+        />
+      </div>
       <div className="rounded-xl border border-border bg-background p-5 shadow-sm">
         <PageHeader title="Reports" badge="alpha" description="Sales KPIs per region and month." divider />
       </div>

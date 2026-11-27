@@ -47,6 +47,7 @@ export { Skeleton } from "./primitives/skeleton";
 export { Checkbox } from "./primitives/checkbox";
 export type { SwitchProps } from "./primitives/switch";
 export { Switch } from "./primitives/switch";
+export type { TabsCountTone, TabsOverflow, TabsVariant } from "./primitives/tabs";
 export { Tabs, TabsContent, TabsList, TabsTrigger } from "./primitives/tabs";
 export { Separator } from "./primitives/separator";
 export { ScrollArea, ScrollBar } from "./primitives/scroll-area";
@@ -120,7 +121,7 @@ export { Slider } from "./primitives/slider";
 
 // --- patterns (composed on top of the primitives above) ---------------------
 export type { ModalProps } from "./patterns/modal/Modal";
-export { Modal } from "./patterns/modal/Modal";
+export { Modal, ModalBody, ModalFooter } from "./patterns/modal/Modal";
 export type { ConfirmDialogProps } from "./patterns/modal/ConfirmDialog";
 export { ConfirmDialog } from "./patterns/modal/ConfirmDialog";
 export type { DialogActionsProps } from "./patterns/modal/DialogActions";
@@ -471,6 +472,8 @@ export { captureInstallPrompt, useInstallPrompt } from "./hooks/useInstallPrompt
 export type { AnnounceOptions, AnnouncePoliteness } from "./hooks/useAnnounce";
 export { announce, Announcer, useAnnounce } from "./hooks/useAnnounce";
 export { useMergedRefs } from "./hooks/useMergedRefs";
+export { useKeyboardOffset } from "./hooks/useKeyboardOffset";
+export { useVisualViewportHeight } from "./hooks/useVisualViewportHeight";
 export type { UseFocusTrapOptions } from "./hooks/useFocusTrap";
 export { useFocusTrap } from "./hooks/useFocusTrap";
 export type { LongPressHandlers, UseLongPressOptions } from "./hooks/useLongPress";

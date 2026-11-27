@@ -74,6 +74,80 @@ describe("Tabs", () => {
     await userEvent.click(screen.getByText("B"));
     expect(screen.getByText("Content B")).toBeInTheDocument();
   });
+
+  it("is a pill by default", () => {
+    render(
+      <Tabs defaultValue="a">
+        <TabsList aria-label="views">
+          <TabsTrigger value="a">A</TabsTrigger>
+        </TabsList>
+      </Tabs>,
+    );
+    expect(screen.getByRole("tablist").className).toContain("bg-muted");
+    expect(screen.getByRole("tab", { name: "A" }).className).toContain("rounded-md");
+  });
+
+  it("underline variant: hairline under the list, underline on the active tab, no pill track", async () => {
+    render(
+      <Tabs defaultValue="a" variant="underline">
+        <TabsList aria-label="views">
+          <TabsTrigger value="a">A</TabsTrigger>
+          <TabsTrigger value="b">B</TabsTrigger>
+        </TabsList>
+        <TabsContent value="a">Content A</TabsContent>
+        <TabsContent value="b">Content B</TabsContent>
+      </Tabs>,
+    );
+    const list = screen.getByRole("tablist");
+    expect(list).toHaveAttribute("data-variant", "underline");
+    expect(list.className).toContain("border-b");
+    expect(list.className).toContain("overflow-x-auto");
+    expect(list.className).not.toContain("bg-muted");
+    const a = screen.getByRole("tab", { name: "A" });
+    expect(a.className).toContain("border-b-2");
+    expect(a.className).toContain("data-[state=active]:border-primary");
+    expect(a.className).not.toContain("rounded-md");
+    expect(a).toHaveAttribute("data-state", "active");
+    await userEvent.click(screen.getByRole("tab", { name: "B" }));
+    expect(screen.getByText("Content B")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "B" })).toHaveAttribute("data-state", "active");
+    expect(a).toHaveAttribute("data-state", "inactive");
+  });
+
+  it("underline variant keeps arrow-key navigation", async () => {
+    render(
+      <Tabs defaultValue="a" variant="underline">
+        <TabsList aria-label="views">
+          <TabsTrigger value="a">A</TabsTrigger>
+          <TabsTrigger value="b">B</TabsTrigger>
+        </TabsList>
+        <TabsContent value="a">Content A</TabsContent>
+        <TabsContent value="b">Content B</TabsContent>
+      </Tabs>,
+    );
+    screen.getByRole("tab", { name: "A" }).focus();
+    await userEvent.keyboard("{ArrowRight}");
+    expect(screen.getByText("Content B")).toBeInTheDocument();
+  });
+
+  it("shows a count badge after the label, also for zero", () => {
+    render(
+      <Tabs defaultValue="a" variant="underline">
+        <TabsList aria-label="views">
+          <TabsTrigger value="a" count={3}>
+            Items
+          </TabsTrigger>
+          <TabsTrigger value="b" count={0}>
+            Empty
+          </TabsTrigger>
+          <TabsTrigger value="c">Plain</TabsTrigger>
+        </TabsList>
+      </Tabs>,
+    );
+    expect(screen.getByRole("tab", { name: "Items 3" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Empty 0" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Plain" }).querySelector('[data-slot="tab-count"]')).toBeNull();
+  });
 });
 
 describe("Separator", () => {
