@@ -588,7 +588,7 @@ describe("Combobox with columns (grid mode)", () => {
     expect(germanyRow).toHaveTextContent("Europe");
   });
 
-  it("wraps cell text instead of truncating it, so the popup never needs a horizontal scrollbar", async () => {
+  it("wraps cell text instead of truncating it, so long values do not force a horizontal scrollbar", async () => {
     render(<Combobox options={GRID_OPTIONS} value={null} onChange={vi.fn()} columns={COLUMNS} />);
     await userEvent.click(screen.getByRole("combobox"));
     const cell = within(await screen.findByRole("option", { name: /Germany/ })).getByText("Berlin");
