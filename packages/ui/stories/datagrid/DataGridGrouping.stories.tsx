@@ -118,3 +118,17 @@ export const GroupedVirtualized: Story = {
     />
   ),
 };
+
+/** Group headers stick under the column header while the grid scrolls inside `maxHeight`. */
+export const GroupedScrolling: Story = {
+  render: () => (
+    <DataGrid
+      columns={summaryColumns}
+      dataSource={{ mode: "client", data: grouped }}
+      getRowId={getOrderId}
+      groupBy={(row) => row.customer}
+      showPagination={false}
+      maxHeight={360}
+    />
+  ),
+};
