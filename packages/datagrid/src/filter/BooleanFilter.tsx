@@ -1,8 +1,5 @@
-import { FunnelIcon } from "@heroicons/react/24/outline";
 import type { ReactElement } from "react";
 import type { BooleanColumn } from "../column/types";
-import { Button } from "../components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -10,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select";
-import { cn } from "../lib/utils";
+import { FilterShell } from "./FilterShell";
 import type { FilterDescriptor } from "./types";
 import { useFilterLabels } from "./labels";
 import type { FilterWidgetProps } from "./widget-types";
@@ -106,28 +103,17 @@ export function BooleanFilter<TRow>({
     </Select>
   );
 
-  if (bare) {
-    return <div data-testid={`filter-${column.id}`}>{panel}</div>;
-  }
-
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className={cn("gap-1", isFiltered ? "max-w-[140px] px-2" : "w-8 justify-center px-0")}
-          aria-label={labels.filterAriaLabel(column.header)}
-          data-testid={`filter-${column.id}`}
-        >
-          <FunnelIcon
-            className={cn("h-3.5 w-3.5 shrink-0", isFiltered ? "opacity-100 text-primary dark:text-ring" : "opacity-60")}
-            aria-hidden
-          />
-          {isFiltered && <span className="truncate">{summary}</span>}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-40 p-2">{panel}</PopoverContent>
-    </Popover>
+    <FilterShell
+      columnId={column.id}
+      ariaLabel={labels.filterAriaLabel(column.header)}
+      bare={bare}
+      isFiltered={isFiltered}
+      summary={summary}
+      maxWidthClass="max-w-[140px]"
+      contentClassName="w-40 p-2"
+    >
+      {panel}
+    </FilterShell>
   );
 }

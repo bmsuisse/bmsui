@@ -1,17 +1,14 @@
-import { FunnelIcon } from "@heroicons/react/24/outline";
 import type { ReactElement } from "react";
 import { useEffect, useId, useRef, useState } from "react";
 import { defaultFormat } from "../column/format";
 import type { NumberColumn } from "../column/types";
-import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { cn } from "../lib/utils";
 import { isNumberPair } from "./numberRangeShared";
 import type { FilterDescriptor, FilterOperator } from "./types";
 import type { FilterLabels } from "./labels";
 import { useFilterLabels } from "./labels";
+import { FilterShell } from "./FilterShell";
 import { firstTextInput } from "./focus";
 import type { FilterWidgetProps } from "./widget-types";
 
@@ -213,28 +210,18 @@ export function NumberComparisonFilter<TRow>({
     </div>
   );
 
-  if (bare) {
-    return <div data-testid={`filter-${column.id}`}>{panel}</div>;
-  }
-
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className={cn("gap-1", isFiltered ? "max-w-[180px] px-2" : "w-8 justify-center px-0")}
-          aria-label={labels.filterAriaLabel(column.header)}
-          data-testid={`filter-${column.id}`}
-        >
-          <FunnelIcon
-            className={cn("h-3.5 w-3.5 shrink-0", isFiltered ? "opacity-100 text-primary dark:text-ring" : "opacity-60")}
-            aria-hidden
-          />
-          {isFiltered && <span className="truncate">{summary}</span>}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-3" focusOnOpen={firstTextInput}>{panel}</PopoverContent>
-    </Popover>
+    <FilterShell
+      columnId={column.id}
+      ariaLabel={labels.filterAriaLabel(column.header)}
+      bare={bare}
+      isFiltered={isFiltered}
+      summary={summary}
+      maxWidthClass="max-w-[180px]"
+      contentClassName="w-auto p-3"
+      focusOnOpen={firstTextInput}
+    >
+      {panel}
+    </FilterShell>
   );
 }

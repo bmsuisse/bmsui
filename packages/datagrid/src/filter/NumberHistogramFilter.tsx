@@ -1,13 +1,13 @@
-import { ExclamationTriangleIcon, FunnelIcon } from "@heroicons/react/24/outline";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import type { MouseEvent, ReactElement } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { NumberColumn } from "../column/types";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
 import { cn } from "../lib/utils";
 import { descriptorFor, rangeOf } from "./numberRangeShared";
 import { useFilterLabels } from "./labels";
+import { FilterShell } from "./FilterShell";
 import { firstTextInput } from "./focus";
 import type { FilterWidgetProps } from "./widget-types";
 
@@ -364,28 +364,20 @@ export function NumberHistogramFilter<TRow>({
     </div>
   );
 
-  if (bare) {
-    return <div data-testid={`filter-${column.id}`}>{panel}</div>;
-  }
-
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className={cn("gap-1", isFiltered ? "max-w-[200px] px-2" : "w-8 justify-center px-0")}
-          aria-label={labels.filterAriaLabel(column.header)}
-          data-testid={`filter-${column.id}`}
-        >
-          <FunnelIcon
-            className={cn("h-3.5 w-3.5 shrink-0", isFiltered ? "opacity-100 text-primary dark:text-ring" : "opacity-60")}
-            aria-hidden
-          />
-          {isFiltered && <span className="truncate">{summary}</span>}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[22rem]" focusOnOpen={firstTextInput}>{panel}</PopoverContent>
-    </Popover>
+    <FilterShell
+      columnId={column.id}
+      ariaLabel={labels.filterAriaLabel(column.header)}
+      bare={bare}
+      isFiltered={isFiltered}
+      summary={summary}
+      maxWidthClass="max-w-[200px]"
+      contentClassName="w-[22rem]"
+      focusOnOpen={firstTextInput}
+      open={open}
+      onOpenChange={setOpen}
+    >
+      {panel}
+    </FilterShell>
   );
 }
