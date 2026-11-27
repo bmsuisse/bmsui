@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -586,6 +586,14 @@ describe("Combobox with columns (grid mode)", () => {
     const germanyRow = await screen.findByRole("option", { name: /Germany/ });
     expect(germanyRow).toHaveTextContent("Berlin");
     expect(germanyRow).toHaveTextContent("Europe");
+  });
+
+  it("wraps cell text instead of truncating it, so the popup never needs a horizontal scrollbar", async () => {
+    render(<Combobox options={GRID_OPTIONS} value={null} onChange={vi.fn()} columns={COLUMNS} />);
+    await userEvent.click(screen.getByRole("combobox"));
+    const cell = within(await screen.findByRole("option", { name: /Germany/ })).getByText("Berlin");
+    expect(cell).toHaveClass("whitespace-normal", "break-words");
+    expect(cell).not.toHaveClass("truncate");
   });
 
   it("selects a row on click just like the flat list", async () => {

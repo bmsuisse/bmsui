@@ -822,6 +822,39 @@ export function App(): ReactElement {
             </div>
           </Section>
 
+          <Section title="Combobox (grid columns, long cells)">
+            <div className="w-64">
+              <Combobox
+                data-testid="long-grid-combobox"
+                columns={[
+                  { key: "label", header: "Name" },
+                  { key: "channel", header: "Channel" },
+                  { key: "groups", header: "Product groups" },
+                ]}
+                options={[
+                  {
+                    value: "t1",
+                    label: "Annual turnover bonus — hardware and fasteners, all distribution channels",
+                    data: {
+                      channel: "Wholesale",
+                      groups: "Fasteners, Tools, Machines, Workwear, Safety equipment, Chemicals, Electrical, Plumbing",
+                    },
+                  },
+                  { value: "t2", label: "Growth bonus", data: { channel: "Retail", groups: "Tools" } },
+                  {
+                    value: "t3",
+                    label: "Volume rebate (staggered)",
+                    data: { channel: "Wholesale", groups: "Fasteners, Tools, Machines, Workwear, Safety equipment" },
+                  },
+                ]}
+                value={gridCountry}
+                onChange={setGridCountry}
+                placeholder="Select a template"
+                searchPlaceholder="Search…"
+              />
+            </div>
+          </Section>
+
           <Section title="TagCombobox (grid columns)">
             <div className="w-80">
               <TagCombobox

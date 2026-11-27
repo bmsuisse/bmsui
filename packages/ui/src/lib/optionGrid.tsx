@@ -109,7 +109,10 @@ export function renderGridOptions<T extends GridableOption>({
                 </TableCell>
               )}
               {columns.map((column) => (
-                <TableCell key={column.key} className={cn("truncate", column.className)}>
+                // Wraps rather than truncates: a `<td>` never shrinks below its
+                // nowrap text, so long cells would push the table wider than the
+                // popup (capped at 40rem) and force a horizontal scrollbar.
+                <TableCell key={column.key} className={cn("whitespace-normal break-words", column.className)}>
                   {column.key === "label" ? option.label : option.data?.[column.key]}
                 </TableCell>
               ))}
